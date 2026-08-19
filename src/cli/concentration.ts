@@ -19,9 +19,9 @@ async function main(): Promise<void> {
   const idx = new Indexer();
   const { chances } = await buildChances(idx, { days: Number(arg("--days", "30")), onProgress: () => {} });
 
-  const byMarket = new Map<string, { n: number; wins: number; stake: number; pnl: number; asset: string; iv: number }>();
+  const byMarket = new Map<string, { id: string; n: number; wins: number; stake: number; pnl: number; asset: string; iv: number }>();
   for (const c of chances) {
-    const e = byMarket.get(c.marketId) ?? { n: 0, wins: 0, stake: 0, pnl: 0, asset: c.asset, iv: c.intervalSec };
+    const e = byMarket.get(c.marketId) ?? { id: c.marketId, n: 0, wins: 0, stake: 0, pnl: 0, asset: c.asset, iv: c.intervalSec };
     e.n++;
     e.wins += c.won;
     e.stake += c.price;
@@ -64,7 +64,10 @@ async function main(): Promise<void> {
   console.log("  window                 asset  cadence  chances   won%   P&L/stake");
   for (const r of [...rows].sort((a, b) => a.pnl / Math.max(a.stake, 1e-9) - b.pnl / Math.max(b.stake, 1e-9)).slice(0, 10)) {
     console.log(
-      `  ${String([...byMarket].find(([, v]) => v === r)?.[0]).slice(0, 20)}  ${r.asset.padEnd(5)}  ${String(Math.round(r.iv / 60) + "m").padStart(6)}  ` +
+      // Identify by the TAIL of the marketId: these are bytes32 values sharing a
+      // long run of leading zeros, so a prefix slice prints identically for every
+      // market and makes distinct rows look like one repeated entry.
+      `  …${r.id.slice(-12)}  ${r.asset.padEnd(5)}  ${String(Math.round(r.iv / 60) + "m").padStart(6)}  ` +
         `${String(r.n).padStart(7)}  ${((r.wins / r.n) * 100).toFixed(0).padStart(4)}   ${((r.pnl / Math.max(r.stake, 1e-9)) * 100).toFixed(1).padStart(8)}%`,
     );
   }
