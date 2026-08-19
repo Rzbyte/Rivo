@@ -1,0 +1,32 @@
+{
+  "name": "rivo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Autonomous portfolio manager for DreamDEX Event Contracts.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "calibrate": "tsx src/calibration/cli.ts",
+    "typecheck": "tsc --noEmit",
+    "scan": "tsx src/cli/scan.ts",
+    "allocate": "tsx src/cli/allocate.ts",
+    "backtest": "tsx src/cli/backtest.ts",
+    "diagnose": "tsx src/cli/diagnose.ts",
+    "concentration": "tsx src/cli/concentration.ts",
+    "band": "tsx src/cli/band.ts",
+    "maker": "tsx src/cli/maker.ts",
+    "start": "tsx src/cli/run.ts",
+    "dev": "tsx watch src/cli/run.ts",
+    "report": "tsx src/cli/report.ts",
+    "web": "tsx src/cli/web.ts",
+    "check:kit": "tsx scripts/check-kit.ts",
+    "link:kit": "npm install --no-save file:../dreamdex-bot-kit/packages/ec-core"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "@types/node": "^22.0.0"
+  }
+}

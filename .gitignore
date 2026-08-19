@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Runtime state — a portfolio and its decision log are per-deployment, never shared.
+# Committing these would also publish a trading history that says nothing about the
+# code and everything about one machine's uptime.
+data/
+data*/
+
+# Logs
+*.log
+
+# Generated dashboard snapshots. One curated copy lives in docs/evidence/.
+rivo-dashboard.html
+
+# Reports written by the CLIs with --out. Curated copies live in docs/evidence/.
+/calibration.json
+/backtest.json
+
+# Secrets. There is no reason a key belongs in this repo, ever.
+.env
+.env.*
+!.env.example
+
+# Editor / OS
+.DS_Store
+*.swp
+.idea/
+.vscode/
