@@ -147,6 +147,8 @@ export function logLoss(preds: Prediction[]): number {
 const logit = (p: number) => Math.log(p / (1 - p));
 const sigmoid = (x: number) => 1 / (1 + Math.exp(-x));
 const clamp01 = (p: number) => Math.min(1 - 1e-6, Math.max(1e-6, p));
+/** log(1 + e^x), computed so a large x does not overflow before the log. */
+const softplus = (x: number) => (x > 30 ? x : x < -30 ? Math.exp(x) : Math.log1p(Math.exp(x)));
 
 /** `p_calibrated = sigmoid(a * logit(p_model) + b)`. */
 export interface PlattMap {
@@ -169,14 +171,28 @@ export const applyPlatt = (map: PlattMap, p: number): number =>
  * at all — which is a result worth being able to reach, so the fit is allowed to
  * land there rather than being forced to move.
  */
-export function fitPlatt(preds: Prediction[], iterations = 25): PlattMap {
+export function fitPlatt(preds: Prediction[], iterations = 50): PlattMap {
   if (preds.length < 50) return IDENTITY_MAP;
   const xs = preds.map((d) => logit(clamp01(d.p)));
   const ys = preds.map((d) => d.y);
+
+  // Mean log-likelihood, used to decide whether a step was actually an improvement.
+  const ll = (a: number, b: number): number => {
+    let s = 0;
+    for (let i = 0; i < xs.length; i++) {
+      const z = a * xs[i]! + b;
+      // log sigmoid(z) for y=1, log(1-sigmoid(z)) for y=0, written to avoid
+      // overflow at large |z| — which is exactly where this fit gets into trouble.
+      s += ys[i]! === 1 ? -softplus(-z) : -softplus(z);
+    }
+    return s / xs.length;
+  };
+
   let a = 1;
   let b = 0;
+  let current = ll(a, b);
+
   for (let it = 0; it < iterations; it++) {
-    // Gradient and Hessian of the log-likelihood over (a, b).
     let g0 = 0, g1 = 0, h00 = 0, h01 = 0, h11 = 0;
     for (let i = 0; i < xs.length; i++) {
       const x = xs[i]!;
@@ -189,13 +205,41 @@ export function fitPlatt(preds: Prediction[], iterations = 25): PlattMap {
       h01 += w * x;
       h11 += w;
     }
-    const det = h00 * h11 - h01 * h01;
+    // Ridge on the diagonal. Once the weights collapse toward their floor the
+    // information matrix is near-singular, and an undamped solve turns a finite
+    // gradient into an astronomical step.
+    const ridge = 1e-6 * xs.length;
+    const d00 = h00 + ridge;
+    const d11 = h11 + ridge;
+    const det = d00 * d11 - h01 * h01;
     if (!Number.isFinite(det) || Math.abs(det) < 1e-12) break;
-    const da = (h11 * g0 - h01 * g1) / det;
-    const db = (h00 * g1 - h01 * g0) / det;
-    a += da;
-    b += db;
-    if (Math.abs(da) < 1e-9 && Math.abs(db) < 1e-9) break;
+    let da = (d11 * g0 - h01 * g1) / det;
+    let db = (d00 * g1 - h01 * g0) / det;
+    if (!Number.isFinite(da) || !Number.isFinite(db)) break;
+
+    // Backtracking line search. A pure Newton step is not guaranteed to improve
+    // the likelihood, and on an overconfident model it overshoots so far that the
+    // next iteration is worse still — measured: `a` reaching 8.7e7 on a model
+    // claiming 0.99 while being right 60% of the time. Halving until the step
+    // actually helps turns that into a convergent fit.
+    let step = 1;
+    let improved = false;
+    for (let back = 0; back < 30; back++) {
+      const na = a + step * da;
+      const nb = b + step * db;
+      const next = ll(na, nb);
+      if (Number.isFinite(next) && next > current) {
+        a = na;
+        b = nb;
+        current = next;
+        improved = true;
+        break;
+      }
+      step /= 2;
+    }
+    if (!improved) break; // at an optimum, or no direction improves — stop cleanly
+    if (Math.abs(step * da) < 1e-10 && Math.abs(step * db) < 1e-10) break;
   }
+
   return Number.isFinite(a) && Number.isFinite(b) ? { a, b } : IDENTITY_MAP;
 }

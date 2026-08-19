@@ -15,8 +15,8 @@ Somnia × DreamDEX Event Contracts Hackathon.
 
 Two results, and the second one matters as much as the first.
 
-**The forecasting model works.** Out-of-sample, over **30,751 forecasts across 6,153 settled
-windows**: **AUC 0.8308, Brier 0.1695 — 32.2% skill** over always-saying-0.5.
+**The forecasting model works.** Out-of-sample, over **30,771 forecasts across 6,157 settled
+windows**: **AUC 0.8305, Brier 0.1696 — 32.2% skill** over always-saying-0.5.
 
 **Trading on it, by taking liquidity, does not.** Replayed against **53,989 fills that actually
 executed**, every edge band is negative, and losses grow with claimed edge. The winner's curse,

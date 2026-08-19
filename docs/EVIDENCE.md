@@ -49,12 +49,12 @@ Three things guard against flattering ourselves:
 
 | | |
 |---|---|
-| forecasts scored | **30,751** across **6,153** settled windows |
+| forecasts scored | **30,771** across **6,157** settled windows |
 | period | 2026-07-22 → 2026-08-19 |
 | cadences | 900 / 3600 / 14400 / 86400s |
 | realized UP rate | 50.05% (at-inception prior 50.23%) |
-| **AUC (holdout)** | **0.8308** |   (n = 9,226)
-| **Brier (holdout)** | **0.1695** — 32.2% skill over always-0.5 |
+| **AUC (holdout)** | **0.8305** |   (n = 9,232)
+| **Brier (holdout)** | **0.1696** — 32.2% skill over always-0.5 |
 
 Restricted to windows that actually traded — the ones Rivo could act on — it is better still:
 **AUC 0.8870**.
@@ -64,11 +64,11 @@ sanity check that the model is doing real work rather than fitting noise:
 
 | phase | n | AUC | Brier |
 |---|---|---|---|
-| 10% | 6,153 | 0.6033 | 0.2492 |
-| 25% | 6,151 | 0.6972 | 0.2254 |
-| 50% | 6,151 | 0.8102 | 0.1814 |
-| 75% | 6,149 | 0.8935 | 0.1350 |
-| 90% | 6,147 | 0.9357 | 0.1016 |
+| 10% | 6,157 | 0.6030 | 0.2492 |
+| 25% | 6,155 | 0.6971 | 0.2254 |
+| 50% | 6,155 | 0.8102 | 0.1814 |
+| 75% | 6,153 | 0.8936 | 0.1349 |
+| 90% | 6,151 | 0.9357 | 0.1016 |
 
 ```bash
 npm run calibrate -- --days 30
@@ -86,13 +86,26 @@ windows to fit, last 30% to score):
 
 | correction | holdout Brier | skill vs always-0.5 |
 |---|---|---|
-| **none (model as-is)** | **0.1695** | **32.19%** |
-| linear shrink (`k = 0.872`) | 0.1718 | 31.30% |
-| Platt, global (`a = 0.655, b = 0.324`) | 0.1793 | 28.27% |
-| Platt, per phase | 0.1803 | 27.88% |
+| **none (model as-is)** | **0.1696** | **32.16%** |
+| linear shrink (`k = 0.872`) | 0.1718 | 31.27% |
+| Platt, global (`a = 0.656, b = 0.324`) | 0.1795 | 28.19% |
+| Platt, per phase | 0.1805 | 27.82% |
 
 **Every fitted correction loses to doing nothing.** The in-sample structure was this period's
 noise, not a stable bias.
+
+> A test written after the fact found that the Platt fit could diverge — plain Newton-Raphson
+> overshoots badly on a model that is confidently wrong, and the IRLS weights then collapse to
+> their floor and take the step to infinity (measured: `a` reaching 8.7e7 on synthetic data). It is
+> fixed with a ridge and a backtracking line search. **It did not affect this table**: re-running
+> the study with the corrected fit moved Platt's parameters by 0.0005 (`a` 0.6551 → 0.6556) and
+> left every ordering intact, because real data with thousands of distinct probabilities is
+> well-conditioned enough that Newton converged anyway. Recorded because the check mattered more
+> than the outcome.
+
+The `test` suite pins the scoring rules themselves against cases whose answers are known by
+construction — AUC 1 for a perfect ranking, 0.5 for a constant one, Brier 0.25 for a coin flip —
+so the numbers above rest on something more than having run them once.
 
 This overturned a design assumption. The plan called for calibration-shrunk Kelly on the reasoning
 that Kelly on an uncalibrated probability is a ruin machine — true in general, and not true here.

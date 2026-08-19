@@ -218,8 +218,12 @@ export async function cycle(state: RivoState, deps: LoopDeps): Promise<CycleRepo
  * protocol's answer when no reliable settlement price exists. Scoring that as a
  * loss would slander the model; scoring it as a win would flatter it. It is
  * neither, and it gets its own exit type.
+ *
+ * Exported for testing: this is the only place collateral changes hands on an
+ * outcome, so it is worth pinning directly rather than reaching it through a
+ * full cycle that would need the venue mocked to get here.
  */
-async function resolveSettled(state: RivoState, idx: Indexer, now: number, out: (s: string) => void): Promise<number> {
+export async function resolveSettled(state: RivoState, idx: Indexer, now: number, out: (s: string) => void): Promise<number> {
   const due = state.open.filter((p) => p.expiry <= now);
   if (due.length === 0) return 0;
 
