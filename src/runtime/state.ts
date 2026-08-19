@@ -12,7 +12,7 @@
 // Accumulated over days it becomes the only evidence that the portfolio layer
 // behaves the way the backtest says it does, on data nobody could have fitted to.
 
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { closeSync, existsSync, mkdirSync, openSync, readFileSync, readSync, renameSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type { Asset } from "../core/config.js";
 import type { Leg } from "../engine/book.js";
@@ -174,18 +174,79 @@ export class DecisionLog {
     writeFileSync(this.path, lines, { flag: "a" });
   }
 
-  read(): DecisionRecord[] {
+  /**
+   * The most recent `maxRecords` decisions.
+   *
+   * Reads BACKWARDS from the end of the file rather than loading it whole. This
+   * log grows without bound by design — it is the forward-test record — and at
+   * one cycle a minute over sixteen legs it reaches hundreds of thousands of
+   * entries in a couple of weeks. Every reader (the dashboard, the report) wants
+   * the recent tail, so loading megabytes to slice the last few hundred lines
+   * would make a long, healthy run the thing that breaks the UI.
+   *
+   * Pass `Infinity` to read everything, which only the analysis paths should do.
+   */
+  read(maxRecords = 5_000): DecisionRecord[] {
     if (!existsSync(this.path)) return [];
-    return readFileSync(this.path, "utf8")
-      .split("\n")
-      .filter((l) => l.trim().length > 0)
-      .flatMap((l) => {
-        try {
-          return [JSON.parse(l) as DecisionRecord];
-        } catch {
-          return []; // a partial final line after a hard kill is not worth dying over
-        }
-      });
+    const text = maxRecords === Infinity ? readFileSync(this.path, "utf8") : this.tail(maxRecords);
+    const lines = text.split("\n").filter((l) => l.trim().length > 0);
+    const wanted = maxRecords === Infinity ? lines : lines.slice(-maxRecords);
+    return wanted.flatMap((l) => {
+      try {
+        return [JSON.parse(l) as DecisionRecord];
+      } catch {
+        return []; // a partial line — a truncated first one, or the last after a hard kill
+      }
+    });
+  }
+
+  /**
+   * How many decisions have EVER been recorded.
+   *
+   * Counted rather than derived from `read()`, which now returns only a tail.
+   * The cumulative figure is the one a reader is told, so it has to be the real
+   * one — a count that quietly caps at the tail size would understate the record
+   * exactly as it grows most interesting.
+   */
+  count(): number {
+    if (!existsSync(this.path)) return 0;
+    const fd = openSync(this.path, "r");
+    try {
+      const buf = Buffer.allocUnsafe(1 << 20);
+      let total = 0;
+      let read = 0;
+      let pos = 0;
+      let lastByte = 0;
+      while ((read = readSync(fd, buf, 0, buf.length, pos)) > 0) {
+        for (let i = 0; i < read; i++) if (buf[i] === 0x0a) total++;
+        lastByte = buf[read - 1]!;
+        pos += read;
+      }
+      // A final line without a trailing newline still counts.
+      return pos > 0 && lastByte !== 0x0a ? total + 1 : total;
+    } finally {
+      closeSync(fd);
+    }
+  }
+
+  /** Read enough trailing bytes to be confident they contain `maxRecords` lines. */
+  private tail(maxRecords: number): string {
+    const size = statSync(this.path).size;
+    // Records are a few hundred bytes; 512 with a floor gives generous headroom
+    // without reading the whole file for a modest request.
+    const want = Math.min(size, Math.max(64 * 1024, maxRecords * 512));
+    const fd = openSync(this.path, "r");
+    try {
+      const buf = Buffer.allocUnsafe(want);
+      readSync(fd, buf, 0, want, size - want);
+      const text = buf.toString("utf8");
+      // Drop the first line unless we happened to start at a record boundary:
+      // reading mid-file almost certainly lands mid-record.
+      const nl = text.indexOf("\n");
+      return want < size && nl >= 0 ? text.slice(nl + 1) : text;
+    } finally {
+      closeSync(fd);
+    }
   }
 }
 

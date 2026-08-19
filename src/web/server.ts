@@ -18,18 +18,23 @@ import { riskOf, type Position } from "../portfolio/risk.js";
 export interface DashboardData {
   state: RivoState | null;
   decisions: DecisionRecord[];
+  /** Every decision ever logged, not just the tail loaded above. */
+  totalEvaluations?: number;
   error?: string;
 }
 
 function read(dataDir: string): DashboardData {
   const sp = statePath(dataDir);
-  if (!existsSync(sp)) return { state: null, decisions: [], error: `No state at ${sp}. Start Rivo with \`npm start\`.` };
+  if (!existsSync(sp)) return { state: null, decisions: [], totalEvaluations: 0, error: `No state at ${sp}. Start Rivo with \`npm start\`.` };
   try {
     const state = JSON.parse(readFileSync(sp, "utf8")) as RivoState;
-    const decisions = new DecisionLog(decisionLogPath(dataDir)).read();
-    return { state, decisions };
+    const log = new DecisionLog(decisionLogPath(dataDir));
+    // The page shows the latest cycle and a rollup of recent declines, so a tail
+    // is all it needs — but the footer quotes the cumulative total, which must be
+    // counted rather than inferred from what was loaded.
+    return { state, decisions: log.read(2_000), totalEvaluations: log.count() };
   } catch (e) {
-    return { state: null, decisions: [], error: e instanceof Error ? e.message : String(e) };
+    return { state: null, decisions: [], totalEvaluations: 0, error: e instanceof Error ? e.message : String(e) };
   }
 }
 
@@ -111,7 +116,7 @@ export function view(data: DashboardData) {
       returned,
       returnOnStake: staked > 0 ? (returned - staked) / staked : 0,
     },
-    evaluations: decisions.length,
+    evaluations: data.totalEvaluations ?? decisions.length,
     lastCycleDecisions: thisCycle.map((d) => ({
       label: `${d.asset}-${Math.round(d.intervalSec / 60)}m`,
       leg: d.leg,

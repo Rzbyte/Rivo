@@ -288,6 +288,29 @@ async function main(): Promise<void> {
       calibration: { brier: bModel, brierCoin: bCoin, brierPrior: bPrior, logLoss: logLoss(preds) },
       shrinkage: { prior: BASE_RATE_UP, slope, brierAfter: bShrunk },
       reliability: reliability(preds, args.bins),
+      // Breakdowns are written out so the evidence file stands alone: anything
+      // quoted in the docs should be checkable from the artefact, not only from
+      // re-running the command and trusting that the venue has not moved.
+      byPhase: [...new Set(ds.samples.map((s) => s.phase))]
+        .sort((x, z) => x - z)
+        .map((ph) => {
+          const sub = ds.samples.filter((s) => s.phase === ph).map((s) => ({ p: s.p, y: s.y }));
+          return { phase: ph, n: sub.length, auc: auc(sub), brier: brierScore(sub) };
+        }),
+      byCadence: [...new Set(ds.samples.map((s) => s.intervalSec))]
+        .sort((x, z) => x - z)
+        .map((iv) => {
+          const sub = ds.samples.filter((s) => s.intervalSec === iv).map((s) => ({ p: s.p, y: s.y }));
+          return { intervalSec: iv, n: sub.length, auc: auc(sub), brier: brierScore(sub) };
+        }),
+      holdout: (() => {
+        const ord = [...ds.samples].sort((x, z) => x.settleAt - z.settleAt);
+        const c = Math.floor(ord.length * 0.7);
+        const te = ord.slice(c).map((d) => ({ p: d.p, y: d.y }));
+        return te.length > 200
+          ? { n: te.length, auc: auc(te), brier: brierScore(te), brierCoin: brierOfConstant(te, 0.5) }
+          : null;
+      })(),
       skipped: ds.skipped,
     };
     writeFileSync(args.out, JSON.stringify(report, null, 2));

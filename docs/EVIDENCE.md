@@ -49,12 +49,12 @@ Three things guard against flattering ourselves:
 
 | | |
 |---|---|
-| forecasts scored | **30,671** across **6,137** settled windows |
+| forecasts scored | **30,751** across **6,153** settled windows |
 | period | 2026-07-22 → 2026-08-19 |
 | cadences | 900 / 3600 / 14400 / 86400s |
-| realized UP rate | 49.99% (at-inception prior 50.23%) |
-| **AUC (holdout)** | **0.8302** |
-| **Brier (holdout)** | **0.1697** — 32.1% skill over always-0.5 |
+| realized UP rate | 50.05% (at-inception prior 50.23%) |
+| **AUC (holdout)** | **0.8308** |   (n = 9,226)
+| **Brier (holdout)** | **0.1695** — 32.2% skill over always-0.5 |
 
 Restricted to windows that actually traded — the ones Rivo could act on — it is better still:
 **AUC 0.8870**.
@@ -64,11 +64,11 @@ sanity check that the model is doing real work rather than fitting noise:
 
 | phase | n | AUC | Brier |
 |---|---|---|---|
-| 10% | 6,137 | 0.6025 | 0.2494 |
-| 25% | 6,135 | 0.6967 | 0.2255 |
-| 50% | 6,135 | 0.8096 | 0.1817 |
-| 75% | 6,133 | 0.8935 | 0.1350 |
-| 90% | 6,131 | 0.9355 | 0.1018 |
+| 10% | 6,153 | 0.6033 | 0.2492 |
+| 25% | 6,151 | 0.6972 | 0.2254 |
+| 50% | 6,151 | 0.8102 | 0.1814 |
+| 75% | 6,149 | 0.8935 | 0.1350 |
+| 90% | 6,147 | 0.9357 | 0.1016 |
 
 ```bash
 npm run calibrate -- --days 30
@@ -86,10 +86,10 @@ windows to fit, last 30% to score):
 
 | correction | holdout Brier | skill vs always-0.5 |
 |---|---|---|
-| **none (model as-is)** | **0.1697** | **32.13%** |
-| linear shrink (`k = 0.871`) | 0.1719 | 31.23% |
-| Platt, global (`a = 0.654, b = 0.324`) | 0.1798 | 28.10% |
-| Platt, per phase | 0.1806 | 27.76% |
+| **none (model as-is)** | **0.1695** | **32.19%** |
+| linear shrink (`k = 0.872`) | 0.1718 | 31.30% |
+| Platt, global (`a = 0.655, b = 0.324`) | 0.1793 | 28.27% |
+| Platt, per phase | 0.1803 | 27.88% |
 
 **Every fitted correction loses to doing nothing.** The in-sample structure was this period's
 noise, not a stable bias.
@@ -161,15 +161,21 @@ Same forecasts, same order, different sizing. Starting capital 50.
 
 | strategy | final | return | max DD | trades | hit % |
 |---|---|---|---|---|---|
-| **Rivo (Kelly + portfolio constraints)** | **19.18** | −61.6% | 76.9% | 997 | 41.9 |
+| **Rivo (Kelly + portfolio constraints)** | **34.60** | −30.8% | 51.9% | 1,200 | 46.5 |
 | Kelly, no portfolio constraints | 0.00 | −100% | 36.8% | 50 | 20.0 |
 | Full Kelly, no constraints | 0.00 | −100% | 36.0% | 50 | 20.0 |
 | Equal weight (5% each) | 0.00 | −100% | 39.4% | 58 | 19.0 |
 | Any positive edge (5% each) | 0.00 | −100% | 30.3% | 55 | 20.0 |
 | All-in on any edge | 0.00 | −100% | 36.0% | 50 | 20.0 |
 
-Every unconstrained rule is **bankrupt inside 60 trades**. The constrained one survives 997 and
-retains 38% of capital **on an edge that is genuinely negative**.
+Every unconstrained rule is **bankrupt inside 60 trades**. The constrained one survives **1,200**
+and retains **69% of capital on an edge that is genuinely negative** (−2.37% return on stake,
+against −61% for unconstrained Kelly).
+
+These figures improved materially once the allocator was fixed to treat Kelly and the position cap
+as targets for the whole leg rather than allowances for one more order — see §6. Before that fix
+the same comparison read 19.18 and 997 trades. Both versions tell the same story; the fixed one
+tells it more clearly, and it is the code that ships.
 
 This is the one claim a negative core does not undermine, and it is measured rather than argued.
 The mechanism is visible in the live allocator too: on a venue whose top candidates are routinely
@@ -257,5 +263,11 @@ npm run allocate  -- --capital 50 --profile balanced
 
 Saved outputs from the runs quoted above are in [`evidence/`](evidence/).
 
-Numbers will drift as the venue accumulates windows and other participants' bots change the books.
-The methods will not.
+Every figure quoted above comes from the saved artefacts in [`evidence/`](evidence/) —
+`calibration.json` carries the holdout, the per-phase and the per-cadence breakdowns, so anything
+in this document can be checked without re-running anything.
+
+Numbers drift as the venue accumulates windows and as other participants' bots change the books;
+across the runs behind this document the forecast count moved from 30,671 to 30,751 and the
+holdout AUC from 0.8302 to 0.8308. The methods do not drift, and neither does the direction of any
+conclusion here.

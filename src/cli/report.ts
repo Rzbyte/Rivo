@@ -41,7 +41,9 @@ function main(): void {
   const state: RivoState = new StateStore(sp).load(() => {
     throw new Error("unreachable");
   });
-  const decisions = new DecisionLog(decisionLogPath(dir)).read();
+  const logStore = new DecisionLog(decisionLogPath(dir));
+  const decisions = logStore.read(20_000);
+  const totalEvaluations = logStore.count();
 
   const equity = equityOf(state);
   const hours = (Date.now() / 1000 - state.startedAt) / 3600;
@@ -125,7 +127,10 @@ function main(): void {
     const buys = decisions.filter((d) => d.action === "BUY");
     const skips = decisions.filter((d) => d.action === "SKIP");
     const windows = new Set(decisions.map((d) => d.marketId)).size;
-    console.log(`  leg evaluations            ${decisions.length}   (cumulative across cycles)`);
+    console.log(`  leg evaluations            ${totalEvaluations}   (cumulative across cycles)`);
+    if (decisions.length < totalEvaluations) {
+      console.log(`  analysed below             ${decisions.length}   (most recent — the log is read as a tail)`);
+    }
     console.log(`  distinct windows seen      ${windows}`);
     console.log(`  acted on                   ${buys.length}`);
     console.log(`  declined                   ${skips.length}   (${pct(skips.length / decisions.length)})`);

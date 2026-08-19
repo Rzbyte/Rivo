@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-19T20:55:07.216Z",
+  "generatedAt": "2026-08-19T22:02:14.960Z",
   "venueId": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
   "params": {
     "days": 30,
@@ -16,24 +16,24 @@
       "cashFloor": 0.3,
       "rotationHysteresis": 0.035
     },
-    "rho": 0.9096349542494843
+    "rho": 0.9081914499680352
   },
   "stream": {
-    "markets": 16438,
+    "markets": 16452,
     "withFills": 473,
     "chances": 53746
   },
   "results": [
     {
       "name": "Rivo (Kelly + portfolio constraints)",
-      "finalEquity": 19.18179352775529,
-      "return": -0.6163641294448943,
-      "maxDrawdown": 0.7689186144125787,
-      "trades": 997,
-      "declined": 52749,
-      "hitRate": 0.4192577733199599,
-      "totalStaked": 415.40778210279325,
-      "returnOnStake": -0.07418784096013566
+      "finalEquity": 34.603426699356,
+      "return": -0.30793146601288,
+      "maxDrawdown": 0.5191299046255229,
+      "trades": 1200,
+      "declined": 52546,
+      "hitRate": 0.465,
+      "totalStaked": 650.2697972418524,
+      "returnOnStake": -0.023677208084935262
     },
     {
       "name": "Kelly, no portfolio constraints",

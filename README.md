@@ -15,8 +15,8 @@ Somnia × DreamDEX Event Contracts Hackathon.
 
 Two results, and the second one matters as much as the first.
 
-**The forecasting model works.** Out-of-sample, over **30,671 forecasts across 6,137 settled
-windows**: **AUC 0.8302, Brier 0.1697 — 32.1% skill** over always-saying-0.5.
+**The forecasting model works.** Out-of-sample, over **30,751 forecasts across 6,153 settled
+windows**: **AUC 0.8308, Brier 0.1695 — 32.2% skill** over always-saying-0.5.
 
 **Trading on it, by taking liquidity, does not.** Replayed against **53,989 fills that actually
 executed**, every edge band is negative, and losses grow with claimed edge. The winner's curse,
@@ -29,12 +29,13 @@ portfolio constraints that **demonstrably prevent ruin even when the underlying 
 
 | strategy | final (from 50) | trades survived |
 |---|---|---|
-| **Rivo — Kelly + portfolio constraints** | **19.18** | **997** |
+| **Rivo — Kelly + portfolio constraints** | **34.60** | **1,200** |
 | Kelly, no portfolio constraints | 0.00 | 50 |
 | Equal weight, 5% each | 0.00 | 58 |
 | All-in on any edge | 0.00 | 50 |
 
-Every unconstrained rule is bankrupt inside 60 trades. Full method, every number, and the four
+Every unconstrained rule is bankrupt inside 60 trades. Rivo survives 1,200 and keeps 69% of
+capital on an edge that is genuinely negative. Full method, every number, and the four
 alternative explanations we eliminated first: **[docs/EVIDENCE.md](docs/EVIDENCE.md)**.
 
 ---
