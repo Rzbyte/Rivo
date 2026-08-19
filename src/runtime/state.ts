@@ -30,6 +30,14 @@ export interface HeldPosition extends Position {
   txHash?: string;
   /** True once the window settled and the payout was accounted for. */
   resolved?: boolean;
+  /**
+   * Set when the position was discovered on-chain rather than opened by Rivo.
+   *
+   * Its entry price is an ESTIMATE — nothing on-chain records what was paid — so
+   * any P&L involving it is only as good as the mark used at adoption. Reports
+   * must say so rather than presenting a guess as a fill.
+   */
+  adopted?: boolean;
 }
 
 /** A settled position, kept for the performance record. */

@@ -45,6 +45,14 @@ export interface Executor {
   claim(): Promise<number>;
   /** Confirm on-chain that a window still accepts orders. */
   isTradable(marketId: string): Promise<boolean>;
+  /**
+   * The wallet whose holdings this executor's state should mirror, or null.
+   *
+   * Null in a dry run, and that is the whole signal reconciliation needs:
+   * simulated positions have no on-chain counterpart, so checking them against a
+   * chain that has never heard of them would delete the entire portfolio.
+   */
+  address(): Promise<string | null>;
 }
 
 /**
@@ -98,6 +106,10 @@ export class DryExecutor implements Executor {
 
   async isTradable(): Promise<boolean> {
     return true;
+  }
+
+  async address(): Promise<string | null> {
+    return null; // nothing simulated exists on-chain to reconcile against
   }
 }
 
@@ -230,6 +242,16 @@ export class LiveExecutor implements Executor {
     const core = await this.load();
     const resolved = await this.resolve(marketId);
     return resolved ? core.isTradable(resolved.onchain) : false;
+  }
+
+  async address(): Promise<string | null> {
+    await this.load();
+    // `ctx.exchange.walletAddress` is the property ec-core's own `sellableSize`
+    // and `netPosition` read to identify the signer, so it is the right one —
+    // but like the rest of this class it has not been exercised against a live
+    // signer. If reconciliation reports nothing on a funded wallet, check here first.
+    const ex = (this.ctx as { exchange?: { walletAddress?: string } }).exchange;
+    return ex?.walletAddress ?? null;
   }
 }
 

@@ -296,6 +296,40 @@ export class Indexer {
   }
 
   /**
+   * What an account actually holds, straight from the chain's own accounting.
+   *
+   * This is the only reading of a portfolio that does not depend on Rivo having
+   * correctly remembered what it did. A bot that trusts its own notes will, the
+   * first time it dies between a fill landing and its state being written,
+   * believe it holds nothing and buy a second copy of everything.
+   *
+   * Keyed `marketId:LEG` in human units. `outcomeIndex` is 0 for Up, 1 for Down.
+   */
+  async outcomeBalances(account: string): Promise<Map<string, number>> {
+    const out = new Map<string, number>();
+    if (!account) return out;
+    for (let offset = 0; ; offset += 500) {
+      const data = await gql<{ OutcomeBalance: { market_id: string; outcomeIndex: number; balance: string }[] }>(
+        this.url,
+        "outcomeBalances",
+        `query($acct:String!,$offset:Int!){
+           OutcomeBalance(where:{ account:{_eq:$acct}, balance:{_gt:"0"} }, limit:500, offset:$offset){
+             market_id outcomeIndex balance
+           }
+         }`,
+        { acct: account.toLowerCase(), offset },
+      );
+      for (const b of data.OutcomeBalance) {
+        const leg = Number(b.outcomeIndex) === 0 ? "UP" : "DOWN";
+        const key = `${b.market_id.toLowerCase()}:${leg}`;
+        out.set(key, (out.get(key) ?? 0) + Number(b.balance) / this.one);
+      }
+      if (data.OutcomeBalance.length < 500) break;
+    }
+    return out;
+  }
+
+  /**
    * Settlement status for specific windows.
    *
    * A settled window drops out of the live list, so a bot holding a position in

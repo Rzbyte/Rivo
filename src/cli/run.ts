@@ -117,6 +117,7 @@ function heartbeat(r: CycleReport, capital: number, equity: number, realized: nu
     `pnl ${(realized >= 0 ? "+" : "") + realized.toFixed(2)}`,
     `rho ${r.rho.toFixed(2)}`,
   ];
+  if (r.reconciled.length > 0) parts.push(`reconciled ${r.reconciled.length}`);
   if (r.settled > 0) parts.push(`settled ${r.settled}`);
   if (r.bought > 0) parts.push(`bought ${r.bought}`);
   if (r.halted) parts.push("HALTED");

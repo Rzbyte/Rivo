@@ -46,10 +46,10 @@ alternative explanations we eliminated first: **[docs/EVIDENCE.md](docs/EVIDENCE
 npm test
 ```
 
-**86 tests** across the six things that either move money or produce a published number: the
+**99 tests** across the seven things that either move money or produce a published number: the
 dual-crossing-path book, the fair-value model and volatility estimator, the scoring rules behind
-every figure in [EVIDENCE.md](docs/EVIDENCE.md), the capital allocator, the position manager, and
-settlement.
+every figure in [EVIDENCE.md](docs/EVIDENCE.md), the capital allocator, the position manager, settlement, and
+on-chain reconciliation.
 
 Written after two bugs reached a live run, so both are pinned as regressions — the allocator
 sizing each cycle's order against remaining budget instead of a target for the whole leg, and a
@@ -189,17 +189,34 @@ src/
   portfolio/   risk profiles · delta & expiry-bucket risk · capital allocator
   calibration/ dataset builder · scoring rules · calibration maps
   backtest/    fill-grounded replay · competing sizers · diagnostics · maker replay
-  runtime/     durable state · execution adapter · position manager · the cycle
+  runtime/     durable state · execution adapter · position manager · reconciliation · the cycle
   web/         dashboard server + static snapshot export
   cli/         start · web · report · calibrate · scan · allocate · backtest · diagnose · band · maker · concentration
-  *.test.ts    86 tests, colocated with what they cover
+  *.test.ts    99 tests, colocated with what they cover
 ```
 
 The cycle:
 
 ```
-SETTLE → CLAIM → DISCOVER → ANALYZE → MONITOR/RECOVER → RISK CHECK → ALLOCATE → EXECUTE
+DISCOVER → RECONCILE → SETTLE/CLAIM → MONITOR/RECOVER → RISK CHECK → ALLOCATE → EXECUTE
 ```
+
+**Reconciliation makes the chain the authority on what is held**, and runs before anything reasons
+from it — settling, managing and allocating against a portfolio Rivo merely *believes* it has
+would be wrong in the same direction all at once. Holdings come from the indexer's
+`OutcomeBalance`, so this needs no SDK and no key beyond knowing the address.
+
+It is deliberately asymmetric. A shortfall inside a two-minute grace window is left alone, because
+the indexer lags the chain by seconds and deleting a just-filled position is the more expensive
+mistake; a surplus is trusted immediately, because extra shares cannot be lag. A holding the chain
+has and Rivo does not is adopted at the model's fair value and **flagged as estimated** — nothing
+on-chain records what was paid. Dry runs skip all of it: simulated positions have no on-chain
+counterpart, so checking them against a chain that never heard of them would delete the portfolio.
+
+State is also written the moment a fill is recorded rather than once per cycle. That gap — order
+lands, process dies, fill never written — is exactly how a bot forgets a position it owns and buys
+a second copy. Saving immediately mostly prevents it; reconciliation repairs it when it happens
+anyway.
 
 Settlement runs *before* allocation so capital freed by a window that just resolved is
 redeployable in the same pass. Claiming runs inside the loop rather than on a timer, because it
@@ -251,7 +268,7 @@ validates against the real thing.
 | `npm run diagnose -- --days 30` | why taking liquidity loses |
 | `npm run concentration -- --days 30` | whether losses are a trade-weighting artefact |
 | `npm run maker -- --days 30` | the maker replay, and its methodological limit |
-| `npm test` · `npm run typecheck` | 86 tests · strict TypeScript, no emit |
+| `npm test` · `npm run typecheck` | 99 tests · strict TypeScript, no emit |
 | `npm run check:kit` · `npm run link:kit` | verify / install the optional bot kit |
 
 Every command except `link:kit` runs with no private key. All `--days` commands read public

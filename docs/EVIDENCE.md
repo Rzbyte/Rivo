@@ -242,6 +242,44 @@ The runtime has been verified end to end in dry mode against the live venue.
   Edges had compressed to +0.005…+0.036 and the only leg clearing the floor was inside the expiry
   headroom, where the venue can lock a market between the book snapshot and the send.
 
+### Reconciliation: the chain is the authority
+
+Until this landed, `state.open` was the only record of a position — fine until the first time the
+process dies between an order filling on-chain and that fill being written down. After that Rivo
+believes it holds nothing and buys a second copy of everything it owns, with real money, in a
+market where it may not be able to sell either copy back.
+
+Holdings now come from the indexer's `OutcomeBalance` table, which needs no SDK and no key. Run
+against a real venue account, the read finds what a state-file-only bot is blind to:
+
+```
+akun 0xe151139cfcb1a89bda2fef0733004a13a34e8acb
+  ...4648:UP     2490.00
+  ...4648:DOWN   2491.00
+```
+
+Equal holdings of both legs of one window — minted complete sets sitting unmerged, which is
+precisely the trapped capital the RECOVER action exists to release. Other accounts show balances
+on **Finalized** windows: unclaimed payouts, the "winnings are claimed, not received" hazard
+visible in the wild.
+
+The correction is deliberately asymmetric, and the asymmetry is the interesting part:
+
+| situation | action | why |
+|---|---|---|
+| chain holds less, position < 2 min old | **kept** | the indexer lags the chain by seconds; deleting a just-filled position is the more expensive mistake |
+| chain holds less, position older | dropped or scaled | lag cannot explain it any more |
+| chain holds **more** | trusted immediately | extra shares cannot be lag |
+| chain holds a leg Rivo has no record of | adopted, **flagged estimated** | nothing on-chain records what was paid; marked at fair value, which opens it at zero unrealised P&L rather than inventing a gain |
+| the window is not live | reported, never adopted | a position with no expiry can never be managed or settled |
+
+Dry runs skip reconciliation entirely — simulated positions have no on-chain counterpart, so
+checking them against a chain that never heard of them would delete the portfolio. `address()`
+returning null is that signal, and the dry runtime was verified to leave its positions alone.
+
+State is also written the moment a fill is recorded rather than once per cycle, which mostly
+prevents the gap that reconciliation exists to repair.
+
 ### Two bugs the runtime found in its own allocator
 
 Both surfaced by running it, not by reading it. Recorded because the fixes are the interesting part.

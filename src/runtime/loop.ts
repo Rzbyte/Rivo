@@ -1,7 +1,7 @@
 // The autonomous cycle.
 //
-//   DISCOVER -> ANALYZE -> RANK -> ALLOCATE -> RISK CHECK -> EXECUTE
-//            -> MONITOR -> SETTLE / CLAIM -> RECOVER -> REALLOCATE
+//   DISCOVER -> RECONCILE -> SETTLE / CLAIM -> MONITOR / RECOVER
+//            -> RISK CHECK -> ALLOCATE -> EXECUTE
 //
 // Ordering is not arbitrary. Settlement runs BEFORE allocation so that capital
 // freed by a window that just resolved is available in the same pass rather than
@@ -24,6 +24,7 @@ import { allocate } from "../portfolio/allocator.js";
 import type { RiskProfile } from "../portfolio/profiles.js";
 import { measureCorrelation, type Position } from "../portfolio/risk.js";
 import { legKey, manage, type PositionDecision } from "./position.js";
+import { describe as describeDiscrepancy, reconcile, type Discrepancy } from "./reconcile.js";
 import type { Executor } from "./executor.js";
 import {
   DecisionLog,
@@ -47,6 +48,8 @@ export interface LoopDeps {
 export interface CycleReport {
   cycle: number;
   at: number;
+  /** Corrections applied because the chain disagreed with our records. */
+  reconciled: Discrepancy[];
   windows: number;
   legs: number;
   settled: number;
@@ -76,8 +79,49 @@ export async function cycle(state: RivoState, deps: LoopDeps): Promise<CycleRepo
   state.lastCycleAt = now;
   const records: DecisionRecord[] = [];
 
+  // --- DISCOVER + ANALYZE ------------------------------------------------
+  // First, because reconciliation needs it. Adopting a position the chain holds
+  // and Rivo does not requires knowing the window's asset, cadence and expiry —
+  // a position without an expiry can never be managed or settled — and all of
+  // that lives in the snapshot. Pricing is independent of what we hold, so
+  // running it before reconciliation costs nothing.
+  const snap: Snapshot = await snapshot(idx, { minEdge: profile.minEdge, now });
+  const spot = new Map<Asset, number>();
+  for (const [a, s] of snap.assets) spot.set(a, s.spot);
+  const rho = measureCorrelation(snap.assets.get("BTC")?.bars ?? [], snap.assets.get("ETH")?.bars ?? []);
+
+  const oppByLeg = new Map(snap.opportunities.map((o) => [legKey(o.marketId, o.leg), o]));
+
+  // --- RECONCILE ---------------------------------------------------------
+  // Make the chain the authority on what is held, before anything reasons from
+  // it. Settlement, position management and allocation all read `state.open`,
+  // so a stale picture makes every one of them wrong in the same direction.
+  //
+  // Dry runs skip this: simulated positions have no on-chain counterpart, and
+  // checking them against a chain that never heard of them would delete the
+  // entire portfolio. `executor.address()` returning null IS that signal.
+  let reconciled: Discrepancy[] = [];
+  const account = await executor.address();
+  if (account) {
+    const meta = new Map<string, { asset: Asset; intervalSec: number; expiry: number; fair: number }>();
+    const marks = new Map<string, number>();
+    for (const o of snap.opportunities) {
+      const k = `${o.marketId.toLowerCase()}:${o.leg}`;
+      meta.set(k, { asset: o.asset, intervalSec: o.intervalSec, expiry: o.expiry, fair: o.fair });
+      // Mark an adopted position at the model's own fair value rather than at
+      // the ask. Nothing on-chain records what was paid, so any figure here is a
+      // guess; fair value is the neutral one — it opens the position at zero
+      // unrealised P&L instead of inventing an instant gain or loss.
+      if (Number.isFinite(o.fair)) marks.set(k, o.fair);
+    }
+    const chain = await idx.outcomeBalances(account);
+    reconciled = reconcile({ state, chain, meta, marks, now });
+    for (const d of reconciled) out(`  ${describeDiscrepancy(d)}`);
+    if (reconciled.length > 0) store.save(state);
+  }
+
   // --- SETTLE ------------------------------------------------------------
-  // Resolve anything whose window has ended, before deciding anything new.
+  // Resolve anything whose window has ended, now that holdings are trustworthy.
   const settled = await resolveSettled(state, idx, now, out);
 
   // --- CLAIM -------------------------------------------------------------
@@ -86,14 +130,6 @@ export async function cycle(state: RivoState, deps: LoopDeps): Promise<CycleRepo
     claimed = await executor.claim();
     state.lastClaimSweepAt = now;
   }
-
-  // --- DISCOVER + ANALYZE ------------------------------------------------
-  const snap: Snapshot = await snapshot(idx, { minEdge: profile.minEdge, now });
-  const spot = new Map<Asset, number>();
-  for (const [a, s] of snap.assets) spot.set(a, s.spot);
-  const rho = measureCorrelation(snap.assets.get("BTC")?.bars ?? [], snap.assets.get("ETH")?.bars ?? []);
-
-  const oppByLeg = new Map(snap.opportunities.map((o) => [legKey(o.marketId, o.leg), o]));
 
   // --- MONITOR (+ RECOVER) ------------------------------------------------
   const managed = manage({
@@ -181,6 +217,12 @@ export async function cycle(state: RivoState, deps: LoopDeps): Promise<CycleRepo
       state.open.push(pos);
       state.cash -= res.cost;
       state.lastTradedAt = { ...(state.lastTradedAt ?? {}), [key]: now };
+      // Persist NOW rather than at the end of the cycle. The gap between an
+      // order filling on-chain and that fill being written down is exactly the
+      // window in which a crash makes Rivo forget a position it owns — and then
+      // buy a second copy. Reconciliation above repairs that after the fact;
+      // saving here mostly prevents it.
+      store.save(state);
       bought++;
       spent += res.cost;
       records.push(record(now, state.cycles, o, "BUY", res.filled, res.cost, d.binding));
@@ -197,6 +239,7 @@ export async function cycle(state: RivoState, deps: LoopDeps): Promise<CycleRepo
   return {
     cycle: state.cycles,
     at: now,
+    reconciled,
     windows: snap.windows.length,
     legs: snap.opportunities.length,
     settled,
