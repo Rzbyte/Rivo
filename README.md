@@ -40,6 +40,40 @@ alternative explanations we eliminated first: **[docs/EVIDENCE.md](docs/EVIDENCE
 
 ---
 
+## Tests
+
+```bash
+npm test
+```
+
+**86 tests** across the six things that either move money or produce a published number: the
+dual-crossing-path book, the fair-value model and volatility estimator, the scoring rules behind
+every figure in [EVIDENCE.md](docs/EVIDENCE.md), the capital allocator, the position manager, and
+settlement.
+
+Written after two bugs reached a live run, so both are pinned as regressions — the allocator
+sizing each cycle's order against remaining budget instead of a target for the whole leg, and a
+conviction stop that re-fired on the same information every cycle (3.06 → 1.53 → 0.76 → 0.38,
+paying a spread each time).
+
+The suite then found a third bug on its own: `fitPlatt` diverged on a confidently-wrong model —
+plain Newton-Raphson overshoots, the IRLS weights collapse to their floor, and a finite gradient
+becomes an astronomical step. Measured at `a = 8.7e7` where the correct answer is `0.088`. Fixed
+with a ridge and a backtracking line search. Re-running the calibration study with the corrected
+fit moved Platt's parameters by 0.0005 and changed no conclusion, which is recorded in EVIDENCE.md
+because the check mattered more than the outcome.
+
+The scoring rules are checked against cases whose answers are known by construction rather than by
+having been run once — AUC 1 for a perfect ranking, 0.5 for a constant one, Brier 0.25 for a coin
+flip — so the headline numbers rest on more than a single execution.
+
+Three of the fixtures were wrong before the code was, and each failure demonstrated the code
+working: a book helper offering only `SELL_YES` left a DOWN leg with no asks at all, a comment
+claiming "40% of 3600s = 1440s" ignored that `headroomSec` caps at 300s, and an assertion demanded
+ten decimal places from an approximation documented to 1.5e-7.
+
+---
+
 ## Quickstart
 
 ```bash
@@ -157,7 +191,8 @@ src/
   backtest/    fill-grounded replay · competing sizers · diagnostics · maker replay
   runtime/     durable state · execution adapter · position manager · the cycle
   web/         dashboard server + static snapshot export
-  cli/         start · web · report · calibrate · scan · allocate · backtest · diagnose · band · maker
+  cli/         start · web · report · calibrate · scan · allocate · backtest · diagnose · band · maker · concentration
+  *.test.ts    86 tests, colocated with what they cover
 ```
 
 The cycle:
@@ -198,6 +233,29 @@ validates against the real thing.
 
 > The live execution path is written against `ec-core`'s documented surface rather than stubbed,
 > but it has **not yet been exercised against the chain**. Canary at minimum size before trusting it.
+
+---
+
+## Commands
+
+| | |
+|---|---|
+| `npm start -- --capital 50 --profile balanced` | the autopilot (dry run by default) |
+| `npm run web` | dashboard at localhost:3000 (`--snapshot out.html` freezes it to one file) |
+| `npm run report` | what it did, and why |
+| `npm run scan` | price every live leg right now |
+| `npm run allocate -- --capital 50` | one allocation pass, with the binding constraint per leg |
+| `npm run calibrate -- --days 30` | forecasting skill, holdout-validated (`--traded-only`, `--out`) |
+| `npm run backtest -- --days 30` | Rivo's sizing against five alternatives on identical forecasts |
+| `npm run band -- --days 30` | edge-floor/ceiling sweep |
+| `npm run diagnose -- --days 30` | why taking liquidity loses |
+| `npm run concentration -- --days 30` | whether losses are a trade-weighting artefact |
+| `npm run maker -- --days 30` | the maker replay, and its methodological limit |
+| `npm test` · `npm run typecheck` | 86 tests · strict TypeScript, no emit |
+| `npm run check:kit` · `npm run link:kit` | verify / install the optional bot kit |
+
+Every command except `link:kit` runs with no private key. All `--days` commands read public
+indexers.
 
 ---
 
