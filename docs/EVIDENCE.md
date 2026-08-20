@@ -286,32 +286,66 @@ npm run coherence -- --days 30 --skew 15
 
 ---
 
-## 6. Making is unproven — and this replay cannot settle it
+## 6. Making was the open question. It is now measured, and negative
 
 Mint a complete set for 1 collateral, sell the Up at your ask and the Down at `1 − bid`, receive
 `1 + spread`, hold nothing at settlement. Zero fees mean the spread is not handed back. That is a
-structural edge rather than a forecasting one, and it is the natural response to §3.
+*structural* edge rather than a forecasting one, and it was the natural response to §3 — a maker
+sits on the other side of both the spread and the winner's curse that the taker pays.
 
-The replay is negative — best case −0.82%, at a tight spread under a tight disagreement ceiling —
-but **it is a lower bound, not an estimate**, for a specific and unavoidable reason:
+No replay could settle it. Crediting yourself with a fill means claiming a place in a queue that no
+longer exists, and our own fill-replay could only ever credit fills where the model sat *below* the
+market — the maker's own winner's curse, and precisely the adverse subset. So we rested real quotes
+on testnet, centred on Rivo's own fair value rather than the book mid, and read back what the chain
+said happened.
 
-Rivo can only be credited with a fill when its quote would have beaten the one that actually
-printed. That conditions every recorded fill on the model sitting *below* the market, which is the
-maker's own winner's curse and is precisely the adverse subset. The offsetting fills a real
-two-sided maker would collect on the other leg are invisible here, because they are trades that
-never happened. Only ~39% of volume paired even at the best setting, where a genuine two-sided
-maker in a working book pairs most of its flow.
+### Result
 
-One signal does carry through: **the disagreement ceiling helps monotonically** (−0.82% at 0.05
-versus −3.55% unbounded), the same result §3 produced from the opposite side of the book.
+| | |
+|---|---|
+| orders posted | 16 |
+| …that rested | **16** |
+| …rejected | 0 |
+| fills against our quotes | 5 (25 shares) |
+| **paired shares** | **0.00** |
+| captured spread | **−0.0067** per share |
+| adverse selection | **−0.2537** per share |
+| **net** | **−0.2604** per share |
 
-Settling this needs quotes actually resting on the venue. That is a testnet run, not a replay.
+The plumbing is sound — every order rested, none was rejected. Two things matter beyond the sign.
+
+**Not one fill was paired.** Every quote that was lifted was lifted on one side only, so the "mint a
+pair, sell both legs, keep the spread" story never happened once. Fills arrive one side at a time,
+and the side that fills is the side that was about to be wrong.
+
+**Captured spread is negative** despite quoting at fair ± 0.02. The fills landed at prices worse
+than the fair value they were quoted against: the quote went stale and was picked off. Adverse
+selection is showing up *inside* the capture term, not merely beside it.
+
+Captured spread and adverse selection are reported apart on purpose. A maker profits only when the
+first exceeds the second (Glosten & Milgrom, 1985), and one blended P&L number hides which side of
+that inequality a run is on — the only thing worth knowing.
+
+### What this does and does not establish
+
+Five fills is a small sample, and settlement P&L on the 25 one-sided shares is not in these figures.
+This is **first evidence, not a verdict.** But the direction matches theory, matches §3, and nothing
+in it supports the claim that complete sets plus two-sided quoting is free spread. We will not make
+that claim.
+
+The run also exposed its own bug worth recording: **40 complete sets were minted to support 16
+orders** — roughly 400 collateral spent acquiring inventory already held — because the indexer lags
+the chain and a set minted moments earlier still reads as zero. Fixed by remembering what was minted
+within a session.
+
+One thing did work exactly as designed. The filled bids left the book net long, and the portfolio
+delta budget then blocked further bidding. The risk engine stopped the maker accumulating exposure
+it had not chosen — which is §4's claim, observed live rather than in replay.
 
 ```bash
-npm run maker -- --days 30
+npm run maker:live -- --capital 50 --cycles 60 --live --mint
+npm run maker -- --days 30    # the replay, and its methodological limit
 ```
-
----
 
 ## 7. Live behaviour
 

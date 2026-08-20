@@ -280,6 +280,7 @@ validates against the real thing.
 | `npm run diagnose -- --days 30` | why taking liquidity loses |
 | `npm run concentration -- --days 30` | whether losses are a trade-weighting artefact |
 | `npm run maker -- --days 30` | the maker replay, and its methodological limit |
+| `npm run maker:live -- --live --mint` | two-sided quoting on testnet — measured, and negative |
 | `npm run coherence -- --days 30` | cross-tenor arbitrage bound — derived, tested, rejected on size |
 | `npm test` · `npm run typecheck` | 99 tests · strict TypeScript, no emit |
 | `npm run doctor` | can Rivo trade right now — signer, gas, collateral, venue, kit |
