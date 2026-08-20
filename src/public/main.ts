@@ -1,196 +1,379 @@
-// Rendering for the public page. Hand-drawn SVG, no chart library: two charts do
-// not justify a dependency, and a page that works from a file:// URL is a page
-// anyone can open.
+// Rivo, in the browser.
+//
+// Four routes over one engine. `/` is the product, `/app` is the portfolio,
+// `/explorer` is the pricing surface, `/evidence` is the record. Hash routing,
+// because the whole point is that this deploys as static files anywhere — a path
+// router would need server rewrites and would break the single-file build.
+//
+// The cycle is the heart of it: every CYCLE_MS the engine runs a full pass
+// against the live venue — settle, discover, price, allocate — and the render is
+// a pure function of what came back. There is no incremental DOM state to get
+// out of sync with the portfolio, which at this size is worth far more than the
+// re-render costs.
 
-import { load, type Row, type Snapshot } from "./app.js";
+import { Indexer } from "../core/indexer.js";
+import { runCycle, emptyPortfolio, type Activity, type PortfolioView, type ShadowPortfolio } from "./engine.js";
+import { snapshot, type Snapshot } from "../engine/scan.js";
+import { newPolicy, type PortfolioPolicy, type RunMode } from "../portfolio/policy.js";
+import type { ProfileName } from "../portfolio/profiles.js";
+import {
+  connect, detectProvider, readWallet, silentAccounts, switchNetwork, WalletError,
+  type Eip1193Provider, type WalletState,
+} from "./wallet.js";
+import { autopilotBlocker, discover, type BackendStatus } from "./backend.js";
+import * as store from "./store.js";
+import { esc, mount, onAction } from "./ui/dom.js";
+import { connectGate, configure, dashboard, walletChip, type AppState } from "./ui/portfolio.js";
+import { landing } from "./ui/landing.js";
+import { explorer } from "./ui/explorer.js";
+import { evidence, type EvidenceBundle } from "./ui/evidence.js";
 
-const f2 = (n: number) => n.toFixed(2);
-const f3 = (n: number) => n.toFixed(3);
-const pct = (n: number) => `${(100 * n).toFixed(1)}%`;
-const esc = (s: unknown) =>
-  String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
-const css = (v: string) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const CYCLE_MS = 30_000;
 
-interface Evidence {
-  holdout: { n: number; auc: number; brier: number; brierCoin: number };
-  sample: { forecasts: number; marketsUsed: number };
-  reliability: { lo: number; hi: number; n: number; meanP: number; freq: number }[];
+type Route = "home" | "app" | "explorer" | "evidence";
+
+const state: AppState & { route: Route; portfolio: ShadowPortfolio | null; preview: PortfolioView | null } = {
+  route: "home",
+  wallet: null,
+  connecting: false,
+  error: null,
+  policy: null,
+  portfolio: null,
+  view: null,
+  preview: null,
+  backend: null,
+  draft: { capital: 50, profile: "balanced", mode: "shadow" },
+  busy: false,
+  showAdvanced: false,
+  equity: [],
+  activity: [],
+};
+
+const idx = new Indexer();
+let provider: Eip1193Provider | null = null;
+let explorerSnap: Snapshot | null = null;
+let evidenceBundle: EvidenceBundle | null = null;
+let timer: ReturnType<typeof setTimeout> | null = null;
+
+// ------------------------------------------------------------------- routing
+
+const routeOf = (hash: string): Route => {
+  const h = hash.replace(/^#\/?/, "").split("?")[0];
+  return h === "app" || h === "portfolio" ? "app" : h === "explorer" ? "explorer" : h === "evidence" ? "evidence" : "home";
+};
+
+function nav(): string {
+  const links: [Route, string, string][] = [
+    ["home", "#/", "Rivo"],
+    ["app", "#/app", "Portfolio"],
+    ["explorer", "#/explorer", "Explorer"],
+    ["evidence", "#/evidence", "Evidence"],
+  ];
+  return `
+    <a class="brand" href="#/"><span class="brand-dot"></span>Rivo</a>
+    <div class="nav-links">
+      ${links
+        .slice(1)
+        .map(([r, href, label]) => `<a href="${href}" ${state.route === r ? 'aria-current="page"' : ""}>${label}</a>`)
+        .join("")}
+      <a href="https://github.com/Rzbyte/Rivo" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+    <div class="nav-right">${walletChip(state)}</div>`;
 }
 
-/**
- * The hero: model against book across the whole term structure.
- *
- * Eight windows, two underlyings, four tenors, on one axis. The point it makes
- * visually is the one a per-market view cannot: when the bars lean the same way
- * at the same time, they are one directional view expressed several times.
- */
-function termChart(rows: Row[]): string {
-  const quoted = rows.filter((r) => r.gap !== null);
-  if (rows.length === 0) return `<p class="empty">no live windows right now — the venue rolls every 15 minutes</p>`;
+function render(): void {
+  const navEl = document.getElementById("nav");
+  if (navEl) navEl.innerHTML = nav();
 
-  const rowH = 34;
-  const padL = 92;
-  const padR = 66;
-  const top = 26;
-  const W = 780;
-  const H = top + rows.length * rowH + 20;
-  const x = (p: number) => padL + p * (W - padL - padR);
-  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Rivo model probability against book price, by tenor">`;
-  for (const g of [0, 0.25, 0.5, 0.75, 1]) {
-    s += `<line x1="${x(g)}" y1="${top - 10}" x2="${x(g)}" y2="${H - 18}" stroke="${css("--line")}" stroke-width="1"/>`;
-    s += `<text x="${x(g)}" y="${H - 4}" fill="${css("--muted")}" font-size="10" text-anchor="middle" font-family="${css("--mono")}">${g.toFixed(2)}</text>`;
+  switch (state.route) {
+    case "app":
+      if (!state.wallet) return mount(connectGate(state));
+      if (!state.policy || state.policy.state === "idle" || state.policy.state === "stopped") return mount(configure(state));
+      return mount(dashboard(state));
+    case "explorer":
+      return mount(explorer(explorerSnap, state.wallet?.network ?? "testnet"));
+    case "evidence":
+      return mount(evidence(evidenceBundle ?? { calibration: null, backtest: null, coherence: null, maker: null }));
+    default:
+      return mount(
+        landing({
+          preview: state.preview,
+          evidence: evidenceBundle?.calibration
+            ? {
+                auc: evidenceBundle.calibration.holdout.auc,
+                brier: evidenceBundle.calibration.holdout.brier,
+                skill: 1 - evidenceBundle.calibration.holdout.brier / evidenceBundle.calibration.holdout.brierCoin,
+                n: evidenceBundle.calibration.sample.forecasts,
+              }
+            : null,
+          connected: Boolean(state.wallet),
+        }),
+      );
   }
-  rows.forEach((r, i) => {
-    const y = top + i * rowH + rowH / 2;
-    s += `<text x="0" y="${y + 4}" fill="${css("--ink")}" font-size="12.5" font-family="${css("--mono")}">${esc(r.label)}</text>`;
-    const mid = r.gap === null ? null : r.fair + r.gap;
-    if (mid !== null) {
-      const lo = Math.min(r.fair, mid);
-      const hi = Math.max(r.fair, mid);
-      const rich = mid > r.fair;
-      s += `<rect x="${x(lo)}" y="${y - 7}" width="${Math.max(1, x(hi) - x(lo))}" height="14" rx="2" fill="${rich ? css("--neg") : css("--pos")}" opacity="0.2"/>`;
-      s += `<circle cx="${x(mid)}" cy="${y}" r="4.5" fill="${css("--muted")}"/>`;
-    }
-    s += `<rect x="${x(r.fair) - 1.5}" y="${y - 10}" width="3" height="20" rx="1.5" fill="${css("--accent")}"/>`;
-    if (r.gap !== null) {
-      const strong = Math.abs(r.gap) > 0.03;
-      s += `<text x="${W - padR + 10}" y="${y + 4}" fill="${strong ? css("--ink") : css("--muted")}" font-size="11.5" font-family="${css("--mono")}">${r.gap >= 0 ? "+" : ""}${f3(r.gap)}</text>`;
-    } else {
-      s += `<text x="${W - padR + 10}" y="${y + 4}" fill="${css("--muted")}" font-size="11.5" font-family="${css("--mono")}">no quote</text>`;
-    }
-  });
-  s += "</svg>";
-
-  const leaning = quoted.filter((r) => (r.gap ?? 0) > 0).length;
-  const note =
-    quoted.length === 0
-      ? "Nothing is quoted on both sides right now — this venue is thin, and that is itself worth seeing."
-      : `<strong>${leaning} of ${quoted.length}</strong> quoted windows are priced above the model. When they lean the same way at the same time they are one directional view expressed several times — which is exactly what a per-market view cannot show you.`;
-  return `${s}<p class="note"><span style="color:${css("--accent")}">▮</span> Rivo's model &nbsp; <span style="color:${css("--muted")}">●</span> book &nbsp;·&nbsp; ${note}</p>`;
 }
 
-/** Reliability: predicted probability against realized frequency. */
-function reliabilityChart(e: Evidence): string {
-  const W = 420;
-  const H = 210;
-  const pad = 36;
-  const sx = (p: number) => pad + p * (W - pad - 14);
-  const sy = (p: number) => H - 28 - p * (H - 50);
-  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="predicted probability against realized frequency">`;
-  s += `<line x1="${sx(0)}" y1="${sy(0)}" x2="${sx(1)}" y2="${sy(1)}" stroke="${css("--muted")}" stroke-width="1" stroke-dasharray="3 3" opacity="0.6"/>`;
-  for (const g of [0, 0.5, 1]) {
-    s += `<text x="${sx(g)}" y="${H - 8}" fill="${css("--muted")}" font-size="10" text-anchor="middle" font-family="${css("--mono")}">${g}</text>`;
-    s += `<text x="${pad - 8}" y="${sy(g) + 3}" fill="${css("--muted")}" font-size="10" text-anchor="end" font-family="${css("--mono")}">${g}</text>`;
+// -------------------------------------------------------------------- wallet
+
+async function refreshWallet(address: `0x${string}`): Promise<void> {
+  if (!provider) return;
+  try {
+    state.wallet = await readWallet(provider, address);
+    state.error = state.wallet.network === null ? "This wallet is not on a Somnia network." : null;
+  } catch (e) {
+    state.error = e instanceof Error ? e.message : String(e);
   }
-  const maxN = Math.max(...e.reliability.map((b) => b.n));
-  let path = "";
-  e.reliability.forEach((b, i) => {
-    const r = 3 + 5 * Math.sqrt(b.n / maxN);
-    s += `<circle cx="${sx(b.meanP)}" cy="${sy(b.freq)}" r="${r.toFixed(1)}" fill="${css("--accent")}" opacity="0.75"/>`;
-    path += `${i ? "L" : "M"}${sx(b.meanP).toFixed(1)} ${sy(b.freq).toFixed(1)} `;
-  });
-  s += `<path d="${path}" fill="none" stroke="${css("--accent")}" stroke-width="1.3" opacity="0.5"/></svg>`;
-  return s;
 }
 
-function render(snap: Snapshot, ev: Evidence | null): void {
-  const app = document.getElementById("app")!;
-  const t = new Date(snap.at * 1000).toISOString().replace("T", " ").slice(0, 19);
-
-  let h = `<header>
-    <h1>Rivo</h1>
-    <span class="sub">What every DreamDEX Event Contract is worth, right now</span>
-  </header>
-  <p class="lede">Each contract asks one question: does BTC or ETH close at or above the price it opened at,
-  over a fixed window. Rivo prices all eight live windows against their own resolved opening references and
-  the underlying's measured volatility — then shows you what the order book is charging instead.
-  <strong>No wallet, no sign-in, nothing to install.</strong></p>`;
-
-  const spots = Object.entries(snap.spot).filter(([, v]) => v > 0);
-  h += `<div class="strip">`;
-  for (const [a, v] of spots) {
-    h += `<span><b>${esc(a)}</b> ${f2(v)} <i>σ ${(100 * (snap.sigmaPerMin[a] ?? 0)).toFixed(3)}%/min</i></span>`;
+async function doConnect(): Promise<void> {
+  provider ??= detectProvider();
+  if (!provider) {
+    state.error = "NO_PROVIDER";
+    return render();
   }
-  h += `<span class="right">${t} UTC · testnet</span></div>`;
-
-  h += `<div class="panel hero">${termChart(snap.rows)}</div>`;
-
-  if (snap.rows.length > 0) {
-    h += `<h2>Every live window</h2><div class="panel scroll"><table>
-      <tr><th>Window</th><th class="num">Rivo</th><th class="num">Book bid</th><th class="num">Book ask</th>
-      <th class="num">Gap</th><th class="num">Spot vs open</th><th class="num">Settles</th></tr>`;
-    for (const r of snap.rows) {
-      const money = 100 * Math.log(r.spot / r.reference);
-      h += `<tr><td>${esc(r.label)}</td>
-        <td class="num strong">${f3(r.fair)}</td>
-        <td class="num">${r.bid === null ? "—" : f3(r.bid)}</td>
-        <td class="num">${r.ask === null ? "—" : f3(r.ask)}</td>
-        <td class="num ${r.gap === null ? "" : r.gap > 0 ? "neg" : "pos"}">${r.gap === null ? "—" : (r.gap >= 0 ? "+" : "") + f3(r.gap)}</td>
-        <td class="num">${money >= 0 ? "+" : ""}${money.toFixed(3)}%</td>
-        <td class="num">${Math.max(0, Math.round(r.minutesLeft))}m</td></tr>`;
-    }
-    h += `</table></div>
-    <p class="note"><b>Gap</b> is book minus model. Positive means the book is charging more than Rivo thinks
-    the outcome is worth. <b>Spot vs open</b> is how far the underlying currently sits from the level that
-    window settles against — the single input that moves the price most.</p>`;
+  state.connecting = true;
+  state.error = null;
+  render();
+  try {
+    const address = await connect(provider);
+    store.rememberWallet(address);
+    await refreshWallet(address);
+    adoptWallet(address);
+  } catch (e) {
+    state.error = e instanceof WalletError ? e.message : String(e);
+  } finally {
+    state.connecting = false;
+    render();
   }
+}
 
-  if (snap.unpriced.length > 0) {
-    h += `<p class="note">Not priced: ${snap.unpriced.map((u) => `${esc(u.label)} <i>(${esc(u.reason)})</i>`).join(" · ")}</p>`;
+/** Load this wallet's saved policy and portfolio, or seed a draft from defaults. */
+function adoptWallet(address: string): void {
+  const policy = store.loadPolicy(address);
+  state.policy = policy;
+  if (policy) {
+    state.portfolio = store.loadPortfolio(address, policy);
+    state.draft = { capital: policy.capital, profile: policy.profile, mode: policy.mode };
+    state.activity = store.loadActivity(address);
+    rebuildEquity();
+  } else {
+    state.portfolio = null;
+    state.activity = [];
+    state.equity = [];
   }
+}
 
-  if (ev) {
-    const skill = 1 - ev.holdout.brier / ev.holdout.brierCoin;
-    h += `<h2>Why you should believe that number</h2>
-    <div class="two">
-      <div class="panel">${reliabilityChart(ev)}
-        <p class="note">Dashed line is perfect calibration; dot size is sample count.</p></div>
-      <div class="panel evidence">
-        <div class="stat"><span>${f3(ev.holdout.auc)}</span><i>AUC, held out</i></div>
-        <div class="stat"><span>${f3(ev.holdout.brier)}</span><i>Brier, against ${f3(ev.holdout.brierCoin)} for always-0.5</i></div>
-        <div class="stat"><span>${pct(skill)}</span><i>skill over a coin flip</i></div>
-        <div class="stat"><span>${ev.sample.forecasts.toLocaleString()}</span><i>forecasts scored, across ${ev.sample.marketsUsed.toLocaleString()} settled windows</i></div>
-        <p class="note">Every forecast was made from information available at the time and scored against
-        what settlement actually decided. The correction was fitted on the earlier windows and tested on the
-        later ones, so none of this is measured on the data it was tuned to.</p>
-      </div>
-    </div>`;
+// ------------------------------------------------------------------- the loop
+
+/** Equity through time, reconstructed from settled positions — no extra persistence. */
+function rebuildEquity(): void {
+  const pf = state.portfolio;
+  const policy = state.policy;
+  if (!pf || !policy) return (state.equity = []), undefined;
+  let equity = policy.capital;
+  const series = [{ t: pf.startedAt, equity }];
+  for (const c of [...pf.closed].sort((a, b) => a.closedAt - b.closedAt)) {
+    equity += c.proceeds - c.cost;
+    series.push({ t: c.closedAt, equity });
   }
-
-  h += `<h2>What this is</h2>
-  <p class="lede">Rivo is the portfolio and evidence layer for DreamDEX Event Contracts. This page is its
-  pricing engine, made public. The same code also runs an autonomous portfolio manager that allocates
-  capital across these windows under portfolio-wide risk limits — but you do not need any of that to use
-  the number above.</p>
-  <p class="note"><strong>An honest note.</strong> Being able to price these accurately is not the same as
-  being able to profit from trading them. We measured that too, and taking liquidity against this venue's
-  flow lost money at every threshold we tested. That result is in the repository with its method, alongside
-  everything else. Prices, not promises.</p>
-  <footer>
-    <a href="https://github.com/Rzbyte/Rivo">github.com/Rzbyte/Rivo</a> ·
-    built on the <a href="https://github.com/somnia-chain/dreamdex-bot-kit">DreamDEX Bot Kit</a> ·
-    Somnia × DreamDEX Event Contracts Hackathon
-  </footer>`;
-
-  app.innerHTML = h;
+  if (state.view) series.push({ t: state.view.at, equity: state.view.equity });
+  state.equity = series;
 }
 
 async function tick(): Promise<void> {
-  const app = document.getElementById("app")!;
   try {
-    const [snap, ev] = await Promise.all([
-      load(),
-      fetch("calibration.json")
-        .then((r) => (r.ok ? (r.json() as Promise<Evidence>) : null))
-        .catch(() => null),
-    ]);
-    render(snap, ev);
+    if (state.route === "explorer" || (state.route === "home" && !state.preview)) {
+      explorerSnap = await snapshot(idx);
+    }
+    if (state.route === "home") await previewCycle();
+    if (state.policy && state.portfolio && state.policy.state !== "idle" && state.policy.state !== "stopped") {
+      const view = await runCycle(idx, state.policy, state.portfolio);
+      state.view = view;
+      store.savePortfolio(state.portfolio);
+      state.activity = store.appendActivity(state.policy.owner, view.activity as Activity[]);
+      rebuildEquity();
+    }
   } catch (e) {
-    app.innerHTML = `<header><h1>Rivo</h1></header><p class="empty">Could not reach the venue: ${esc(
-      e instanceof Error ? e.message : String(e),
-    )}</p>`;
+    // A failed cycle must not stop the loop: the venue rolls markets constantly
+    // and a transient read failure is expected, not exceptional.
+    state.activity = [
+      { at: Math.floor(Date.now() / 1000), kind: "info", text: `cycle failed: ${e instanceof Error ? e.message : String(e)}` },
+      ...state.activity,
+    ].slice(0, 300);
   }
+  render();
+  schedule();
 }
 
-void tick();
-setInterval(() => void tick(), 20_000);
+function schedule(): void {
+  if (timer) clearTimeout(timer);
+  timer = setTimeout(() => void tick(), CYCLE_MS);
+}
+
+/**
+ * A throwaway balanced portfolio, run once, so the landing page shows a real
+ * allocation rather than a description of one. It holds nothing between cycles —
+ * the point is the decisions, not the P&L.
+ */
+async function previewCycle(): Promise<void> {
+  const demo: PortfolioPolicy = {
+    ...newPolicy("0x0000000000000000000000000000000000000000", 50, "balanced"),
+    state: "running",
+  };
+  const pf = emptyPortfolio(demo);
+  state.preview = await runCycle(idx, demo, pf);
+}
+
+// ------------------------------------------------------------------ commands
+
+function persistPolicy(next: PortfolioPolicy): void {
+  state.policy = next;
+  store.savePolicy(next);
+}
+
+function startRivo(): void {
+  const w = state.wallet;
+  if (!w) return;
+  const policy = store.configure(w.address, {
+    capital: state.draft.capital,
+    profile: state.draft.profile,
+    mode: state.draft.mode,
+  });
+  persistPolicy({ ...policy, state: "running" });
+  store.savePolicy(state.policy!);
+  state.portfolio = store.loadPortfolio(w.address, state.policy!);
+  state.busy = true;
+  render();
+  void tick().finally(() => {
+    state.busy = false;
+    render();
+  });
+}
+
+onAction((act, el) => {
+  switch (act) {
+    case "connect":
+      return void doConnect();
+    case "disconnect":
+      store.forgetWallet();
+      state.wallet = null;
+      state.policy = null;
+      state.portfolio = null;
+      state.view = null;
+      return render();
+    case "switch":
+      return void (async () => {
+        if (!provider) return;
+        try {
+          await switchNetwork(provider, "testnet");
+          const a = await silentAccounts(provider);
+          if (a) await refreshWallet(a);
+        } catch (e) {
+          state.error = e instanceof Error ? e.message : String(e);
+        }
+        render();
+      })();
+    case "profile":
+      state.draft.profile = el.dataset.v as ProfileName;
+      return render();
+    case "mode": {
+      const mode = el.dataset.v as RunMode;
+      const blocker = mode === "autopilot" ? autopilotBlocker(state.backend) : null;
+      if (blocker) {
+        state.error = blocker;
+        return render();
+      }
+      state.draft.mode = mode;
+      state.error = null;
+      return render();
+    }
+    case "start":
+      readDraft();
+      return startRivo();
+    case "pause":
+      if (state.policy) persistPolicy({ ...state.policy, state: "paused" });
+      return render();
+    case "resume":
+      if (state.policy) persistPolicy({ ...state.policy, state: "running" });
+      return void tick();
+    case "stop":
+      if (state.policy) persistPolicy({ ...state.policy, state: "stopped", stoppedReason: "stopped by you" });
+      state.view = null;
+      return render();
+    default:
+      return;
+  }
+});
+
+/** Pull the configuration form into the draft before starting. */
+function readDraft(): void {
+  const capEl = document.querySelector<HTMLInputElement>('[data-input="capital"]');
+  const capital = Number(capEl?.value);
+  if (Number.isFinite(capital) && capital > 0) state.draft.capital = capital;
+}
+
+// --------------------------------------------------------------------- boot
+
+async function loadEvidence(): Promise<void> {
+  const one = async <T>(name: string): Promise<T | null> => {
+    try {
+      const res = await fetch(`${name}.json`);
+      return res.ok ? ((await res.json()) as T) : null;
+    } catch {
+      return null;
+    }
+  };
+  const [calibration, backtest, coherence, maker] = await Promise.all([
+    one<EvidenceBundle["calibration"]>("calibration"),
+    one<EvidenceBundle["backtest"]>("backtest"),
+    one<EvidenceBundle["coherence"]>("coherence"),
+    one<EvidenceBundle["maker"]>("maker-live"),
+  ]);
+  evidenceBundle = { calibration, backtest, coherence, maker } as EvidenceBundle;
+}
+
+async function boot(): Promise<void> {
+  state.route = routeOf(location.hash);
+  render();
+
+  window.addEventListener("hashchange", () => {
+    state.route = routeOf(location.hash);
+    render();
+    void tick();
+  });
+
+  provider = detectProvider();
+  if (provider) {
+    // Restore a prior session without prompting. A page that opens a wallet
+    // popup on load is a page people close.
+    const remembered = store.lastWallet();
+    const account = await silentAccounts(provider);
+    if (account && (!remembered || remembered === account)) {
+      await refreshWallet(account);
+      adoptWallet(account);
+    }
+    provider.on?.("accountsChanged", (...args) => {
+      const next = (args[0] as string[] | undefined)?.[0]?.toLowerCase();
+      if (!next) {
+        state.wallet = null;
+        state.policy = null;
+        state.portfolio = null;
+      } else {
+        store.rememberWallet(next);
+        void refreshWallet(next as `0x${string}`).then(() => adoptWallet(next));
+      }
+      render();
+    });
+    provider.on?.("chainChanged", () => {
+      if (state.wallet) void refreshWallet(state.wallet.address).then(render);
+    });
+  }
+
+  render();
+  await Promise.all([loadEvidence(), discover().then((b) => void (state.backend = b))]);
+  render();
+  await tick();
+}
+
+void boot().catch((e) => {
+  mount(`<div class="wrap"><p class="note warn">Rivo failed to start: ${esc(e instanceof Error ? e.message : String(e))}</p></div>`);
+});

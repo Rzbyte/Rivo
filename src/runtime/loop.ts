@@ -34,6 +34,8 @@ import {
   type DecisionRecord,
   type HeldPosition,
   type RivoState,
+  ledgerBalances,
+  ledgerImbalance,
 } from "./state.js";
 
 export interface LoopDeps {
@@ -149,6 +151,16 @@ export async function cycle(state: RivoState, deps: LoopDeps): Promise<CycleRepo
   for (const d of managed) {
     if (d.action === "HOLD") continue;
     await applyPositionAction(state, d, snap, executor, out, records, now);
+  }
+
+  // --- LEDGER CHECK -------------------------------------------------------
+  // Before any risk number is computed from it. Every figure below — equity,
+  // drawdown, the breaker — is derived from cash and open cost, so a ledger that
+  // does not balance makes all of them wrong in the same direction at once.
+  if (!ledgerBalances(state)) {
+    const drift = ledgerImbalance(state);
+    out(`LEDGER DRIFT ${drift >= 0 ? "+" : ""}${drift.toFixed(4)} — cash and positions disagree with capital + realised`);
+    state.contributed = (state.contributed ?? 0) + drift;
   }
 
   // --- RISK CHECK ---------------------------------------------------------
@@ -343,10 +355,17 @@ async function applyPositionAction(
     // A merge consumes equal shares of both legs and returns collateral 1:1.
     // Reduce this leg by the merged amount; its partner is reduced by its own
     // decision in the same pass.
+    const releasedCost = p.shares <= res.filled ? p.cost : (p.cost * res.filled) / p.shares;
     p.shares -= res.filled;
-    const releasedCost = p.shares <= 0 ? p.cost : (p.cost * res.filled) / (p.shares + res.filled);
     p.cost -= releasedCost;
-    state.cash += res.filled * 0.5; // each leg contributes half of the recovered unit
+    // A merge returns exactly 1 collateral per complete set, so each of the two
+    // legs recovers half a unit per share. That is a FIXED payout, and the cost
+    // basis it releases is not — the difference is a realised gain or loss and
+    // has to be booked as one. Crediting cash without it breaks the ledger
+    // identity in state.ts, which is how a live run drifted 426 of phantom cash.
+    const recovered = res.filled * 0.5;
+    state.cash += recovered;
+    state.realizedPnl += recovered - releasedCost;
     if (p.shares <= 1e-9) state.open = state.open.filter((x) => x !== p);
     out(`  MERGE ${p.asset} ${p.leg} ${res.filled.toFixed(2)} -> collateral  (${d.reason})`);
     return;

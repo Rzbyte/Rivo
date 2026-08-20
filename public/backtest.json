@@ -1,0 +1,94 @@
+{
+  "generatedAt": "2026-08-19T22:02:14.960Z",
+  "venueId": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
+  "params": {
+    "days": 30,
+    "capital": 50,
+    "profile": {
+      "name": "balanced",
+      "kellyFraction": 0.5,
+      "maxDeployed": 0.7,
+      "maxPerPosition": 0.2,
+      "maxAssetDeltaPer1Pct": 0.05,
+      "maxCombinedDeltaPer1Pct": 0.06,
+      "maxPerExpiryBucket": 0.3,
+      "minEdge": 0.03,
+      "cashFloor": 0.3,
+      "rotationHysteresis": 0.035
+    },
+    "rho": 0.9081914499680352
+  },
+  "stream": {
+    "markets": 16452,
+    "withFills": 473,
+    "chances": 53746
+  },
+  "results": [
+    {
+      "name": "Rivo (Kelly + portfolio constraints)",
+      "finalEquity": 34.603426699356,
+      "return": -0.30793146601288,
+      "maxDrawdown": 0.5191299046255229,
+      "trades": 1200,
+      "declined": 52546,
+      "hitRate": 0.465,
+      "totalStaked": 650.2697972418524,
+      "returnOnStake": -0.023677208084935262
+    },
+    {
+      "name": "Kelly, no portfolio constraints",
+      "finalEquity": 0,
+      "return": -1,
+      "maxDrawdown": 0.3679533638934708,
+      "trades": 50,
+      "declined": 53696,
+      "hitRate": 0.2,
+      "totalStaked": 81.60233180532649,
+      "returnOnStake": -0.6127275887076589
+    },
+    {
+      "name": "Full Kelly, no constraints",
+      "finalEquity": 0,
+      "return": -1,
+      "maxDrawdown": 0.3600000000000001,
+      "trades": 50,
+      "declined": 53696,
+      "hitRate": 0.2,
+      "totalStaked": 82.00000000000001,
+      "returnOnStake": -0.6097560975609755
+    },
+    {
+      "name": "Equal weight (5% each)",
+      "finalEquity": 0,
+      "return": -1,
+      "maxDrawdown": 0.39434068311043036,
+      "trades": 58,
+      "declined": 53688,
+      "hitRate": 0.1896551724137931,
+      "totalStaked": 80.28296584447845,
+      "returnOnStake": -0.6227971210836726
+    },
+    {
+      "name": "Any positive edge (5% each)",
+      "finalEquity": 0,
+      "return": -1,
+      "maxDrawdown": 0.3030930365334195,
+      "trades": 55,
+      "declined": 53691,
+      "hitRate": 0.2,
+      "totalStaked": 84.84534817332901,
+      "returnOnStake": -0.5893074997801401
+    },
+    {
+      "name": "All-in on any edge",
+      "finalEquity": 0,
+      "return": -1,
+      "maxDrawdown": 0.3600000000000001,
+      "trades": 50,
+      "declined": 53696,
+      "hitRate": 0.2,
+      "totalStaked": 82.00000000000001,
+      "returnOnStake": -0.6097560975609755
+    }
+  ]
+}

@@ -23,7 +23,7 @@
 //      already accounted for. That is what the delta budget below prevents, and
 //      it is the whole reason this layer exists.
 
-import type { Asset } from "../core/config.js";
+import { tenorLabel, type Asset } from "../core/config.js";
 import type { MarketBook } from "../engine/book.js";
 import { fillableFor, type Opportunity } from "../engine/opportunity.js";
 import type { RiskProfile } from "./profiles.js";
@@ -174,6 +174,17 @@ export function allocate(input: AllocatorInputs): Allocation {
     const bucket = expiryBucket(opp.expiry);
     const inBucket = current.expiryBuckets.get(bucket) ?? 0;
     limits.push({ name: `expiry bucket ${bucket}`, allowedCost: Math.max(0, budget.expiryBucket - inBucket) });
+
+    // A user-set ceiling on one cadence. Only applied when they set one, so the
+    // built-in profiles behave exactly as they did and as the backtest measured.
+    const tenorCap = prof.maxPerTenor?.[opp.intervalSec];
+    if (typeof tenorCap === "number") {
+      const inTenor = positions.filter((p) => p.intervalSec === opp.intervalSec).reduce((s, p) => s + p.cost, 0);
+      limits.push({
+        name: `${tenorLabel(opp.intervalSec)} tenor cap ${(tenorCap * 100).toFixed(0)}%`,
+        allowedCost: Math.max(0, totalCapital * tenorCap - inTenor),
+      });
+    }
 
     // --- what the book will actually supply ---------------------------------
     const allowedCost = Math.max(0, Math.min(...limits.map((l) => l.allowedCost)));

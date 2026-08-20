@@ -100,6 +100,24 @@ export interface RivoState {
   profile: string;
   dryRun: boolean;
   /**
+   * Net value of positions ADOPTED from the chain that Rivo never bought, at the
+   * marks they were adopted on, minus any dropped again.
+   *
+   * It exists so the cash ledger can balance without lying about either number.
+   * Reconciliation can hand the portfolio a position it has no record of paying
+   * for — a leftover from another process on the same wallet, or a manual trade.
+   * Crediting the eventual payout to `cash` with no matching debit inflates cash
+   * without limit, which is exactly what happened on a live run: 451.76 of cash
+   * against 50 of allocated capital.
+   *
+   * Kept SEPARATE from `capital` on purpose. Capital is what the user authorised
+   * and every risk budget is a fraction of it, so folding adopted assets into it
+   * would let a stray token found on the wallet quietly raise Rivo's own risk
+   * limits. Adopted positions still consume the delta budget, so finding one
+   * makes Rivo more conservative, never less.
+   */
+  contributed?: number;
+  /**
    * Unix seconds of the last trade in each leg, keyed `marketId:leg`.
    *
    * Guards against the one loop that costs money without changing anything: the
@@ -111,11 +129,55 @@ export interface RivoState {
   lastTradedAt?: Record<string, number>;
 }
 
+/**
+ * The ledger identity every mutation must preserve.
+ *
+ * Cash plus what is tied up in open positions equals what was put in plus what
+ * has been realised. Any path that moves one side without the other is an
+ * accounting bug, and on a live portfolio it is invisible until the equity curve
+ * is already wrong.
+ */
+export const ledgerImbalance = (s: RivoState): number =>
+  s.cash + s.open.reduce((a, p) => a + p.cost, 0) - (s.capital + (s.contributed ?? 0) + s.realizedPnl);
+
+/** Whether the ledger balances, within float tolerance scaled to the size of the book. */
+export function ledgerBalances(s: RivoState): boolean {
+  const scale = Math.max(1, Math.abs(s.capital) + Math.abs(s.realizedPnl));
+  return Math.abs(ledgerImbalance(s)) <= 1e-6 * scale;
+}
+
+/**
+ * Make a state written before the ledger identity was enforced balance again.
+ *
+ * State files exist that predate this rule — one live run drifted 426 of phantom
+ * cash into them — and there is no way to reconstruct which mutation lost the
+ * money. What CAN be done is stop the lie propagating: absorb the difference
+ * into `contributed`, where it is visible and clearly labelled, rather than
+ * leaving it hidden inside `cash` where every downstream number inherits it.
+ *
+ * Loud on purpose. A silent repair is how the original bug survived as long as
+ * it did, and the resulting P&L should be treated as suspect for that portfolio.
+ */
+export function repairLedger(state: RivoState, warn: (msg: string) => void): RivoState {
+  if (ledgerBalances(state)) {
+    state.contributed ??= 0;
+    return state;
+  }
+  const drift = ledgerImbalance(state);
+  state.contributed = (state.contributed ?? 0) + drift;
+  warn(
+    `LEDGER REPAIRED: cash + open cost exceeded capital + realised by ${drift.toFixed(2)}. ` +
+      `Absorbed into contributed. This state predates the reconciliation fix — P&L before now is unreliable.`,
+  );
+  return state;
+}
+
 export function emptyState(capital: number, profile: string, dryRun: boolean): RivoState {
   const now = Math.floor(Date.now() / 1000);
   return {
     version: STATE_VERSION,
     capital,
+    contributed: 0,
     cash: capital,
     realizedPnl: 0,
     open: [],
@@ -142,7 +204,7 @@ export class StateStore {
       if (raw.version !== STATE_VERSION) {
         throw new Error(`state file is version ${raw.version}, this build writes ${STATE_VERSION}`);
       }
-      return raw;
+      return repairLedger(raw, (m) => console.warn(m));
     } catch (e) {
       // Refuse to silently start fresh. A corrupt or stale state file next to a
       // wallet holding real positions is exactly when starting from zero does

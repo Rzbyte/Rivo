@@ -16,6 +16,7 @@ import { simulateBuy } from "../engine/book.js";
 import { loadEcCore, type EcContext, type EcCore, type MarketOnchain, type UnifiedMarket } from "./ec-core-types.js";
 import { loadEnv } from "../core/env.js";
 import { AllowanceManager } from "./allowance.js";
+import { authority } from "./signer.js";
 import { COLLATERAL_TOKEN, network } from "../core/config.js";
 
 export interface OrderRequest {
@@ -410,16 +411,19 @@ export class LiveExecutor implements Executor {
   }
 }
 
-/** Pick an executor. Live requires BOTH a key and an explicit opt-out of dry run. */
+/** Pick an executor. Live requires BOTH a signing authority and an explicit opt-out of dry run. */
 export function makeExecutor(dryRun: boolean): Executor {
-  loadEnv();
-  const hasKey = Boolean((process.env.PRIVATE_KEY ?? "").trim().match(/^0x[0-9a-fA-F]{64}$/));
-  if (dryRun || !hasKey) return new DryExecutor();
+  if (dryRun || !hasSigner()) return new DryExecutor();
   return new LiveExecutor();
 }
 
-/** Whether a usable signer is configured. `0x...` placeholders do not count. */
+/**
+ * Whether a usable signer is configured.
+ *
+ * Delegates to signer.ts so there is one definition of "can Rivo trade" rather
+ * than a regex repeated at each call site — the shape of that answer changes the
+ * moment a session-key path exists, and it should change in one place.
+ */
 export function hasSigner(): boolean {
-  loadEnv();
-  return Boolean((process.env.PRIVATE_KEY ?? "").trim().match(/^0x[0-9a-fA-F]{64}$/));
+  return authority().available();
 }

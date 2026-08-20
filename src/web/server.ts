@@ -20,6 +20,9 @@ import { buildView, readState, runtimeStatus, LIVENESS_WINDOW_SEC } from "./data
 import { PAGE } from "./page.js";
 import { PROFILES } from "../portfolio/profiles.js";
 import { statePath } from "../runtime/state.js";
+import { PortfolioRegistry } from "./registry.js";
+import { authorityStatus } from "../runtime/signer.js";
+import { network } from "../core/config.js";
 
 export interface ServeOptions {
   dataDir: string;
@@ -57,8 +60,26 @@ function stopChild(): void {
   }
 }
 
+/**
+ * CORS, deliberately open for reads and control on this server.
+ *
+ * The public page is static and may be served from GitHub Pages, a file:// URL
+ * or localhost, so a same-origin policy would make the backend unreachable from
+ * exactly the places it is meant to be reached from. This is safe here for a
+ * specific reason rather than by assumption: every endpoint is scoped to a
+ * wallet address that the caller must already know, Autopilot is restricted to
+ * the backend's own signer address (see registry.ts), and nothing here can move
+ * funds to a destination the caller supplies. Anyone deploying this beyond a
+ * hackathon should put an origin allowlist here.
+ */
+const CORS = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-methods": "GET, POST, PUT, OPTIONS",
+  "access-control-allow-headers": "content-type",
+} as const;
+
 function json(res: import("node:http").ServerResponse, code: number, body: unknown): void {
-  res.writeHead(code, { "content-type": "application/json", "cache-control": "no-store" });
+  res.writeHead(code, { "content-type": "application/json", "cache-control": "no-store", ...CORS });
   res.end(JSON.stringify(body));
 }
 
@@ -76,9 +97,40 @@ async function readBody(req: import("node:http").IncomingMessage): Promise<Recor
 export function serve(opts: ServeOptions): void {
   const { dataDir, repoRoot, port } = opts;
 
+  const registry = new PortfolioRegistry({ dataDir, repoRoot, intervalMs: opts.intervalMs ?? 60_000 });
+
   const server = createServer((req, res) => {
     void (async () => {
       const url = req.url ?? "/";
+
+      // Preflight. Answered before anything else so a cross-origin PUT from the
+      // static page is not rejected by the route table below.
+      if (req.method === "OPTIONS") {
+        res.writeHead(204, CORS);
+        return res.end();
+      }
+
+      // --- per-wallet portfolios ------------------------------------------
+      // /api/portfolio/<owner>[/start|pause|stop]
+      const portfolio = url.match(/^\/api\/portfolio\/(0x[0-9a-fA-F]{40})(?:\/(start|pause|stop))?$/);
+      if (portfolio) {
+        const owner = portfolio[1]!.toLowerCase();
+        const action = portfolio[2] as "start" | "pause" | "stop" | undefined;
+        try {
+          if (action && req.method === "POST") return json(res, 200, await registry.command(owner, action));
+          if (req.method === "PUT") return json(res, 200, await registry.put({ ...(await readBody(req)), owner }));
+          if (req.method === "GET") {
+            const record = registry.get(owner);
+            if (!record) return json(res, 404, { error: "no portfolio for that wallet" });
+            return json(res, 200, { ...record, state: readState(record.dataDir) });
+          }
+          return json(res, 405, { error: `${req.method} not allowed here` });
+        } catch (e) {
+          // A refusal is a 409, not a 500: the request was well-formed and the
+          // answer is "no", with the reason the registry gave.
+          return json(res, 409, { error: e instanceof Error ? e.message : String(e) });
+        }
+      }
 
       if (url === "/api/state") {
         return json(res, 200, buildView(dataDir, repoRoot, ownedAlive()));
@@ -145,8 +197,29 @@ export function serve(opts: ServeOptions): void {
       }
 
       if (url === "/api/health") {
-        return json(res, 200, { ok: true, owned: ownedAlive(), livenessWindowSec: LIVENESS_WINDOW_SEC });
+        // The public page reads this to decide whether Autopilot can be offered
+        // at all, so it must describe the signing authority honestly — including
+        // when there is none. `authorityStatus` is the only path from a key to
+        // anything displayable, and it carries no key material.
+        const authority = await authorityStatus();
+        return json(res, 200, {
+          ok: true,
+          canTrade: authority.kind !== "none",
+          authority,
+          running: ownedAlive() || registry.list().some((p) => p.running),
+          network: network(),
+          portfolios: registry.list().length,
+          owned: ownedAlive(),
+          livenessWindowSec: LIVENESS_WINDOW_SEC,
+        });
       }
+
+      // An unmatched /api/ path is a client error, not a request for the page.
+      // Serving HTML with a 200 here makes every mistyped endpoint look like a
+      // success to a caller that only checks the status — including the public
+      // page's own backend discovery, which would then adopt a static host as a
+      // Rivo backend.
+      if (url.startsWith("/api/")) return json(res, 404, { error: `no such endpoint: ${url}` });
 
       res.writeHead(200, { "content-type": "text/html; charset=utf-8" });
       res.end(PAGE);
@@ -168,6 +241,13 @@ export function serve(opts: ServeOptions): void {
   server.listen(port, () => {
     console.log(`RIVO cockpit  ->  http://localhost:${port}`);
     console.log(`data dir      ${dataDir}`);
+    void authorityStatus().then((a) => {
+      console.log(
+        a.kind === "none"
+          ? `signer        none — Shadow Mode only (${a.missing ?? "no key configured"})`
+          : `signer        ${a.kind} ${a.address ?? "(address unresolved)"} on ${a.network}`,
+      );
+    });
   });
 
   // Never leave a trading process orphaned by our own shutdown.
@@ -176,6 +256,7 @@ export function serve(opts: ServeOptions): void {
       console.log("stopping the runtime this server started…");
       stopChild();
     }
+    registry.stopAll();
     process.exit(0);
   };
   process.on("SIGINT", shutdown);

@@ -47,6 +47,19 @@ export interface RiskProfile {
    * for donating spread.
    */
   rotationHysteresis: number;
+  /**
+   * Optional ceiling on capital in one CADENCE, keyed by interval seconds, as a
+   * fraction of total capital.
+   *
+   * Absent from every built-in profile on purpose: it exists for a user who has
+   * a view about horizons rather than about risk appetite — "15-minute windows
+   * are noise, cap them at 5%" — which is not something a three-way risk dial
+   * can express. Set through PortfolioPolicy.overrides; see policy.ts.
+   *
+   * Distinct from maxPerExpiryBucket, which groups whatever settles at the same
+   * moment regardless of cadence.
+   */
+  maxPerTenor?: Record<number, number>;
 }
 
 export const PROFILES: Record<ProfileName, RiskProfile> = {

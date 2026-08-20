@@ -16,6 +16,13 @@
 //   * A position the chain knows about but Rivo does not has no cost basis to
 //     recover — nothing records what was paid. It is adopted at a stated
 //     estimate and flagged, so no report can quietly present a guess as a fill.
+//
+// Every correction here also moves `state.contributed`, and that is not
+// bookkeeping pedantry. Reconciliation is the one place where positions appear
+// and vanish without a trade, so it is the one place that can break the ledger
+// identity in state.ts. It did: adopting a position credited no cash but its
+// eventual payout credited the full proceeds, and a live run drifted to 451.76
+// of cash against 50 of allocated capital before anything noticed.
 
 import type { Asset } from "../core/config.js";
 import type { Leg } from "../engine/book.js";
@@ -98,7 +105,13 @@ export function reconcile(input: ReconcileInput): Discrepancy[] {
     }
 
     if (chainShares <= 0) {
-      for (const p of lots) state.open.splice(state.open.indexOf(p), 1);
+      // Removing a position removes its cost from the open side of the ledger,
+      // so the same value leaves `contributed` — the portfolio is managing less
+      // than it was. Without this the equity curve steps up for free.
+      for (const p of lots) {
+        state.contributed = (state.contributed ?? 0) - p.cost;
+        state.open.splice(state.open.indexOf(p), 1);
+      }
       out.push({
         marketId,
         leg,
@@ -115,8 +128,13 @@ export function reconcile(input: ReconcileInput): Discrepancy[] {
     // the average entry price a fiction.
     const factor = chainShares / stateShares;
     for (const p of lots) {
+      const before = p.cost;
       p.shares *= factor;
       p.cost *= factor;
+      // The chain disagreed about size, so value entered or left the portfolio
+      // without a trade. Book the difference where it belongs rather than
+      // letting the ledger absorb it silently.
+      state.contributed = (state.contributed ?? 0) + (p.cost - before);
     }
     out.push({
       marketId,
@@ -148,6 +166,12 @@ export function reconcile(input: ReconcileInput): Discrepancy[] {
       continue;
     }
     const mark = input.marks?.get(k) ?? 0.5;
+    // The wallet handed the portfolio an asset it never paid for. Record it as a
+    // contribution, NOT as capital: risk budgets are fractions of capital, and a
+    // stray token found on the wallet must never be able to raise Rivo's own
+    // limits. It still consumes the delta budget, so adopting one makes the
+    // allocator more conservative, never less.
+    state.contributed = (state.contributed ?? 0) + chainShares * mark;
     state.open.push({
       marketId,
       asset: meta.asset,

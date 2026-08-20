@@ -18,6 +18,10 @@ export interface VenueEndpoints {
   /** Collateral decimals: 6 on testnet (tUSDC), 18 on mainnet (USDso). */
   decimals: number;
   chainId: number;
+  /** Block explorer root, no trailing slash — for linking evidence a judge can check. */
+  explorer: string;
+  /** Human name of the chain, for the wallet's network prompt. */
+  chainName: string;
 }
 
 export const VENUE: Record<Network, VenueEndpoints> = {
@@ -28,6 +32,8 @@ export const VENUE: Record<Network, VenueEndpoints> = {
     rpc: "https://api.infra.testnet.somnia.network",
     decimals: 6,
     chainId: 50312,
+    explorer: "https://shannon-explorer.somnia.network",
+    chainName: "Somnia Shannon Testnet",
   },
   mainnet: {
     indexer: "https://prd.smk.somnia.host/v1/graphql",
@@ -37,8 +43,19 @@ export const VENUE: Record<Network, VenueEndpoints> = {
     rpc: "https://api.infra.mainnet.somnia.network",
     decimals: 18,
     chainId: 5031,
+    explorer: "https://explorer.somnia.network",
+    chainName: "Somnia",
   },
 };
+
+/** Explorer link for a transaction, so evidence in the UI is checkable by a stranger. */
+export const txUrl = (net: Network, hash: string): string => `${VENUE[net].explorer}/tx/${hash}`;
+
+/** Explorer link for an account. */
+export const addressUrl = (net: Network, address: string): string => `${VENUE[net].explorer}/address/${address}`;
+
+/** The native gas token. Somnia testnet funds gas in STT. */
+export const gasTokenName = (net: Network): string => (net === "mainnet" ? "SOMI" : "STT");
 
 /** The two underlyings the venue lists. Everything else derives from these. */
 export const ASSETS = ["BTC", "ETH"] as const;
