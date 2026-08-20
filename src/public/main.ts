@@ -254,6 +254,19 @@ onAction((act, el) => {
   switch (act) {
     case "connect":
       return void doConnect();
+    case "demo": {
+      // A portfolio with no wallet behind it. Everything downstream treats the
+      // identity as an address, so nothing needs a special case — only the
+      // header, which says plainly that these are not real balances.
+      const owner = store.demoIdentity();
+      state.wallet = {
+        address: owner, chainId: 0, network: "testnet", gas: 0, collateral: 0,
+        gasSymbol: "STT", collateralSymbol: "tUSDC",
+      };
+      state.error = null;
+      adoptWallet(owner);
+      return render();
+    }
     case "disconnect":
       store.forgetWallet();
       state.wallet = null;

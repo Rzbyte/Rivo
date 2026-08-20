@@ -143,3 +143,32 @@ export const forgetWallet = (): void => {
     /* nothing to do */
   }
 };
+
+/**
+ * An identity for someone with no wallet.
+ *
+ * Shadow Mode never signs and never spends — the address is only a key under
+ * which to file a policy. Demanding a browser extension for that turned "anyone
+ * can watch Rivo manage a portfolio" into "anyone who has already installed
+ * MetaMask can", which is a much smaller group and a barrier we imposed for no
+ * reason of our own.
+ *
+ * Deliberately shaped like an address so every downstream check — parsePolicy,
+ * the registry's isolation key, the storage namespace — treats it identically
+ * and nothing needs a special case. The `0xde…` prefix marks it as a demo so the
+ * UI can say so, and it can never collide with a real wallet: the remaining
+ * bytes are random and no one holds the private key, because none was generated.
+ */
+export function demoIdentity(): `0x${string}` {
+  const existing = read<string>(`${NS}:demo`);
+  if (existing && /^0xde[0-9a-f]{38}$/.test(existing)) return existing as `0x${string}`;
+  const bytes = new Uint8Array(19);
+  (globalThis.crypto ?? { getRandomValues: (a: Uint8Array) => a.map(() => Math.floor(Math.random() * 256)) })
+    .getRandomValues(bytes);
+  const id = `0xde${[...bytes].map((b) => b.toString(16).padStart(2, "0")).join("")}` as `0x${string}`;
+  write(`${NS}:demo`, id);
+  return id;
+}
+
+/** Whether an identity is a local demo rather than a connected wallet. */
+export const isDemo = (owner: string): boolean => owner.toLowerCase().startsWith("0xde");

@@ -13,6 +13,7 @@ import { PROFILES, type ProfileName } from "../../portfolio/profiles.js";
 import type { WalletState } from "../wallet.js";
 import type { BackendStatus } from "../backend.js";
 import { addressUrl, tenorLabel, type Network } from "../../core/venue.js";
+import { isDemo } from "../store.js";
 import { clock, cls, esc, f2, f3, horizon, meter, pct, relTime, shortAddr, signed } from "./dom.js";
 import { equityChart, exposureBar, termChart } from "./charts.js";
 
@@ -46,22 +47,25 @@ export function connectGate(s: AppState): string {
     <div class="panel pad" style="margin-top:28px">
       ${
         noProvider
-          ? `<h3>No wallet detected</h3>
+          ? `<h3>No wallet detected — that is fine</h3>
              <p class="mut" style="font-size:13.5px;margin-top:6px">
-               Rivo needs an EIP-1193 browser wallet to identify your portfolio. Install MetaMask or
-               a compatible wallet and reload. You can still explore the live pricing engine and the
-               evidence without one.</p>
+               Shadow Mode runs the real engine against the live venue with paper fills, so it needs
+               no signature and no funds. Start one now; connect a wallet later if you want your own
+               balances alongside it.</p>
              <div style="display:flex;gap:9px;margin-top:14px;flex-wrap:wrap">
+               <button class="primary" data-act="demo">Start a portfolio</button>
                <a class="btn" href="#/explorer">Open the explorer</a>
-               <a class="btn" href="#/evidence">See the evidence</a>
              </div>`
-          : `<button class="primary big" data-act="connect" ${s.connecting ? "disabled" : ""}>
-               ${s.connecting ? "check your wallet…" : "Connect wallet"}
-             </button>
+          : `<div style="display:flex;gap:10px;flex-wrap:wrap">
+               <button class="primary big" data-act="connect" ${s.connecting ? "disabled" : ""}>
+                 ${s.connecting ? "check your wallet…" : "Connect wallet"}
+               </button>
+               <button class="big" data-act="demo">Try it without a wallet</button>
+             </div>
              <p class="mut" style="font-size:12.5px;margin-top:12px;margin-bottom:0">
-               Read-only. Rivo asks for your address to scope your portfolio and read your balances —
-               it never requests a signature here, and there is no field on this page that could
-               accept a private key.
+               Read-only either way. Shadow Mode never signs and never spends, so a wallet is only
+               used to scope your portfolio and show your balances — nothing on this page requests a
+               signature, and no field on it could accept a private key.
              </p>`
       }
       ${s.error && !noProvider ? `<p class="note warn" style="margin-bottom:0">${esc(s.error)}</p>` : ""}
@@ -91,6 +95,11 @@ export function walletChip(s: AppState): string {
     return `<span class="tag bad"><i class="dot"></i>wrong network</span>
             <button data-act="switch">Switch to Somnia</button>`;
   }
+  if (isDemo(w.address)) {
+    return `
+      <span class="tag warn">demo portfolio</span>
+      <button data-act="connect">Connect a wallet</button>`;
+  }
   return `
     <span class="tag mute" title="${esc(w.address)}">${esc(shortAddr(w.address))}</span>
     <span class="tag ok"><i class="dot"></i>${esc(w.network)}</span>
@@ -99,6 +108,17 @@ export function walletChip(s: AppState): string {
 
 function walletPanel(w: WalletState): string {
   const net = w.network as Network;
+  if (isDemo(w.address)) {
+    return `
+    <div class="panel pad">
+      <h3>Demo portfolio</h3>
+      <p class="mut" style="font-size:13px;margin:6px 0 0">
+        No wallet connected, and none needed: Shadow Mode prices the live venue and fills on paper,
+        so nothing here is signed or spent. Your policy is stored in this browser only.
+      </p>
+      <button style="margin-top:12px" data-act="connect">Connect a wallet to see real balances</button>
+    </div>`;
+  }
   return `
   <div class="panel pad">
     <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap">
