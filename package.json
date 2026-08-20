@@ -26,12 +26,16 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "doctor": "tsx scripts/doctor.ts",
-    "faucet": "tsx scripts/faucet.ts"
+    "faucet": "tsx scripts/faucet.ts",
+    "approve": "tsx scripts/approve.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0",
     "vitest": "^2.1.9"
+  },
+  "dependencies": {
+    "viem": "^2.55.19"
   }
 }

@@ -5,6 +5,13 @@
 // private key, no signer, and no SDK, so that anyone reading the submission can
 // reproduce every number in it.
 
+import { loadEnv } from "./env.js";
+
+// Every reader of configuration goes through this module, so loading the file
+// here means no entry point can forget to do it — which is precisely how live
+// mode ended up unreachable from `.env`.
+loadEnv();
+
 export type Network = "testnet" | "mainnet";
 
 export interface RivoEndpoints {

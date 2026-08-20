@@ -79,6 +79,11 @@ export async function cycle(state: RivoState, deps: LoopDeps): Promise<CycleRepo
   state.lastCycleAt = now;
   const records: DecisionRecord[] = [];
 
+  // One generation of on-chain state per pass. Pools are recycled across
+  // windows, so a snapshot held from a previous cycle can point at the pool a
+  // market used to live in.
+  executor.newCycle();
+
   // --- DISCOVER + ANALYZE ------------------------------------------------
   // First, because reconciliation needs it. Adopting a position the chain holds
   // and Rivo does not requires knowing the window's asset, cadence and expiry —

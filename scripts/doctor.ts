@@ -7,24 +7,13 @@
 //
 // It never prints a private key, and it sends nothing.
 
-import { existsSync, readFileSync } from "node:fs";
+import { loadEnv } from "../src/core/env.js";
 import { Indexer } from "../src/core/indexer.js";
 import { collateralName, COLLATERAL_TOKEN, endpoints, network } from "../src/core/config.js";
 
 const ok = (s: string) => `  ok    ${s}`;
 const warn = (s: string) => `  warn  ${s}`;
 const bad = (s: string) => `  MISS  ${s}`;
-
-/** Load .env without a dependency, and without echoing anything sensitive. */
-function loadEnv(): void {
-  if (!existsSync(".env")) return;
-  for (const line of readFileSync(".env", "utf8").split("\n")) {
-    const m = line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*)\s*$/);
-    if (!m) continue;
-    const [, k, v] = m;
-    if (k && v !== undefined && !process.env[k]) process.env[k] = v.replace(/^["']|["']$/g, "");
-  }
-}
 
 /**
  * The address behind the configured key.

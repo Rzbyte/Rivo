@@ -18,7 +18,8 @@
 /** Opaque handles — Rivo never inspects these, it only passes them back. */
 export type EcContext = unknown;
 export type UnifiedMarket = { symbol?: string; info?: { marketId?: string } };
-export type MarketOnchain = unknown;
+/** Only the fields Rivo reads. `pool` is the contract that escrows collateral. */
+export type MarketOnchain = { pool?: `0x${string}` };
 
 export interface PlaceLimitArgs {
   market: UnifiedMarket;

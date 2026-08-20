@@ -47,6 +47,19 @@ async function main(): Promise<void> {
   const log = new DecisionLog(decisionLogPath(dataDir));
   const state = store.load(() => emptyState(capital, prof.name, dryRun));
   const executor = makeExecutor(dryRun);
+  // The live executor needs the venue's collateral decimals to size an approval,
+  // and an approval is worth a line in the log: it is a transaction the operator
+  // did not ask for, sent once per pool before the first order that needs it.
+  if (executor.mode === "live") {
+    const live = executor as unknown as {
+      decimals?: number;
+      onApprove?: (p: string, h: string) => void;
+      onNote?: (m: string) => void;
+    };
+    live.decimals = idx.decimals;
+    live.onApprove = (pool, hash) => console.log(`  APPROVE pool ${pool.slice(0, 10)}… tx ${hash}`);
+    live.onNote = (m) => console.log(`  note: ${m}`);
+  }
 
   console.log("RIVO");
   console.log("=".repeat(78));
@@ -84,6 +97,7 @@ async function main(): Promise<void> {
       consecutiveErrors++;
       const msg = e instanceof Error ? e.message : String(e);
       console.log(`  cycle error (${consecutiveErrors}): ${msg}`);
+      if (process.env.RIVO_TRACE) console.log((e as Error)?.stack ?? "(no stack)");
       // A transient indexer hiccup should not end a multi-day run, but a wall of
       // errors means something is genuinely broken and grinding on will only
       // make the state harder to reason about.

@@ -8,19 +8,9 @@
 // THIS SENDS A TRANSACTION. It is the only script in the repo that does anything
 // other than read, and it refuses to run anywhere but testnet.
 
-import { existsSync, readFileSync } from "node:fs";
 import { collateralName, COLLATERAL_TOKEN, network } from "../src/core/config.js";
+import { loadEnv } from "../src/core/env.js";
 import { Indexer } from "../src/core/indexer.js";
-
-function loadEnv(): void {
-  if (!existsSync(".env")) return;
-  for (const line of readFileSync(".env", "utf8").split("\n")) {
-    const m = line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*)\s*$/);
-    if (!m) continue;
-    const [, k, v] = m;
-    if (k && v !== undefined && !process.env[k]) process.env[k] = v.replace(/^["']|["']$/g, "");
-  }
-}
 
 async function balanceOf(rpc: string, token: string, who: string, decimals: number): Promise<number | null> {
   const data = `0x70a08231${who.replace(/^0x/, "").toLowerCase().padStart(64, "0")}`;

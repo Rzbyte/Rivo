@@ -10,6 +10,9 @@ data*/
 # Logs
 *.log
 
+# Scratch probes
+tmp/
+
 # Generated dashboard snapshots. One curated copy lives in docs/evidence/.
 rivo-dashboard.html
 
