@@ -13,6 +13,7 @@
 import { describe, expect, it } from "vitest";
 import { emptyState, ledgerBalances, ledgerImbalance, type HeldPosition, type RivoState } from "./state.js";
 import { reconcile } from "./reconcile.js";
+import { backoffSec, FAILURE_BACKOFF_CAP_SEC } from "./loop.js";
 import type { Asset } from "../core/config.js";
 
 const NOW = 1_800_000_000;
@@ -165,5 +166,27 @@ describe("the live failure this prevents", () => {
     fixed.open.push(held({ marketId: "0xadopted", shares: 20, cost: 6, adopted: true }));
     fixed.contributed = (fixed.contributed ?? 0) + 6;
     expect(ledgerBalances(fixed)).toBe(true);
+  });
+});
+
+describe("failing orders back off instead of retrying forever", () => {
+  it("escalates the delay, so a permanently unsellable leg stops burning cycles", () => {
+    // `lastTradedAt` only records SUCCESS, so before this a leg whose orders
+    // reverted had no cooldown at all. Measured on a live canary: one stuck
+    // 0.56-share position produced 22 errors across 110 cycles.
+    expect(backoffSec(1)).toBe(60);
+    expect(backoffSec(2)).toBe(120);
+    expect(backoffSec(3)).toBe(240);
+    expect(backoffSec(4)).toBe(480);
+  });
+
+  it("caps the delay so a leg is never abandoned outright", () => {
+    expect(backoffSec(50)).toBe(FAILURE_BACKOFF_CAP_SEC);
+    expect(FAILURE_BACKOFF_CAP_SEC).toBeLessThanOrEqual(3600);
+  });
+
+  it("treats a zero or negative count as the first retry rather than throwing", () => {
+    expect(backoffSec(0)).toBe(60);
+    expect(backoffSec(-3)).toBe(60);
   });
 });

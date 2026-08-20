@@ -74,6 +74,20 @@ const MAX_DRAWDOWN = 0.35;
 /** Minimum gap between trades in one leg. Long enough to outlast a model wobble. */
 const LEG_COOLDOWN_SEC = 180;
 
+/**
+ * Back off a leg whose orders keep failing: 1, 2, 4, 8… minutes, capped at an hour.
+ *
+ * Exponential rather than fixed because the two causes look identical from here
+ * and want opposite responses. A transient indexer disagreement clears in
+ * seconds and should be retried soon; a position the venue will not let us sell
+ * — wrong lot, locked market, an approval we do not hold — will still be
+ * unsellable in an hour, and hammering it every cycle buys nothing but gas and a
+ * log nobody can read.
+ */
+export const FAILURE_BACKOFF_CAP_SEC = 3600;
+export const backoffSec = (failures: number): number =>
+  Math.min(FAILURE_BACKOFF_CAP_SEC, 60 * 2 ** Math.max(0, failures - 1));
+
 export async function cycle(state: RivoState, deps: LoopDeps): Promise<CycleReport> {
   const { idx, executor, store, log, profile, out } = deps;
   const now = Math.floor(Date.now() / 1000);
@@ -150,7 +164,36 @@ export async function cycle(state: RivoState, deps: LoopDeps): Promise<CycleRepo
   });
   for (const d of managed) {
     if (d.action === "HOLD") continue;
-    await applyPositionAction(state, d, snap, executor, out, records, now);
+    const key = legKey(d.position.marketId, d.position.leg);
+    const fail = state.failures?.[key];
+    if (fail && now - fail.lastAt < backoffSec(fail.count)) {
+      records.push(
+        record(
+          now,
+          state.cycles,
+          { ...d.position, fair: d.position.fairAtEntry, ask: null, edge: null },
+          "SKIP",
+          0,
+          0,
+          `backing off — ${fail.count} failed order attempt${fail.count > 1 ? "s" : ""} on this leg, ` +
+            `retrying in ${Math.ceil((backoffSec(fail.count) - (now - fail.lastAt)) / 60)}m`,
+        ),
+      );
+      continue;
+    }
+    try {
+      await applyPositionAction(state, d, snap, executor, out, records, now);
+      if (state.failures?.[key]) delete state.failures[key];
+    } catch (e) {
+      // One leg failing must not abort the cycle. Everything after this point —
+      // the risk check, allocation, settlement accounting — is unrelated to this
+      // position and was being skipped entirely because the throw unwound past it.
+      state.failures ??= {};
+      const count = (state.failures[key]?.count ?? 0) + 1;
+      state.failures[key] = { count, lastAt: now };
+      out(`  ORDER FAILED ${key.slice(-14)} (${count}) — ${e instanceof Error ? e.message : String(e)}`);
+      out(`    backing off ${Math.round(backoffSec(count) / 60)}m before retrying this leg`);
+    }
   }
 
   // --- LEDGER CHECK -------------------------------------------------------

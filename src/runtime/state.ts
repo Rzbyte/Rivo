@@ -127,6 +127,19 @@ export interface RivoState {
    * guard as OF_COOLDOWN_MS.
    */
   lastTradedAt?: Record<string, number>;
+  /**
+   * Consecutive failed order attempts per leg, keyed `marketId:leg`.
+   *
+   * `lastTradedAt` only records SUCCESS, so a leg whose orders keep reverting
+   * had no cooldown at all and was retried every cycle forever. Measured on a
+   * live canary: one stuck 0.56-share position produced 22 errors across 110
+   * cycles, and because the failure aborted the whole cycle, everything after it
+   * — allocation, settlement, claiming — was skipped on each of those passes.
+   *
+   * Cleared on the first success, so a leg that recovers is not punished for a
+   * transient failure.
+   */
+  failures?: Record<string, { count: number; lastAt: number }>;
 }
 
 /**
