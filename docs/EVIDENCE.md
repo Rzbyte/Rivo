@@ -401,6 +401,56 @@ returning null is that signal, and the dry runtime was verified to leave its pos
 State is also written the moment a fill is recorded rather than once per cycle, which mostly
 prevents the gap that reconciliation exists to repair.
 
+### The live canary: every stage, with something to check
+
+Run on Somnia testnet with **20 units of capital** — the smallest size at which the balanced
+profile's minimum trade (0.25 collateral) is meaningful. `npm run proof` writes
+[`docs/evidence/live-canary.json`](evidence/live-canary.json), which reports a stage with no evidence
+as **unproven** rather than omitting it.
+
+| stage | evidence |
+|---|---|
+| DISCOVER | 36 cycles against the live venue |
+| ANALYZE | decision log at ./data-canary/decisions.jsonl |
+| ALLOCATE | 15 positions opened by the allocator |
+| RISK CHECK | within limits, breaker armed |
+| EXECUTE | 7 positions carry an on-chain transaction hash |
+| CONFIRM | 7/7 receipts confirm status 0x1 |
+| RECONCILE | 1 positions adopted from chain, 38 outcome balances read |
+| PERSIST | state at ./data-canary/state.json, 36 cycles |
+| LEDGER | imbalance 0.00e+0 |
+| SETTLE | 1 positions resolved against the venue's oracle |
+| CLAIM | last sweep 2026-08-20T18:27:07.000Z |
+
+Transactions, with receipts read back from the RPC rather than from Rivo's own logs:
+
+| tx | block | events | |
+|---|---|---|---|
+| `0x6c703e254f1ae1a6…` | 466,767,414 | 8 | [explorer](https://shannon-explorer.somnia.network/tx/0x6c703e254f1ae1a6a9e65d64f0021ebec936be9f5cde1c4977e57e5bdf2da1e8) |
+| `0x1033a547baf5f9f2…` | 466,769,412 | 8 | [explorer](https://shannon-explorer.somnia.network/tx/0x1033a547baf5f9f29377688a9b9fc25d6b926454745902bb5eb56a5535f1ca79) |
+| `0xa1d497ebd870f98d…` | 466,769,789 | 8 | [explorer](https://shannon-explorer.somnia.network/tx/0xa1d497ebd870f98d14405d2d7832a17e62b1f962621276214bdfb4603e8290c1) |
+| `0x4587319b44ee8bfd…` | 466,773,611 | 8 | [explorer](https://shannon-explorer.somnia.network/tx/0x4587319b44ee8bfd65a939f4f13e55d99ddce9b2be7bad1100056a70e69bc925) |
+| `0x5ed97dade0f1163f…` | 466,775,407 | 8 | [explorer](https://shannon-explorer.somnia.network/tx/0x5ed97dade0f1163fa6b1794415daa0aba8201e966ae5954b5f308c437d7d9ad5) |
+| `0x471e56471ddc90b7…` | 466,775,803 | 8 | [explorer](https://shannon-explorer.somnia.network/tx/0x471e56471ddc90b728f46be8f8640ca829d5b449b38022e65d288e8439e1e652) |
+| `0x64faa04e35d0111b…` | 466,779,619 | 8 | [explorer](https://shannon-explorer.somnia.network/tx/0x64faa04e35d0111b0da46628af0e4fefce61481a02ae8deaf1f4acf8b8f25d3d) |
+
+Two of those stages are worth naming individually.
+
+**Restart recovery.** The runtime was killed mid-run and restarted against the same data directory.
+The position it held came back identically — 1.6700 shares before, 1.6700 after, same transaction
+hash — and was **not** bought a second time. Two genuinely new positions opened afterwards, which is
+the correct behaviour and the thing that makes the first observation meaningful: the process was
+trading normally, it simply did not re-buy what it already owned.
+
+**Capital recovery, unprompted.** On its first pass the runtime found complete sets on the wallet
+left by the maker experiment, recognised them as offsetting pairs, and merged them back to
+collateral — `mergeCompleteSet` used as capital recovery rather than as an exit, which is the whole
+point of the distinction. Nobody asked it to.
+
+The wallet is shared with earlier experiments, so `contributed` on this run is large (41.28)
+relative to the 20 of allocated capital. That is the ledger working as
+designed: adopted value is tracked but kept out of `capital`, so it cannot widen a single risk budget.
+
 ### The cash ledger did not balance, and nothing could tell
 
 The worst bug in this project, found by building a portfolio UI that had to display cash.

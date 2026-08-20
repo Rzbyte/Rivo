@@ -93,7 +93,7 @@ function render(): void {
     case "explorer":
       return mount(explorer(explorerSnap, state.wallet?.network ?? "testnet"));
     case "evidence":
-      return mount(evidence(evidenceBundle ?? { calibration: null, backtest: null, coherence: null, maker: null }));
+      return mount(evidence(evidenceBundle ?? { calibration: null, backtest: null, coherence: null, maker: null, canary: null }));
     default:
       return mount(
         landing({
@@ -322,13 +322,14 @@ async function loadEvidence(): Promise<void> {
       return null;
     }
   };
-  const [calibration, backtest, coherence, maker] = await Promise.all([
+  const [calibration, backtest, coherence, maker, canary] = await Promise.all([
     one<EvidenceBundle["calibration"]>("calibration"),
     one<EvidenceBundle["backtest"]>("backtest"),
     one<EvidenceBundle["coherence"]>("coherence"),
     one<EvidenceBundle["maker"]>("maker-live"),
+    one<EvidenceBundle["canary"]>("live-canary"),
   ]);
-  evidenceBundle = { calibration, backtest, coherence, maker } as EvidenceBundle;
+  evidenceBundle = { calibration, backtest, coherence, maker, canary } as EvidenceBundle;
 }
 
 async function boot(): Promise<void> {

@@ -76,7 +76,7 @@ async function main(): Promise<void> {
 
   // The evidence the page shows is the artefact the calibration CLI writes, not
   // a hand-copied number. Ship it beside the page so the two cannot disagree.
-  const artefacts = ["calibration", "backtest", "coherence", "maker-live"];
+  const artefacts = ["calibration", "backtest", "coherence", "maker-live", "live-canary"];
   const copied: string[] = [];
   for (const name of artefacts) {
     const from = resolve(`docs/evidence/${name}.json`);

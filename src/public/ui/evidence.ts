@@ -17,6 +17,22 @@ export interface EvidenceBundle {
   backtest: Backtest | null;
   coherence: Coherence | null;
   maker: MakerLive | null;
+  canary: LiveCanary | null;
+}
+
+interface LiveCanary {
+  generatedAt: string;
+  network: string;
+  wallet: { address: string; url: string; collateral: number; collateralSymbol: string };
+  authority: { kind: string; boundedOnChain: boolean; bounds: string };
+  runtime: { cycles: number; capital: number; cash: number; realizedPnl: number; contributed: number };
+  ledger: { identity: string; imbalance: number; balances: boolean };
+  execution: {
+    positionsOpenedByRivo: number;
+    withTransactionHash: number;
+    receipts: { hash: string; url: string; succeeded: boolean; block: number | null; events: number | null }[];
+  };
+  stages: { name: string; proven: boolean; evidence: string }[];
 }
 
 interface Calibration {
@@ -63,6 +79,7 @@ export function evidence(e: EvidenceBundle): string {
         beyond that we could not demonstrate, and this page says where.
       </p>
     </div>
+    ${e.canary ? canarySection(e.canary) : ""}
     ${e.calibration ? calibrationSection(e.calibration) : missing("calibration")}
     ${e.backtest ? backtestSection(e.backtest) : missing("backtest")}
     ${e.maker ? makerSection(e.maker) : ""}
@@ -76,6 +93,7 @@ export function evidence(e: EvidenceBundle): string {
       <pre class="num" style="font-size:12.5px;overflow-x:auto;background:var(--panel-2);padding:12px;border-radius:8px;margin:0"><code>npm run calibrate -- --days 30    # discrimination, calibration, holdout
 npm run backtest  -- --days 30    # Rivo against five unconstrained baselines
 npm run coherence -- --days 30    # cross-tenor arbitrage bound
+npm run proof     -- --data-dir ./data-live   # the live execution chain
 npm test                          # 115 tests, entirely offline</code></pre>
     </div>
   </div>`;
@@ -83,6 +101,72 @@ npm test                          # 115 tests, entirely offline</code></pre>
 
 const missing = (what: string): string =>
   `<div class="panel pad" style="margin-top:20px"><p class="empty">${esc(what)} artefact not published with this build</p></div>`;
+
+function canarySection(c: LiveCanary): string {
+  const proven = c.stages.filter((s) => s.proven).length;
+  const ok = c.execution.receipts.filter((r) => r.succeeded);
+  return `
+  <div class="sec-head" style="margin-top:34px"><h2>Does it actually run on-chain?</h2>
+    <span class="hint">live canary on ${esc(c.network)} · ${c.runtime.cycles} cycles · ${new Date(c.generatedAt).toISOString().slice(0, 16).replace("T", " ")} UTC</span></div>
+  <div class="grid g4">
+    ${[
+      ["Stages evidenced", `${proven}/${c.stages.length}`, "each with a checkable artefact"],
+      ["Transactions", String(ok.length), `all status 0x1`],
+      ["Ledger imbalance", c.ledger.imbalance.toExponential(1), c.ledger.balances ? "balances" : "DOES NOT BALANCE"],
+      ["Capital", f2(c.runtime.capital), `smallest safe size`],
+    ]
+      .map(([k, v, s]) => `<div class="panel stat"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`)
+      .join("")}
+  </div>
+  <div class="grid side" style="margin-top:14px">
+    <div class="panel pad">
+      <h3>The autonomous path, stage by stage</h3>
+      <p class="mut" style="font-size:12.5px;margin:4px 0 12px">
+        A stage with no evidence is reported as unproven rather than omitted.
+      </p>
+      <table><tbody>
+        ${c.stages
+          .map(
+            (s) => `<tr>
+              <td style="white-space:nowrap"><span class="tag ${s.proven ? "ok" : "mute"}">${s.proven ? "✓" : "·"}</span>
+                <b style="margin-left:6px">${esc(s.name)}</b></td>
+              <td style="text-align:left;white-space:normal" class="mut">${esc(s.evidence)}</td>
+            </tr>`,
+          )
+          .join("")}
+      </tbody></table>
+    </div>
+    <div class="panel pad">
+      <h3>Transactions</h3>
+      <p class="mut" style="font-size:12.5px;margin:4px 0 10px">
+        Receipts read back from the RPC, not from Rivo's own logs. Click through and check them.
+      </p>
+      <div style="font-family:var(--mono);font-size:11.5px;line-height:1.7">
+        ${c.execution.receipts
+          .slice(0, 10)
+          .map(
+            (r) =>
+              `<div style="padding:4px 0;border-bottom:1px solid var(--line)">
+                 <span class="${r.succeeded ? "pos" : "neg"}">${r.succeeded ? "✓" : "✗"}</span>
+                 <a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.hash.slice(0, 22))}…</a>
+                 <span class="mut"> block ${r.block?.toLocaleString() ?? "?"} · ${r.events ?? "?"} events</span>
+               </div>`,
+          )
+          .join("")}
+      </div>
+      <p class="mut" style="font-size:12px;margin:12px 0 0">
+        Wallet <a href="${esc(c.wallet.url)}" target="_blank" rel="noopener">${esc(c.wallet.address.slice(0, 10))}…</a>
+        · authority <b>${esc(c.authority.kind)}</b>${c.authority.boundedOnChain ? "" : ", bounded by Rivo rather than by the chain"}.
+      </p>
+    </div>
+  </div>
+  <p class="note" style="margin-top:14px">
+    <b>${esc(c.ledger.identity)}</b> — checked before any risk figure is derived from it, because
+    equity, drawdown and the circuit breaker all come from the same two numbers and would be wrong
+    together. On this run the imbalance is ${c.ledger.imbalance.toExponential(1)}.
+    Reproduce with <code>npm run proof -- --data-dir ./data-canary</code>.
+  </p>`;
+}
 
 function calibrationSection(c: Calibration): string {
   const days = Math.round((c.period.to - c.period.from) / 86400);

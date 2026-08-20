@@ -112,9 +112,9 @@ describe("every screen renders", () => {
 
   it("renders the evidence page from artefacts, and survives missing ones", async () => {
     const { evidence } = await import("./evidence.js");
-    const empty = evidence({ calibration: null, backtest: null, coherence: null, maker: null });
+    const empty = evidence({ calibration: null, backtest: null, coherence: null, maker: null, canary: null });
     expect(empty).toContain("not published");
-    expect(() => evidence({ calibration: null, backtest: null, coherence: null, maker: null })).not.toThrow();
+    expect(() => evidence({ calibration: null, backtest: null, coherence: null, maker: null, canary: null })).not.toThrow();
   });
 
   it("renders the explorer's empty state rather than throwing on no snapshot", async () => {
