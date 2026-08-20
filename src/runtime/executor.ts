@@ -231,34 +231,37 @@ export class LiveExecutor implements Executor {
     // does, and its absence here is why a fresh wallet gets
     // `placeBinaryOrder reverted: for an unknown reason`, which names nothing.
     if (side === "buy" && onchain.pool) {
-      // CHECK ONLY — never approve from inside the loop.
+      // Approve the pool inline when it cannot yet pull collateral.
       //
-      // Approving is a transaction. The SDK signs with its own locally-tracked
-      // nonce, so a second signer touching the same key races it. Measured: an
-      // inline approval made every order in that cycle revert with
-      // `placeBinaryOrder reverted: for an unknown reason`, while the identical
-      // order with no approval alongside it filled immediately. The kit warns
-      // about exactly this for its claim sweep — two senders on one key race
-      // each other's nonce.
+      // Autonomy is the product: a manager that needs a human to stop it,
+      // approve a pool and restart it is not one. So the approval happens here,
+      // once per pool, in the same pass that needs it.
+      //
+      // The hazard to watch is the nonce: the SDK signs with its own tracked
+      // nonce, and this approval goes out through a separate viem client, so in
+      // principle the two could collide.
+      //
+      // Measured 2026-08-20, and worth recording because we briefly believed the
+      // opposite: they do not. Waiting for the approval's receipt before
+      // returning is enough. In one live cycle an inline approval fired between
+      // two orders and the order immediately after it filled — four orders
+      // across two cycles, zero nonce errors. An earlier round of reverts was
+      // blamed on this and was in fact the lot-size bug below, present in both
+      // the with- and without-approval runs that were compared.
       const mgr = this.allowanceManager();
       if (mgr) {
         try {
           const one = 10 ** (this.decimals ?? 6);
           const need = BigInt(Math.max(1, Math.ceil(req.size * req.limitPrice * one)));
-          const current = await mgr.allowanceFor(onchain.pool);
-          if (current < need) {
-            return {
-              filled: 0,
-              avgPrice: 0,
-              cost: 0,
-              rejected:
-                `pool ${onchain.pool.slice(0, 10)}… may only pull ${current} of the ${need} needed. ` +
-                `Stop Rivo and run \`npm run approve\` — approving here would race the SDK's nonce.`,
-            };
-          }
-        } catch {
-          // A failed allowance read should not block a trade that might work;
-          // the order itself is the authority and will revert if it cannot pay.
+          const hash = await mgr.ensure(onchain.pool, need);
+          if (hash) this.onApprove?.(onchain.pool, hash);
+        } catch (e) {
+          return {
+            filled: 0,
+            avgPrice: 0,
+            cost: 0,
+            rejected: `approving pool ${onchain.pool.slice(0, 10)}… failed: ${e instanceof Error ? e.message : String(e)}`,
+          };
         }
       }
     }

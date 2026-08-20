@@ -7,17 +7,20 @@
 // the event-contract half has no equivalent, so a fresh wallet's first order
 // reverts with `placeBinaryOrder reverted: for an unknown reason`.
 //
-// WHY THIS IS A SEPARATE COMMAND, and not something the runtime does inline:
+// THIS COMMAND IS OPTIONAL. The runtime approves pools by itself, inline, the
+// first time it needs one — autonomy is the product, and a manager that needs a
+// human to stop it, approve a pool and restart it is not one.
 //
-// Approving is a transaction, and it has to be signed. The SDK signs with its
-// own locally-tracked nonce, so a second signer touching the same key races it —
-// the kit's own docs say this plainly about the claim sweep ("two senders on one
-// key race each other's nonce... which is also why you should not run two bots
-// on one key"). Measured here: approving inline made every subsequent order in
-// the same cycle revert, while the identical order placed with no approval
-// alongside it filled immediately.
+// It survives as a warm-up. Approving costs a transaction and a round trip, and
+// paying that in the middle of a cycle means paying it exactly when an edge is
+// disappearing. Running this before a session gets it out of the way.
 //
-// So: approve here, with the runtime stopped. The runtime only ever CHECKS.
+// A note on what we got wrong, since the opposite is easy to assume: we first
+// believed an inline approval would race the SDK's own nonce tracker, because
+// the kit warns about precisely that for its claim sweep. Measured, it does not
+// — waiting for the approval receipt before placing is enough. The reverts that
+// prompted the theory were the venue's lot granularity, present in both runs
+// being compared.
 
 import { maxUint256 } from "viem";
 import { loadEnv } from "../src/core/env.js";
