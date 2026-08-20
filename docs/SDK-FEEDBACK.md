@@ -5,8 +5,13 @@ Findings from building [Rivo](../README.md) against `@somnia-chain/markets-sdk` 
 August 2026 on the DreamDEX testnet venue
 (`0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c`).
 
-Every item is reproducible. Where a snippet is given it runs against public endpoints with no
-key. Ordered by how much time each one cost us.
+**Thirteen findings.** Every one is reproducible; where a snippet is given it runs against public
+endpoints with no key. Ordered roughly by how much time each cost us.
+
+Five of them (#4–#8) came out of taking Rivo live rather than reading the docs — they are the
+things that only appear once a real wallet sends a real order. **#4 is the one we would fix first:
+a developer who follows your documentation exactly cannot place their first Event Contract order,
+and the error names nothing.**
 
 The kit is genuinely good — `ec-core` is 1,585 lines that absorb sixteen documented sharp edges,
 and `docs/gotchas.md` and `docs/measuring-edge.md` are better than most production trading
@@ -111,7 +116,127 @@ already in the indexer; the `Fill` table has everything needed including `makerS
 
 ---
 
-## 4. `ec-core` has no operator / session-key support
+## 4. `ec-core` has no allowance handling, so a fresh wallet's first order always reverts
+
+**Severity: highest on this list. It blocks every new event-contract developer, silently.**
+
+The pool that escrows collateral needs an ERC-20 allowance. The **spot** half of the kit grants one
+before every order — `packages/core/src/execute.ts` calls
+`ensureAllowance(ctx, inputToken, p.pool, requiredAmount)`. The **event-contract** half has no
+equivalent:
+
+```bash
+grep -rn "approve\|allowance" packages/ec-core/src/   # → no results
+grep -rn "approve\|allowance" node_modules/@somnia-chain/markets-sdk/dist/   # → no results
+```
+
+So a wallet that follows the documentation, funds itself from the faucet, and places its first
+Event Contract order gets:
+
+```
+@somnia-chain/markets-sdk: placeBinaryOrder reverted: for an unknown reason.
+```
+
+which names nothing. Not the missing allowance, not the pool, not the token. We lost hours to it,
+and the only reason we found it was by comparing two wallets on-chain: ours held **zero** allowance
+to every candidate spender, while a wallet that had successfully traded held an **unlimited**
+allowance to the **pool address** specifically — not to `binaryModule`, not to `marketsCore`.
+
+**Reproduce** — pick any wallet from a recent binary `Fill` and compare:
+
+```bash
+# allowance(owner, spender) on tUSDC 0x70a86D8842FB63C4Ad2b7cdddF530eBf1BB25d8E
+cast call $TUSDC "allowance(address,address)" $WALLET $POOL --rpc-url https://api.infra.testnet.somnia.network
+```
+
+**Suggested fix:** call `ensureAllowance` from `ec-core`'s `placeLimit` exactly as the spot path
+does, or fail early with a message that names the missing approval. This is the difference between
+a developer's first order working and a developer concluding the venue is broken.
+
+**A second-order hazard worth documenting alongside it.** We first tried approving inline, then
+concluded it raced the SDK's nonce and moved it out of the loop. That conclusion was wrong — the
+reverts were finding #5 below, present in both runs we compared. Measured properly, an inline
+approval that waits for its receipt does **not** race the SDK: an approval fired mid-cycle between
+two orders, and the order immediately after it filled. Recording the correction because the kit's
+own nonce warning makes the wrong conclusion very easy to reach.
+
+---
+
+## 5. The venue's lot is coarser than `ec-core` configures, and the rejection is unnamed
+
+**Severity: high — it breaks any strategy that sizes continuously.**
+
+`packages/ec-core/src/config.ts` sets testnet `lot: 1` raw unit, on the note that *"the venue
+accepted orders down to 1 raw unit (0.000001 share), i.e. no lot constraint in practice."*
+
+It does not. Measured on one market at one price, same signer, same minute:
+
+| size | result |
+|---|---|
+| 1, 2, 3, 5, 8 | filled |
+| 3.71 | filled |
+| **9.749193184999303** | **reverted** |
+
+3.71 is exactly 3,710,000 raw units. 9.749193… floors to 9,749,193 — a multiple of nothing. The
+revert message is the same `for an unknown reason`.
+
+This is not an edge case for anyone sizing by a continuous rule. Fractional-Kelly sizing produces
+values like the third row on essentially every order, so the venue rejects everything until you
+discover the constraint by bisection.
+
+**Suggested fix:** publish the venue's real `lotSize` on the binary market row — spot and perp rows
+already carry `tickSize`, `lotSize` and `minQuantity`, and binary rows carry none, which is why
+`ec-core` has to guess. Failing that, correct the configured default and the comment.
+
+---
+
+## 6. `loadEnv()` runs too late to help a consumer decide dry-vs-live
+
+**Severity: medium — silent, and it makes live mode unreachable from `.env`.**
+
+`loadEnv()` lives inside `createExchange()`. But a consumer decides *whether to open a signer at
+all* before calling it — that is the entire point of `createExchange({ withSigner })`. So code that
+reads `process.env.PRIVATE_KEY` to choose its execution mode sees nothing, and silently stays
+read-only next to a `.env` containing exactly that key.
+
+Our runtime reported `no funded PRIVATE_KEY — staying dry` while sitting beside a populated `.env`.
+
+**Suggested fix:** export `loadEnv` from the package index (it is already exported from
+`config.ts` but is easy to miss), or note in the getting-started page that consumers must load
+`.env` themselves before branching on its contents.
+
+---
+
+## 7. `trader.faucet()` is unreachable for a pure taker
+
+**Severity: low, but it produces the most confusing possible failure.**
+
+`ec-core`'s faucet call lives inside `seedInventory`, which a taker never invokes — buying by
+crossing the book needs no minted inventory. So a wallet with gas and no tUSDC runs the loop
+perfectly, scans every market, evaluates every leg, and buys nothing, forever. It looks exactly
+like a bot that has found no opportunities.
+
+**Suggested fix:** expose the faucet on the exchange surface, or top up collateral in the same
+place gas is checked (`assertFunded` already reads the native balance and throws a good message
+when it is zero — collateral deserves the same).
+
+---
+
+## 8. Outcome balances lag the chain, so freshly minted inventory reads as zero
+
+**Severity: low, but it costs real collateral.**
+
+`OutcomeBalance` in the indexer lags the chain by seconds, like every other indexed table. A maker
+that mints a complete set and re-reads its inventory on the next cycle still sees zero, concludes
+it has none, and mints again. Measured: **40 complete sets bought to support 16 orders** — roughly
+400 collateral spent acquiring inventory already held.
+
+The indexer lag is documented generally; that it applies to *your own just-submitted mint* is the
+part that surprises. Worth one line beside the mint-a-pair recipe.
+
+---
+
+## 9. `ec-core` has no operator / session-key support
 
 **Severity: medium-high — it blocks the non-custodial UX story for event contracts specifically.**
 
@@ -132,7 +257,7 @@ series-scoped grant to be practical.
 
 ---
 
-## 5. Down-leg liquidity comes from resting `BUY_YES`, and the docs don't say so
+## 10. Down-leg liquidity comes from resting `BUY_YES`, and the docs don't say so
 
 **Severity: medium — causes systematic under-filling, silently.**
 
@@ -155,7 +280,7 @@ liquidity rather than a modelling error.
 
 ---
 
-## 6. The `Series` table is empty
+## 11. The `Series` table is empty
 
 **Severity: low, but it forces guesswork.**
 
@@ -170,7 +295,7 @@ grid from `intervalSec` on live rows. That matters because of finding #7.
 
 ---
 
-## 7. Retired and malformed series persist and are indistinguishable from live product
+## 12. Retired and malformed series persist and are indistinguishable from live product
 
 **Severity: medium for anyone calibrating or backtesting.**
 
@@ -194,7 +319,7 @@ consumers can scope to what the venue actually offers.
 
 ---
 
-## 8. Testnet tUSDC(6) vs mainnet USDso(18)
+## 13. Testnet tUSDC(6) vs mainnet USDso(18)
 
 **Severity: low — well documented, still a recurring foot-gun.**
 
