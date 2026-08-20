@@ -65,6 +65,8 @@ async function main(): Promise<void> {
   console.log("make money. This is that signal, and its calibration is in docs/EVIDENCE.md.");
   console.log("");
 
+  /** Markets minted this session, so indexer lag cannot cause a second mint. */
+  const mintedMarkets = new Set<string>();
   const posted: Posted[] = [];
   let failures = 0;
   let minted = 0;
@@ -131,12 +133,18 @@ async function main(): Promise<void> {
       // only ever a slow buyer, which is the taker path we already know loses.
       if (mint) {
         for (const need of plan.needsInventory) {
+          // Inventory is read from the indexer, which lags the chain by seconds,
+          // so a set minted moments ago still reads as zero and the market asks
+          // to be minted again. Measured: 40 complete sets bought to support 16
+          // orders — 400 collateral spent acquiring inventory already held.
+          if (mintedMarkets.has(need.marketId.toLowerCase())) continue;
           const r = await executor.mintSet(need.marketId, need.shares);
           if (r.rejected) {
             console.log(`      mint ${need.marketId.slice(-8)} failed: ${r.rejected}`);
             failures++;
           } else {
             minted++;
+            mintedMarkets.add(need.marketId.toLowerCase());
             console.log(`      minted a complete set for ${need.marketId.slice(-8)}`);
           }
         }
@@ -160,8 +168,19 @@ async function main(): Promise<void> {
           `${snap.windows.length}w · quoted ${plan.quotes.length} (${rested} rested) · ` +
           `pulled ${pulled} · need inventory ${plan.needsInventory.length} · skipped ${plan.skipped.length}`,
       );
-      if (cycle === 1 && plan.skipped.length > 0) {
-        for (const s of plan.skipped.slice(0, 4)) console.log(`      skip ${s.marketId.slice(-8)} ${s.leg}: ${s.reason}`);
+      // Roll the reasons up every cycle, not just the first. "skipped 8" with no
+      // reason is the same silence that made three earlier bugs take hours: a
+      // maker standing aside is making a decision, and a decision with no stated
+      // cause cannot be reviewed.
+      if (plan.skipped.length > 0) {
+        const why = new Map<string, number>();
+        for (const x of plan.skipped) {
+          const key = x.reason.replace(/\d+s to expiry/, "inside expiry headroom").replace(/[\d.]+/g, "N");
+          why.set(key, (why.get(key) ?? 0) + 1);
+        }
+        for (const [reason, n] of [...why].sort((a, b) => b[1] - a[1])) {
+          console.log(`      skip ×${n}: ${reason}`);
+        }
       }
     } catch (e) {
       failures++;
