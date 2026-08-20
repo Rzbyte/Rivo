@@ -24,7 +24,8 @@
     "check:kit": "tsx scripts/check-kit.ts",
     "link:kit": "npm install --no-save file:../dreamdex-bot-kit/packages/ec-core",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "doctor": "tsx scripts/doctor.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

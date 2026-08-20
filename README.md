@@ -239,7 +239,8 @@ npm run link:kit        # makes @dreamdex-bot-kit/ec-core resolvable
 npm run check:kit       # verify the exports Rivo calls still exist
 
 cp .env.example .env    # then set a funded testnet PRIVATE_KEY and DRY_RUN=false
-npm start -- --capital 50 --profile balanced
+npm run doctor          # checks signer, gas, collateral, venue and kit in one pass
+npm start -- --capital 5 --profile conservative
 ```
 
 `ec-core` is deliberately **not** a hard dependency: it ships as raw TypeScript from a private
@@ -269,6 +270,7 @@ validates against the real thing.
 | `npm run concentration -- --days 30` | whether losses are a trade-weighting artefact |
 | `npm run maker -- --days 30` | the maker replay, and its methodological limit |
 | `npm test` · `npm run typecheck` | 99 tests · strict TypeScript, no emit |
+| `npm run doctor` | can Rivo trade right now — signer, gas, collateral, venue, kit |
 | `npm run check:kit` · `npm run link:kit` | verify / install the optional bot kit |
 
 Every command except `link:kit` runs with no private key. All `--days` commands read public
