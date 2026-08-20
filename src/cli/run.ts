@@ -87,10 +87,21 @@ async function main(): Promise<void> {
   process.on("SIGTERM", () => stop("SIGTERM"));
 
   let consecutiveErrors = 0;
+  // Generous against a normal cycle (seconds) and decisive against a hang.
+  const CYCLE_DEADLINE_MS = Math.max(120_000, intervalMs * 3);
   while (!stopping) {
     const started = Date.now();
     try {
-      const r = await cycle(state, { idx, executor, store, log, profile: prof, out: (l) => console.log(l) });
+      // A watchdog above the per-request timeouts. Those bound each read; this
+      // bounds the CYCLE, so a stall anywhere — an unbounded call added later, a
+      // wallet library that swallows its own abort, a pathological retry chain —
+      // still ends in an error the loop can recover from rather than a process
+      // that sleeps forever holding its state file frozen. Measured: a live run
+      // hung exactly this way for two hours and looked healthy the whole time.
+      const r = await withDeadline(
+        cycle(state, { idx, executor, store, log, profile: prof, out: (l) => console.log(l) }),
+        CYCLE_DEADLINE_MS,
+      );
       consecutiveErrors = 0;
       heartbeat(r, state.capital, equityOf(state), state.realizedPnl, state.open.length);
     } catch (e) {
@@ -115,6 +126,31 @@ async function main(): Promise<void> {
 
   console.log("");
   console.log(`stopped after ${state.cycles} cycles · equity ${money(equityOf(state))} · realised ${money(state.realizedPnl)}`);
+}
+
+/**
+ * Reject if `work` has not settled within `ms`.
+ *
+ * The underlying work is NOT cancelled — it cannot be, once it is in flight —
+ * so the timer is unref'd and the loop simply stops waiting on it. That is the
+ * right trade: an abandoned cycle may still write state it had already computed,
+ * and the next cycle reconciles against the chain before trusting any of it.
+ */
+function withDeadline<T>(work: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`cycle exceeded ${(ms / 1000).toFixed(0)}s deadline — abandoning it`)), ms);
+    timer.unref?.();
+    work.then(
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(timer);
+        reject(e);
+      },
+    );
+  });
 }
 
 function heartbeat(r: CycleReport, capital: number, equity: number, realized: number, open: number): void {

@@ -338,6 +338,33 @@ saves the next person the same detour.
 
 ---
 
+## 14. `DreamDexRest` issues an unbounded `fetch`
+
+`packages/core/src/rest.ts:139` calls `fetch` with no `AbortSignal`, so a request that connects
+and then stalls never resolves and never rejects. Every other network path in the kit is bounded —
+viem's `http()` transport defaults to a 10s timeout and `waitForTransactionReceipt` to 180s — which
+makes this one the exception rather than the pattern, and the easiest kind of gap to miss.
+
+The failure mode is specific and quiet. A stalled read does not throw, so a caller's `try/catch`
+never runs, its retry logic never runs, and its process stays alive at zero CPU holding an open
+socket. Nothing that inspects the process reports a problem.
+
+We hit exactly this shape in **our own** indexer client, not in the kit — which is why it is worth
+reporting rather than shrugging at. A live Rivo runtime sat frozen for two hours: state file
+untouched, three sockets open, `utime` unchanged between samples, and every liveness check that
+looked at the process said healthy. It had stopped trading, settling and claiming. The fix was one
+line per call site:
+
+```ts
+const res = await fetch(url, { ..., signal: AbortSignal.timeout(20_000) });
+```
+
+**Suggestion:** give `DreamDexRest` a `timeoutMs` option defaulting to something finite, and say in
+the docs that an autonomous bot must bound every read. Bots built on this kit are explicitly meant
+to run unattended, and unattended is precisely when nobody notices a hang.
+
+---
+
 ## Smaller notes
 
 - **`ec-oracle-follow`'s README is the most useful document in the kit.** Its honesty about the

@@ -16,17 +16,54 @@ export class IndexerError extends Error {
   }
 }
 
-async function gql<T>(url: string, op: string, query: string, variables?: unknown): Promise<T> {
+/**
+ * How long a single indexer read may take before it is abandoned.
+ *
+ * There is no such thing as an unbounded wait in an autonomous system, only a
+ * wait nobody has measured. A live runtime hung here for two hours: zero CPU,
+ * three open sockets, a `fetch` that never resolved and never rejected. It kept
+ * its process alive and its state file frozen, so every liveness check that
+ * looked at the process said healthy while the portfolio silently stopped
+ * settling, claiming and trading. A stalled read has to become an error.
+ */
+export const REQUEST_TIMEOUT_MS = 20_000;
+/** Transient failures are the normal case against a public indexer, not the exception. */
+const RETRIES = 2;
+
+const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+
+async function gqlOnce<T>(url: string, op: string, query: string, variables?: unknown): Promise<T> {
+  // AbortSignal.timeout is the only thing that actually bounds a fetch: a
+  // Promise.race leaves the request running and the socket held.
   const res = await fetch(url, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(variables ? { query, variables } : { query }),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
   if (!res.ok) throw new IndexerError(op, `HTTP ${res.status}`);
   const body = (await res.json()) as { data?: T; errors?: { message: string }[] };
   if (body.errors?.length) throw new IndexerError(op, body.errors.map((e) => e.message).join("; "));
   if (!body.data) throw new IndexerError(op, "no data in response");
   return body.data;
+}
+
+async function gql<T>(url: string, op: string, query: string, variables?: unknown): Promise<T> {
+  let last: unknown;
+  for (let attempt = 0; attempt <= RETRIES; attempt++) {
+    try {
+      return await gqlOnce<T>(url, op, query, variables);
+    } catch (e) {
+      last = e;
+      // A GraphQL-level error is the server answering; retrying re-asks a
+      // question already answered. Only transport failures are worth another go.
+      const transport = e instanceof IndexerError ? /HTTP 5\d\d/.test(e.message) : true;
+      if (!transport || attempt === RETRIES) break;
+      await sleep(400 * 2 ** attempt);
+    }
+  }
+  const detail = last instanceof Error ? last.message : String(last);
+  throw last instanceof IndexerError ? last : new IndexerError(op, `${detail} (after ${RETRIES + 1} attempts)`);
 }
 
 /** One executed trade. `price` is an Up probability. */

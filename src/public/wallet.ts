@@ -151,6 +151,9 @@ async function rpc<T>(net: Network, method: string, params: unknown[]): Promise<
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ jsonrpc: "2.0", id: ++rpcId, method, params }),
+    // Bounded, for the same reason every read in this project is: a balance that
+    // never arrives must become an error the UI can show, not a spinner forever.
+    signal: AbortSignal.timeout(15_000),
   });
   if (!res.ok) throw new WalletError("RPC", `${method} → HTTP ${res.status}`);
   const body = (await res.json()) as { result?: T; error?: { message: string } };

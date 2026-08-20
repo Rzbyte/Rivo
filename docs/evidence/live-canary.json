@@ -1,0 +1,183 @@
+{
+  "generatedAt": "2026-08-20T18:16:47.426Z",
+  "network": "testnet",
+  "venueId": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
+  "wallet": {
+    "address": "0x6730d3a2a217108ab53ccfe60ffdad05d3c124e5",
+    "url": "https://shannon-explorer.somnia.network/address/0x6730d3a2a217108ab53ccfe60ffdad05d3c124e5",
+    "gas": 49.270691912,
+    "gasSymbol": "STT",
+    "collateral": 9911.48461,
+    "collateralSymbol": "tUSDC"
+  },
+  "authority": {
+    "kind": "raw-key",
+    "boundedOnChain": false,
+    "bounds": "Full account authority. Capital ceiling, delta budgets, drawdown breaker and kill switch are enforced by Rivo, not by the chain."
+  },
+  "runtime": {
+    "cycles": 13,
+    "startedAt": 1787249190,
+    "lastCycleAt": 1787249779,
+    "capital": 20,
+    "contributed": 41.27516579346404,
+    "cash": 37.64133,
+    "realizedPnl": -9.67718514632194,
+    "halted": null,
+    "dryRun": false
+  },
+  "ledger": {
+    "identity": "cash + open cost == capital + contributed + realised",
+    "cash": 37.64133,
+    "openCost": 13.956650647142101,
+    "capital": 20,
+    "contributed": 41.27516579346404,
+    "realizedPnl": -9.67718514632194,
+    "imbalance": 7.105427357601002e-15,
+    "balances": true
+  },
+  "execution": {
+    "positionsOpenedByRivo": 3,
+    "withTransactionHash": 3,
+    "receipts": [
+      {
+        "hash": "0x6c703e254f1ae1a6a9e65d64f0021ebec936be9f5cde1c4977e57e5bdf2da1e8",
+        "url": "https://shannon-explorer.somnia.network/tx/0x6c703e254f1ae1a6a9e65d64f0021ebec936be9f5cde1c4977e57e5bdf2da1e8",
+        "found": true,
+        "succeeded": true,
+        "block": 466767414,
+        "gasUsed": 628682,
+        "events": 8,
+        "to": "0xae9c15cce0ab5740cba3c0284943da55d9a5796d"
+      },
+      {
+        "hash": "0x1033a547baf5f9f29377688a9b9fc25d6b926454745902bb5eb56a5535f1ca79",
+        "url": "https://shannon-explorer.somnia.network/tx/0x1033a547baf5f9f29377688a9b9fc25d6b926454745902bb5eb56a5535f1ca79",
+        "found": true,
+        "succeeded": true,
+        "block": 466769412,
+        "gasUsed": 426781,
+        "events": 8,
+        "to": "0xf501c195ecf6b15676cd6b5419986ac94b2022f3"
+      },
+      {
+        "hash": "0xa1d497ebd870f98d14405d2d7832a17e62b1f962621276214bdfb4603e8290c1",
+        "url": "https://shannon-explorer.somnia.network/tx/0xa1d497ebd870f98d14405d2d7832a17e62b1f962621276214bdfb4603e8290c1",
+        "found": true,
+        "succeeded": true,
+        "block": 466769789,
+        "gasUsed": 628682,
+        "events": 8,
+        "to": "0x3b0f94e52f49f4aeef3231efc9381d61098199bf"
+      }
+    ]
+  },
+  "positions": {
+    "open": [
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004746",
+        "leg": "BTC 1d UP",
+        "shares": 8.96,
+        "cost": 8.931111539501524,
+        "expiry": 1787270400,
+        "adopted": true,
+        "txHash": null
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004d00",
+        "leg": "ETH 4h UP",
+        "shares": 5,
+        "cost": 2.6668691076405766,
+        "expiry": 1787256000,
+        "adopted": true,
+        "txHash": null
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004e35",
+        "leg": "BTC 1h UP",
+        "shares": 1.67,
+        "cost": 0.5678,
+        "expiry": 1787252400,
+        "adopted": false,
+        "txHash": "0x6c703e254f1ae1a6a9e65d64f0021ebec936be9f5cde1c4977e57e5bdf2da1e8"
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004cff",
+        "leg": "BTC 4h DOWN",
+        "shares": 2.55,
+        "cost": 1.09395,
+        "expiry": 1787256000,
+        "adopted": false,
+        "txHash": "0x1033a547baf5f9f29377688a9b9fc25d6b926454745902bb5eb56a5535f1ca79"
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004e36",
+        "leg": "ETH 1h UP",
+        "shares": 2.62,
+        "cost": 0.6969200000000001,
+        "expiry": 1787252400,
+        "adopted": false,
+        "txHash": "0xa1d497ebd870f98d14405d2d7832a17e62b1f962621276214bdfb4603e8290c1"
+      }
+    ],
+    "settled": [],
+    "onChainOutcomeBalances": 38
+  },
+  "stages": [
+    {
+      "name": "DISCOVER",
+      "proven": true,
+      "evidence": "13 cycles against the live venue"
+    },
+    {
+      "name": "ANALYZE",
+      "proven": true,
+      "evidence": "decision log at ./data-canary/decisions.jsonl"
+    },
+    {
+      "name": "ALLOCATE",
+      "proven": true,
+      "evidence": "3 positions opened by the allocator"
+    },
+    {
+      "name": "RISK CHECK",
+      "proven": true,
+      "evidence": "within limits, breaker armed"
+    },
+    {
+      "name": "EXECUTE",
+      "proven": true,
+      "evidence": "3 positions carry an on-chain transaction hash"
+    },
+    {
+      "name": "CONFIRM",
+      "proven": true,
+      "evidence": "3/3 receipts confirm status 0x1"
+    },
+    {
+      "name": "RECONCILE",
+      "proven": true,
+      "evidence": "2 positions adopted from chain, 38 outcome balances read"
+    },
+    {
+      "name": "PERSIST",
+      "proven": true,
+      "evidence": "state at ./data-canary/state.json, 13 cycles"
+    },
+    {
+      "name": "LEDGER",
+      "proven": true,
+      "evidence": "imbalance 7.11e-15"
+    },
+    {
+      "name": "SETTLE",
+      "proven": false,
+      "evidence": "0 positions resolved against the venue's oracle"
+    },
+    {
+      "name": "CLAIM",
+      "proven": true,
+      "evidence": "last sweep 2026-08-20T18:06:30.000Z"
+    }
+  ]
+}

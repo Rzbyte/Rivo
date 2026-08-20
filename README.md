@@ -56,7 +56,7 @@ alternative explanations we eliminated first: **[docs/EVIDENCE.md](docs/EVIDENCE
 npm test
 ```
 
-**115 tests** across the eight things that either move money or produce a published number: the
+**171 tests** across the things that either move money or produce a published number: the
 dual-crossing-path book, the fair-value model and volatility estimator, the scoring rules behind
 every figure in [EVIDENCE.md](docs/EVIDENCE.md), the capital allocator, the position manager, settlement, and
 on-chain reconciliation.
@@ -225,7 +225,7 @@ src/
   web/         cockpit server + static snapshot export
   public/      the public pricing page — browser bundle, shares the runtime's math
   cli/         start · web · report · calibrate · scan · allocate · backtest · diagnose · band · maker · concentration
-  *.test.ts    115 tests, colocated with what they cover
+  *.test.ts    171 tests, colocated with what they cover
 ```
 
 The cycle:
@@ -305,7 +305,8 @@ validates against the real thing.
 | `npm run maker:live -- --live --mint` | two-sided quoting on testnet — measured, and negative |
 | `npm run coherence -- --days 30` | cross-tenor arbitrage bound — derived, tested, rejected on size |
 | `npm run build:public` | build the public page — static, no backend |
-| `npm test` · `npm run typecheck` | 115 tests · strict TypeScript, no emit |
+| `npm run proof` | capture the live execution chain as a checkable artefact |
+| `npm test` · `npm run typecheck` | 171 tests · strict TypeScript, no emit |
 | `npm run doctor` | can Rivo trade right now — signer, gas, collateral, venue, kit |
 | `npm run check:kit` · `npm run link:kit` | verify / install the optional bot kit |
 
