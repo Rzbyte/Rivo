@@ -1,0 +1,446 @@
+{
+  "generatedAt": "2026-08-20T12:08:40.743Z",
+  "days": 30,
+  "skewSec": 15,
+  "grossProfitCeiling": 12.588000000000001,
+  "medianSizeShares": 2,
+  "perOccurrence": 0.05521052631578948,
+  "windowsScanned": 6096,
+  "pairsStructural": 1834,
+  "pairsBothTraded": 83,
+  "pairsWithReferences": 83,
+  "tenorCombos": [
+    {
+      "combo": "900s+3600s",
+      "n": 1132
+    },
+    {
+      "combo": "900s+14400s",
+      "n": 287
+    },
+    {
+      "combo": "3600s+14400s",
+      "n": 285
+    },
+    {
+      "combo": "14400s+86400s",
+      "n": 44
+    },
+    {
+      "combo": "900s+86400s",
+      "n": 44
+    },
+    {
+      "combo": "3600s+86400s",
+      "n": 42
+    }
+  ],
+  "observations": 23431,
+  "violations": 719,
+  "violationRate": 0.030685843540608597,
+  "executableViolations": 228,
+  "worst": [
+    {
+      "pair": {
+        "asset": "BTC",
+        "expiry": 1784822400,
+        "lo": {
+          "marketId": "0x0000000000000000000000000000000000000000000000000000000000000201",
+          "asset": "BTC",
+          "intervalSec": 3600,
+          "tradingStart": 1784818800,
+          "expiry": 1784822400,
+          "status": "Finalized",
+          "strike": "0",
+          "winningOutcome": 0,
+          "finalized": true,
+          "voided": false,
+          "tradeCount": 594
+        },
+        "hi": {
+          "marketId": "0x0000000000000000000000000000000000000000000000000000000000000209",
+          "asset": "BTC",
+          "intervalSec": 900,
+          "tradingStart": 1784821500,
+          "expiry": 1784822400,
+          "status": "Finalized",
+          "strike": "0",
+          "winningOutcome": 0,
+          "finalized": true,
+          "voided": false,
+          "tradeCount": 139
+        },
+        "refLo": 6490465,
+        "refHi": 6490657
+      },
+      "at": 1784821972,
+      "skewSec": 12,
+      "pLo": 0.727,
+      "pHi": 0.865,
+      "gap": -0.138,
+      "size": 1
+    },
+    {
+      "pair": {
+        "asset": "BTC",
+        "expiry": 1784822400,
+        "lo": {
+          "marketId": "0x0000000000000000000000000000000000000000000000000000000000000201",
+          "asset": "BTC",
+          "intervalSec": 3600,
+          "tradingStart": 1784818800,
+          "expiry": 1784822400,
+          "status": "Finalized",
+          "strike": "0",
+          "winningOutcome": 0,
+          "finalized": true,
+          "voided": false,
+          "tradeCount": 594
+        },
+        "hi": {
+          "marketId": "0x0000000000000000000000000000000000000000000000000000000000000209",
+          "asset": "BTC",
+          "intervalSec": 900,
+          "tradingStart": 1784821500,
+          "expiry": 1784822400,
+          "status": "Finalized",
+          "strike": "0",
+          "winningOutcome": 0,
+          "finalized": true,
+          "voided": false,
+          "tradeCount": 139
+        },
+        "refLo": 6490465,
+        "refHi": 6490657
+      },
+      "at": 1784822058,
+      "skewSec": 13,
+      "pLo": 0.735,
+      "pHi": 0.87,
+      "gap": -0.135,
+      "size": 1
+    },
+    {
+      "pair": {
+        "asset": "BTC",
+        "expiry": 1784822400,
+        "lo": {
+          "marketId": "0x0000000000000000000000000000000000000000000000000000000000000201",
+          "asset": "BTC",
+          "intervalSec": 3600,
+          "tradingStart": 1784818800,
+          "expiry": 1784822400,
+          "status": "Finalized",
+          "strike": "0",
+          "winningOutcome": 0,
+          "finalized": true,
+          "voided": false,
+          "tradeCount": 594
+        },
+        "hi": {
+          "marketId": "0x0000000000000000000000000000000000000000000000000000000000000209",
+          "asset": "BTC",
+          "intervalSec": 900,
+          "tradingStart": 1784821500,
+          "expiry": 1784822400,
+          "status": "Finalized",
+          "strike": "0",
+          "winningOutcome": 0,
+          "finalized": true,
+          "voided": false,
+          "tradeCount": 139
+        },
+        "refLo": 6490465,
+        "refHi": 6490657
+      },
+      "at": 1784822058,
+      "skewSec": 8,
+      "pLo": 0.735,
+      "pHi": 0.865,
+      "gap": -0.13,
+      "size": 1
+    },
+    {
+      "pair": {
+        "asset": "BTC",
+        "expiry": 1784822400,
+        "lo": {
+          "marketId": "0x0000000000000000000000000000000000000000000000000000000000000201",
+          "asset": "BTC",
+          "intervalSec": 3600,
+          "tradingStart": 1784818800,
+          "expiry": 1784822400,
+          "status": "Finalized",
+          "strike": "0",
+          "winningOutcome": 0,
+          "finalized": true,
+          "voided": false,
+          "tradeCount": 594
+        },
+        "hi": {
+          "marketId": "0x0000000000000000000000000000000000000000000000000000000000000209",
+          "asset": "BTC",
+          "intervalSec": 900,
+          "tradingStart": 1784821500,
+          "expiry": 1784822400,
+          "status": "Finalized",
+          "strike": "0",
+          "winningOutcome": 0,
+          "finalized": true,
+          "voided": false,
+          "tradeCount": 139
+        },
+        "refLo": 6490465,
+        "refHi": 6490657
+      },
+      "at": 1784821974,
+      "skewSec": 10,
+      "pLo": 0.727,
+      "pHi": 0.847,
+      "gap": -0.12,
+      "size": 1
+    },
+    {
+      "pair": {
+        "asset": "BTC",
+        "expiry": 1784822400,
+        "lo": {
+          "marketId": "0x0000000000000000000000000000000000000000000000000000000000000201",
+          "asset": "BTC",
+          "intervalSec": 3600,
+          "tradingStart": 1784818800,
+          "expiry": 1784822400,
+          "status": "Finalized",
+          "strike": "0",
+          "winningOutcome": 0,
+          "finalized": true,
+          "voided": false,
+          "tradeCount": 594
+        },
+        "hi": {
+          "marketId": "0x0000000000000000000000000000000000000000000000000000000000000209",
+          "asset": "BTC",
+          "intervalSec": 900,
+          "tradingStart": 1784821500,
+          "expiry": 1784822400,
+          "status": "Finalized",
+          "strike": "0",
+          "winningOutcome": 0,
+          "finalized": true,
+          "voided": false,
+          "tradeCount": 139
+        },
+        "refLo": 6490465,
+        "refHi": 6490657
+      },
+      "at": 1784821966,
+      "skewSec": 13,
+      "pLo": 0.775,
+      "pHi": 0.885,
+      "gap": -0.10999999999999999,
+      "size": 3
+    },
+    {
+      "pair": {
+        "asset": "BTC",
+        "expiry": 1784822400,
+        "lo": {
+          "marketId": "0x0000000000000000000000000000000000000000000000000000000000000201",
+          "asset": "BTC",
+          "intervalSec": 3600,
+          "tradingStart": 1784818800,
+          "expiry": 1784822400,
+          "status": "Finalized",
+          "strike": "0",
+          "winningOutcome": 0,
+          "finalized": true,
+          "voided": false,
+          "tradeCount": 594
+        },
+        "hi": {
+          "marketId": "0x0000000000000000000000000000000000000000000000000000000000000209",
+          "asset": "BTC",
+          "intervalSec": 900,
+          "tradingStart": 1784821500,
+          "expiry": 1784822400,
+          "status": "Finalized",
+          "strike": "0",
+          "winningOutcome": 0,
+          "finalized": true,
+          "voided": false,
+          "tradeCount": 139
+        },
+        "refLo": 6490465,
+        "refHi": 6490657
+      },
+      "at": 1784822194,
+      "skewSec": 14,
+      "pLo": 0.875,
+      "pHi": 0.985,
+      "gap": -0.10999999999999999,
+      "size": 3
+    },
+    {
+      "pair": {
+        "asset": "BTC",
+        "expiry": 1784822400,
+        "lo": {
+          "marketId": "0x0000000000000000000000000000000000000000000000000000000000000201",
+          "asset": "BTC",
+          "intervalSec": 3600,
+          "tradingStart": 1784818800,
+          "expiry": 1784822400,
+          "status": "Finalized",
+          "strike": "0",
+          "winningOutcome": 0,
+          "finalized": true,
+          "voided": false,
+          "tradeCount": 594
+        },
+        "hi": {
+          "marketId": "0x0000000000000000000000000000000000000000000000000000000000000209",
+          "asset": "BTC",
+          "intervalSec": 900,
+          "tradingStart": 1784821500,
+          "expiry": 1784822400,
+          "status": "Finalized",
+          "strike": "0",
+          "winningOutcome": 0,
+          "finalized": true,
+          "voided": false,
+          "tradeCount": 139
+        },
+        "refLo": 6490465,
+        "refHi": 6490657
+      },
+      "at": 1784821752,
+      "skewSec": 14,
+      "pLo": 0.575,
+      "pHi": 0.675,
+      "gap": -0.10000000000000009,
+      "size": 1
+    },
+    {
+      "pair": {
+        "asset": "BTC",
+        "expiry": 1784822400,
+        "lo": {
+          "marketId": "0x0000000000000000000000000000000000000000000000000000000000000201",
+          "asset": "BTC",
+          "intervalSec": 3600,
+          "tradingStart": 1784818800,
+          "expiry": 1784822400,
+          "status": "Finalized",
+          "strike": "0",
+          "winningOutcome": 0,
+          "finalized": true,
+          "voided": false,
+          "tradeCount": 594
+        },
+        "hi": {
+          "marketId": "0x0000000000000000000000000000000000000000000000000000000000000209",
+          "asset": "BTC",
+          "intervalSec": 900,
+          "tradingStart": 1784821500,
+          "expiry": 1784822400,
+          "status": "Finalized",
+          "strike": "0",
+          "winningOutcome": 0,
+          "finalized": true,
+          "voided": false,
+          "tradeCount": 139
+        },
+        "refLo": 6490465,
+        "refHi": 6490657
+      },
+      "at": 1784822041,
+      "skewSec": 12,
+      "pLo": 0.735,
+      "pHi": 0.835,
+      "gap": -0.09999999999999998,
+      "size": 2
+    },
+    {
+      "pair": {
+        "asset": "BTC",
+        "expiry": 1784822400,
+        "lo": {
+          "marketId": "0x0000000000000000000000000000000000000000000000000000000000000201",
+          "asset": "BTC",
+          "intervalSec": 3600,
+          "tradingStart": 1784818800,
+          "expiry": 1784822400,
+          "status": "Finalized",
+          "strike": "0",
+          "winningOutcome": 0,
+          "finalized": true,
+          "voided": false,
+          "tradeCount": 594
+        },
+        "hi": {
+          "marketId": "0x0000000000000000000000000000000000000000000000000000000000000209",
+          "asset": "BTC",
+          "intervalSec": 900,
+          "tradingStart": 1784821500,
+          "expiry": 1784822400,
+          "status": "Finalized",
+          "strike": "0",
+          "winningOutcome": 0,
+          "finalized": true,
+          "voided": false,
+          "tradeCount": 139
+        },
+        "refLo": 6490465,
+        "refHi": 6490657
+      },
+      "at": 1784822053,
+      "skewSec": 5,
+      "pLo": 0.735,
+      "pHi": 0.835,
+      "gap": -0.09999999999999998,
+      "size": 1
+    },
+    {
+      "pair": {
+        "asset": "BTC",
+        "expiry": 1784822400,
+        "lo": {
+          "marketId": "0x0000000000000000000000000000000000000000000000000000000000000201",
+          "asset": "BTC",
+          "intervalSec": 3600,
+          "tradingStart": 1784818800,
+          "expiry": 1784822400,
+          "status": "Finalized",
+          "strike": "0",
+          "winningOutcome": 0,
+          "finalized": true,
+          "voided": false,
+          "tradeCount": 594
+        },
+        "hi": {
+          "marketId": "0x0000000000000000000000000000000000000000000000000000000000000209",
+          "asset": "BTC",
+          "intervalSec": 900,
+          "tradingStart": 1784821500,
+          "expiry": 1784822400,
+          "status": "Finalized",
+          "strike": "0",
+          "winningOutcome": 0,
+          "finalized": true,
+          "voided": false,
+          "tradeCount": 139
+        },
+        "refLo": 6490465,
+        "refHi": 6490657
+      },
+      "at": 1784821568,
+      "skewSec": 11,
+      "pLo": 0.395,
+      "pHi": 0.485,
+      "gap": -0.08999999999999997,
+      "size": 4
+    }
+  ],
+  "roundTripCost": 0.024,
+  "skewToleranceSec": 15
+}

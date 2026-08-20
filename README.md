@@ -9,6 +9,16 @@ redeems what settles, and redeploys the proceeds — without being prompted.
 Built on the official [`dreamdex-bot-kit`](https://github.com/somnia-chain/dreamdex-bot-kit).
 Somnia × DreamDEX Event Contracts Hackathon.
 
+> **What is the kit's, and what is Rivo's.** Fair probability from an underlying, market discovery,
+> edge gating, settlement and claim primitives, and the Event Contract bot scaffolding all already
+> exist in the kit — `ec-oracle-follow` and `ec-core` in particular. Rivo credits and extends them
+> rather than claiming them. What Rivo adds is the layer above: a calibration and evidence harness
+> for Event Contracts, cross-market capital allocation, portfolio-wide risk, post-entry position
+> management, autonomous lifecycle orchestration, on-chain state reconciliation, explainability, and
+> a consumer-facing product.
+>
+> **Rivo is the portfolio and evidence layer for DreamDEX Event Contracts.**
+
 ---
 
 ## The honest headline
@@ -189,6 +199,7 @@ src/
   portfolio/   risk profiles · delta & expiry-bucket risk · capital allocator
   calibration/ dataset builder · scoring rules · calibration maps
   backtest/    fill-grounded replay · competing sizers · diagnostics · maker replay
+  research/    cross-tenor coherence — the derivation and its test
   runtime/     durable state · execution adapter · position manager · reconciliation · the cycle
   web/         dashboard server + static snapshot export
   cli/         start · web · report · calibrate · scan · allocate · backtest · diagnose · band · maker · concentration
@@ -269,6 +280,7 @@ validates against the real thing.
 | `npm run diagnose -- --days 30` | why taking liquidity loses |
 | `npm run concentration -- --days 30` | whether losses are a trade-weighting artefact |
 | `npm run maker -- --days 30` | the maker replay, and its methodological limit |
+| `npm run coherence -- --days 30` | cross-tenor arbitrage bound — derived, tested, rejected on size |
 | `npm test` · `npm run typecheck` | 99 tests · strict TypeScript, no emit |
 | `npm run doctor` | can Rivo trade right now — signer, gas, collateral, venue, kit |
 | `npm run check:kit` · `npm run link:kit` | verify / install the optional bot kit |

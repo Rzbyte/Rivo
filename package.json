@@ -27,7 +27,8 @@
     "test:watch": "vitest",
     "doctor": "tsx scripts/doctor.ts",
     "faucet": "tsx scripts/faucet.ts",
-    "approve": "tsx scripts/approve.ts"
+    "approve": "tsx scripts/approve.ts",
+    "coherence": "tsx src/cli/coherence.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

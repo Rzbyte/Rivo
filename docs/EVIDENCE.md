@@ -201,7 +201,92 @@ npm run backtest -- --days 30 --capital 50
 
 ---
 
-## 5. Making is unproven — and this replay cannot settle it
+## 5. Cross-tenor coherence: real, and too small to trade
+
+DreamDEX lists a rolling term structure — `{BTC, ETH} × {15m, 1h, 4h, 1d}` — on two underlyings.
+That raises an obvious question: are the probabilities across tenors mutually consistent, and if not,
+is the inconsistency tradeable *without* a directional view? That would matter, because §3 shows the
+directional view is what loses money.
+
+### The derivation, before the data
+
+Window *i* settles 1 if `S(T_i) ≥ R_i`, where `R_i` is that window's own resolved opening price.
+Different tenors compare against different levels, which kills the relation people reach for first:
+
+> `P(1h UP) ≥ P(15m UP)` — **not valid.** Neither event contains the other, and the references move
+> independently. Any monotonicity assumed across tenors is unfounded.
+
+What *is* valid needs two windows on the **same asset sharing the same expiry instant**, with
+references `R_lo < R_hi`. Then `{S(T) ≥ R_hi} ⊂ {S(T) ≥ R_lo}`, so
+
+```
+p_lo ≥ p_hi
+```
+
+and this is **model-free** — set inclusion, no volatility or drift assumption. As a trade it is
+direction-neutral by construction. Buy lo-UP and hi-DOWN:
+
+| terminal price | lo-UP | hi-DOWN | total |
+|---|---|---|---|
+| `≥ R_hi` | 1 | 0 | **1** |
+| `[R_lo, R_hi)` | 1 | 1 | **2** |
+| `< R_lo` | 0 | 1 | **1** |
+
+Minimum payoff 1 in every state, so the package must cost ≥ 1. Its cost is
+`ask(lo-UP) + ask(hi-DOWN) = 1 + (p_lo − p_hi)`, below 1 exactly when the bound breaks.
+
+Two things deliberately **not** claimed. *Intra-market arbitrage* is structurally impossible: Up and
+Down trade on one book where Down is 1 − Up, so `ask(UP) + ask(DOWN) = 1 + (ask − bid) ≥ 1` always.
+And a book disagreeing with our *fair value* is a **model-consistency** violation, not arbitrage —
+trading it is the directional bet §3 already measured as unprofitable. Only the bound above was ever
+direction-neutral, so only it was tested.
+
+### The result
+
+| | |
+|---|---|
+| settled windows on listed cadences | 6,096 |
+| same-asset same-expiry pairs | **1,834** |
+| …where both legs ever traded | **83** |
+| simultaneous observations (≤15s apart) | 23,431 |
+| violations (`p_lo < p_hi`) | 719 — **3.07%** |
+| …clearing the 0.024 round trip | 228 |
+| **gross profit if every one taken** | **12.59 collateral over 30 days** |
+
+The bound *is* violated, and the violations are real: the worst case was verified end to end — same
+expiry instant (16:00:00 UTC), references $64,904.65 and $64,906.57, both settling UP, priced 0.727
+and 0.865 twelve seconds apart. Two near-identical questions, fourteen cents apart.
+
+**But it is not material.** 0.42/day at a ceiling that assumes we could have been the taker on both
+legs of trades we merely observed, that taking them would not have moved the prices being measured,
+and that fills 15 seconds apart are simultaneous — on a 15-minute window, 2% of its life.
+
+Sensitivity to that last assumption, which is the one doing the most work:
+
+| simultaneity | observations | violations | rate | clearing round trip |
+|---|---|---|---|---|
+| 5s | 8,281 | 238 | 2.87% | 61 |
+| 15s | 23,431 | 719 | 3.07% | 228 |
+| 30s | 45,979 | 1,479 | 3.22% | 552 |
+| 300s | 430,511 | 20,609 | 4.79% | 13,648 |
+
+The rate rises with tolerance, which is the signature of staleness rather than arbitrage — at 300s
+most "violations" are just prices from different moments. That a residual ~2.9% survives genuine
+5-second simultaneity is what makes the finding real rather than an artefact.
+
+**The binding constraint is liquidity, not coherence.** Of 1,834 structural pairs, only **83** had
+both legs trade at all. A relative-value trade needs two fills; this venue struggles to supply one.
+
+Recorded as a property of the venue, not adopted as a strategy. It does not enter the Opportunity
+Engine.
+
+```bash
+npm run coherence -- --days 30 --skew 15
+```
+
+---
+
+## 6. Making is unproven — and this replay cannot settle it
 
 Mint a complete set for 1 collateral, sell the Up at your ask and the Down at `1 − bid`, receive
 `1 + spread`, hold nothing at settlement. Zero fees mean the spread is not handed back. That is a
@@ -228,7 +313,7 @@ npm run maker -- --days 30
 
 ---
 
-## 6. Live behaviour
+## 7. Live behaviour
 
 The runtime has been verified end to end in dry mode against the live venue.
 
