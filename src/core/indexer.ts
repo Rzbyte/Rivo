@@ -4,6 +4,7 @@
 
 import { endpoints, feedId, network, type Asset, type Network } from "./config.js";
 import type { RestingOrder } from "../engine/book.js";
+import { timeoutSignal } from "./timeout.js";
 
 // scaleReference lives in venue.js — pure, so the public page shares the exact
 // implementation rather than a copy that could drift from this one.
@@ -39,7 +40,7 @@ async function gqlOnce<T>(url: string, op: string, query: string, variables?: un
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(variables ? { query, variables } : { query }),
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    signal: timeoutSignal(REQUEST_TIMEOUT_MS),
   });
   if (!res.ok) throw new IndexerError(op, `HTTP ${res.status}`);
   const body = (await res.json()) as { data?: T; errors?: { message: string }[] };

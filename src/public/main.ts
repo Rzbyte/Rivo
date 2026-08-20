@@ -371,9 +371,19 @@ async function boot(): Promise<void> {
   }
 
   render();
-  await Promise.all([loadEvidence(), discover().then((b) => void (state.backend = b))]);
-  render();
-  await tick();
+
+  // Start the venue scan IMMEDIATELY, and let the evidence files and the backend
+  // probe resolve alongside it. Awaiting them first cost the landing page
+  // several seconds before its first request even went out — the backend probe
+  // in particular walks localhost candidates that are absent for every visitor
+  // who is not running Rivo locally, and none of it is needed to render the hero.
+  const scanning = tick();
+  void loadEvidence().then(render);
+  void discover().then((b) => {
+    state.backend = b;
+    render();
+  });
+  await scanning;
 }
 
 void boot().catch((e) => {

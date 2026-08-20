@@ -16,6 +16,7 @@ import { collateralBalance, nativeBalance } from "../public/wallet.js";
 import { Indexer } from "../core/indexer.js";
 import { VENUE, txUrl, addressUrl, collateralName, gasTokenName, tenorLabel } from "../core/venue.js";
 import { network } from "../core/config.js";
+import { timeoutSignal } from "../core/timeout.js";
 
 const arg = (flag: string, fallback = ""): string => {
   const i = process.argv.indexOf(flag);
@@ -37,7 +38,7 @@ async function receiptOf(net: "testnet" | "mainnet", hash: string): Promise<Rece
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_getTransactionReceipt", params: [hash] }),
-      signal: AbortSignal.timeout(20_000),
+      signal: timeoutSignal(20_000),
     });
     const body = (await res.json()) as { result?: Receipt };
     return body.result ?? null;

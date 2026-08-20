@@ -27,6 +27,7 @@
 // backend. The UI states that rather than blurring it.
 
 import { COLLATERAL_TOKEN, VENUE, collateralName, gasTokenName, type Network } from "../core/venue.js";
+import { timeoutSignal } from "../core/timeout.js";
 
 /** The subset of EIP-1193 we use. Deliberately narrow: no signing methods. */
 export interface Eip1193Provider {
@@ -153,7 +154,7 @@ async function rpc<T>(net: Network, method: string, params: unknown[]): Promise<
     body: JSON.stringify({ jsonrpc: "2.0", id: ++rpcId, method, params }),
     // Bounded, for the same reason every read in this project is: a balance that
     // never arrives must become an error the UI can show, not a spinner forever.
-    signal: AbortSignal.timeout(15_000),
+    signal: timeoutSignal(15_000),
   });
   if (!res.ok) throw new WalletError("RPC", `${method} → HTTP ${res.status}`);
   const body = (await res.json()) as { result?: T; error?: { message: string } };
