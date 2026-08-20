@@ -30,6 +30,51 @@ export interface ServeOptions {
   port: number;
   /** Interval passed to a runtime started from the browser. */
   intervalMs?: number;
+  /**
+   * Interface to bind. Loopback by default, deliberately.
+   *
+   * This server can start a LIVE trading runtime with the operator's key, so
+   * reaching it is equivalent to holding that key. Node binds every interface
+   * when no host is given, which on any machine with a routable address puts a
+   * "spend my money" button on the open internet with no authentication in front
+   * of it. Loopback is the only default that is safe to get wrong.
+   */
+  host?: string;
+  /**
+   * Shared secret required on mutating requests, from RIVO_CONTROL_TOKEN.
+   *
+   * Mandatory whenever the server is bound off-loopback — see `serve`, which
+   * refuses to start rather than exposing control without it.
+   */
+  token?: string;
+}
+
+/** Whether an address is loopback-only, and therefore reachable solely from this machine. */
+export const isLoopback = (host: string): boolean =>
+  host === "127.0.0.1" || host === "localhost" || host === "::1" || host.startsWith("127.");
+
+/** Shortest token accepted off-loopback. Long enough that guessing is not a strategy. */
+export const MIN_TOKEN_LENGTH = 16;
+
+/**
+ * Whether a request carries the control token.
+ *
+ * Extracted so it can be tested directly: this is the check standing between a
+ * stranger and a live trading runtime, and burying it inside a closure would
+ * mean the only way to exercise it is to start a server and hope.
+ *
+ * The comparison reads every character regardless of where the strings diverge.
+ * Timing on an HTTP handler is noisy enough that this is close to theatre, but
+ * it costs one loop and removes the need to argue about it.
+ */
+export function tokenAccepted(headers: Record<string, unknown>, token: string): boolean {
+  if (token.length === 0) return true; // loopback-only, no token configured
+  const auth = String(headers.authorization ?? "");
+  const supplied = auth.startsWith("Bearer ") ? auth.slice(7) : String(headers["x-rivo-token"] ?? "");
+  if (supplied.length !== token.length) return false;
+  let diff = 0;
+  for (let i = 0; i < token.length; i++) diff |= supplied.charCodeAt(i) ^ token.charCodeAt(i);
+  return diff === 0;
 }
 
 /** The runtime this server started, if any. */
@@ -96,6 +141,27 @@ async function readBody(req: import("node:http").IncomingMessage): Promise<Recor
 
 export function serve(opts: ServeOptions): void {
   const { dataDir, repoRoot, port } = opts;
+  const host = opts.host ?? "127.0.0.1";
+  const token = opts.token ?? process.env.RIVO_CONTROL_TOKEN ?? "";
+  const local = isLoopback(host);
+
+  // Refuse rather than warn. A warning printed at startup is read once, by the
+  // person who already knew; the exposure outlives them.
+  if (!local && token.length < MIN_TOKEN_LENGTH) {
+    console.error(`refusing to bind ${host}: control endpoints can start live trading with the`);
+    console.error(`operator's key, so an off-loopback bind requires RIVO_CONTROL_TOKEN (>=${MIN_TOKEN_LENGTH} chars).`);
+    console.error(`Set one, or drop --host and serve on loopback only.`);
+    process.exitCode = 1;
+    return;
+  }
+
+  /**
+   * Anything that can move money or change a policy needs the token, when one is
+   * set. Reads stay open: they expose no key and no control, and the public page
+   * probes /api/health from a browser that cannot hold a secret.
+   */
+  const authorised = (req: import("node:http").IncomingMessage): boolean =>
+    tokenAccepted(req.headers as Record<string, unknown>, token);
 
   const registry = new PortfolioRegistry({ dataDir, repoRoot, intervalMs: opts.intervalMs ?? 60_000 });
 
@@ -116,6 +182,9 @@ export function serve(opts: ServeOptions): void {
       if (portfolio) {
         const owner = portfolio[1]!.toLowerCase();
         const action = portfolio[2] as "start" | "pause" | "stop" | undefined;
+        if (req.method !== "GET" && !authorised(req)) {
+          return json(res, 401, { error: "this server requires RIVO_CONTROL_TOKEN on control requests" });
+        }
         try {
           if (action && req.method === "POST") return json(res, 200, await registry.command(owner, action));
           if (req.method === "PUT") return json(res, 200, await registry.put({ ...(await readBody(req)), owner }));
@@ -134,6 +203,10 @@ export function serve(opts: ServeOptions): void {
 
       if (url === "/api/state") {
         return json(res, 200, buildView(dataDir, repoRoot, ownedAlive()));
+      }
+
+      if ((url === "/api/start" || url === "/api/stop") && req.method === "POST" && !authorised(req)) {
+        return json(res, 401, { error: "this server requires RIVO_CONTROL_TOKEN on control requests" });
       }
 
       if (url === "/api/start" && req.method === "POST") {
@@ -238,8 +311,10 @@ export function serve(opts: ServeOptions): void {
     process.exitCode = 1;
   });
 
-  server.listen(port, () => {
-    console.log(`RIVO cockpit  ->  http://localhost:${port}`);
+  server.listen(port, host, () => {
+    console.log(`RIVO cockpit  ->  http://${local ? "localhost" : host}:${port}`);
+    console.log(`bind          ${host}${local ? " (loopback only — not reachable from other machines)" : "  ** REACHABLE OFF THIS MACHINE **"}`);
+    console.log(`control       ${token ? "token required" : "open (loopback only)"}`);
     console.log(`data dir      ${dataDir}`);
     void authorityStatus().then((a) => {
       console.log(

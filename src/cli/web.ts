@@ -4,6 +4,10 @@
 //   npm run web -- --port 3117       another port
 //   npm run web -- --data-dir ./data-live
 //   npm run web -- --snapshot out.html   freeze to one self-contained file
+//
+// Binds loopback by default. Control endpoints can start a live runtime with the
+// operator's key, so exposing them off this machine requires --host AND a
+// RIVO_CONTROL_TOKEN of at least 16 characters; the server refuses otherwise.
 
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -27,6 +31,7 @@ if (out) {
     dataDir,
     repoRoot,
     port: Number(arg("--port", "3000")),
+    host: arg("--host", "127.0.0.1"),
     intervalMs: Number(arg("--interval-ms", "60000")),
   });
 }
