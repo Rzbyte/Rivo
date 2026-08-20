@@ -56,9 +56,17 @@ async function main(): Promise<void> {
     // for a Node builtin does not belong in the browser bundle.
     external: [],
     plugins: [nodeStub],
-    // config.ts reads process.env for overrides; in a tab there are none, and an
-    // empty object makes every `process.env.X` read undefined rather than throw.
-    define: { "process.env": "{}" },
+    // A `process` shim rather than a `define` for `process.env`.
+    //
+    // The narrower version shipped a broken page: defining only `process.env`
+    // left `loadEnv(dir = process.cwd())` in config.ts referencing a bare
+    // `process`, which throws ReferenceError in any browser the moment the
+    // module loads. It typechecked, it bundled, and it was caught only by a test
+    // that actually boots the bundle. A shim covers every `process.X` a
+    // dependency might reach for, not the one we happened to think of.
+    banner: {
+      js: `globalThis.process ||= { env: {}, cwd: () => "/", argv: [], platform: "browser", version: "" };`,
+    },
     logLevel: "warning",
     metafile: true,
   });

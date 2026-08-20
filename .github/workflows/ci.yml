@@ -16,6 +16,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
+      # Before the tests: boot.test.ts runs the SHIPPED bundle in a DOM, so the
+      # build is part of what the suite covers. It caught a bare `process`
+      # reference that typechecked cleanly and would have thrown in any browser.
+      - run: npm run build:public
       # The suite is entirely offline: every venue interaction goes through a
       # fixture, so CI needs no key, no RPC and no funded wallet.
       - run: npm test
