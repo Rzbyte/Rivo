@@ -349,7 +349,9 @@ npm run maker -- --days 30    # the replay, and its methodological limit
 
 ## 7. Live behaviour
 
-The runtime has been verified end to end in dry mode against the live venue.
+The runtime has been verified end to end in dry mode against the live venue, and the autonomous
+path has been run for real on testnet — see **the live canary** below for transaction hashes and
+receipts.
 
 - **Settlement** — seeded four positions in already-settled windows, two winners and two losers.
   Winners paid 10.00 each, losers 0, cash reconciled exactly.
@@ -398,6 +400,63 @@ returning null is that signal, and the dry runtime was verified to leave its pos
 
 State is also written the moment a fill is recorded rather than once per cycle, which mostly
 prevents the gap that reconciliation exists to repair.
+
+### The cash ledger did not balance, and nothing could tell
+
+The worst bug in this project, found by building a portfolio UI that had to display cash.
+
+A live run showed **451.76 of cash against 50 of allocated capital**. Not a rounding drift — nine
+times the capital. Three paths credited value with no matching debit:
+
+- **Adoption.** Reconciliation takes custody of a position Rivo never bought. Its cost was recorded
+  on the position but never debited anywhere, so when the window settled, the full payout was
+  credited to cash against a purchase that never happened.
+- **Dropping.** A position the chain no longer holds was removed, taking its cost off the books with
+  nothing booked against it. Equity stepped up for free.
+- **Merging.** `mergeCompleteSet` returns exactly 1 collateral per set, so each leg recovers 0.5 per
+  share — a *fixed* payout. The cost basis it released was not fixed, and the difference went
+  nowhere.
+
+None of it was visible. Equity, drawdown and the circuit breaker are all derived from cash and open
+cost, so they were wrong together, in the same direction, and consistently — which is exactly what a
+correct system looks like from the outside.
+
+There is now one identity, checked before any risk figure is computed from it:
+
+```
+cash + Σ open.cost  ==  capital + contributed + realised
+```
+
+`contributed` is net value adopted from the chain, and it is deliberately **not** folded into
+`capital`. Every risk budget is a fraction of capital, so folding it in would let a stray token found
+on the wallet quietly raise Rivo's own limits. Kept separate, an adopted position still consumes the
+delta budget — so discovering one makes the allocator *more* conservative, never less.
+
+Verified on the live canary, cycle 12, after a kill and restart:
+
+```
+kas 30.0000 + biaya-terbuka 31.5980 = 61.5980
+modal 20 + kontribusi 50.7367 + realisasi -9.1387 = 61.5980
+ketimpangan 0.00e+0  →  SEIMBANG
+```
+
+State files written before the rule existed are repaired on load — loudly, because a silent repair
+is how the original bug survived. The 451.76 state repairs to a 496.59 contribution with a warning
+that its P&L is unreliable, which is the honest outcome: the drift cannot be attributed after the
+fact, only stopped from propagating.
+
+### A live runtime hung for two hours and looked healthy
+
+Found while investigating the ledger. The process had been alive 6h25m; its state file had not
+changed in nearly two. Zero CPU between samples, three open sockets, sleeping — a `fetch` that never
+resolved and never rejected. It had stopped trading, settling and claiming. Every check that
+inspected the *process* said healthy.
+
+Every indexer read is now bounded by `AbortSignal.timeout(20s)` with two retries for transport
+failures only, and the run loop wraps each cycle in a deadline above that, so a stall anywhere still
+becomes an error the loop recovers from. Reported upstream as finding 14 in
+[SDK-FEEDBACK](SDK-FEEDBACK.md), scoped honestly: the hang was in our code, and viem already bounds
+the kit's RPC path.
 
 ### Two bugs the runtime found in its own allocator
 
