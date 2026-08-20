@@ -92,14 +92,22 @@ async function main(): Promise<void> {
         invByLeg.set(`${k.slice(0, i)}:${k.slice(i + 1)}`, v);
       }
 
-      // Existing inventory is exposure, so the delta budget must see it.
+      // Existing inventory is exposure, so the delta budget must see it — but
+      // only the NET of it. Equal Up and Down in one market is a complete set:
+      // directionally flat by construction, which is the entire reason minting
+      // one is safe. Counting the Up leg alone reads a hedged position as a full
+      // long, and measured, that falsely exhausted the budget and skipped every
+      // market the maker was there to quote.
       const assetDelta = new Map<string, number>();
       for (const o of snap.opportunities) {
         if (o.leg !== "UP") continue;
-        const held = invByLeg.get(legKey(o.marketId.toLowerCase(), "UP")) ?? 0;
-        if (held === 0) continue;
+        const k = o.marketId.toLowerCase();
+        const up = invByLeg.get(legKey(k, "UP")) ?? 0;
+        const down = invByLeg.get(legKey(k, "DOWN")) ?? 0;
+        const net = up - down;
+        if (net === 0) continue;
         const spot = snap.assets.get(o.asset as Asset)?.spot ?? 0;
-        assetDelta.set(o.asset, (assetDelta.get(o.asset) ?? 0) + held * deltaPer1Pct(o.deltaPerShare, spot));
+        assetDelta.set(o.asset, (assetDelta.get(o.asset) ?? 0) + net * deltaPer1Pct(o.deltaPerShare, spot));
       }
 
       const plan = planQuotes({
