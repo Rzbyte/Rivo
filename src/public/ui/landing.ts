@@ -110,10 +110,16 @@ export function landing(d: LandingData): string {
 
 function livePreview(p: PortfolioView): string {
   const btc = p.exposures.find((e) => e.asset === "BTC");
+  // The callout should demonstrate the claim the page makes — that legs are
+  // refused by PORTFOLIO limits rather than by price. Taking whichever refusal
+  // happens to rank first by edge produced examples like "top-up below minimum
+  // trade", which is true, uninteresting, and about trade size rather than risk.
   const refused = p.skipped.filter((d) => (d.edge ?? 0) > 0);
+  const PORTFOLIO_LIMIT = /delta budget|combined delta|expiry bucket|deployed cap|max position|tenor cap|cash floor|free cash/;
+  const headline = refused.find((d) => PORTFOLIO_LIMIT.test(d.binding)) ?? refused[0];
   const rows = new Map<string, { label: string; fair: number; ask: number | null; bid: number | null }>();
   for (const d of [...p.accepted, ...p.skipped]) {
-    if (d.leg === "UP") rows.set(d.marketId, { label: `${d.asset} ${d.tenor}`, fair: d.fair, ask: d.ask, bid: null });
+    if (d.leg === "UP") rows.set(d.marketId, { label: `${d.asset} ${d.tenor}`, fair: d.fair, ask: d.ask, bid: d.bid });
   }
   return `
   <div class="panel" style="margin-top:30px">
@@ -134,12 +140,23 @@ function livePreview(p: PortfolioView): string {
         <div class="stat" style="padding:0"><div class="k">BTC exposure</div><div class="v">${btc ? signed(btc.delta) : "—"}</div><div class="s">of ±${btc ? f2(btc.cap) : "—"} per 1% move</div></div>
       </div>
       ${termChart([...rows.values()])}
+      <p class="mut" style="font-size:12px;margin:10px 0 0">
+        One row per window, showing its <b>UP</b> leg. Every window also trades a DOWN leg at its own
+        price, and Rivo scores both — ${p.accepted.length + p.skipped.length} legs across these
+        ${rows.size} windows this cycle.
+      </p>
       ${
-        refused.length > 0
+        headline
           ? `<div class="note" style="margin-top:14px">
-               <b>${esc(refused[0]!.label)}</b> has ${signed((refused[0]!.edge ?? 0) * 100, 1)}% of raw edge and Rivo
-               <b>refused it</b> — ${esc(refused[0]!.binding)}. That refusal is the product.
-               <a href="#/app">See the full reasoning</a>.
+               Right now: <b>${esc(headline.label)}</b> is priced at ${headline.ask === null ? "—" : headline.ask.toFixed(3)}
+               against Rivo's ${headline.fair.toFixed(3)} — ${signed((headline.edge ?? 0) * 100, 1)} points of raw edge —
+               and Rivo <b>refused it</b>, because ${esc(headline.binding)}.
+               ${
+                 PORTFOLIO_LIMIT.test(headline.binding)
+                   ? "That is a portfolio limit, not a view about the price: the exposure is already spoken for."
+                   : ""
+               }
+               <a href="#/app">See every constraint it applied</a>.
              </div>`
           : ""
       }

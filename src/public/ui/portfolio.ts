@@ -324,7 +324,7 @@ function termRows(v: PortfolioView): { label: string; fair: number; ask: number 
   const seen = new Map<string, { label: string; fair: number; ask: number | null; bid: number | null }>();
   for (const d of [...v.accepted, ...v.skipped]) {
     if (d.leg !== "UP") continue; // one row per market; the Down leg is its complement
-    seen.set(d.marketId, { label: `${d.asset} ${d.tenor}`, fair: d.fair, ask: d.ask, bid: null });
+    seen.set(d.marketId, { label: `${d.asset} ${d.tenor}`, fair: d.fair, ask: d.ask, bid: d.bid });
   }
   return [...seen.values()];
 }

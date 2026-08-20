@@ -23,6 +23,7 @@ function opp(over: Partial<Opportunity> = {}): Opportunity {
     leg: "UP",
     fair,
     ask,
+    bid: over.bid ?? null,
     mid: ask,
     edge: fair - ask,
     depthAtFair: 1000,

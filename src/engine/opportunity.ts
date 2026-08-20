@@ -50,6 +50,8 @@ export interface Opportunity {
   fair: number;
   /** Cheapest price this leg can be bought at right now. */
   ask: number | null;
+  /** Best price this leg can be SOLD at right now — the other side of the book. */
+  bid: number | null;
   /** Mid of this leg, when both sides are quoted. */
   mid: number | null;
   /** fair − ask: expected value per share, in collateral. */
@@ -154,6 +156,7 @@ export function scoreWindow(w: LiveWindow, ctx: MarketContext, o: ScanOptions = 
       leg,
       fair,
       ask,
+      bid: bestBid(lb),
       mid: mid(lb),
       edge,
       depthAtFair: fv === null ? 0 : depthAtOrBetter(lb, fair),

@@ -8,57 +8,89 @@ import { cssVar, esc, f2, f3 } from "./dom.js";
 
 interface TermRow {
   label: string;
+  /** Rivo's probability that this window closes above its opening price. */
   fair: number;
+  /** What the book charges to buy that outcome. */
   ask: number | null;
+  /** What the book pays to sell it. */
   bid: number | null;
 }
 
 /**
- * Model against book for every live leg.
+ * Rivo's model against the book, one row per live window.
  *
- * Model is a horizontal tick, the book a filled bar between bid and ask, so the
- * eye reads the GAP rather than two absolute levels — the gap is the tradeable
- * quantity and the levels are not.
+ * Drawn as a dumbbell — a filled dot for the model, a hollow ring for the ask,
+ * and a thick line between them — because the quantity that matters is the GAP,
+ * and a gap is a distance. An earlier version drew the two as separate ticks
+ * with a faint band between, and it was unreadable: the band collapsed to two
+ * invisible pixels whenever the book had no bid (which is most of the time on
+ * this venue), the legend described a band that was not there, and the edge
+ * column was clipped by the viewBox. None of that was a styling problem. The
+ * chart was asking the reader to compute the story instead of showing it.
  */
 export function termChart(rows: TermRow[]): string {
   if (rows.length === 0) return `<p class="empty">no live windows</p>`;
-  const W = 720, H = 34 + rows.length * 38, L = 108, R = 40;
-  const x = (p: number) => L + p * (W - L - R);
-  const line = cssVar("--line"), muted = cssVar("--muted"), ink = cssVar("--ink");
-  const accent = cssVar("--accent"), pos = cssVar("--pos"), neg = cssVar("--neg");
 
-  const ticks = [0, 0.25, 0.5, 0.75, 1]
+  const L = 92, R = 74, ROW = 34, TOP = 46;
+  const W = 720, H = TOP + rows.length * ROW + 16;
+  const x = (p: number) => L + Math.max(0, Math.min(1, p)) * (W - L - R);
+  const line = cssVar("--line"), muted = cssVar("--muted"), ink = cssVar("--ink");
+  const accent = cssVar("--accent"), pos = cssVar("--pos"), neg = cssVar("--neg"), panel = cssVar("--panel");
+
+  const grid = [0, 0.25, 0.5, 0.75, 1]
     .map(
       (p) =>
-        `<line x1="${x(p)}" y1="26" x2="${x(p)}" y2="${H - 8}" stroke="${line}" stroke-width="1"/>` +
-        `<text x="${x(p)}" y="18" fill="${muted}" font-size="10.5" text-anchor="middle">${(p * 100).toFixed(0)}%</text>`,
+        `<line x1="${x(p)}" y1="${TOP - 12}" x2="${x(p)}" y2="${H - 12}" stroke="${line}" stroke-width="1"/>` +
+        `<text x="${x(p)}" y="${TOP - 20}" fill="${muted}" font-size="10.5" text-anchor="middle">${(p * 100).toFixed(0)}%</text>`,
     )
     .join("");
 
   const bars = rows
     .map((r, i) => {
-      const y = 38 + i * 38;
-      const lo = r.bid ?? r.ask ?? r.fair;
-      const hi = r.ask ?? r.bid ?? r.fair;
-      const gap = r.ask === null ? null : r.fair - r.ask;
-      const c = gap === null ? muted : gap > 0.01 ? pos : gap < -0.01 ? neg : muted;
-      const bw = Math.max(2, x(hi) - x(lo));
+      const y = TOP + 6 + i * ROW;
+      const xf = x(r.fair);
+
+      if (r.ask === null) {
+        return (
+          `<text x="0" y="${y + 4}" fill="${ink}" font-size="12.5" font-weight="600">${esc(r.label)}</text>` +
+          `<circle cx="${xf}" cy="${y}" r="5" fill="${accent}"/>` +
+          `<text x="${W - R + 8}" y="${y + 4}" fill="${muted}" font-size="10.5">no offer</text>`
+        );
+      }
+
+      const edge = r.fair - r.ask;          // positive: the book is selling it below what Rivo thinks it is worth
+      const c = edge > 0.005 ? pos : edge < -0.005 ? neg : muted;
+      const xa = x(r.ask);
+      const [lo, hi] = xf < xa ? [xf, xa] : [xa, xf];
+
       return (
-        `<text x="0" y="${y + 4}" fill="${ink}" font-size="12" font-weight="560">${esc(r.label)}</text>` +
-        `<rect x="${x(lo)}" y="${y - 7}" width="${bw}" height="14" rx="3" fill="${c}" opacity=".2"/>` +
-        `<line x1="${x(r.fair)}" y1="${y - 11}" x2="${x(r.fair)}" y2="${y + 11}" stroke="${accent}" stroke-width="2.5" stroke-linecap="round"/>` +
-        `<text x="${W - R + 6}" y="${y + 4}" fill="${c}" font-size="11" font-family="ui-monospace,monospace">` +
-        `${gap === null ? "—" : (gap >= 0 ? "+" : "−") + Math.abs(gap).toFixed(3)}</text>`
+        `<text x="0" y="${y + 4}" fill="${ink}" font-size="12.5" font-weight="600">${esc(r.label)}</text>` +
+        // The gap, as a physical distance.
+        `<line x1="${lo}" y1="${y}" x2="${hi}" y2="${y}" stroke="${c}" stroke-width="4" stroke-linecap="round" opacity=".45"/>` +
+        // Where the book will sell it to you: a ring, because it is a price you can choose to pay.
+        `<circle cx="${xa}" cy="${y}" r="4.5" fill="${panel}" stroke="${c}" stroke-width="2"/>` +
+        // Rivo's own number: filled, because it is not negotiable.
+        `<circle cx="${xf}" cy="${y}" r="5" fill="${accent}"/>` +
+        `<text x="${W - R + 8}" y="${y + 4}" fill="${c}" font-size="11.5" font-family="ui-monospace,monospace">` +
+        `${edge >= 0 ? "+" : "\u2212"}${Math.abs(edge * 100).toFixed(1)}</text>`
       );
     })
     .join("");
 
   return (
-    `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Rivo fair value against the order book for every live window">` +
-    `${ticks}${bars}</svg>` +
-    `<p class="note" style="margin-top:10px">` +
-    `<span style="color:var(--accent)">▎</span> Rivo's model &nbsp;·&nbsp; shaded band = bid–ask &nbsp;·&nbsp; ` +
-    `right column = model − ask, the edge before constraints.</p>`
+    `<div class="scroll"><svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:520px" role="img" ` +
+    `aria-label="Rivo's model against the order book for every live window">` +
+    `<text x="0" y="14" fill="${muted}" font-size="10.5">chance this window closes ABOVE its opening price</text>` +
+    `${grid}${bars}</svg></div>` +
+    `<div class="note" style="margin-top:12px;font-size:13px">` +
+    `<svg width="52" height="12" style="display:inline-block;vertical-align:-2px" aria-hidden="true">` +
+    `<line x1="8" y1="6" x2="44" y2="6" stroke="${muted}" stroke-width="4" stroke-linecap="round" opacity=".45"/>` +
+    `<circle cx="8" cy="6" r="5" fill="${accent}"/>` +
+    `<circle cx="44" cy="6" r="4.5" fill="${panel}" stroke="${muted}" stroke-width="2"/></svg> ` +
+    `<b>Filled dot</b> is Rivo's model. <b>Ring</b> is what the book charges. The line between them is the ` +
+    `edge, in percentage points, shown on the right — <span style="color:${pos}">green</span> when the book ` +
+    `is selling below Rivo's value, <span style="color:${neg}">red</span> when above.` +
+    `</div>`
   );
 }
 

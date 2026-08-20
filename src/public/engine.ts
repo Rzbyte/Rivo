@@ -91,6 +91,7 @@ export interface DecisionView {
   label: string;
   fair: number;
   ask: number | null;
+  bid: number | null;
   edge: number | null;
   action: "BUY" | "SKIP";
   shares: number;
@@ -345,6 +346,7 @@ function buildView(
       label: legLabel(o.asset, o.intervalSec, o.leg),
       fair: o.fair,
       ask: o.ask,
+      bid: o.bid,
       edge: o.edge,
       action: d.action,
       shares: d.shares,
