@@ -9,7 +9,7 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { Indexer } from "../src/core/indexer.js";
-import { endpoints, network } from "../src/core/config.js";
+import { collateralName, COLLATERAL_TOKEN, endpoints, network } from "../src/core/config.js";
 
 const ok = (s: string) => `  ok    ${s}`;
 const warn = (s: string) => `  warn  ${s}`;
@@ -26,13 +26,30 @@ function loadEnv(): void {
   }
 }
 
-/** Address for a key, via the bot kit's viem. Returns null when it is absent. */
-async function deriveAddress(pk: string): Promise<string | null> {
+/**
+ * The address behind the configured key.
+ *
+ * Preferred route is `ec-core` itself, because that is exactly how the live
+ * executor learns its own address — so getting a result here proves that path
+ * works rather than merely proving the key parses. viem is a fallback for when
+ * the kit is absent but happens to be resolvable anyway.
+ */
+async function deriveAddress(pk: string): Promise<{ address: string; via: string } | null> {
+  try {
+    const core = (await import("@dreamdex-bot-kit/ec-core")) as {
+      createExchange: (o: { withSigner: boolean }) => { exchange?: { walletAddress?: string } };
+    };
+    const ctx = core.createExchange({ withSigner: true });
+    const a = ctx.exchange?.walletAddress;
+    if (a) return { address: a, via: "ec-core (jalur yang sama dipakai eksekusi live)" };
+  } catch {
+    // fall through — the kit may not be linked
+  }
   try {
     const { privateKeyToAccount } = (await import("viem/accounts")) as {
       privateKeyToAccount: (k: `0x${string}`) => { address: string };
     };
-    return privateKeyToAccount(pk as `0x${string}`).address;
+    return { address: privateKeyToAccount(pk as `0x${string}`).address, via: "viem" };
   } catch {
     return null;
   }
@@ -121,10 +138,11 @@ async function main(): Promise<void> {
   } else {
     const derived = await deriveAddress(pk);
     if (derived) {
-      address = derived;
-      console.log(ok(`kunci valid → ${derived}`));
+      address = derived.address;
+      console.log(ok(`kunci valid → ${derived.address}`));
+      console.log(`        via ${derived.via}`);
     } else {
-      console.log(warn("kunci valid, tapi alamatnya tak bisa diturunkan (viem belum ada — jalankan npm run link:kit)"));
+      console.log(warn("kunci valid, tapi alamatnya tak bisa diturunkan — jalankan `npm run link:kit`"));
       if (address) console.log(ok(`memakai RIVO_ADDRESS=${address}`));
     }
   }
@@ -143,13 +161,14 @@ async function main(): Promise<void> {
     } else if (gas < 0.05) console.log(warn(`gas ${gas.toFixed(4)} STT — tipis, isi lagi sebelum menjalankan lama`));
     else console.log(ok(`gas ${gas.toFixed(4)} STT`));
 
-    const collateralToken = process.env.COLLATERAL_TOKEN ?? DEFAULT_COLLATERAL[net];
-    const col = collateralToken ? await erc20Balance(rpc, collateralToken, address, idx.decimals) : null;
-    const name = net === "mainnet" ? "USDso" : "tUSDC";
+    const collateralToken = process.env.COLLATERAL_TOKEN ?? COLLATERAL_TOKEN[net];
+    const col = await erc20Balance(rpc, collateralToken, address, idx.decimals);
+    const name = collateralName(net);
     if (col === null) {
       console.log(warn(`saldo ${name} tak terbaca (token ${collateralToken ?? "tidak diketahui"}) — set COLLATERAL_TOKEN kalau alamatnya berbeda`));
     } else if (col <= 0) {
       console.log(bad(`${name} 0 — INI collateral-nya. STT hanya untuk gas; tanpa ${name} tak ada kontrak yang bisa dibeli`));
+      if (net === "testnet") console.log(`        token ${collateralToken} punya faucet(uint256) publik`);
       blockers++;
     } else {
       console.log(ok(`${name} ${col.toFixed(2)}`));
@@ -200,12 +219,6 @@ async function main(): Promise<void> {
     process.exitCode = 1;
   }
 }
-
-/** Collateral token per network, from the kit's address book. */
-const DEFAULT_COLLATERAL: Record<string, string | undefined> = {
-  testnet: process.env.TUSDC_ADDRESS,
-  mainnet: process.env.USDSO_ADDRESS,
-};
 
 main().catch((e) => {
   console.error(`doctor gagal: ${e instanceof Error ? e.message : String(e)}`);

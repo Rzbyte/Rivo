@@ -50,3 +50,21 @@ export type Asset = (typeof ASSETS)[number];
 
 /** Price-feed id for an asset. The feed quotes against USDC on both networks. */
 export const feedId = (asset: Asset): string => `${asset}/USDC`;
+
+/**
+ * The collateral token every Event Contract settles in.
+ *
+ * Bundled rather than read from the kit, for the same reason the kit bundles its
+ * own: the readiness check has to be able to tell you that you have no
+ * collateral *before* you have installed anything. Testnet's tUSDC exposes a
+ * public `faucet(uint256)`, which is how a wallet funds itself.
+ *
+ * Verified against ec-core's address book, 2026-08-19. Override if a venue moves.
+ */
+export const COLLATERAL_TOKEN: Record<Network, string> = {
+  testnet: "0x70a86D8842FB63C4Ad2b7cdddF530eBf1BB25d8E",
+  mainnet: "0x0Ed782B8079529f7385c3eDA9fAf1EaA0DbC6a17",
+};
+
+/** Human name of the collateral, for messages a person reads. */
+export const collateralName = (net: Network): string => (net === "mainnet" ? "USDso" : "tUSDC");
