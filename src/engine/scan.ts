@@ -39,21 +39,30 @@ export async function snapshot(idx: Indexer, o: SnapshotOptions = {}): Promise<S
   const unpriced: Snapshot["unpriced"] = [];
 
   const live = await idx.liveMarkets();
+  const ids = live.map((m) => m.marketId);
 
-  const assets = new Map<Asset, AssetState>();
-  for (const asset of ASSETS) {
-    if (!live.some((m) => m.asset === asset)) continue;
-    const [{ spot, mark, at }, bars] = await Promise.all([
-      idx.latestSpot(asset),
-      idx.candles(asset, now - (lookback + 5) * 60, now + 120),
-    ]);
-    assets.set(asset, { spot, mark, spotAgeSec: Math.max(0, now - at), bars });
-  }
-
-  const [refs, orders] = await Promise.all([
-    idx.openingReferences(live.map((m) => m.marketId)),
-    idx.restingOrders(live.map((m) => m.marketId)),
+  // Everything after the market list is independent of everything else after the
+  // market list, so it all goes out at once. Serialised — one asset's spot, then
+  // its candles, then the next asset, then references, then orders — a full pass
+  // took 7.7s over 8 round trips, which is most of the time the landing page
+  // spends before it can show anything. The venue snapshot is the product's
+  // first impression; making a user wait through six avoidable round trips for
+  // it is a design decision, not a technical constraint.
+  const wanted = ASSETS.filter((a) => live.some((m) => m.asset === a));
+  const [assetStates, refs, orders] = await Promise.all([
+    Promise.all(
+      wanted.map(async (asset) => {
+        const [{ spot, mark, at }, bars] = await Promise.all([
+          idx.latestSpot(asset),
+          idx.candles(asset, now - (lookback + 5) * 60, now + 120),
+        ]);
+        return [asset, { spot, mark, spotAgeSec: Math.max(0, now - at), bars }] as const;
+      }),
+    ),
+    idx.openingReferences(ids),
+    idx.restingOrders(ids),
   ]);
+  const assets = new Map<Asset, AssetState>(assetStates);
 
   const windows: LiveWindow[] = [];
   for (const m of live) {

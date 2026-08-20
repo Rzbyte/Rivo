@@ -181,9 +181,10 @@ function rebuildEquity(): void {
 
 async function tick(): Promise<void> {
   try {
-    if (state.route === "explorer" || (state.route === "home" && !state.preview)) {
-      explorerSnap = await snapshot(idx);
-    }
+    // One scan per route, never two. The landing page used to take a snapshot
+    // for itself AND run a preview cycle that took another, so the hero waited
+    // out two full passes over the venue before it could render anything.
+    if (state.route === "explorer") explorerSnap = await snapshot(idx);
     if (state.route === "home") await previewCycle();
     if (state.policy && state.portfolio && state.policy.state !== "idle" && state.policy.state !== "stopped") {
       const view = await runCycle(idx, state.policy, state.portfolio);
