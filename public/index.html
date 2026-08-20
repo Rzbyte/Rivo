@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rivo — what every DreamDEX Event Contract is worth</title>
+<meta name="description" content="Live fair-value pricing for DreamDEX Event Contracts, validated against 30,000+ settled forecasts. No wallet, no sign-in.">
+<style>
+  :root{
+    --bg:#fbfbfa; --panel:#fff; --ink:#17170f; --muted:#6f6f66; --line:#e7e6e1; --line2:#f2f1ed;
+    --pos:#1a7a4c; --neg:#b5321d; --accent:#2f5fd0;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+    --bg:#141418; --panel:#1c1c21; --ink:#eeece6; --muted:#9b9b93; --line:#2c2c33; --line2:#232329;
+    --pos:#4ecd8c; --neg:#ff7d64; --accent:#84a9ff;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#141418; --panel:#1c1c21; --ink:#eeece6; --muted:#9b9b93; --line:#2c2c33; --line2:#232329;
+    --pos:#4ecd8c; --neg:#ff7d64; --accent:#84a9ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+  .wrap{max-width:1000px;margin:0 auto;padding:40px 20px 72px}
+  header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+  h1{font-size:32px;margin:0;letter-spacing:-.03em;font-weight:680}
+  .sub{color:var(--muted);font-size:15px}
+  .lede{color:var(--ink);opacity:.9;font-size:15.5px;max-width:70ch;margin:0 0 18px}
+  .note{color:var(--muted);font-size:13.5px;max-width:74ch;margin:12px 0 0}
+  .note i{font-style:normal;opacity:.75}
+  h2{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+    margin:34px 0 12px;font-weight:640}
+  .strip{display:flex;gap:20px;align-items:center;flex-wrap:wrap;font:13px/1 var(--mono);
+    color:var(--muted);padding:11px 14px;background:var(--panel);border:1px solid var(--line);
+    border-radius:10px;margin-bottom:16px}
+  .strip b{color:var(--ink);font-weight:640} .strip i{font-style:normal;opacity:.7}
+  .strip .right{margin-left:auto}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}
+  .hero{padding:22px 20px}
+  .two{display:grid;gap:14px;grid-template-columns:1fr 1fr}
+  @media(max-width:800px){.two{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse;font:13.5px/1.5 var(--mono)}
+  th{text-align:left;font-weight:640;color:var(--muted);font-size:10.5px;letter-spacing:.06em;
+    text-transform:uppercase;padding:0 12px 8px 0;border-bottom:1px solid var(--line)}
+  td{padding:9px 12px 9px 0;border-bottom:1px solid var(--line2)}
+  tr:last-child td{border-bottom:none}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .strong{color:var(--accent);font-weight:640}
+  .pos{color:var(--pos)} .neg{color:var(--neg)}
+  .evidence{display:flex;flex-direction:column;justify-content:center;gap:14px}
+  .stat{display:flex;align-items:baseline;gap:12px}
+  .stat span{font:660 26px/1 var(--mono);letter-spacing:-.02em}
+  .stat i{font-style:normal;color:var(--muted);font-size:13px}
+  .scroll{overflow-x:auto}
+  .empty{color:var(--muted);font-style:italic;padding:18px 0}
+  svg{display:block;width:100%;height:auto;overflow:visible}
+  footer{margin-top:44px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+  a{color:var(--accent)}
+</style>
+</head>
+<body>
+  <div class="wrap" id="app"><p class="empty">reading the venue…</p></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

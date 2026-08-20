@@ -56,7 +56,7 @@ alternative explanations we eliminated first: **[docs/EVIDENCE.md](docs/EVIDENCE
 npm test
 ```
 
-**99 tests** across the seven things that either move money or produce a published number: the
+**115 tests** across the eight things that either move money or produce a published number: the
 dual-crossing-path book, the fair-value model and volatility estimator, the scoring rules behind
 every figure in [EVIDENCE.md](docs/EVIDENCE.md), the capital allocator, the position manager, settlement, and
 on-chain reconciliation.
@@ -81,6 +81,24 @@ Three of the fixtures were wrong before the code was, and each failure demonstra
 working: a book helper offering only `SELL_YES` left a DOWN leg with no asks at all, a comment
 claiming "40% of 3600s = 1440s" ignored that `headroomSec` caps at 300s, and an assertion demanded
 ten decimal places from an approximation documented to 1.5e-7.
+
+---
+
+## The public page
+
+```bash
+npm run build:public     # static files in public/, no backend
+npx serve public
+```
+
+Live fair value for every DreamDEX Event Contract, with the calibration evidence
+behind it. **No wallet, no sign-in, nothing to install** — both Somnia indexers send
+permissive CORS headers, so the page runs entirely in the browser against the same
+public endpoints the runtime uses, and deploys as static files anywhere.
+
+It imports the *same* pricing code the trading runtime uses rather than a copy. That
+matters: the number on the page is the number Rivo would trade on, and the calibration
+shown beneath it is the measured accuracy of that exact function over 30,771 forecasts.
 
 ---
 
@@ -201,9 +219,10 @@ src/
   backtest/    fill-grounded replay · competing sizers · diagnostics · maker replay
   research/    cross-tenor coherence — the derivation and its test
   runtime/     durable state · execution adapter · position manager · reconciliation · the cycle
-  web/         dashboard server + static snapshot export
+  web/         cockpit server + static snapshot export
+  public/      the public pricing page — browser bundle, shares the runtime's math
   cli/         start · web · report · calibrate · scan · allocate · backtest · diagnose · band · maker · concentration
-  *.test.ts    99 tests, colocated with what they cover
+  *.test.ts    115 tests, colocated with what they cover
 ```
 
 The cycle:
@@ -282,7 +301,8 @@ validates against the real thing.
 | `npm run maker -- --days 30` | the maker replay, and its methodological limit |
 | `npm run maker:live -- --live --mint` | two-sided quoting on testnet — measured, and negative |
 | `npm run coherence -- --days 30` | cross-tenor arbitrage bound — derived, tested, rejected on size |
-| `npm test` · `npm run typecheck` | 99 tests · strict TypeScript, no emit |
+| `npm run build:public` | build the public page — static, no backend |
+| `npm test` · `npm run typecheck` | 115 tests · strict TypeScript, no emit |
 | `npm run doctor` | can Rivo trade right now — signer, gas, collateral, venue, kit |
 | `npm run check:kit` · `npm run link:kit` | verify / install the optional bot kit |
 

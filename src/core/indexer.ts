@@ -5,6 +5,10 @@
 import { endpoints, feedId, network, type Asset, type Network } from "./config.js";
 import type { RestingOrder } from "../engine/book.js";
 
+// scaleReference lives in venue.js — pure, so the public page shares the exact
+// implementation rather than a copy that could drift from this one.
+export { scaleReference } from "./venue.js";
+
 export class IndexerError extends Error {
   constructor(op: string, detail: string) {
     super(`indexer ${op}: ${detail}`);
@@ -390,29 +394,3 @@ export class Indexer {
   }
 }
 
-/**
- * Put an oracle `numericValue` back into real price units.
- *
- * The scale is NOT declared anywhere on the row, and it is not constant: opening
- * references are 1e2 while settlement answers are 1e4 (measured on testnet,
- * 2026-08-19). Reading a reference at the wrong scale is silent and catastrophic
- * — it moves the price by 100x, which turns every probability into 0 or 1 while
- * still looking like a plausible number.
- *
- * So we do not trust a constant. We pick the power of ten that lands the
- * reference nearest to a known-good price for the same asset, and reject the
- * market when nothing lands close.
- */
-export function scaleReference(raw: number, referencePrice: number): number | null {
-  if (!(raw > 0) || !(referencePrice > 0)) return null;
-  let best: { value: number; err: number } | null = null;
-  for (let k = 0; k <= 8; k++) {
-    const value = raw / 10 ** k;
-    const err = Math.abs(Math.log(value / referencePrice));
-    if (!best || err < best.err) best = { value, err };
-  }
-  // A window's opening price sits within a few percent of prices during its
-  // life. Anything beyond ~40% away means no scale fits and the row is unusable.
-  if (!best || best.err > 0.35) return null;
-  return best.value;
-}

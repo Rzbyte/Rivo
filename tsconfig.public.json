@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // The public page runs in a browser and needs DOM globals. Kept in its own
+    // config so the Node side cannot reach for `document` by accident — that
+    // mistake compiles cleanly and fails only at runtime, in production.
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": []
+  },
+  "include": ["src/public/**/*.ts", "src/model/**/*.ts", "src/engine/book.ts", "src/core/venue.ts"]
+}
