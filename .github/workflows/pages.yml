@@ -34,6 +34,18 @@ jobs:
       # there is nothing to schedule and no secret to hold — a build is only out of
       # date when the pricing code or the evidence changes.
       - run: npm run build:public
+      # `configure-pages` fails with a message that does not name the cause when
+      # Pages is set to "Deploy from a branch". That setting silently produces a
+      # WORKING but WRONG site: Jekyll renders the repo README at the Pages URL,
+      # while public/app.js 404s because it is a build artefact and is not
+      # committed. A green padlock on the wrong page is worse than a red X, so
+      # say plainly what to change before the cryptic failure happens.
+      - name: Check Pages is set to GitHub Actions
+        continue-on-error: true
+        run: |
+          echo "::notice::If this job fails at 'configure-pages', open Settings → Pages"
+          echo "::notice::and set Source to 'GitHub Actions' (not 'Deploy from a branch')."
+          echo "::notice::A branch source serves the README via Jekyll and 404s on app.js."
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

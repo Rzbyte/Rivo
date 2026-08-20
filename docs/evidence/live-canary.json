@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-08-20T18:34:17.537Z",
+  "generatedAt": "2026-08-20T18:41:18.829Z",
   "network": "testnet",
   "venueId": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
   "wallet": {
     "address": "0x6730d3a2a217108ab53ccfe60ffdad05d3c124e5",
     "url": "https://shannon-explorer.somnia.network/address/0x6730d3a2a217108ab53ccfe60ffdad05d3c124e5",
-    "gas": 49.232440502,
+    "gas": 49.220089454,
     "gasSymbol": "STT",
-    "collateral": 9913.8816,
+    "collateral": 9914.09932,
     "collateralSymbol": "tUSDC"
   },
   "authority": {
@@ -16,28 +16,28 @@
     "bounds": "Full account authority. Capital ceiling, delta budgets, drawdown breaker and kill switch are enforced by Rivo, not by the chain."
   },
   "runtime": {
-    "cycles": 36,
+    "cycles": 44,
     "startedAt": 1787249190,
-    "lastCycleAt": 1787250844,
+    "lastCycleAt": 1787251227,
     "capital": 20,
     "contributed": 41.27516579346404,
-    "cash": 40.489990000000006,
-    "realizedPnl": -8.996864253962517,
+    "cash": 40.698730000000005,
+    "realizedPnl": -9.561604253962518,
     "halted": null,
     "dryRun": false
   },
   "ledger": {
     "identity": "cash + open cost == capital + contributed + realised",
-    "cash": 40.489990000000006,
-    "openCost": 11.788311539501525,
+    "cash": 40.698730000000005,
+    "openCost": 11.014831539501523,
     "capital": 20,
     "contributed": 41.27516579346404,
-    "realizedPnl": -8.996864253962517,
+    "realizedPnl": -9.561604253962518,
     "imbalance": 0,
     "balances": true
   },
   "execution": {
-    "positionsOpenedByRivo": 15,
+    "positionsOpenedByRivo": 19,
     "withTransactionHash": 7,
     "receipts": [
       {
@@ -126,8 +126,8 @@
       {
         "market": "0x0000000000000000000000000000000000000000000000000000000000004e35",
         "leg": "BTC 1h UP",
-        "shares": 1.67,
-        "cost": 0.5678,
+        "shares": 0.42,
+        "cost": 0.14279999999999998,
         "expiry": 1787252400,
         "adopted": false,
         "txHash": "0x6c703e254f1ae1a6a9e65d64f0021ebec936be9f5cde1c4977e57e5bdf2da1e8"
@@ -180,8 +180,8 @@
       {
         "market": "0x0000000000000000000000000000000000000000000000000000000000004e35",
         "leg": "BTC 1h UP",
-        "shares": 1.18,
-        "cost": 0.46728,
+        "shares": 0.3,
+        "cost": 0.1188,
         "expiry": 1787252400,
         "adopted": false,
         "txHash": "0x64faa04e35d0111b0da46628af0e4fefce61481a02ae8deaf1f4acf8b8f25d3d"
@@ -204,7 +204,7 @@
     {
       "name": "DISCOVER",
       "proven": true,
-      "evidence": "36 cycles against the live venue"
+      "evidence": "44 cycles against the live venue"
     },
     {
       "name": "ANALYZE",
@@ -214,7 +214,7 @@
     {
       "name": "ALLOCATE",
       "proven": true,
-      "evidence": "15 positions opened by the allocator"
+      "evidence": "19 positions opened by the allocator"
     },
     {
       "name": "RISK CHECK",
@@ -239,7 +239,7 @@
     {
       "name": "PERSIST",
       "proven": true,
-      "evidence": "state at ./data-canary/state.json, 36 cycles"
+      "evidence": "state at ./data-canary/state.json, 44 cycles"
     },
     {
       "name": "LEDGER",
@@ -254,7 +254,7 @@
     {
       "name": "CLAIM",
       "proven": true,
-      "evidence": "last sweep 2026-08-20T18:27:07.000Z"
+      "evidence": "last sweep 2026-08-20T18:37:50.000Z"
     }
   ]
 }
