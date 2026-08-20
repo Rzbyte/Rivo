@@ -91,6 +91,9 @@ npm run build:public     # static files in public/, no backend
 npx serve public
 ```
 
+**Live: https://rzbyte.github.io/Rivo/** — deployed from `main` by GitHub Actions on
+every push, so what is published is always what is in the repo.
+
 Live fair value for every DreamDEX Event Contract, with the calibration evidence
 behind it. **No wallet, no sign-in, nothing to install** — both Somnia indexers send
 permissive CORS headers, so the page runs entirely in the browser against the same

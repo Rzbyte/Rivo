@@ -1,0 +1,42 @@
+name: Deploy public page
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Only the deploy needs privileges, and only to Pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a running deploy finish rather than cancelling it half-published.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      # Bundles the browser entry points and copies docs/evidence/calibration.json
+      # in beside them. The page fetches its market data live from the client, so
+      # there is nothing to schedule and no secret to hold — a build is only out of
+      # date when the pricing code or the evidence changes.
+      - run: npm run build:public
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+      - id: deployment
+        uses: actions/deploy-pages@v4
