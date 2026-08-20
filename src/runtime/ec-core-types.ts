@@ -52,6 +52,7 @@ export interface EcCore {
   clampProbability(p: number, lo?: number, hi?: number): number;
   seedInventory(ctx: EcContext, market: UnifiedMarket, onchain: MarketOnchain): Promise<void>;
   maybeClaim(ctx: EcContext, opts?: Record<string, unknown>): Promise<void>;
+  cancelTracked(ctx: EcContext): Promise<{ cancelled: number; tracked: number }>;
 }
 
 /** Every name this file promises. `check:kit` asserts the kit still exports them. */
@@ -65,6 +66,7 @@ export const EC_CORE_EXPORTS = [
   "clampProbability",
   "seedInventory",
   "maybeClaim",
+  "cancelTracked",
 ] as const;
 
 /** Where the kit is expected to live, unless RIVO_EC_CORE points elsewhere. */

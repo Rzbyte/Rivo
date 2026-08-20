@@ -28,7 +28,8 @@
     "doctor": "tsx scripts/doctor.ts",
     "faucet": "tsx scripts/faucet.ts",
     "approve": "tsx scripts/approve.ts",
-    "coherence": "tsx src/cli/coherence.ts"
+    "coherence": "tsx src/cli/coherence.ts",
+    "maker:live": "tsx src/cli/makerlive.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

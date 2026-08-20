@@ -25,6 +25,13 @@ export interface OrderRequest {
   size: number;
   /** Worst price acceptable, in this leg's own probability terms. */
   limitPrice: number;
+  /**
+   * `ioc` takes what crosses and cancels the rest — the taker path.
+   * `post-only` rests or is REJECTED, never takes. A post-only that would cross
+   * does not revert; the write succeeds and simply rests nothing, which is why
+   * the caller has to check `rested` rather than assume.
+   */
+  type?: "ioc" | "post-only";
 }
 
 export interface OrderResult {
@@ -32,6 +39,10 @@ export interface OrderResult {
   avgPrice: number;
   cost: number;
   txHash?: string;
+  /** True when quantity is resting on the book — the point of a post-only. */
+  rested?: boolean;
+  /** On-chain order id, present only when something rested. */
+  orderId?: string;
   /** Set when nothing happened and why. */
   rejected?: string;
 }
@@ -46,6 +57,8 @@ export interface Executor {
   mergeSet(marketId: string, amount: number): Promise<OrderResult>;
   /** Sweep settled windows and redeem. Returns collateral recovered. */
   claim(): Promise<number>;
+  /** Cancel every order this session has resting. Returns how many were pulled. */
+  cancelResting(): Promise<number>;
   /** Confirm on-chain that a window still accepts orders. */
   isTradable(marketId: string): Promise<boolean>;
   /**
@@ -113,6 +126,10 @@ export class DryExecutor implements Executor {
     // Settlement in a dry run is resolved from the indexer by the loop itself,
     // which knows each window's winning outcome. There is nothing to sweep.
     return 0;
+  }
+
+  async cancelResting(): Promise<number> {
+    return 0; // nothing simulated ever rested on a real book
   }
 
   async isTradable(): Promise<boolean> {
@@ -299,13 +316,20 @@ export class LiveExecutor implements Executor {
       side,
       price,
       size,
-      // IOC: take what crosses now and cancel the rest. An unfilled remainder
-      // that rests holds escrow invisibly unless every open order is tracked,
-      // and the allocator has already decided what this cycle should own.
-      type: "ioc",
+      // IOC for the taker path: take what crosses now and cancel the rest, since
+      // an unfilled remainder rests holding escrow invisibly. Post-only for the
+      // maker path, where resting IS the point and crossing is the failure.
+      type: req.type ?? "ioc",
     });
       const cost = side === "buy" ? res.filled * res.price : -(res.filled * res.price);
-      return { filled: res.filled, avgPrice: res.price, cost, txHash: res.hash };
+      return {
+        filled: res.filled,
+        avgPrice: res.price,
+        cost,
+        txHash: res.hash,
+        rested: res.rested,
+        ...(res.orderId !== undefined ? { orderId: String(res.orderId) } : {}),
+      };
     } catch (e) {
       // An error that does not say what it was trying to do is most of a wasted
       // afternoon. The SDK's message is `placeBinaryOrder reverted: for an
@@ -363,6 +387,16 @@ export class LiveExecutor implements Executor {
     const core = await this.load();
     const resolved = await this.resolve(marketId);
     return resolved ? core.isTradable(resolved.onchain) : false;
+  }
+
+  async cancelResting(): Promise<number> {
+    const core = await this.load();
+    // ec-core tracks every order it rested and cancels them together. Leaving a
+    // stale quote on the book is not merely untidy: it holds escrow, and it can
+    // be lifted at a price the model no longer believes.
+    const r = (await (core as unknown as { cancelTracked: (c: unknown) => Promise<{ cancelled: number }> })
+      .cancelTracked(this.ctx)) as { cancelled: number };
+    return r?.cancelled ?? 0;
   }
 
   async address(): Promise<string | null> {
