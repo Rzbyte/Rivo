@@ -5,13 +5,19 @@ Findings from building [Rivo](../README.md) against `@somnia-chain/markets-sdk` 
 August 2026 on the DreamDEX testnet venue
 (`0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c`).
 
-**Thirteen findings.** Every one is reproducible; where a snippet is given it runs against public
+**Fourteen findings.** Every one is reproducible; where a snippet is given it runs against public
 endpoints with no key. Ordered roughly by how much time each cost us.
 
 Five of them (#4–#8) came out of taking Rivo live rather than reading the docs — they are the
-things that only appear once a real wallet sends a real order. **#4 is the one we would fix first:
-a developer who follows your documentation exactly cannot place their first Event Contract order,
-and the error names nothing.**
+things that only appear once a real wallet sends a real order. Three are worth pulling out:
+
+- **#4 — a developer who follows your documentation exactly cannot place their first Event
+  Contract order, and the error names nothing.** The one we would fix first, because it is the
+  difference between a new builder shipping and concluding the venue is broken.
+- **#8 — `OutcomeBalance` is wrong about what a wallet owns, in both directions, and does not
+  converge.** Two of five rows on one wallet. A bot cannot guess at its own holdings.
+- **#9 — the on-chain permission that would make non-custodial Event Contract bots possible is
+  already deployed and switched off.** One flag away from changing what can be built here.
 
 The kit is genuinely good — `ec-core` is 1,585 lines that absorb sixteen documented sharp edges,
 and `docs/gotchas.md` and `docs/measuring-edge.md` are better than most production trading
@@ -222,17 +228,42 @@ when it is zero — collateral deserves the same).
 
 ---
 
-## 8. Outcome balances lag the chain, so freshly minted inventory reads as zero
+## 8. `OutcomeBalance` disagrees with the chain in BOTH directions, and does not converge
 
-**Severity: low, but it costs real collateral.**
+**Severity: high — it is wrong about what a wallet owns, which is the one thing a bot cannot guess.**
 
-`OutcomeBalance` in the indexer lags the chain by seconds, like every other indexed table. A maker
-that mints a complete set and re-reads its inventory on the next cycle still sees zero, concludes
-it has none, and mints again. Measured: **40 complete sets bought to support 16 orders** — roughly
-400 collateral spent acquiring inventory already held.
+We first filed this as ordinary indexer lag. It is not. Re-measured against the outcome-token
+contract itself on 2026-08-22, one wallet, one read:
 
-The indexer lag is documented generally; that it applies to *your own just-submitted mint* is the
-part that surprises. Worth one line beside the mint-a-pair recipe.
+| market | leg | `OutcomeBalance` | ERC-6909 `balanceOf` | window |
+|---|---|---|---|---|
+| …5d4e | UP | 0.3100 | **0.0000** | Finalized |
+| …5dc1 | DOWN | 0.7900 | **0.0000** | Finalized |
+| …5dc2 | DOWN | 0.0700 | 0.0700 | Finalized |
+| …5deb | DOWN | 0.3800 | 0.3800 | Finalized |
+| …5de8 | DOWN | 0.3100 | 0.3100 | Trading |
+
+**Two of five rows were wrong, and they were wrong in the direction nobody plans for.** Lag means
+the table is *behind* — a fill or a mint that has not appeared yet. That is the case we had already
+hit and reported: a maker re-reads its inventory, sees zero, mints again. Measured then at **40
+complete sets bought to support 16 orders**, roughly 400 collateral spent re-acquiring inventory it
+already held.
+
+These two rows are the opposite. The positions settled, the tokens were burned on-chain, and the
+row stayed. It is still there hours later, so this is not a few seconds of catch-up — it does not
+converge. A bot reading that table sees an asset that does not exist, and any sensible thing it
+does next is wrong: our runtime reported them as unclaimed payouts on **every single cycle**, and
+a market still listed as Trading would instead have had a phantom position adopted into the
+portfolio, with phantom value credited to the ledger.
+
+Both directions are the same underlying problem: `OutcomeBalance` is a derived copy being used as
+the record of ownership. Ours is now read from the pool's own ERC-6909 singleton
+(`getBinaryPoolParams()` → `outcomeToken`, `yesId`/`noId`, then `balanceOf(owner, id)`) and the
+indexer is treated as a hint. That works, and it is three calls where one indexed read should do.
+
+**What would help:** treat a burn on settlement as an event that zeroes the row, the same way a
+mint creates it; and document, beside the mint-a-pair recipe, that this table must not be used as
+the authority on holdings by anything that spends money on the answer.
 
 ---
 

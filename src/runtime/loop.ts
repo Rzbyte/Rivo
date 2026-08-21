@@ -18,12 +18,14 @@
 // trades, and two senders on one key race each other's nonce.
 
 import { Indexer } from "../core/indexer.js";
-import type { Asset } from "../core/config.js";
+import { network, type Asset } from "../core/config.js";
 import { snapshot, type Snapshot } from "../engine/scan.js";
+import type { Leg } from "../engine/book.js";
 import { allocate } from "../portfolio/allocator.js";
 import type { RiskProfile } from "../portfolio/profiles.js";
 import { measureCorrelation, type Position } from "../portfolio/risk.js";
 import { legKey, manage, type PositionDecision } from "./position.js";
+import { OutcomeReader } from "./onchain.js";
 import { describe as describeDiscrepancy, reconcile, type Discrepancy } from "./reconcile.js";
 import type { Executor } from "./executor.js";
 import {
@@ -149,7 +151,8 @@ export async function cycle(state: RivoState, deps: LoopDeps): Promise<CycleRepo
       if (Number.isFinite(o.fair)) marks.set(k, o.fair);
     }
     const chain = await idx.outcomeBalances(account);
-    reconciled = reconcile({ state, chain, meta, marks, now });
+    const verified = await verifyAgainstChain(idx, chain, state, account);
+    reconciled = reconcile({ state, chain: verified, meta, marks, now });
     for (const d of reconciled) {
       // Print a self-repeating finding once, then only when it changes. It is
       // still in `reconciled` for the report and the state; what is suppressed
@@ -494,6 +497,70 @@ async function applyPositionAction(
     });
     out(`  ${d.action} ${p.asset}-${Math.round(p.intervalSec / 60)}m ${p.leg} ${res.filled.toFixed(2)} @ ${res.avgPrice.toFixed(3)}  (${d.reason})`);
   }
+}
+
+/**
+ * Replace the indexer's holdings with the chain's, wherever the chain will say.
+ *
+ * `reconcile()` is a pure function and stays that way — this does the I/O and
+ * hands it a better map. That separation is worth keeping: the rules for what to
+ * adopt, drop and resize are the delicate part and remain testable without a
+ * network.
+ *
+ * Only the legs that could actually cause a change are checked — the union of
+ * what the indexer reports and what Rivo believes it holds — so this is a
+ * handful of `eth_call`s per cycle rather than a scan. Everything else stays as
+ * the indexer had it.
+ *
+ * A leg the chain cannot be asked about is LEFT ALONE, deliberately. The failure
+ * modes are not symmetric: keeping a stale figure repeats yesterday's behaviour,
+ * while treating an unanswered read as zero would delete a live position on the
+ * strength of a timeout.
+ */
+export async function verifyAgainstChain(
+  idx: Pick<Indexer, "poolsOf">,
+  fromIndexer: Map<string, number>,
+  state: Pick<RivoState, "open">,
+  account: string,
+  read: Pick<OutcomeReader, "balance"> = outcomeReader(),
+): Promise<Map<string, number>> {
+  const keys = new Set<string>([...fromIndexer.keys(), ...state.open.map((p) => legKey(p.marketId, p.leg))]);
+  if (keys.size === 0) return fromIndexer;
+
+  const marketIds = [...new Set([...keys].map((k) => k.slice(0, k.lastIndexOf(":"))))];
+  let pools: Map<string, string>;
+  try {
+    pools = await idx.poolsOf(marketIds);
+  } catch {
+    return fromIndexer; // no pool lookup, no verification — and no harm done
+  }
+
+  const out = new Map(fromIndexer);
+  for (const k of keys) {
+    const cut = k.lastIndexOf(":");
+    const marketId = k.slice(0, cut);
+    const leg = k.slice(cut + 1) as Leg;
+    const pool = pools.get(marketId);
+    if (!pool) continue;
+    const truth = await read.balance(pool, account, leg);
+    if (truth === null) continue;
+    // Zero is a real answer and the most consequential one: it is what tells
+    // reconciliation that a position it believes in does not exist. It only ever
+    // arrives here from a successful read.
+    if (truth > 0) out.set(k, truth);
+    else out.delete(k);
+  }
+  return out;
+}
+
+/** One reader per process, so pool ids are resolved once rather than per cycle. */
+let reader: OutcomeReader | null = null;
+function outcomeReader(): OutcomeReader {
+  reader ??= new OutcomeReader(
+    process.env.RPC_URL ||
+      (network() === "mainnet" ? "https://api.infra.mainnet.somnia.network" : "https://api.infra.testnet.somnia.network"),
+  );
+  return reader;
 }
 
 const record = (

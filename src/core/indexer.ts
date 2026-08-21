@@ -104,11 +104,20 @@ export interface MarketRow {
   finalized: boolean;
   voided: boolean;
   tradeCount: number;
+  /**
+   * The BinaryPool this window trades on, when the indexer knows it.
+   *
+   * Carried because it is the only route from a market id to the contract that
+   * can be asked what a wallet really holds — see runtime/onchain.ts. Pools are
+   * recycled across successive windows, so this is valid for the generation the
+   * row describes and no longer.
+   */
+  pool: string | null;
 }
 
 const MARKET_FIELDS = `
   marketId asset intervalSec tradingStart expiry
-  clobStatus strike winningOutcome finalized voided tradeCount
+  clobStatus strike winningOutcome finalized voided tradeCount binaryPoolAddress
 `;
 
 function toRow(r: Record<string, unknown>): MarketRow {
@@ -124,6 +133,7 @@ function toRow(r: Record<string, unknown>): MarketRow {
     finalized: Boolean(r.finalized),
     voided: Boolean(r.voided),
     tradeCount: Number(r.tradeCount ?? 0),
+    pool: typeof r.binaryPoolAddress === "string" && r.binaryPoolAddress ? r.binaryPoolAddress.toLowerCase() : null,
   };
 }
 
@@ -401,6 +411,33 @@ export class Indexer {
           winningOutcome: m.winningOutcome === null || m.winningOutcome === undefined ? null : Number(m.winningOutcome),
           expiry: Number(m.expiry ?? 0),
         });
+      }
+    }
+    return out;
+  }
+
+  /**
+   * The BinaryPool address for arbitrary markets, live or not.
+   *
+   * `liveMarkets()` cannot answer this for a window that has expired, and those
+   * are exactly the ones a held position needs verifying against — a settled leg
+   * is where the indexer's balance table is most often stale. Chunked and
+   * cached by the caller; pools are stable within a window's generation.
+   */
+  async poolsOf(marketIds: string[]): Promise<Map<string, string>> {
+    const out = new Map<string, string>();
+    const ids = [...new Set(marketIds.map((m) => m.toLowerCase()))];
+    for (let i = 0; i < ids.length; i += 100) {
+      const data = await gql<{ Market: { marketId: string; binaryPoolAddress: string | null }[] }>(
+        this.url,
+        "poolsOf",
+        `query($ids:[String!]){
+           Market(where:{ marketId:{_in:$ids} }, limit:200){ marketId binaryPoolAddress }
+         }`,
+        { ids: ids.slice(i, i + 100) },
+      );
+      for (const m of data.Market) {
+        if (m.binaryPoolAddress) out.set(String(m.marketId).toLowerCase(), m.binaryPoolAddress.toLowerCase());
       }
     }
     return out;

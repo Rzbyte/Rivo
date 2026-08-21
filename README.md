@@ -56,7 +56,7 @@ alternative explanations we eliminated first: **[docs/EVIDENCE.md](docs/EVIDENCE
 npm test
 ```
 
-**232 tests** across the things that either move money or produce a published number: the
+**248 tests** across the things that either move money or produce a published number: the
 dual-crossing-path book, the fair-value model and volatility estimator, the scoring rules behind
 every figure in [EVIDENCE.md](docs/EVIDENCE.md), the capital allocator, the position manager, settlement, and
 on-chain reconciliation.
@@ -225,7 +225,7 @@ src/
   web/         cockpit server + static snapshot export
   public/      the public pricing page — browser bundle, shares the runtime's math
   cli/         start · web · report · calibrate · scan · allocate · backtest · diagnose · band · maker · concentration · agent
-  *.test.ts    232 tests, colocated with what they cover
+  *.test.ts    248 tests, colocated with what they cover
 ```
 
 The cycle:
@@ -236,8 +236,11 @@ DISCOVER → RECONCILE → SETTLE/CLAIM → MONITOR/RECOVER → RISK CHECK → A
 
 **Reconciliation makes the chain the authority on what is held**, and runs before anything reasons
 from it — settling, managing and allocating against a portfolio Rivo merely *believes* it has
-would be wrong in the same direction all at once. Holdings come from the indexer's
-`OutcomeBalance`, so this needs no SDK and no key beyond knowing the address.
+would be wrong in the same direction all at once. Holdings are read from the pool's own ERC-6909
+outcome token rather than from the indexer, because the indexer was measurably wrong in both
+directions: two of five rows on one wallet, including two settled positions whose tokens had been
+burned and whose rows never went away. A read that fails returns null and never zero — a zero here
+authorises deleting a position.
 
 It is deliberately asymmetric. A shortfall inside a two-minute grace window is left alone, because
 the indexer lags the chain by seconds and deleting a just-filled position is the more expensive
@@ -343,7 +346,7 @@ validates against the real thing.
 | `npm run proof` | capture the live execution chain as a checkable artefact |
 | `npm run agent -- new \| status \| fund \| sweep` | the wallet Rivo signs with, and what it may lose |
 | `npm run probe:operator` | can EC be traded non-custodially? measured, not assumed |
-| `npm test` · `npm run typecheck` | 232 tests · strict TypeScript, no emit |
+| `npm test` · `npm run typecheck` | 248 tests · strict TypeScript, no emit |
 | `npm run doctor` | can Rivo trade right now — signer, gas, collateral, venue, kit |
 | `npm run check:kit` · `npm run link:kit` | verify / install the optional bot kit |
 

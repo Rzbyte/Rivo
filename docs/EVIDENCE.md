@@ -491,6 +491,46 @@ arithmetic rather than a promise, which is the only kind of bound available here
 `npm run doctor` reports which authority is in force and what it can lose, because the difference
 between the two is the one thing an operator must not have to guess at.
 
+### The indexer was wrong about what the wallet owned, in both directions
+
+Reconciliation's entire premise is the sentence *the chain is the authority on what is held*. It
+was not doing that. Holdings came from the indexer's `OutcomeBalance` table — a derived copy — and
+on 2026-08-22 a single read of one wallet found two of five rows disagreeing with the
+outcome-token contract itself:
+
+| market | leg | `OutcomeBalance` | chain | window |
+|---|---|---|---|---|
+| …5d4e | UP | 0.3100 | **0.0000** | Finalized |
+| …5dc1 | DOWN | 0.7900 | **0.0000** | Finalized |
+| …5dc2 | DOWN | 0.0700 | 0.0700 | Finalized |
+| …5deb | DOWN | 0.3800 | 0.3800 | Finalized |
+| …5de8 | DOWN | 0.3100 | 0.3100 | Trading |
+
+Both error directions cost something, and neither is theoretical:
+
+- **Stale low** — a fill lands before its row appears. Past the two-minute grace window that
+  becomes a DROP, and Rivo forgets a position it owns and is free to buy a second copy. This is
+  the same lag that had already cost ~400 collateral in re-minted maker inventory
+  ([SDK-FEEDBACK §8](SDK-FEEDBACK.md)).
+- **Stale high** — a position settles, its tokens are burned, the row lingers. Those two zero rows
+  above are exactly the holdings the runtime had been reporting as unclaimed payouts on *every
+  cycle*. There were no unclaimed payouts. On a window still listed as Trading the same row would
+  have been **adopted**: a phantom position, with phantom value credited to `contributed`.
+
+Holdings are now read from the pool's own ERC-6909 singleton — `getBinaryPoolParams()` for the
+outcome token and the two leg ids, then `balanceOf(owner, id)` — and the indexer is demoted to a
+hint. Only the legs that could cause a change are checked, so it costs a handful of `eth_call`s a
+cycle rather than a scan.
+
+The property that matters most is what happens when that read *fails*: it returns null, never
+zero. A zero here authorises deleting a position, so a timeout that decoded as zero would erase a
+portfolio on the strength of a network hiccup. Unverifiable legs keep the indexer's figure, which
+is no worse than before. Sixteen tests cover the module, and half of them are about that
+distinction rather than about arithmetic.
+
+Verified live on the running canary: reconciliation went from four findings a cycle to two, and
+the two that disappeared were exactly the two the chain reported as zero.
+
 ### The cash ledger did not balance, and nothing could tell
 
 The worst bug in this project, found by building a portfolio UI that had to display cash.
