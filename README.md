@@ -56,7 +56,7 @@ alternative explanations we eliminated first: **[docs/EVIDENCE.md](docs/EVIDENCE
 npm test
 ```
 
-**171 tests** across the things that either move money or produce a published number: the
+**230 tests** across the things that either move money or produce a published number: the
 dual-crossing-path book, the fair-value model and volatility estimator, the scoring rules behind
 every figure in [EVIDENCE.md](docs/EVIDENCE.md), the capital allocator, the position manager, settlement, and
 on-chain reconciliation.
@@ -224,8 +224,8 @@ src/
   runtime/     durable state · execution adapter · position manager · reconciliation · the cycle
   web/         cockpit server + static snapshot export
   public/      the public pricing page — browser bundle, shares the runtime's math
-  cli/         start · web · report · calibrate · scan · allocate · backtest · diagnose · band · maker · concentration
-  *.test.ts    171 tests, colocated with what they cover
+  cli/         start · web · report · calibrate · scan · allocate · backtest · diagnose · band · maker · concentration · agent
+  *.test.ts    230 tests, colocated with what they cover
 ```
 
 The cycle:
@@ -271,10 +271,43 @@ npm --prefix ../dreamdex-bot-kit install
 npm run link:kit        # makes @dreamdex-bot-kit/ec-core resolvable
 npm run check:kit       # verify the exports Rivo calls still exist
 
-cp .env.example .env    # then set a funded testnet PRIVATE_KEY and DRY_RUN=false
-npm run doctor          # checks signer, gas, collateral, venue and kit in one pass
-npm start -- --capital 5 --profile conservative
+npm run agent -- new                            # a wallet that holds only its float
+npm run agent -- fund --collateral 25 --gas 1   # from your own key, once
+npm run doctor                                  # which key signs, and what it can lose
+npm start -- --capital 25 --profile conservative --live
 ```
+
+### The key it signs with
+
+An autonomous process has to hold a key that can act for its account, and on this venue there is
+no way around that: the on-chain scoping that would fix it — `placeBinaryOrderFor`,
+`cancelOrderFor` — **is present in the deployed contract and switched off**. Both revert
+`0x3fb0ba2e` for every caller, the owner acting for itself included, while each parameter error
+carries its own selector. `npm run probe:operator` reproduces the whole differential in a minute,
+with no key and no gas.
+
+So the lever is not the permission, it is the balance. `npm run agent` creates a wallet that holds
+only what you moved into it — no other assets, no allowance against your own wallet — so the worst
+case is a number you chose rather than everything that wallet has ever held, and `npm run agent --
+sweep` takes it back. Rivo prefers it over a raw key in `.env` whenever one exists.
+
+That is a real bound and a narrow one. It does not make a hot key safe; it makes the loss small.
+The distinction is stated in the product rather than glossed, in
+[`src/runtime/signer.ts`](src/runtime/signer.ts) and in what `doctor` prints.
+
+### Self-hosting
+
+```bash
+npm run agent -- new
+echo "RIVO_CONTROL_TOKEN=$(openssl rand -hex 24)" >> .env
+docker compose up -d          # cockpit on http://localhost:3000
+```
+
+The image bakes in nothing secret and is identical for everyone. The agent wallet is mounted
+read-only, state lives on a volume so a restart resumes the portfolio rather than re-buying it,
+and the container runs as a non-root user. `docker compose --profile headless up -d` runs the
+autopilot without the UI; the two are mutually exclusive on purpose, because two processes writing
+one state file is how a bot forgets what it owns.
 
 `ec-core` is deliberately **not** a hard dependency: it ships as raw TypeScript from a private
 workspace, so requiring it would mean nobody could `npm install` this repo without the kit checked
@@ -282,8 +315,10 @@ out at an exact relative path — for code only the live path touches. It is loa
 type-checked against a local contract (`src/runtime/ec-core-types.ts`) that `npm run check:kit`
 validates against the real thing.
 
-> The live execution path is written against `ec-core`'s documented surface rather than stubbed,
-> but it has **not yet been exercised against the chain**. Canary at minimum size before trusting it.
+> The live path has been exercised against the chain: **1,005 cycles, 208 positions opened, 68
+> settled**, ending with the drawdown breaker firing at 35.3% and halting new entries by itself.
+> Transaction hashes and every stage in [docs/EVIDENCE.md](docs/EVIDENCE.md#the-live-canary-every-stage-with-something-to-check).
+> Still canary at minimum size before trusting it with anything you mind losing.
 
 ---
 
@@ -306,7 +341,9 @@ validates against the real thing.
 | `npm run coherence -- --days 30` | cross-tenor arbitrage bound — derived, tested, rejected on size |
 | `npm run build:public` | build the public page — static, no backend |
 | `npm run proof` | capture the live execution chain as a checkable artefact |
-| `npm test` · `npm run typecheck` | 171 tests · strict TypeScript, no emit |
+| `npm run agent -- new \| status \| fund \| sweep` | the wallet Rivo signs with, and what it may lose |
+| `npm run probe:operator` | can EC be traded non-custodially? measured, not assumed |
+| `npm test` · `npm run typecheck` | 230 tests · strict TypeScript, no emit |
 | `npm run doctor` | can Rivo trade right now — signer, gas, collateral, venue, kit |
 | `npm run check:kit` · `npm run link:kit` | verify / install the optional bot kit |
 
@@ -318,7 +355,8 @@ indexers.
 ## Documentation
 
 - **[docs/EVIDENCE.md](docs/EVIDENCE.md)** — every claim, its method, and what we ruled out
-- **[docs/SDK-FEEDBACK.md](docs/SDK-FEEDBACK.md)** — findings from building against the SDK and indexer
+- **[docs/SDK-FEEDBACK.md](docs/SDK-FEEDBACK.md)** — findings from building against the SDK and indexer, including the
+  on-chain measurement that the Event Contract operator entrypoints exist and are disabled
 - **[DISCLAIMER.md](DISCLAIMER.md)** — read before running anything with money
 - [docs/evidence/](docs/evidence/) — saved outputs and a dashboard snapshot
 

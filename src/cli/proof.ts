@@ -56,9 +56,20 @@ async function main(): Promise<void> {
     throw new Error(`no state at ${dataDir}/state.json — run the runtime first`);
   });
 
+  // Whose run is this? The state file's own record wins over whatever key is
+  // configured right now, because those diverge as soon as a machine has more
+  // than one wallet — and a proof that reports the wrong account's balances
+  // beside somebody else's transaction hashes is worse than no proof.
   const authority = await authorityStatus();
-  if (!authority.address) throw new Error("no signing authority configured — nothing to prove");
-  const address = authority.address;
+  // `arg` returns "" when absent, so these are || rather than ?? — an empty
+  // string is a missing flag, not a chosen value.
+  const address = arg("--address") || state.tradedBy || authority.address;
+  if (!address) {
+    throw new Error(
+      "this state records no trading account and no signing authority is configured — pass --address to prove against one",
+    );
+  }
+  const sameAsConfigured = !authority.address || address.toLowerCase() === authority.address.toLowerCase();
 
   const idx = new Indexer();
   const [gas, collateral, outcome] = await Promise.all([
@@ -117,7 +128,15 @@ async function main(): Promise<void> {
     network: net,
     venueId: VENUE[net].venueId,
     wallet: { address, url: addressUrl(net, address), gas, gasSymbol: gasTokenName(net), collateral, collateralSymbol: collateralName(net) },
-    authority: { kind: authority.kind, boundedOnChain: authority.boundedOnChain, bounds: authority.bounds },
+    authority: {
+      kind: authority.kind,
+      boundedOnChain: authority.boundedOnChain,
+      bounds: authority.bounds,
+      // Which wallet these figures belong to, and whether it is still the one
+      // configured — so a reader can tell a fresh proof from a historical one.
+      addressSource: arg("--address") ? "flag" : state.tradedBy ? "recorded in state" : "configured key (this run predates state.tradedBy)",
+      isCurrentSigner: sameAsConfigured,
+    },
     runtime: {
       cycles: state.cycles,
       startedAt: state.startedAt,
@@ -172,9 +191,18 @@ async function main(): Promise<void> {
 
   console.log(`RIVO LIVE PROOF  ·  ${net}`);
   console.log("=".repeat(78));
-  console.log(`wallet     ${address}`);
+  const source = arg("--address")
+    ? "given with --address"
+    : state.tradedBy
+      ? "recorded by the run itself"
+      : "not recorded — assumed from the configured key";
+  console.log(`wallet     ${address}  (${source})`);
   console.log(`           ${gas.toFixed(4)} ${gasTokenName(net)} · ${collateral.toFixed(4)} ${collateralName(net)}`);
   console.log(`authority  ${authority.kind}${authority.boundedOnChain ? " (bounded on-chain)" : " (bounds enforced by Rivo, not the chain)"}`);
+  if (!sameAsConfigured) {
+    console.log(`           note: this run was traded by the address above, not by the key configured now`);
+    console.log(`           (${authority.address}) — balances shown are the run's own.`);
+  }
   console.log("");
   for (const s of proof.stages) {
     console.log(`  ${s.proven ? "✓" : "·"}  ${s.name.padEnd(11)} ${s.evidence}`);

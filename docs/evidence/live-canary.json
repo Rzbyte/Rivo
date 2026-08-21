@@ -1,190 +1,240 @@
 {
-  "generatedAt": "2026-08-20T18:41:18.829Z",
+  "generatedAt": "2026-08-21T20:03:44.487Z",
   "network": "testnet",
   "venueId": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
   "wallet": {
-    "address": "0x6730d3a2a217108ab53ccfe60ffdad05d3c124e5",
-    "url": "https://shannon-explorer.somnia.network/address/0x6730d3a2a217108ab53ccfe60ffdad05d3c124e5",
-    "gas": 49.220089454,
+    "address": "0x6730d3a2A217108AB53CCFe60ffdAd05D3C124e5",
+    "url": "https://shannon-explorer.somnia.network/address/0x6730d3a2A217108AB53CCFe60ffdAd05D3C124e5",
+    "gas": 47.4018598,
     "gasSymbol": "STT",
-    "collateral": 9914.09932,
+    "collateral": 9858.31643,
     "collateralSymbol": "tUSDC"
   },
   "authority": {
-    "kind": "raw-key",
+    "kind": "agent-wallet",
     "boundedOnChain": false,
-    "bounds": "Full account authority. Capital ceiling, delta budgets, drawdown breaker and kill switch are enforced by Rivo, not by the chain."
+    "bounds": "A dedicated wallet holding only its funded float. Maximum loss is that balance — it holds no other assets and no allowance to the owner's wallet. Sweep it back with `npm run agent -- sweep`.",
+    "addressSource": "flag",
+    "isCurrentSigner": false
   },
   "runtime": {
-    "cycles": 44,
+    "cycles": 1005,
     "startedAt": 1787249190,
-    "lastCycleAt": 1787251227,
+    "lastCycleAt": 1787295860,
     "capital": 20,
-    "contributed": 41.27516579346404,
-    "cash": 40.698730000000005,
-    "realizedPnl": -9.561604253962518,
-    "halted": null,
+    "contributed": 37.30066579346405,
+    "cash": 31.00568000000006,
+    "realizedPnl": -25.195355793464028,
+    "halted": "drawdown 35.3% exceeded 35% — no new positions; open ones will settle",
     "dryRun": false
   },
   "ledger": {
     "identity": "cash + open cost == capital + contributed + realised",
-    "cash": 40.698730000000005,
-    "openCost": 11.014831539501523,
+    "cash": 31.00568000000006,
+    "openCost": 1.09963,
     "capital": 20,
-    "contributed": 41.27516579346404,
-    "realizedPnl": -9.561604253962518,
-    "imbalance": 0,
+    "contributed": 37.30066579346405,
+    "realizedPnl": -25.195355793464028,
+    "imbalance": 4.263256414560601e-14,
     "balances": true
   },
   "execution": {
-    "positionsOpenedByRivo": 19,
-    "withTransactionHash": 7,
+    "positionsOpenedByRivo": 208,
+    "withTransactionHash": 10,
     "receipts": [
       {
-        "hash": "0x6c703e254f1ae1a6a9e65d64f0021ebec936be9f5cde1c4977e57e5bdf2da1e8",
-        "url": "https://shannon-explorer.somnia.network/tx/0x6c703e254f1ae1a6a9e65d64f0021ebec936be9f5cde1c4977e57e5bdf2da1e8",
+        "hash": "0xdc89f5d2efad349b72e1c8dba7a714c34628ff9311cfde22e4bd289aab8b5263",
+        "url": "https://shannon-explorer.somnia.network/tx/0xdc89f5d2efad349b72e1c8dba7a714c34628ff9311cfde22e4bd289aab8b5263",
         "found": true,
         "succeeded": true,
-        "block": 466767414,
-        "gasUsed": 628682,
-        "events": 8,
-        "to": "0xae9c15cce0ab5740cba3c0284943da55d9a5796d"
-      },
-      {
-        "hash": "0x1033a547baf5f9f29377688a9b9fc25d6b926454745902bb5eb56a5535f1ca79",
-        "url": "https://shannon-explorer.somnia.network/tx/0x1033a547baf5f9f29377688a9b9fc25d6b926454745902bb5eb56a5535f1ca79",
-        "found": true,
-        "succeeded": true,
-        "block": 466769412,
+        "block": 467068226,
         "gasUsed": 426781,
         "events": 8,
-        "to": "0xf501c195ecf6b15676cd6b5419986ac94b2022f3"
+        "to": "0xc3e2b06a7a9e35170785a01595a09e4aed8a78df"
       },
       {
-        "hash": "0xa1d497ebd870f98d14405d2d7832a17e62b1f962621276214bdfb4603e8290c1",
-        "url": "https://shannon-explorer.somnia.network/tx/0xa1d497ebd870f98d14405d2d7832a17e62b1f962621276214bdfb4603e8290c1",
+        "hash": "0x8f35112dcacd1563dd5a3d6a7f81fbaa5e0f2cacca15ec49f4e2aadba0a886e9",
+        "url": "https://shannon-explorer.somnia.network/tx/0x8f35112dcacd1563dd5a3d6a7f81fbaa5e0f2cacca15ec49f4e2aadba0a886e9",
         "found": true,
         "succeeded": true,
-        "block": 466769789,
-        "gasUsed": 628682,
-        "events": 8,
-        "to": "0x3b0f94e52f49f4aeef3231efc9381d61098199bf"
-      },
-      {
-        "hash": "0x4587319b44ee8bfd65a939f4f13e55d99ddce9b2be7bad1100056a70e69bc925",
-        "url": "https://shannon-explorer.somnia.network/tx/0x4587319b44ee8bfd65a939f4f13e55d99ddce9b2be7bad1100056a70e69bc925",
-        "found": true,
-        "succeeded": true,
-        "block": 466773611,
-        "gasUsed": 428682,
-        "events": 8,
-        "to": "0x3b0f94e52f49f4aeef3231efc9381d61098199bf"
-      },
-      {
-        "hash": "0x5ed97dade0f1163fa6b1794415daa0aba8201e966ae5954b5f308c437d7d9ad5",
-        "url": "https://shannon-explorer.somnia.network/tx/0x5ed97dade0f1163fa6b1794415daa0aba8201e966ae5954b5f308c437d7d9ad5",
-        "found": true,
-        "succeeded": true,
-        "block": 466775407,
+        "block": 467082509,
         "gasUsed": 426781,
         "events": 8,
-        "to": "0xf501c195ecf6b15676cd6b5419986ac94b2022f3"
+        "to": "0xc3e2b06a7a9e35170785a01595a09e4aed8a78df"
       },
       {
-        "hash": "0x471e56471ddc90b728f46be8f8640ca829d5b449b38022e65d288e8439e1e652",
-        "url": "https://shannon-explorer.somnia.network/tx/0x471e56471ddc90b728f46be8f8640ca829d5b449b38022e65d288e8439e1e652",
+        "hash": "0x6ff21f94efc83b235c5016056bba14988d34ed744498f2837b3c4d9719c4308e",
+        "url": "https://shannon-explorer.somnia.network/tx/0x6ff21f94efc83b235c5016056bba14988d34ed744498f2837b3c4d9719c4308e",
         "found": true,
         "succeeded": true,
-        "block": 466775803,
-        "gasUsed": 428682,
+        "block": 467092270,
+        "gasUsed": 426781,
         "events": 8,
-        "to": "0x3b0f94e52f49f4aeef3231efc9381d61098199bf"
+        "to": "0xc3e2b06a7a9e35170785a01595a09e4aed8a78df"
       },
       {
-        "hash": "0x64faa04e35d0111b0da46628af0e4fefce61481a02ae8deaf1f4acf8b8f25d3d",
-        "url": "https://shannon-explorer.somnia.network/tx/0x64faa04e35d0111b0da46628af0e4fefce61481a02ae8deaf1f4acf8b8f25d3d",
+        "hash": "0xc3857af36f532f5adef2814d5374e2e5661c7b1a626febb6ce436d05b75a6b38",
+        "url": "https://shannon-explorer.somnia.network/tx/0xc3857af36f532f5adef2814d5374e2e5661c7b1a626febb6ce436d05b75a6b38",
         "found": true,
         "succeeded": true,
-        "block": 466779619,
-        "gasUsed": 428682,
+        "block": 467092840,
+        "gasUsed": 626781,
         "events": 8,
-        "to": "0xae9c15cce0ab5740cba3c0284943da55d9a5796d"
+        "to": "0xc09e4a5bdee2899962727125fb5eaeb896798e46"
+      },
+      {
+        "hash": "0x2665144da27ed347dc9748b5f8813fd8e9ca6b1a98d49be4afc3d6b5678e7ae6",
+        "url": "https://shannon-explorer.somnia.network/tx/0x2665144da27ed347dc9748b5f8813fd8e9ca6b1a98d49be4afc3d6b5678e7ae6",
+        "found": true,
+        "succeeded": true,
+        "block": 467102933,
+        "gasUsed": 426781,
+        "events": 8,
+        "to": "0xc3e2b06a7a9e35170785a01595a09e4aed8a78df"
+      },
+      {
+        "hash": "0x77142df4795942358640319acc08101816cbfaae8f179bd8cb67460a88ae15e6",
+        "url": "https://shannon-explorer.somnia.network/tx/0x77142df4795942358640319acc08101816cbfaae8f179bd8cb67460a88ae15e6",
+        "found": true,
+        "succeeded": true,
+        "block": 467107600,
+        "gasUsed": 426781,
+        "events": 8,
+        "to": "0xc09e4a5bdee2899962727125fb5eaeb896798e46"
+      },
+      {
+        "hash": "0x74a31c7f026f4264c69fff821b76296b218b5183e34c6d95fa52a0da080b8577",
+        "url": "https://shannon-explorer.somnia.network/tx/0x74a31c7f026f4264c69fff821b76296b218b5183e34c6d95fa52a0da080b8577",
+        "found": true,
+        "succeeded": true,
+        "block": 467123587,
+        "gasUsed": 626781,
+        "events": 8,
+        "to": "0xc3f0bb8cd90d3ffa6a3e4982bcd6698f27af5cc8"
+      },
+      {
+        "hash": "0x5bb78e2945d1d8cfb44a061362898410657c30377f62edcb9edd2faa484a1723",
+        "url": "https://shannon-explorer.somnia.network/tx/0x5bb78e2945d1d8cfb44a061362898410657c30377f62edcb9edd2faa484a1723",
+        "found": true,
+        "succeeded": true,
+        "block": 467131666,
+        "gasUsed": 626781,
+        "events": 8,
+        "to": "0x22b860e577dbadedb659985d8ec3706559702ab5"
+      },
+      {
+        "hash": "0xb4aa342d51dc3058dcd954e361eb813cb65ffa5a6235ea05295b6988f922f285",
+        "url": "https://shannon-explorer.somnia.network/tx/0xb4aa342d51dc3058dcd954e361eb813cb65ffa5a6235ea05295b6988f922f285",
+        "found": true,
+        "succeeded": true,
+        "block": 467148279,
+        "gasUsed": 426781,
+        "events": 8,
+        "to": "0xc09e4a5bdee2899962727125fb5eaeb896798e46"
+      },
+      {
+        "hash": "0x74f2215d8a02fe3ff63c6851cfdec18dcf8b476404aaa8dd7df30e59e664a0d9",
+        "url": "https://shannon-explorer.somnia.network/tx/0x74f2215d8a02fe3ff63c6851cfdec18dcf8b476404aaa8dd7df30e59e664a0d9",
+        "found": true,
+        "succeeded": true,
+        "block": 467148332,
+        "gasUsed": 426781,
+        "events": 8,
+        "to": "0xc3f0bb8cd90d3ffa6a3e4982bcd6698f27af5cc8"
       }
     ]
   },
   "positions": {
     "open": [
       {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004746",
-        "leg": "BTC 1d UP",
-        "shares": 8.96,
-        "cost": 8.931111539501524,
-        "expiry": 1787270400,
-        "adopted": true,
-        "txHash": null
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004e35",
-        "leg": "BTC 1h UP",
-        "shares": 0.42,
-        "cost": 0.14279999999999998,
-        "expiry": 1787252400,
+        "market": "0x00000000000000000000000000000000000000000000000000000000000051d3",
+        "leg": "BTC 1d DOWN",
+        "shares": 0.6000000000000002,
+        "cost": 0.15000000000000005,
+        "expiry": 1787356800,
         "adopted": false,
-        "txHash": "0x6c703e254f1ae1a6a9e65d64f0021ebec936be9f5cde1c4977e57e5bdf2da1e8"
+        "txHash": "0xdc89f5d2efad349b72e1c8dba7a714c34628ff9311cfde22e4bd289aab8b5263"
       },
       {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004cff",
+        "market": "0x00000000000000000000000000000000000000000000000000000000000051d3",
+        "leg": "BTC 1d DOWN",
+        "shares": 0.17,
+        "cost": 0.05491,
+        "expiry": 1787356800,
+        "adopted": false,
+        "txHash": "0x8f35112dcacd1563dd5a3d6a7f81fbaa5e0f2cacca15ec49f4e2aadba0a886e9"
+      },
+      {
+        "market": "0x00000000000000000000000000000000000000000000000000000000000051d3",
+        "leg": "BTC 1d DOWN",
+        "shares": 0.17,
+        "cost": 0.05372000000000002,
+        "expiry": 1787356800,
+        "adopted": false,
+        "txHash": "0x6ff21f94efc83b235c5016056bba14988d34ed744498f2837b3c4d9719c4308e"
+      },
+      {
+        "market": "0x00000000000000000000000000000000000000000000000000000000000051d4",
+        "leg": "ETH 1d DOWN",
+        "shares": 0.4,
+        "cost": 0.166,
+        "expiry": 1787356800,
+        "adopted": false,
+        "txHash": "0xc3857af36f532f5adef2814d5374e2e5661c7b1a626febb6ce436d05b75a6b38"
+      },
+      {
+        "market": "0x00000000000000000000000000000000000000000000000000000000000051d3",
+        "leg": "BTC 1d DOWN",
+        "shares": 0.28,
+        "cost": 0.08204,
+        "expiry": 1787356800,
+        "adopted": false,
+        "txHash": "0x2665144da27ed347dc9748b5f8813fd8e9ca6b1a98d49be4afc3d6b5678e7ae6"
+      },
+      {
+        "market": "0x00000000000000000000000000000000000000000000000000000000000051d4",
+        "leg": "ETH 1d DOWN",
+        "shares": 0.35000000000000003,
+        "cost": 0.14525,
+        "expiry": 1787356800,
+        "adopted": false,
+        "txHash": "0x77142df4795942358640319acc08101816cbfaae8f179bd8cb67460a88ae15e6"
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000005440",
+        "leg": "ETH 4h DOWN",
+        "shares": 0.060000000000000026,
+        "cost": 0.02478000000000001,
+        "expiry": 1787299200,
+        "adopted": false,
+        "txHash": "0x74a31c7f026f4264c69fff821b76296b218b5183e34c6d95fa52a0da080b8577"
+      },
+      {
+        "market": "0x000000000000000000000000000000000000000000000000000000000000543f",
         "leg": "BTC 4h DOWN",
-        "shares": 1.2799999999999998,
-        "cost": 0.5491199999999999,
-        "expiry": 1787256000,
+        "shares": 0.18999999999999978,
+        "cost": 0.07314999999999991,
+        "expiry": 1787299200,
         "adopted": false,
-        "txHash": "0x1033a547baf5f9f29377688a9b9fc25d6b926454745902bb5eb56a5535f1ca79"
+        "txHash": "0x5bb78e2945d1d8cfb44a061362898410657c30377f62edcb9edd2faa484a1723"
       },
       {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004e36",
-        "leg": "ETH 1h UP",
-        "shares": 0.66,
-        "cost": 0.17556000000000002,
-        "expiry": 1787252400,
+        "market": "0x00000000000000000000000000000000000000000000000000000000000051d4",
+        "leg": "ETH 1d DOWN",
+        "shares": 0.59,
+        "cost": 0.23128000000000004,
+        "expiry": 1787356800,
         "adopted": false,
-        "txHash": "0xa1d497ebd870f98d14405d2d7832a17e62b1f962621276214bdfb4603e8290c1"
+        "txHash": "0xb4aa342d51dc3058dcd954e361eb813cb65ffa5a6235ea05295b6988f922f285"
       },
       {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004e36",
-        "leg": "ETH 1h UP",
-        "shares": 0.61,
-        "cost": 0.16714,
-        "expiry": 1787252400,
+        "market": "0x0000000000000000000000000000000000000000000000000000000000005440",
+        "leg": "ETH 4h DOWN",
+        "shares": 0.29999999999999993,
+        "cost": 0.1185,
+        "expiry": 1787299200,
         "adopted": false,
-        "txHash": "0x4587319b44ee8bfd65a939f4f13e55d99ddce9b2be7bad1100056a70e69bc925"
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004cff",
-        "leg": "BTC 4h DOWN",
-        "shares": 2.05,
-        "cost": 0.67855,
-        "expiry": 1787256000,
-        "adopted": false,
-        "txHash": "0x5ed97dade0f1163fa6b1794415daa0aba8201e966ae5954b5f308c437d7d9ad5"
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004e36",
-        "leg": "ETH 1h UP",
-        "shares": 0.95,
-        "cost": 0.25175000000000003,
-        "expiry": 1787252400,
-        "adopted": false,
-        "txHash": "0x471e56471ddc90b728f46be8f8640ca829d5b449b38022e65d288e8439e1e652"
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004e35",
-        "leg": "BTC 1h UP",
-        "shares": 0.3,
-        "cost": 0.1188,
-        "expiry": 1787252400,
-        "adopted": false,
-        "txHash": "0x64faa04e35d0111b0da46628af0e4fefce61481a02ae8deaf1f4acf8b8f25d3d"
+        "txHash": "0x74f2215d8a02fe3ff63c6851cfdec18dcf8b476404aaa8dd7df30e59e664a0d9"
       }
     ],
     "settled": [
@@ -196,15 +246,366 @@
         "proceeds": 1.17,
         "won": true,
         "closedAt": 1787250619
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004e35",
+        "leg": "BTC 1h UP",
+        "shares": 0.42,
+        "cost": 0.14279999999999998,
+        "proceeds": 0,
+        "won": false,
+        "closedAt": 1787252431
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004e36",
+        "leg": "ETH 1h UP",
+        "shares": 0.66,
+        "cost": 0.17556000000000002,
+        "proceeds": 0,
+        "won": false,
+        "closedAt": 1787252431
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004e36",
+        "leg": "ETH 1h UP",
+        "shares": 0.61,
+        "cost": 0.16714,
+        "proceeds": 0,
+        "won": false,
+        "closedAt": 1787252431
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004e36",
+        "leg": "ETH 1h UP",
+        "shares": 0.95,
+        "cost": 0.25175000000000003,
+        "proceeds": 0,
+        "won": false,
+        "closedAt": 1787252431
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004e35",
+        "leg": "BTC 1h UP",
+        "shares": 0.3,
+        "cost": 0.1188,
+        "proceeds": 0,
+        "won": false,
+        "closedAt": 1787252431
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004eaa",
+        "leg": "ETH 15m DOWN",
+        "shares": 0.64,
+        "cost": 0.27263999999999994,
+        "proceeds": 0,
+        "won": false,
+        "closedAt": 1787252431
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004ea9",
+        "leg": "BTC 15m UP",
+        "shares": 0.54,
+        "cost": 0.27162000000000003,
+        "proceeds": 0,
+        "won": false,
+        "closedAt": 1787252431
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004ed2",
+        "leg": "ETH 15m DOWN",
+        "shares": 0.71,
+        "cost": 0.33441,
+        "proceeds": 0,
+        "won": false,
+        "closedAt": 1787253307
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004ed1",
+        "leg": "BTC 15m DOWN",
+        "shares": 0.9,
+        "cost": 0.34650000000000003,
+        "proceeds": 0,
+        "won": false,
+        "closedAt": 1787253307
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004ef8",
+        "leg": "ETH 15m DOWN",
+        "shares": 0.86,
+        "cost": 0.37238,
+        "proceeds": 0,
+        "won": false,
+        "closedAt": 1787254248
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004ed0",
+        "leg": "ETH 1h DOWN",
+        "shares": 0.22,
+        "cost": 0.09195999999999999,
+        "proceeds": 0,
+        "won": false,
+        "closedAt": 1787256060
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004ed0",
+        "leg": "ETH 1h DOWN",
+        "shares": 0.12000000000000001,
+        "cost": 0.047400000000000005,
+        "proceeds": 0,
+        "won": false,
+        "closedAt": 1787256060
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004cff",
+        "leg": "BTC 4h DOWN",
+        "shares": 0.14,
+        "cost": 0.05362000000000001,
+        "proceeds": 0,
+        "won": false,
+        "closedAt": 1787256060
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004ed0",
+        "leg": "ETH 1h DOWN",
+        "shares": 3.55,
+        "cost": 0.82715,
+        "proceeds": 0,
+        "won": false,
+        "closedAt": 1787256060
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004f44",
+        "leg": "ETH 15m UP",
+        "shares": 3.05,
+        "cost": 1.06445,
+        "proceeds": 0,
+        "won": false,
+        "closedAt": 1787256060
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004d00",
+        "leg": "ETH 4h DOWN",
+        "shares": 1.45,
+        "cost": 0.57275,
+        "proceeds": 1.45,
+        "won": true,
+        "closedAt": 1787256060
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004f44",
+        "leg": "ETH 15m UP",
+        "shares": 1.35,
+        "cost": 0.45630000000000004,
+        "proceeds": 0,
+        "won": false,
+        "closedAt": 1787256060
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004f6e",
+        "leg": "ETH 15m DOWN",
+        "shares": 1.02,
+        "cost": 0.39372,
+        "proceeds": 1.02,
+        "won": true,
+        "closedAt": 1787256934
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004f94",
+        "leg": "ETH 15m DOWN",
+        "shares": 0.78,
+        "cost": 0.34164000000000005,
+        "proceeds": 0,
+        "won": false,
+        "closedAt": 1787257811
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004fb9",
+        "leg": "BTC 15m UP",
+        "shares": 0.49,
+        "cost": 0.30184,
+        "proceeds": 0,
+        "won": false,
+        "closedAt": 1787258728
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004f6b",
+        "leg": "BTC 1h DOWN",
+        "shares": 0.25,
+        "cost": 0.08949999999999998,
+        "proceeds": 0.25,
+        "won": true,
+        "closedAt": 1787259606
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004f6b",
+        "leg": "BTC 1h DOWN",
+        "shares": 0.74,
+        "cost": 0.25604,
+        "proceeds": 0.74,
+        "won": true,
+        "closedAt": 1787259606
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004f6c",
+        "leg": "ETH 1h UP",
+        "shares": 0.2899999999999998,
+        "cost": 0.1293399999999999,
+        "proceeds": 0,
+        "won": false,
+        "closedAt": 1787259606
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000005008",
+        "leg": "ETH 15m UP",
+        "shares": 0.21,
+        "cost": 0.09387,
+        "proceeds": 0.21,
+        "won": true,
+        "closedAt": 1787260501
+      },
+      {
+        "market": "0x000000000000000000000000000000000000000000000000000000000000502e",
+        "leg": "ETH 15m UP",
+        "shares": 0.56,
+        "cost": 0.25424,
+        "proceeds": 0,
+        "won": false,
+        "closedAt": 1787261426
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000005005",
+        "leg": "BTC 1h DOWN",
+        "shares": 0.24000000000000002,
+        "cost": 0.09168,
+        "proceeds": 0,
+        "won": false,
+        "closedAt": 1787263239
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000005006",
+        "leg": "ETH 1h DOWN",
+        "shares": 0.93,
+        "cost": 0.38688,
+        "proceeds": 0.93,
+        "won": true,
+        "closedAt": 1787263239
+      },
+      {
+        "market": "0x00000000000000000000000000000000000000000000000000000000000050a2",
+        "leg": "ETH 15m UP",
+        "shares": 0.04000000000000001,
+        "cost": 0.020560000000000002,
+        "proceeds": 0,
+        "won": false,
+        "closedAt": 1787264100
+      },
+      {
+        "market": "0x00000000000000000000000000000000000000000000000000000000000050c8",
+        "leg": "ETH 15m DOWN",
+        "shares": 0.9,
+        "cost": 0.423,
+        "proceeds": 0,
+        "won": false,
+        "closedAt": 1787265029
+      },
+      {
+        "market": "0x00000000000000000000000000000000000000000000000000000000000050a0",
+        "leg": "ETH 1h UP",
+        "shares": 0.65,
+        "cost": 0.15795,
+        "proceeds": 0,
+        "won": false,
+        "closedAt": 1787266842
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000005113",
+        "leg": "BTC 15m DOWN",
+        "shares": 0.33,
+        "cost": 0.15279000000000004,
+        "proceeds": 0.33,
+        "won": true,
+        "closedAt": 1787266842
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000005114",
+        "leg": "ETH 15m DOWN",
+        "shares": 0.37,
+        "cost": 0.19314000000000003,
+        "proceeds": 0,
+        "won": false,
+        "closedAt": 1787266842
+      },
+      {
+        "market": "0x000000000000000000000000000000000000000000000000000000000000509f",
+        "leg": "BTC 1h UP",
+        "shares": 0.97,
+        "cost": 0.38606,
+        "proceeds": 0,
+        "won": false,
+        "closedAt": 1787266842
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000005113",
+        "leg": "BTC 15m DOWN",
+        "shares": 0.71,
+        "cost": 0.37346,
+        "proceeds": 0.71,
+        "won": true,
+        "closedAt": 1787266842
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000005187",
+        "leg": "BTC 15m DOWN",
+        "shares": 0.23,
+        "cost": 0.17917000000000002,
+        "proceeds": 0.23,
+        "won": true,
+        "closedAt": 1787269502
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000004746",
+        "leg": "BTC 1d UP",
+        "shares": 8.96,
+        "cost": 8.931111539501524,
+        "proceeds": 8.96,
+        "won": true,
+        "closedAt": 1787270440
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000005200",
+        "leg": "ETH 15m DOWN",
+        "shares": 0.37,
+        "cost": 0.26788,
+        "proceeds": 0.37,
+        "won": true,
+        "closedAt": 1787272231
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000005225",
+        "leg": "BTC 15m DOWN",
+        "shares": 1.15,
+        "cost": 0.5888,
+        "proceeds": 1.15,
+        "won": true,
+        "closedAt": 1787273106
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000005225",
+        "leg": "BTC 15m DOWN",
+        "shares": 0.33,
+        "cost": 0.29271,
+        "proceeds": 0.33,
+        "won": true,
+        "closedAt": 1787273106
       }
     ],
-    "onChainOutcomeBalances": 38
+    "onChainOutcomeBalances": 89
   },
   "stages": [
     {
       "name": "DISCOVER",
       "proven": true,
-      "evidence": "44 cycles against the live venue"
+      "evidence": "1005 cycles against the live venue"
     },
     {
       "name": "ANALYZE",
@@ -214,47 +615,47 @@
     {
       "name": "ALLOCATE",
       "proven": true,
-      "evidence": "19 positions opened by the allocator"
+      "evidence": "208 positions opened by the allocator"
     },
     {
       "name": "RISK CHECK",
       "proven": true,
-      "evidence": "within limits, breaker armed"
+      "evidence": "circuit breaker fired: drawdown 35.3% exceeded 35% — no new positions; open ones will settle"
     },
     {
       "name": "EXECUTE",
       "proven": true,
-      "evidence": "7 positions carry an on-chain transaction hash"
+      "evidence": "10 positions carry an on-chain transaction hash"
     },
     {
       "name": "CONFIRM",
       "proven": true,
-      "evidence": "7/7 receipts confirm status 0x1"
+      "evidence": "10/10 receipts confirm status 0x1"
     },
     {
       "name": "RECONCILE",
       "proven": true,
-      "evidence": "1 positions adopted from chain, 38 outcome balances read"
+      "evidence": "0 positions adopted from chain, 89 outcome balances read"
     },
     {
       "name": "PERSIST",
       "proven": true,
-      "evidence": "state at ./data-canary/state.json, 44 cycles"
+      "evidence": "state at ./data-canary/state.json, 1005 cycles"
     },
     {
       "name": "LEDGER",
       "proven": true,
-      "evidence": "imbalance 0.00e+0"
+      "evidence": "imbalance 4.26e-14"
     },
     {
       "name": "SETTLE",
       "proven": true,
-      "evidence": "1 positions resolved against the venue's oracle"
+      "evidence": "68 positions resolved against the venue's oracle"
     },
     {
       "name": "CLAIM",
       "proven": true,
-      "evidence": "last sweep 2026-08-20T18:37:50.000Z"
+      "evidence": "last sweep 2026-08-21T06:57:35.000Z"
     }
   ]
 }

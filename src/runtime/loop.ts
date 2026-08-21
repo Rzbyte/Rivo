@@ -124,6 +124,10 @@ export async function cycle(state: RivoState, deps: LoopDeps): Promise<CycleRepo
   let reconciled: Discrepancy[] = [];
   const account = await executor.address();
   if (account) {
+    // Whose run this is. Written once and never overwritten: if the same data
+    // directory is later pointed at a different wallet that is worth noticing,
+    // not silently papering over.
+    state.tradedBy ??= account.toLowerCase();
     const meta = new Map<string, { asset: Asset; intervalSec: number; expiry: number; fair: number }>();
     const marks = new Map<string, number>();
     for (const o of snap.opportunities) {

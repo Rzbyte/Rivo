@@ -100,6 +100,17 @@ export interface RivoState {
   profile: string;
   dryRun: boolean;
   /**
+   * The account this state was traded from, recorded the first time a live cycle
+   * learns it.
+   *
+   * Without it, anything reading a state file after the fact has to assume the
+   * wallet configured *now* is the wallet that produced *then* — and that
+   * assumption broke the moment agent wallets arrived: `npm run proof` against a
+   * finished run reported the balances of a wallet that had never touched it.
+   * Optional, because states written before this existed are still valid.
+   */
+  tradedBy?: string;
+  /**
    * Net value of positions ADOPTED from the chain that Rivo never bought, at the
    * marks they were adopted on, minus any dropped again.
    *

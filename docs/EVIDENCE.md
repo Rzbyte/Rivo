@@ -404,35 +404,45 @@ prevents the gap that reconciliation exists to repair.
 ### The live canary: every stage, with something to check
 
 Run on Somnia testnet with **20 units of capital** — the smallest size at which the balanced
-profile's minimum trade (0.25 collateral) is meaningful. `npm run proof` writes
-[`docs/evidence/live-canary.json`](evidence/live-canary.json), which reports a stage with no evidence
-as **unproven** rather than omitting it.
+profile's minimum trade (0.25 collateral) is meaningful. It then ran for **1,005 cycles**, opened
+**208 positions**, settled **68** of them, and stopped itself when the drawdown breaker fired.
+`npm run proof` writes [`docs/evidence/live-canary.json`](evidence/live-canary.json), which reports
+a stage with no evidence as **unproven** rather than omitting it.
 
 | stage | evidence |
 |---|---|
-| DISCOVER | 36 cycles against the live venue |
+| DISCOVER | 1,005 cycles against the live venue |
 | ANALYZE | decision log at ./data-canary/decisions.jsonl |
-| ALLOCATE | 15 positions opened by the allocator |
-| RISK CHECK | within limits, breaker armed |
-| EXECUTE | 7 positions carry an on-chain transaction hash |
-| CONFIRM | 7/7 receipts confirm status 0x1 |
-| RECONCILE | 1 positions adopted from chain, 38 outcome balances read |
-| PERSIST | state at ./data-canary/state.json, 36 cycles |
-| LEDGER | imbalance 0.00e+0 |
-| SETTLE | 1 positions resolved against the venue's oracle |
-| CLAIM | last sweep 2026-08-20T18:27:07.000Z |
+| ALLOCATE | 208 positions opened by the allocator |
+| RISK CHECK | **circuit breaker fired** — drawdown 35.3% exceeded 35%; no new positions, open ones left to settle |
+| EXECUTE | 10 positions carry an on-chain transaction hash |
+| CONFIRM | 10/10 receipts confirm status 0x1 |
+| RECONCILE | 0 positions adopted from chain, 89 outcome balances read |
+| PERSIST | state at ./data-canary/state.json, 1,005 cycles |
+| LEDGER | imbalance 4.26e-14 |
+| SETTLE | 68 positions resolved against the venue's oracle |
+| CLAIM | last sweep 2026-08-21T06:57:35.000Z |
+
+The RISK CHECK line is the one to read twice. This is not a run that was stopped by hand at a
+convenient moment — it traded until its own drawdown limit was hit, then halted new entries and
+let the open positions settle out rather than dumping them into a thin bid. Realised P&L was
+**−25.20** against 20 of allocated capital and 37.30 adopted, which is the negative edge of §3
+showing up exactly where the backtest said it would. The breaker is the part that worked.
 
 Transactions, with receipts read back from the RPC rather than from Rivo's own logs:
 
 | tx | block | events | |
 |---|---|---|---|
-| `0x6c703e254f1ae1a6…` | 466,767,414 | 8 | [explorer](https://shannon-explorer.somnia.network/tx/0x6c703e254f1ae1a6a9e65d64f0021ebec936be9f5cde1c4977e57e5bdf2da1e8) |
-| `0x1033a547baf5f9f2…` | 466,769,412 | 8 | [explorer](https://shannon-explorer.somnia.network/tx/0x1033a547baf5f9f29377688a9b9fc25d6b926454745902bb5eb56a5535f1ca79) |
-| `0xa1d497ebd870f98d…` | 466,769,789 | 8 | [explorer](https://shannon-explorer.somnia.network/tx/0xa1d497ebd870f98d14405d2d7832a17e62b1f962621276214bdfb4603e8290c1) |
-| `0x4587319b44ee8bfd…` | 466,773,611 | 8 | [explorer](https://shannon-explorer.somnia.network/tx/0x4587319b44ee8bfd65a939f4f13e55d99ddce9b2be7bad1100056a70e69bc925) |
-| `0x5ed97dade0f1163f…` | 466,775,407 | 8 | [explorer](https://shannon-explorer.somnia.network/tx/0x5ed97dade0f1163fa6b1794415daa0aba8201e966ae5954b5f308c437d7d9ad5) |
-| `0x471e56471ddc90b7…` | 466,775,803 | 8 | [explorer](https://shannon-explorer.somnia.network/tx/0x471e56471ddc90b728f46be8f8640ca829d5b449b38022e65d288e8439e1e652) |
-| `0x64faa04e35d0111b…` | 466,779,619 | 8 | [explorer](https://shannon-explorer.somnia.network/tx/0x64faa04e35d0111b0da46628af0e4fefce61481a02ae8deaf1f4acf8b8f25d3d) |
+| `0xdc89f5d2efad349b…` | 467,068,226 | 8 | [explorer](https://shannon-explorer.somnia.network/tx/0xdc89f5d2efad349b72e1c8dba7a714c34628ff9311cfde22e4bd289aab8b5263) |
+| `0x8f35112dcacd1563…` | 467,082,509 | 8 | [explorer](https://shannon-explorer.somnia.network/tx/0x8f35112dcacd1563dd5a3d6a7f81fbaa5e0f2cacca15ec49f4e2aadba0a886e9) |
+| `0x6ff21f94efc83b23…` | 467,092,270 | 8 | [explorer](https://shannon-explorer.somnia.network/tx/0x6ff21f94efc83b235c5016056bba14988d34ed744498f2837b3c4d9719c4308e) |
+| `0xc3857af36f532f5a…` | 467,092,840 | 8 | [explorer](https://shannon-explorer.somnia.network/tx/0xc3857af36f532f5adef2814d5374e2e5661c7b1a626febb6ce436d05b75a6b38) |
+| `0x2665144da27ed347…` | 467,102,933 | 8 | [explorer](https://shannon-explorer.somnia.network/tx/0x2665144da27ed347dc9748b5f8813fd8e9ca6b1a98d49be4afc3d6b5678e7ae6) |
+| `0x77142df479594235…` | 467,107,600 | 8 | [explorer](https://shannon-explorer.somnia.network/tx/0x77142df4795942358640319acc08101816cbfaae8f179bd8cb67460a88ae15e6) |
+| `0x74a31c7f026f4264…` | 467,123,587 | 8 | [explorer](https://shannon-explorer.somnia.network/tx/0x74a31c7f026f4264c69fff821b76296b218b5183e34c6d95fa52a0da080b8577) |
+| `0x5bb78e2945d1d8cf…` | 467,131,666 | 8 | [explorer](https://shannon-explorer.somnia.network/tx/0x5bb78e2945d1d8cfb44a061362898410657c30377f62edcb9edd2faa484a1723) |
+| `0xb4aa342d51dc3058…` | 467,148,279 | 8 | [explorer](https://shannon-explorer.somnia.network/tx/0xb4aa342d51dc3058dcd954e361eb813cb65ffa5a6235ea05295b6988f922f285) |
+| `0x74f2215d8a02fe3f…` | 467,148,332 | 8 | [explorer](https://shannon-explorer.somnia.network/tx/0x74f2215d8a02fe3ff63c6851cfdec18dcf8b476404aaa8dd7df30e59e664a0d9) |
 
 Two of those stages are worth naming individually.
 
@@ -447,9 +457,39 @@ left by the maker experiment, recognised them as offsetting pairs, and merged th
 collateral — `mergeCompleteSet` used as capital recovery rather than as an exit, which is the whole
 point of the distinction. Nobody asked it to.
 
-The wallet is shared with earlier experiments, so `contributed` on this run is large (41.28)
+The wallet is shared with earlier experiments, so `contributed` on this run is large (37.30)
 relative to the 20 of allocated capital. That is the ledger working as
 designed: adopted value is tracked but kept out of `capital`, so it cannot widen a single risk budget.
+
+### The agent wallet, and what it is actually worth
+
+The canary above traded from a wallet holding roughly 9,900 tUSDC to risk 20 of it. Every bound on
+that — capital ceiling, delta budgets, drawdown breaker — was enforced by Rivo's own code, so all
+of them held exactly as long as Rivo was the only thing holding the key. That is a weak guarantee
+and it was never described as anything else.
+
+The venue offers nothing better: the on-chain scoping that would fix it is present in the deployed
+contract and switched off, which is measured in [SDK-FEEDBACK §9](SDK-FEEDBACK.md#9-event-contracts-ship-placebinaryorderfor-and-cancelorderfor--and-both-are-disabled)
+and reproducible with `npm run probe:operator`. So the remaining lever is not the permission, it is
+the balance.
+
+An agent wallet is a key Rivo generates that holds only the float moved into it. Verified end to
+end on testnet:
+
+| | |
+|---|---|
+| agent | `0x3bd75480952054acA9f6e6d1DF7CE1da6a87dbB1`, created by `npm run agent -- new` |
+| funded | 25 tUSDC + 1 STT, by two transfers from the owner |
+| ran | the autopilot, `--live`, against the live venue |
+| observed | the agent's balances moved; the owner's did not |
+
+The distinction it buys is narrow and worth stating precisely. It does not make a hot key safe — a
+hot key is a hot key. It changes what a compromise costs from *everything that wallet has ever
+held* to *a number the owner chose*, and the owner can sweep it back with one command. That is
+arithmetic rather than a promise, which is the only kind of bound available here.
+
+`npm run doctor` reports which authority is in force and what it can lose, because the difference
+between the two is the one thing an operator must not have to guess at.
 
 ### The cash ledger did not balance, and nothing could tell
 
