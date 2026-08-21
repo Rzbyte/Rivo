@@ -257,6 +257,26 @@ export class StateStore {
 }
 
 /** Append-only decision log, one JSON object per line. */
+/**
+ * Roll the decision log at this size, keeping one previous generation.
+ *
+ * The log is the forward-test record and was deliberately unbounded, which is
+ * the right instinct and the wrong outcome for something meant to run
+ * unattended: measured at ~3.6KB a cycle, a 45-second cadence writes ~7MB a day
+ * and fills a container volume in months. A trading process that dies of a full
+ * disk dies holding positions, and it dies at the worst possible moment —
+ * whenever the disk happens to fill, which is not correlated with anything.
+ *
+ * 64MB of history plus one rolled generation is ~35,000 cycles, comfortably more
+ * than any run this has had, and it is bounded. `RIVO_LOG_MAX_BYTES=0` restores
+ * the old unbounded behaviour for anyone who would rather keep everything and
+ * watch the disk themselves.
+ */
+const logMaxBytes = (): number => {
+  const raw = Number(process.env.RIVO_LOG_MAX_BYTES ?? 64 * 1024 * 1024);
+  return Number.isFinite(raw) ? raw : 64 * 1024 * 1024;
+};
+
 export class DecisionLog {
   constructor(readonly path: string) {}
 
@@ -264,8 +284,28 @@ export class DecisionLog {
     if (records.length === 0) return;
     const dir = dirname(this.path);
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+    this.rollIfLarge();
     const lines = records.map((r) => JSON.stringify(r)).join("\n") + "\n";
     writeFileSync(this.path, lines, { flag: "a" });
+  }
+
+  /**
+   * Rename the log aside once it passes the cap.
+   *
+   * Rename rather than truncate, so the boundary never lands mid-record and a
+   * reader is never handed half a line. Failure here is swallowed on purpose:
+   * losing rotation costs disk eventually, while throwing would abort the cycle
+   * that was about to record what it just did with real money.
+   */
+  private rollIfLarge(): void {
+    const cap = logMaxBytes();
+    if (cap <= 0) return;
+    try {
+      if (!existsSync(this.path) || statSync(this.path).size < cap) return;
+      renameSync(this.path, `${this.path}.1`);
+    } catch {
+      /* keep writing; a log that cannot roll is better than a cycle that cannot record */
+    }
   }
 
   /**

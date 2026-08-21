@@ -10,8 +10,11 @@
 // The identity is one line — cash + open cost == capital + contributed +
 // realised — and every path that moves positions has to preserve it.
 
-import { describe, expect, it } from "vitest";
-import { emptyState, ledgerBalances, ledgerImbalance, type HeldPosition, type RivoState } from "./state.js";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { DecisionLog, emptyState, ledgerBalances, ledgerImbalance, type DecisionRecord, type HeldPosition, type RivoState } from "./state.js";
 import { reconcile } from "./reconcile.js";
 import { backoffSec, FAILURE_BACKOFF_CAP_SEC } from "./loop.js";
 import type { Asset } from "../core/config.js";
@@ -188,5 +191,65 @@ describe("failing orders back off instead of retrying forever", () => {
   it("treats a zero or negative count as the first retry rather than throwing", () => {
     expect(backoffSec(0)).toBe(60);
     expect(backoffSec(-3)).toBe(60);
+  });
+});
+
+describe("the decision log stays on disk without eating it", () => {
+  // The log is the forward-test record and was deliberately unbounded. Measured
+  // at ~3.6KB a cycle, a 45-second cadence writes ~7MB a day, and a trading
+  // process that dies of a full disk dies holding positions — at a moment
+  // determined by the disk rather than by anything about the market.
+  let dir: string;
+  const savedCap = process.env.RIVO_LOG_MAX_BYTES;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), "rivo-log-"));
+  });
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+    if (savedCap === undefined) delete process.env.RIVO_LOG_MAX_BYTES;
+    else process.env.RIVO_LOG_MAX_BYTES = savedCap;
+  });
+
+  const rec = (i: number) =>
+    ({ at: i, cycle: i, marketId: `0x${i}`, leg: "UP", action: "SKIP", note: "x".repeat(200) }) as unknown as DecisionRecord;
+
+  it("rolls aside once past the cap, and keeps writing", () => {
+    process.env.RIVO_LOG_MAX_BYTES = "2000";
+    const path = join(dir, "decisions.jsonl");
+    const log = new DecisionLog(path);
+
+    for (let i = 0; i < 40; i++) log.append([rec(i)]);
+
+    expect(existsSync(`${path}.1`)).toBe(true);
+    // Still readable, and reading returns the current generation rather than
+    // throwing on a file that moved under it.
+    const tail = log.read();
+    expect(tail.length).toBeGreaterThan(0);
+    expect(statSync(path).size).toBeLessThan(4000);
+  });
+
+  it("rolls by renaming, so no reader is ever handed half a record", () => {
+    process.env.RIVO_LOG_MAX_BYTES = "1000";
+    const path = join(dir, "decisions.jsonl");
+    const log = new DecisionLog(path);
+    for (let i = 0; i < 20; i++) log.append([rec(i)]);
+
+    // Every line in both generations parses. Truncating in place instead of
+    // renaming is what would break this.
+    for (const f of [path, `${path}.1`]) {
+      for (const line of readFileSync(f, "utf8").split("\n").filter((l) => l.trim())) {
+        expect(() => JSON.parse(line)).not.toThrow();
+      }
+    }
+  });
+
+  it("keeps everything when the cap is disabled", () => {
+    process.env.RIVO_LOG_MAX_BYTES = "0";
+    const path = join(dir, "decisions.jsonl");
+    const log = new DecisionLog(path);
+    for (let i = 0; i < 40; i++) log.append([rec(i)]);
+    expect(existsSync(`${path}.1`)).toBe(false);
+    expect(log.count()).toBe(40);
   });
 });
