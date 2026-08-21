@@ -5,40 +5,69 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Rivo — autonomous portfolio manager for DreamDEX Event Contracts</title>
 <meta name="description" content="Give Rivo a budget and a risk policy once. It evaluates the whole DreamDEX Event Contract term structure as one portfolio, allocates only within portfolio-wide constraints, and proves every decision.">
+<!-- The mark is the venue: two assets across four tenors. No asset to
+     fetch, and it is the one icon nobody else could be using. -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 8'><g fill='%232f5233'><rect x='0' y='0' width='3' height='3'/><rect x='5' y='0' width='3' height='3'/><rect x='10' y='0' width='3' height='3'/><rect x='15' y='0' width='3' height='3'/><rect x='0' y='5' width='3' height='3'/><rect x='5' y='5' width='3' height='3'/><rect x='10' y='5' width='3' height='3'/><rect x='15' y='5' width='3' height='3'/></g></svg>">
+<meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12120f" media="(prefers-color-scheme: dark)">
 <style>
-  /* Palette. Light is the base; dark redefines only the tokens, so no colour is
-     ever defined solely inside a media query. */
+  /* Rivo's visual language: an instrument, not a dashboard.
+     ------------------------------------------------------------------
+     What was here before was competent and anonymous — floating white
+     cards with soft shadows, pill tags, system sans throughout. That is
+     the default look of every SaaS product built since 2019, and it said
+     nothing about what this one does.
+
+     Rivo measures a term structure, refuses most of what it finds, and
+     publishes the results that went against it. Its ancestors are ruled
+     ledgers, lab notebooks and plot axes — not product marketing. So:
+
+       * Rules, not shadows. Depth comes from hairlines on a paper ground.
+         Nothing floats, because nothing here is a card in a feed.
+       * Monospace is the institutional voice. Every label, tag, column
+         head and control is a measured quantity or names one, so it is
+         set in mono with tracking. Prose stays in sans — it is the only
+         thing here that is prose.
+       * 3px radius. Sharp enough to read as an instrument, soft enough
+         not to look unfinished.
+       * The mark IS the product: two rows of four cells, which is exactly
+         the venue Rivo manages — {BTC, ETH} x {15m, 1h, 4h, 1d}.
+       * Accent is ink, used sparingly. Filled accent backgrounds were
+         doing the work that weight and rules should do. */
+
   :root {
-    --bg: #fbfaf8;        --panel: #ffffff;     --panel-2: #f6f4f1;
-    --ink: #16150f;       --muted: #6c6a60;     --faint: #9c998e;
-    --line: #e4e1da;      --line-2: #d2cec4;
-    --accent: #3a5f3a;    --accent-ink: #ffffff; --accent-soft: #eaf0e8;
-    --pos: #2f6b3d;       --neg: #a33a2a;       --warn: #8a6320;
-    --pos-soft: #e8f1e9;  --neg-soft: #f7e9e6;  --warn-soft: #f7efdf;
+    /* Paper, warmed. The old ground was near-white; this one has enough
+       body that a hairline reads as a rule rather than as an artefact. */
+    --bg: #f4f1ea;        --panel: #fbf9f5;     --panel-2: #ebe7dd;
+    --ink: #14140f;       --muted: #605d54;     --faint: #6b675b;
+    --line: #ddd8cc;      --line-2: #c6c0b0;
+    --accent: #2f5233;    --accent-ink: #fbf9f5; --accent-soft: #e3ebe0;
+    --pos: #2c6b3c;       --neg: #9d3423;       --warn: #7d5714;
+    --pos-soft: #e4efe6;  --neg-soft: #f6e6e2;  --warn-soft: #f5ecd9;
     --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
     --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
-    --r: 10px; --shadow: 0 1px 2px rgba(20,18,12,.05), 0 6px 20px rgba(20,18,12,.04);
+    --r: 3px;
+    /* Kept as a token so nothing has to be hunted down if depth ever
+       comes back, but deliberately none: rules do this job now. */
+    --shadow: none;
   }
-  :root:not([data-theme="light"]) { }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #100f0d;      --panel: #191813;     --panel-2: #211f19;
-      --ink: #f0ede4;     --muted: #a5a294;     --faint: #6f6c60;
-      --line: #2a2822;    --line-2: #3a372e;
-      --accent: #9dbf8e;  --accent-ink: #10120e; --accent-soft: #1e2419;
-      --pos: #86c095;     --neg: #e0836f;       --warn: #d8ab5c;
-      --pos-soft: #17251a; --neg-soft: #2a1815; --warn-soft: #241d10;
-      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.22);
+      --bg: #12120f;      --panel: #1a1a15;     --panel-2: #24241d;
+      --ink: #ece9df;     --muted: #a09c8f;     --faint: #8e8b7f;
+      --line: #2c2c24;    --line-2: #403f34;
+      --accent: #a8cf9a;  --accent-ink: #12120f; --accent-soft: #1d2419;
+      --pos: #8cc79a;     --neg: #e08b76;       --warn: #d8ad5f;
+      --pos-soft: #172519; --neg-soft: #2a1714; --warn-soft: #241d0f;
     }
   }
   :root[data-theme="dark"] {
-    --bg: #100f0d;        --panel: #191813;     --panel-2: #211f19;
-    --ink: #f0ede4;       --muted: #a5a294;     --faint: #6f6c60;
-    --line: #2a2822;      --line-2: #3a372e;
-    --accent: #9dbf8e;    --accent-ink: #10120e; --accent-soft: #1e2419;
-    --pos: #86c095;       --neg: #e0836f;       --warn: #d8ab5c;
-    --pos-soft: #17251a;  --neg-soft: #2a1815;  --warn-soft: #241d10;
-    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.22);
+    --bg: #12120f;        --panel: #1a1a15;     --panel-2: #24241d;
+    --ink: #ece9df;       --muted: #a09c8f;     --faint: #8e8b7f;
+    --line: #2c2c24;      --line-2: #403f34;
+    --accent: #a8cf9a;    --accent-ink: #12120f; --accent-soft: #1d2419;
+    --pos: #8cc79a;       --neg: #e08b76;       --warn: #d8ad5f;
+    --pos-soft: #172519;  --neg-soft: #2a1714;  --warn-soft: #241d0f;
   }
 
   * { box-sizing: border-box; }
@@ -49,69 +78,101 @@
     -webkit-font-smoothing: antialiased;
   }
   a { color: inherit; }
-  h1, h2, h3 { line-height: 1.2; margin: 0; font-weight: 640; letter-spacing: -.015em; }
-  h1 { font-size: clamp(28px, 5vw, 46px); letter-spacing: -.03em; }
-  h2 { font-size: 20px; }
-  h3 { font-size: 15px; }
+  h1, h2, h3 { line-height: 1.15; margin: 0; font-weight: 640; letter-spacing: -.02em; }
+  h1 { font-size: clamp(30px, 5.4vw, 52px); letter-spacing: -.035em; font-weight: 680; }
+  h2 { font-size: 19px; letter-spacing: -.015em; }
+  /* Panel headings are labels for a measurement, so they are set like one. */
+  h3 { font-family: var(--mono); font-size: 12px; font-weight: 640;
+       text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
   p { margin: 0 0 .8em; }
   .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 
+  /* --- the mark ---------------------------------------------------
+     Two rows of four: BTC and ETH across 15m, 1h, 4h and 1d. One
+     element, two background gradients, no asset to load. */
+  .brand-dot {
+    width: 18px; height: 8px; border-radius: 0; flex: none; color: var(--accent);
+    background-image:
+      repeating-linear-gradient(to right, currentColor 0 3px, transparent 3px 5px),
+      repeating-linear-gradient(to right, currentColor 0 3px, transparent 3px 5px);
+    background-size: 18px 3px, 18px 3px;
+    background-position: 0 0, 0 5px;
+    background-repeat: no-repeat;
+  }
+
   /* --- chrome --- */
   .nav {
-    position: sticky; top: 0; z-index: 40; background: color-mix(in srgb, var(--bg) 88%, transparent);
-    backdrop-filter: blur(12px); border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 40;
+    background: color-mix(in srgb, var(--bg) 90%, transparent);
+    backdrop-filter: blur(10px); border-bottom: 1px solid var(--line-2);
   }
-  .nav-in { max-width: 1180px; margin: 0 auto; padding: 11px 20px; display: flex; align-items: center; gap: 18px; }
-  .brand { font-weight: 700; letter-spacing: -.03em; font-size: 18px; text-decoration: none; display: flex; align-items: center; gap: 8px; }
-  .brand-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); flex: none; }
-  .nav-links { display: flex; gap: 2px; margin-left: 6px; flex-wrap: wrap; }
+  .nav-in { max-width: 1180px; margin: 0 auto; padding: 12px 22px; display: flex; align-items: center; gap: 20px; }
+  .brand {
+    font-weight: 680; letter-spacing: -.04em; font-size: 19px; text-decoration: none;
+    display: flex; align-items: center; gap: 9px;
+  }
+  .nav-links { display: flex; gap: 4px; margin-left: 8px; flex-wrap: wrap; }
   .nav-links a {
-    text-decoration: none; color: var(--muted); padding: 5px 11px; border-radius: 7px;
-    font-size: 14px; font-weight: 500; white-space: nowrap;
+    text-decoration: none; color: var(--muted); padding: 5px 2px; margin: 0 7px; border-radius: 0;
+    font-family: var(--mono); font-size: 12px; font-weight: 600; white-space: nowrap;
+    text-transform: uppercase; letter-spacing: .08em; border-bottom: 2px solid transparent;
   }
-  .nav-links a:hover { background: var(--panel-2); color: var(--ink); }
-  .nav-links a[aria-current="page"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .nav-links a:hover { color: var(--ink); }
+  /* The current page is underscored like a tab on a ledger, not filled in. */
+  .nav-links a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); background: none; }
   .nav-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 
-  .wrap { max-width: 1180px; margin: 0 auto; padding: 26px 20px 90px; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 26px 22px 90px; }
   .narrow { max-width: 780px; }
 
-  /* --- surfaces --- */
-  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); }
-  .pad { padding: 18px; }
-  .grid { display: grid; gap: 14px; }
+  /* --- surfaces ---
+     A panel is a ruled area of the page, not an object sitting on it. */
+  .panel { background: var(--panel); border: 1px solid var(--line-2); border-radius: var(--r); box-shadow: none; }
+  .pad { padding: 18px 20px; }
+  .grid { display: grid; gap: 12px; }
   @media (min-width: 760px) { .g2 { grid-template-columns: 1fr 1fr; } .g3 { grid-template-columns: repeat(3, 1fr); } }
   @media (min-width: 980px) { .g4 { grid-template-columns: repeat(4, 1fr); } .side { grid-template-columns: 1.55fr 1fr; align-items: start; } }
 
-  .sec-head { display: flex; align-items: baseline; gap: 10px; margin: 30px 0 12px; flex-wrap: wrap; }
+  /* Section heads carry a tick rule — an instrument scale, and the one
+     ornament in the design that means something. */
+  .sec-head { display: flex; align-items: baseline; gap: 12px; margin: 38px 0 14px; flex-wrap: wrap; }
   .sec-head h2 { flex: none; }
-  .sec-head .hint { color: var(--muted); font-size: 13.5px; }
+  .sec-head::after {
+    content: ""; flex: 1 1 60px; height: 7px; align-self: center; min-width: 40px;
+    background-image: repeating-linear-gradient(to right, var(--line-2) 0 1px, transparent 1px 7px);
+    background-position: 0 bottom; background-repeat: repeat-x; background-size: auto 7px;
+    border-bottom: 1px solid var(--line);
+  }
+  .sec-head .hint { color: var(--faint); font-size: 12px; font-family: var(--mono); order: 3; flex: none; }
 
   /* --- stats --- */
-  .stat { padding: 14px 16px; }
-  .stat .k { font-size: 11.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--faint); font-weight: 600; }
-  .stat .v { font-family: var(--mono); font-size: 25px; font-variant-numeric: tabular-nums; letter-spacing: -.02em; margin-top: 3px; }
-  .stat .s { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .stat { padding: 15px 17px; }
+  .stat .k { font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .11em; color: var(--faint); font-weight: 600; }
+  .stat .v { font-family: var(--mono); font-size: 27px; font-variant-numeric: tabular-nums; letter-spacing: -.03em; margin-top: 5px; font-weight: 500; }
+  .stat .s { font-size: 12px; color: var(--muted); margin-top: 3px; }
 
-  /* --- controls --- */
+  /* --- controls ---
+     Set in mono: every one of them names a quantity or an action on one. */
   button, .btn {
-    font: inherit; font-weight: 560; cursor: pointer; border-radius: 8px;
-    border: 1px solid var(--line-2); background: var(--panel); color: var(--ink);
-    padding: 8px 15px; transition: background .12s, border-color .12s, opacity .12s;
+    font-family: var(--mono); font-size: 12.5px; font-weight: 600; cursor: pointer; border-radius: var(--r);
+    border: 1px solid var(--line-2); background: transparent; color: var(--ink);
+    padding: 8px 14px; transition: background .12s, border-color .12s, opacity .12s;
     text-decoration: none; display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+    text-transform: uppercase; letter-spacing: .07em;
   }
-  button:hover:not(:disabled), .btn:hover { background: var(--panel-2); }
-  button:disabled { opacity: .45; cursor: not-allowed; }
+  button:hover:not(:disabled), .btn:hover { background: var(--panel-2); border-color: var(--faint); }
+  button:disabled { opacity: .4; cursor: not-allowed; }
   .primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-  .primary:hover:not(:disabled) { background: var(--accent); filter: brightness(1.08); }
-  .big { padding: 12px 22px; font-size: 16px; border-radius: 9px; }
+  .primary:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); filter: brightness(1.1); }
+  .big { padding: 12px 20px; font-size: 13px; letter-spacing: .08em; }
   .ghost { background: transparent; border-color: transparent; color: var(--muted); }
-  .ghost:hover { background: var(--panel-2); color: var(--ink); }
+  .ghost:hover { background: var(--panel-2); color: var(--ink); border-color: transparent; }
   .danger { color: var(--neg); border-color: color-mix(in srgb, var(--neg) 35%, var(--line-2)); }
 
   input, select {
-    font: inherit; padding: 8px 11px; border-radius: 8px; border: 1px solid var(--line-2);
-    background: var(--panel); color: var(--ink); width: 100%; font-family: var(--mono);
+    font: inherit; padding: 9px 11px; border-radius: var(--r); border: 1px solid var(--line-2);
+    background: var(--bg); color: var(--ink); width: 100%; font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
   }
   input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 
@@ -123,7 +184,7 @@
   a:focus-visible, button:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
-    border-radius: 6px;
+    border-radius: var(--r);
   }
 
   /* The live dot pulses and buttons ease. Neither is load-bearing, and for
@@ -136,100 +197,124 @@
       scroll-behavior: auto !important;
     }
   }
-  label { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .06em;
-          color: var(--faint); font-weight: 600; margin-bottom: 5px; }
-  .field { margin-bottom: 15px; }
+  label { display: block; font-family: var(--mono); font-size: 10.5px; text-transform: uppercase;
+          letter-spacing: .11em; color: var(--faint); font-weight: 600; margin-bottom: 6px; }
+  .field { margin-bottom: 16px; }
 
   /* segmented choice */
-  .seg { display: grid; gap: 7px; }
+  .seg { display: grid; gap: 6px; }
   @media (min-width: 520px) { .seg.h3 { grid-template-columns: repeat(3, 1fr); } .seg.h2 { grid-template-columns: repeat(2, 1fr); } }
   .seg button {
-    display: block; text-align: left; padding: 11px 13px; width: 100%; border-radius: 9px;
-    background: var(--panel); line-height: 1.35;
+    display: block; text-align: left; padding: 12px 14px; width: 100%; border-radius: var(--r);
+    background: transparent; line-height: 1.4; text-transform: none; letter-spacing: 0;
+    font-family: var(--sans); font-size: 14px;
   }
-  .seg button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
-  .seg .t { font-weight: 640; display: block; font-size: 14.5px; }
-  .seg .d { font-size: 12px; color: var(--muted); display: block; margin-top: 2px; }
+  /* Selected is marked by an accent edge and weight, not a wash of colour. */
+  .seg button[aria-pressed="true"] {
+    border-color: var(--accent); background: var(--panel);
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+  .seg .t { font-family: var(--mono); font-weight: 640; display: block; font-size: 12.5px;
+            text-transform: uppercase; letter-spacing: .07em; }
+  .seg .d { font-size: 12.5px; color: var(--muted); display: block; margin-top: 4px; }
 
-  /* --- tags --- */
+  /* --- tags ---
+     Square, ruled, mono. A pill is a badge; this is a reading. */
   .tag {
-    display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 640;
-    padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line-2);
-    text-transform: uppercase; letter-spacing: .05em; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 5px; font-family: var(--mono);
+    font-size: 10.5px; font-weight: 640; padding: 3px 7px; border-radius: 2px;
+    border: 1px solid var(--line-2); text-transform: uppercase; letter-spacing: .09em; white-space: nowrap;
   }
-  .tag.ok  { background: var(--pos-soft);  color: var(--pos);  border-color: color-mix(in srgb, var(--pos) 28%, transparent); }
-  .tag.bad { background: var(--neg-soft);  color: var(--neg);  border-color: color-mix(in srgb, var(--neg) 28%, transparent); }
-  .tag.warn{ background: var(--warn-soft); color: var(--warn); border-color: color-mix(in srgb, var(--warn) 30%, transparent); }
+  .tag.ok  { background: var(--pos-soft);  color: var(--pos);  border-color: color-mix(in srgb, var(--pos) 30%, transparent); }
+  .tag.bad { background: var(--neg-soft);  color: var(--neg);  border-color: color-mix(in srgb, var(--neg) 30%, transparent); }
+  .tag.warn{ background: var(--warn-soft); color: var(--warn); border-color: color-mix(in srgb, var(--warn) 32%, transparent); }
   .tag.mute{ background: var(--panel-2);   color: var(--muted); }
-  .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+  .dot { width: 6px; height: 6px; border-radius: 0; background: currentColor; flex: none; }
   @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .28 } }
   .live .dot { animation: pulse 1.9s ease-in-out infinite; }
 
   /* --- tables --- */
   .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th, td { padding: 8px 11px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
   th:first-child, td:first-child { text-align: left; }
-  th { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--faint);
-       font-weight: 640; border-bottom-color: var(--line-2); }
+  th { font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .1em;
+       color: var(--faint); font-weight: 640; border-bottom: 1px solid var(--line-2); }
   tbody tr:last-child td { border-bottom: none; }
   td.n { font-family: var(--mono); font-variant-numeric: tabular-nums; }
   .pos { color: var(--pos); } .neg { color: var(--neg); } .mut { color: var(--muted); }
 
-  /* --- meters --- */
-  .meter { height: 6px; border-radius: 999px; background: var(--panel-2); overflow: hidden; margin-top: 6px; }
-  .meter > i { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+  /* --- meters ---
+     Square, because they are gauges reading against a limit rather than
+     progress bars filling toward a reward. */
+  .meter { height: 5px; border-radius: 0; background: var(--panel-2); overflow: hidden; margin-top: 7px;
+           border: 1px solid var(--line); }
+  .meter > i { display: block; height: 100%; background: var(--accent); border-radius: 0; }
   .meter.full > i { background: var(--warn); }
   .meter.over > i { background: var(--neg); }
 
-  /* --- decision cards --- */
-  .dec { border: 1px solid var(--line); border-radius: 9px; padding: 13px 15px; background: var(--panel); }
-  .dec + .dec { margin-top: 9px; }
+  /* --- decision cards ---
+     The left edge carries the verdict, so the eye can scan a column of
+     refusals without reading any of them. */
+  .dec { border: 1px solid var(--line); border-radius: var(--r); padding: 13px 15px; background: var(--panel); }
+  .dec + .dec { margin-top: 7px; }
   .dec.buy  { border-left: 3px solid var(--pos); }
   .dec.skip { border-left: 3px solid var(--line-2); }
   .dec-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .dec-name { font-weight: 640; font-size: 14.5px; }
+  .dec-name { font-family: var(--mono); font-weight: 640; font-size: 13px; letter-spacing: .02em; }
   .dec-why { margin-top: 9px; font-size: 13.5px; color: var(--muted); line-height: 1.55; }
   .dec-why b { color: var(--ink); font-weight: 600; }
   details.limits { margin-top: 10px; }
   details.limits summary {
-    cursor: pointer; font-size: 12.5px; color: var(--accent); font-weight: 600;
-    list-style: none; user-select: none;
+    cursor: pointer; font-family: var(--mono); font-size: 11px; color: var(--accent); font-weight: 640;
+    list-style: none; user-select: none; text-transform: uppercase; letter-spacing: .08em;
   }
   details.limits summary::-webkit-details-marker { display: none; }
-  details.limits summary::before { content: "▸ "; }
-  details.limits[open] summary::before { content: "▾ "; }
-  .limit-row { display: flex; gap: 10px; align-items: baseline; font-size: 12.5px; padding: 3px 0; font-family: var(--mono); }
+  details.limits summary::before { content: "+ "; }
+  details.limits[open] summary::before { content: "- "; }
+  .limit-row { display: flex; gap: 10px; align-items: baseline; font-size: 12px; padding: 3px 0; font-family: var(--mono); }
   .limit-row .lname { flex: 1; font-family: var(--sans); color: var(--muted); }
   .limit-row.bind .lname { color: var(--ink); font-weight: 640; }
   .limit-row.bind .lval { color: var(--neg); font-weight: 600; }
 
   /* --- feed --- */
-  .feed { max-height: 340px; overflow-y: auto; font-family: var(--mono); font-size: 12.5px; }
+  .feed { max-height: 340px; overflow-y: auto; font-family: var(--mono); font-size: 12px; }
   .feed div { padding: 5px 0; border-bottom: 1px solid var(--line); display: flex; gap: 9px; }
   .feed time { color: var(--faint); flex: none; }
-  .feed .k { flex: none; width: 52px; font-weight: 640; text-transform: uppercase; font-size: 10.5px; padding-top: 2px; }
+  .feed .k { flex: none; width: 52px; font-weight: 640; text-transform: uppercase; font-size: 10px; padding-top: 2px; letter-spacing: .06em; }
   .feed .k.buy { color: var(--pos); } .feed .k.settle { color: var(--accent); }
   .feed .k.skip, .feed .k.scan, .feed .k.info { color: var(--faint); }
   .feed .k.halt { color: var(--neg); }
 
   /* --- prose --- */
-  .lede { font-size: clamp(16px, 2.1vw, 19px); color: var(--muted); line-height: 1.62; }
+  .lede { font-size: clamp(16px, 2.1vw, 19px); color: var(--muted); line-height: 1.6; }
   .note {
-    border-left: 3px solid var(--line-2); padding: 2px 0 2px 14px; color: var(--muted);
-    font-size: 13.5px; margin: 14px 0;
+    border-left: 2px solid var(--line-2); padding: 3px 0 3px 14px; color: var(--muted);
+    font-size: 13px; margin: 14px 0;
   }
   .note.warn { border-left-color: var(--warn); }
-  .empty { color: var(--faint); font-size: 13.5px; padding: 22px; text-align: center; }
-  code { font-family: var(--mono); font-size: .92em; background: var(--panel-2); padding: 1px 5px; border-radius: 4px; }
+  /* The empty state carries the mark, so a page with nothing on it still
+     looks like this product rather than like a blank document. */
+  .empty { color: var(--faint); font-family: var(--mono); font-size: 12px; padding: 30px 22px;
+           text-align: center; text-transform: uppercase; letter-spacing: .12em; }
+  .empty::before {
+    content: ""; display: block; width: 18px; height: 8px; margin: 0 auto 14px; color: var(--line-2);
+    background-image:
+      repeating-linear-gradient(to right, currentColor 0 3px, transparent 3px 5px),
+      repeating-linear-gradient(to right, currentColor 0 3px, transparent 3px 5px);
+    background-size: 18px 3px, 18px 3px; background-position: 0 0, 0 5px; background-repeat: no-repeat;
+    animation: pulse 1.9s ease-in-out infinite;
+  }
+  code { font-family: var(--mono); font-size: .92em; background: var(--panel-2); padding: 1px 5px; border-radius: 2px; }
   svg { display: block; max-width: 100%; }
-  .foot { margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--faint); font-size: 12.5px; }
+  .foot { margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--line-2); color: var(--faint);
+          font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
   .foot a { color: var(--muted); }
 </style>
 </head>
 <body>
   <nav class="nav"><div class="nav-in" id="nav"></div></nav>
-  <div id="app"><div class="wrap"><p class="empty">loading…</p></div></div>
+  <div id="app"><div class="wrap"><p class="empty">reading the venue</p></div></div>
   <script type="module" src="app.js"></script>
 </body>
 </html>

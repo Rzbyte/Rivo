@@ -12,18 +12,24 @@ export const PAGE = /* html */ `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Rivo</title>
 <style>
+  /* Same palette as the public page, deliberately.
+     These were different products to look at: this one was cool grey with a
+     blue accent, the other warm paper with forest green. A judge who opens
+     both sees two things, and the cockpit is the half that is supposed to
+     prove the other half is real. One language, one product. */
   :root{
-    --bg:#fbfbfa; --panel:#fff; --ink:#17170f; --muted:#6f6f66; --line:#e7e6e1; --line2:#f2f1ed;
-    --pos:#1a7a4c; --neg:#b5321d; --accent:#2f5fd0; --warn:#a4631a; --live:#1a7a4c;
+    --bg:#f4f1ea; --panel:#fbf9f5; --ink:#14140f; --muted:#605d54; --line:#c6c0b0; --line2:#ddd8cc;
+    --pos:#2c6b3c; --neg:#9d3423; --accent:#2f5233; --warn:#7d5714; --live:#2c6b3c;
     --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
+    --r:3px;
   }
   @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-    --bg:#141418; --panel:#1c1c21; --ink:#eeece6; --muted:#9b9b93; --line:#2c2c33; --line2:#232329;
-    --pos:#4ecd8c; --neg:#ff7d64; --accent:#84a9ff; --warn:#e2a862; --live:#4ecd8c;
+    --bg:#12120f; --panel:#1a1a15; --ink:#ece9df; --muted:#a09c8f; --line:#403f34; --line2:#2c2c24;
+    --pos:#8cc79a; --neg:#e08b76; --accent:#a8cf9a; --warn:#d8ad5f; --live:#8cc79a;
   }}
   :root[data-theme="dark"]{
-    --bg:#141418; --panel:#1c1c21; --ink:#eeece6; --muted:#9b9b93; --line:#2c2c33; --line2:#232329;
-    --pos:#4ecd8c; --neg:#ff7d64; --accent:#84a9ff; --warn:#e2a862; --live:#4ecd8c;
+    --bg:#12120f; --panel:#1a1a15; --ink:#ece9df; --muted:#a09c8f; --line:#403f34; --line2:#2c2c24;
+    --pos:#8cc79a; --neg:#e08b76; --accent:#a8cf9a; --warn:#d8ad5f; --live:#8cc79a;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--ink);
@@ -31,31 +37,38 @@ export const PAGE = /* html */ `<!doctype html>
   .wrap{max-width:1120px;margin:0 auto;padding:28px 20px 72px}
 
   header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:8px}
-  h1{font-size:25px;margin:0;letter-spacing:-.025em;font-weight:660}
+  h1{font-size:25px;margin:0;letter-spacing:-.035em;font-weight:680;display:flex;align-items:center;gap:10px}
+  /* The mark: two assets across four tenors, which is the venue itself. */
+  .mark{width:18px;height:8px;flex:none;color:var(--accent);
+    background-image:repeating-linear-gradient(to right,currentColor 0 3px,transparent 3px 5px),
+                     repeating-linear-gradient(to right,currentColor 0 3px,transparent 3px 5px);
+    background-size:18px 3px,18px 3px;background-position:0 0,0 5px;background-repeat:no-repeat}
   .pill{display:inline-flex;align-items:center;gap:7px;font:600 11px/1 var(--mono);letter-spacing:.09em;
-    padding:6px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+    padding:4px 8px;border-radius:2px;border:1px solid var(--line);color:var(--muted);text-transform:uppercase}
   .pill.on{color:var(--live);border-color:currentColor}
   .pill.off{color:var(--muted)}
-  .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+  .dot{width:6px;height:6px;border-radius:0;background:currentColor}
   .pill.on .dot{animation:pulse 2.2s ease-in-out infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
   .spacer{flex:1}
   .sub{color:var(--muted);font-size:13px}
 
   .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:14px 0 24px;
-    padding:12px 14px;background:var(--panel);border:1px solid var(--line);border-radius:11px}
+    padding:12px 14px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r)}
   .controls label{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
-  input[type=number],select{font:inherit;font-size:14px;padding:6px 9px;border-radius:7px;
-    border:1px solid var(--line);background:var(--bg);color:var(--ink);width:104px}
+  input[type=number],select{font:inherit;font-family:var(--mono);font-size:13px;padding:7px 9px;border-radius:var(--r);
+    border:1px solid var(--line);background:var(--bg);color:var(--ink);width:104px;font-variant-numeric:tabular-nums}
   select{width:auto}
-  button{font:600 14px/1 inherit;padding:9px 18px;border-radius:8px;border:1px solid transparent;
-    background:var(--ink);color:var(--bg);cursor:pointer}
+  button{font:600 12.5px/1 var(--mono);text-transform:uppercase;letter-spacing:.07em;
+    padding:9px 16px;border-radius:var(--r);border:1px solid var(--accent);
+    background:var(--accent);color:var(--bg);cursor:pointer}
   button.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+  button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   button:disabled{opacity:.4;cursor:not-allowed}
   .note{font-size:12px;color:var(--muted)}
 
   .grid{display:grid;gap:13px;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));margin-bottom:22px}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:14px 15px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:15px 16px}
   .card .k{font-size:11px;letter-spacing:.075em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
   .card .v{font:640 23px/1.1 var(--mono);letter-spacing:-.015em}
   .v.pos{color:var(--pos)} .v.neg{color:var(--neg)}
@@ -63,7 +76,7 @@ export const PAGE = /* html */ `<!doctype html>
   h2{font-size:12px;letter-spacing:.085em;text-transform:uppercase;color:var(--muted);
     margin:30px 0 12px;font-weight:640}
   h2 span{text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted);opacity:.8}
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:16px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:17px}
   .two{display:grid;gap:13px;grid-template-columns:1fr 1fr}
   @media(max-width:820px){.two{grid-template-columns:1fr}}
 
@@ -74,7 +87,7 @@ export const PAGE = /* html */ `<!doctype html>
   tr:last-child td{border-bottom:none}
   .num{text-align:right;font-variant-numeric:tabular-nums}
   .why{color:var(--muted);font-size:12px;font-family:inherit}
-  .tag{font:640 10px/1 var(--mono);padding:3px 6px;border-radius:4px;letter-spacing:.05em}
+  .tag{font:640 10px/1 var(--mono);padding:3px 6px;border-radius:2px;letter-spacing:.08em;text-transform:uppercase}
   .tag.buy{background:color-mix(in srgb,var(--pos) 16%,transparent);color:var(--pos)}
   .tag.skip{background:color-mix(in srgb,var(--muted) 15%,transparent);color:var(--muted)}
   .tag.adopt{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
@@ -207,7 +220,7 @@ async function post(path,body){
 function render(d,keepBusy){
   window.__last=d;
   const app=document.getElementById('app');
-  if(!d||d.error){app.innerHTML='<header><h1>Rivo</h1></header><p class="empty">'+esc(d?d.error:'no data')+'</p>'
+  if(!d||d.error){app.innerHTML='<header><h1><i class="mark"></i>Rivo</h1></header><p class="empty">'+esc(d?d.error:'no data')+'</p>'
     +'<div class="controls"><label>capital <input type="number" id="cap" value="50" min="1" step="1"></label>'
     +'<label>profile <select id="prof"><option>conservative</option><option selected>balanced</option><option>active</option></select></label>'
     +'<label><input type="checkbox" id="live"> live</label>'
@@ -215,7 +228,7 @@ function render(d,keepBusy){
 
   const st=d.status, live=d.mode==='LIVE';
   const age=st.sinceLastCycleSec;
-  let h='<header><h1>Rivo</h1>'
+  let h='<header><h1><i class="mark"></i>Rivo</h1>'
     +'<span class="pill '+(st.running?'on':'off')+'"><span class="dot"></span>'
       +(st.running?(live?'LIVE':'SHADOW'):'STOPPED')+'</span>'
     +'<span class="spacer"></span>'
@@ -330,7 +343,7 @@ function stopRun(){ post('/api/stop',{}); }
 
 async function tick(){
   try{ render(await (await fetch('/api/state')).json()); }
-  catch(e){ document.getElementById('app').innerHTML='<h1>Rivo</h1><p class="empty">'+esc(String(e))+'</p>'; }
+  catch(e){ document.getElementById('app').innerHTML='<h1><i class="mark"></i>Rivo</h1><p class="empty">'+esc(String(e))+'</p>'; }
 }
 tick(); setInterval(()=>{if(!busy)tick();},5000);
 </script></body></html>`;
