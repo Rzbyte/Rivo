@@ -124,7 +124,7 @@ function canarySection(c: LiveCanary): string {
       <p class="mut" style="font-size:12.5px;margin:4px 0 12px">
         A stage with no evidence is reported as unproven rather than omitted.
       </p>
-      <table><tbody>
+      <div class="scroll"><table><tbody>
         ${c.stages
           .map(
             (s) => `<tr>
@@ -134,7 +134,7 @@ function canarySection(c: LiveCanary): string {
             </tr>`,
           )
           .join("")}
-      </tbody></table>
+      </tbody></table></div>
     </div>
     <div class="panel pad">
       <h3>Transactions</h3>
@@ -199,7 +199,7 @@ function calibrationSection(c: Calibration): string {
         Early in a window there is almost nothing to know; near expiry the answer is nearly
         determined. A model that scored evenly across phases would be suspicious.
       </p>
-      <table><thead><tr><th>Elapsed</th><th>AUC</th><th>Brier</th><th>N</th></tr></thead><tbody>
+      <div class="scroll"><table><thead><tr><th>Elapsed</th><th>AUC</th><th>Brier</th><th>N</th></tr></thead><tbody>
         ${c.byPhase
           .map(
             (p) =>
@@ -207,7 +207,7 @@ function calibrationSection(c: Calibration): string {
                <td class="n">${p.brier.toFixed(3)}</td><td class="n mut">${p.n.toLocaleString()}</td></tr>`,
           )
           .join("")}
-      </tbody></table>
+      </tbody></table></div>
     </div>
   </div>
   <p class="note" style="margin-top:14px">

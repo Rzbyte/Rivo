@@ -8,7 +8,7 @@
 // It deliberately does NOT open with the model, the mathematics, or the venue.
 // Those are the reason the product works; they are not the product.
 
-import { esc, f2, pct, signed } from "./dom.js";
+import { esc, f2, pct, pending, signed } from "./dom.js";
 import { termChart } from "./charts.js";
 import type { PortfolioView } from "../engine.js";
 
@@ -17,6 +17,10 @@ export interface LandingData {
   preview: PortfolioView | null;
   evidence: { auc: number; brier: number; skill: number; n: number } | null;
   connected: boolean;
+  /** Why the last venue read failed, when it did. */
+  error?: string | null;
+  /** When that attempt was, for "3 minutes ago". */
+  errorAt?: number;
 }
 
 export function landing(d: LandingData): string {
@@ -44,7 +48,7 @@ export function landing(d: LandingData): string {
       </div>
     </div>
 
-    ${p ? livePreview(p) : `<div class="panel pad" style="margin-top:30px"><p class="empty">reading the live venue…</p></div>`}
+    <div style="margin-top:30px">${p ? livePreview(p) : pending("reading the live venue", d.error ?? null, d.errorAt)}</div>
 
     <div class="sec-head" style="margin-top:44px"><h2>What the layer above actually does</h2></div>
     <div class="grid g3">

@@ -14,7 +14,7 @@
 import type { Snapshot } from "../../engine/scan.js";
 import { bestBid } from "../../engine/book.js";
 import { collateralName, tenorLabel, type Network } from "../../core/venue.js";
-import { cls, esc, f2, f3, horizon, pct, signed } from "./dom.js";
+import { cls, esc, f2, f3, horizon, pct, pending, signed } from "./dom.js";
 import { termChart } from "./charts.js";
 import { sigmaPerMinute } from "../../model/vol.js";
 import { DEFAULT_VOL_LOOKBACK_MIN } from "../../calibration/dataset.js";
@@ -53,8 +53,13 @@ export function rowsOf(snap: Snapshot): Row[] {
   return [...byMarket.values()].sort((a, b) => a.label.localeCompare(b.label));
 }
 
-export function explorer(snap: Snapshot | null, net: Network = "testnet"): string {
-  if (!snap) return `<div class="wrap"><p class="empty">reading the venue…</p></div>`;
+export function explorer(
+  snap: Snapshot | null,
+  net: Network = "testnet",
+  error: string | null = null,
+  errorAt?: number,
+): string {
+  if (!snap) return `<div class="wrap" style="padding-top:40px">${pending("reading the venue", error, errorAt)}</div>`;
   const rows = rowsOf(snap);
   // Same lookback the engine priced with, so the σ shown is the σ used.
   const sigma = new Map<string, number>();

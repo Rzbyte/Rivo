@@ -65,3 +65,37 @@ export function onAction(handler: (act: string, el: HTMLElement, ev: Event) => v
     if (el) handler(el.dataset.act!, el, ev);
   });
 }
+
+/**
+ * The panel a route shows when it has nothing to show yet.
+ *
+ * There are two of these and conflating them is the bug this exists to stop. A
+ * page that is still reading looks exactly like a page whose read failed, and
+ * the second one waited forever behind the first one's wording — the front door
+ * said "reading the live venue…" indefinitely whenever the indexer hiccuped,
+ * which is indistinguishable from a broken site and was the first thing a
+ * visitor would see.
+ *
+ * So the failure case says what broke, when, and offers the one action that can
+ * help. Nothing here retries on its own — the cycle already does that on its own
+ * schedule; this is for the person who does not want to wait for it.
+ */
+export function pending(what: string, error: string | null, sinceSec?: number): string {
+  if (!error) return `<div class="panel pad"><p class="empty">${esc(what)}…</p></div>`;
+  const when = sinceSec ? ` ${relTime(sinceSec)}` : "";
+  return `
+  <div class="panel pad">
+    <h3 style="margin:0">Could not reach the venue</h3>
+    <p class="mut" style="font-size:13.5px;margin:8px 0 0">
+      The last attempt${when} failed. Rivo reads public Somnia indexers directly from this page, so
+      this is usually the indexer or your connection rather than anything here — nothing is
+      configured and nothing is signed.
+    </p>
+    <p class="note warn" style="margin:12px 0 0">${esc(error)}</p>
+    <div style="display:flex;gap:9px;margin-top:12px;flex-wrap:wrap">
+      <button class="primary" data-act="retry">Try again</button>
+      <a class="btn" href="#/evidence">Read the evidence instead</a>
+    </div>
+    <p class="mut" style="font-size:12px;margin:10px 0 0">It also retries by itself every 30 seconds.</p>
+  </div>`;
+}

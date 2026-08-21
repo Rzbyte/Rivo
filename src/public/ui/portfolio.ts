@@ -274,7 +274,7 @@ export function configure(s: AppState): string {
         ${walletPanel(w)}
         <div class="panel pad" style="margin-top:14px">
           <h3>What this policy means</h3>
-          <table style="margin-top:10px">
+          <div class="scroll"><table style="margin-top:10px">
             <tbody>
               ${[
                 ["Deployed at most", `${f2(cap * p.maxDeployed)} ${w.collateralSymbol}`],
@@ -288,7 +288,7 @@ export function configure(s: AppState): string {
                 .map(([k, v]) => `<tr><td>${k}</td><td class="n">${v}</td></tr>`)
                 .join("")}
             </tbody>
-          </table>
+          </table></div>
         </div>
         <button class="primary big" data-act="start" style="width:100%;justify-content:center;margin-top:14px"
                 ${s.busy ? "disabled" : ""}>

@@ -12,6 +12,9 @@ import type { DecisionView, PortfolioView } from "../engine.js";
 import { newPolicy, limitsOf } from "../../portfolio/policy.js";
 import { explain } from "../explain.js";
 import { esc, horizon, meter, signed } from "./dom.js";
+import { landing } from "./landing.js";
+import { explorer } from "./explorer.js";
+import { configure, dashboard, type AppState } from "./portfolio.js";
 
 beforeAll(() => {
   // charts.ts reads CSS custom properties for theme colours. In Node there is no
@@ -199,4 +202,110 @@ describe("formatting helpers", () => {
     expect(meter(1, 2)).not.toContain("over");
     expect(meter(1, 0)).toBe("");
   });
+});
+
+describe("a page that cannot reach the venue says so", () => {
+  // The failure this pins is not a crash. It is a page that waits: the landing
+  // route and the explorer both rendered "reading the live venue…" and left it
+  // there forever when a read threw, because the only place an error surfaced
+  // was the dashboard's activity feed. An indefinite loading state is
+  // indistinguishable from a broken site, and the landing page is the first
+  // thing anyone sees.
+
+  it("still says 'reading' while it genuinely is", () => {
+    const html = landing({ preview: null, evidence: null, connected: false, error: null });
+    expect(html).toContain("reading the live venue");
+    expect(html).not.toContain("Could not reach the venue");
+  });
+
+  it("names the failure, and offers the action that helps", () => {
+    const html = landing({
+      preview: null,
+      evidence: null,
+      connected: false,
+      error: "NetworkError when attempting to fetch resource",
+      errorAt: Math.floor(Date.now() / 1000) - 120,
+    });
+    expect(html).toContain("Could not reach the venue");
+    expect(html).toContain("NetworkError");
+    expect(html).toContain('data-act="retry"');
+    // And says it is not the visitor's problem to configure away. Collapsed,
+    // because the source wraps this sentence across lines.
+    expect(html.replace(/\s+/g, " ")).toContain("nothing is configured and nothing is signed");
+  });
+
+  it("escapes whatever the failure said, since it reaches the DOM", () => {
+    const html = landing({ preview: null, evidence: null, connected: false, error: '<img src=x onerror="alert(1)">' });
+    expect(html).not.toContain("<img src=x");
+    expect(html).toContain("&lt;img");
+  });
+
+  it("does the same on the explorer, which fails the same way", () => {
+    expect(explorer(null, "testnet", null)).toContain("reading the venue");
+    const failed = explorer(null, "testnet", "indexer 503");
+    expect(failed).toContain("Could not reach the venue");
+    expect(failed).toContain('data-act="retry"');
+  });
+});
+
+describe("nothing overflows a phone", () => {
+  // A table wider than the viewport does not clip — it stretches its ancestors
+  // and pushes the whole page sideways, so one wide table breaks every screen it
+  // appears on. The convention is a `.scroll` wrapper; the convention had drifted
+  // on three of seven tables. This asserts the convention instead of the memory
+  // of it, across every view that renders one.
+  const wrapped = (html: string): boolean => {
+    // Walk the tags in order; every <table> must be inside an open .scroll div.
+    let depthSinceScroll: number | null = null;
+    for (const m of html.matchAll(/<(\/?)(div|table)\b([^>]*)>/g)) {
+      const [, closing, tag, attrs] = m;
+      if (tag === "table" && !closing && depthSinceScroll === null) return false;
+      if (tag !== "div") continue;
+      if (!closing) {
+        if (depthSinceScroll !== null) depthSinceScroll++;
+        else if ((attrs ?? "").includes("scroll")) depthSinceScroll = 0;
+      } else if (depthSinceScroll !== null) {
+        if (depthSinceScroll === 0) depthSinceScroll = null;
+        else depthSinceScroll--;
+      }
+    }
+    return true;
+  };
+
+  const app = (): AppState => ({
+    wallet: {
+      address: OWNER, chainId: 50312, network: "testnet", gas: 1.5, collateral: 100,
+      gasSymbol: "STT", collateralSymbol: "tUSDC",
+    },
+    connecting: false, error: null, policy, view: view(), backend: null,
+    draft: { capital: 50, profile: "balanced", mode: "shadow" },
+    busy: false, showAdvanced: true, equity: [], activity: [],
+  });
+
+  it("the check itself can fail", () => {
+    // A convention test that cannot go red is decoration. These four cases pin
+    // the walker: bare table, wrapped table, a wrapper that closed before the
+    // table, and a table nested deeper inside a wrapper that is still open.
+    expect(wrapped("<div><table></table></div>")).toBe(false);
+    expect(wrapped('<div class="scroll"><table></table></div>')).toBe(true);
+    expect(wrapped('<div class="scroll"></div><table></table>')).toBe(false);
+    expect(wrapped('<div class="scroll"><div><span></span><table></table></div></div>')).toBe(true);
+  });
+
+  // Built inside each test, not at collection time: charts.ts reads CSS custom
+  // properties, and the stand-in for those is installed by beforeAll.
+  const views: Record<string, () => string> = {
+    dashboard: () => dashboard(app()),
+    configure: () => configure(app()),
+    explorer: () => explorer(null, "testnet", "unreachable"),
+    landing: () => landing({ preview: null, evidence: null, connected: false, error: null }),
+  };
+
+  for (const [name, build] of Object.entries(views)) {
+    it(`keeps every table in ${name} inside a scroll container`, () => {
+      const html = build();
+      expect(html).toContain("<div"); // the walker is only meaningful on real markup
+      expect(wrapped(html)).toBe(true);
+    });
+  }
 });

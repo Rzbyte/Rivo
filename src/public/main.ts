@@ -32,7 +32,14 @@ const CYCLE_MS = 30_000;
 
 type Route = "home" | "app" | "explorer" | "evidence";
 
-const state: AppState & { route: Route; portfolio: ShadowPortfolio | null; preview: PortfolioView | null } = {
+const state: AppState & {
+  route: Route;
+  portfolio: ShadowPortfolio | null;
+  preview: PortfolioView | null;
+  /** Why the last venue read failed, so every route can say so rather than one. */
+  venueError: string | null;
+  venueErrorAt: number;
+} = {
   route: "home",
   wallet: null,
   connecting: false,
@@ -47,6 +54,8 @@ const state: AppState & { route: Route; portfolio: ShadowPortfolio | null; previ
   showAdvanced: false,
   equity: [],
   activity: [],
+  venueError: null,
+  venueErrorAt: 0,
 };
 
 const idx = new Indexer();
@@ -91,7 +100,7 @@ function render(): void {
       if (!state.policy || state.policy.state === "idle" || state.policy.state === "stopped") return mount(configure(state));
       return mount(dashboard(state));
     case "explorer":
-      return mount(explorer(explorerSnap, state.wallet?.network ?? "testnet"));
+      return mount(explorer(explorerSnap, state.wallet?.network ?? "testnet", state.venueError, state.venueErrorAt));
     case "evidence":
       return mount(evidence(evidenceBundle ?? { calibration: null, backtest: null, coherence: null, maker: null, canary: null }));
     default:
@@ -107,6 +116,8 @@ function render(): void {
               }
             : null,
           connected: Boolean(state.wallet),
+          error: state.venueError,
+          errorAt: state.venueErrorAt,
         }),
       );
   }
@@ -197,11 +208,22 @@ async function tick(): Promise<void> {
       state.activity = store.appendActivity(state.policy.owner, view.activity as Activity[]);
       rebuildEquity();
     }
+    // A pass that got all the way here reached the venue, so any previous
+    // failure is over. Clearing it here rather than at the top means a route
+    // that reads nothing cannot clear an error it never re-tested.
+    state.venueError = null;
   } catch (e) {
     // A failed cycle must not stop the loop: the venue rolls markets constantly
     // and a transient read failure is expected, not exceptional.
+    const message = e instanceof Error ? e.message : String(e);
+    // The activity feed only appears on the dashboard. The landing page and the
+    // explorer showed "reading the live venue…" indefinitely instead, which is
+    // indistinguishable from a hung page — and the landing page is the first
+    // thing anyone sees.
+    state.venueError = message;
+    state.venueErrorAt = Math.floor(Date.now() / 1000);
     state.activity = [
-      { at: Math.floor(Date.now() / 1000), kind: "info", text: `cycle failed: ${e instanceof Error ? e.message : String(e)}` },
+      { at: Math.floor(Date.now() / 1000), kind: "info", text: `cycle failed: ${message}` },
       ...state.activity,
     ].slice(0, 300);
   }
@@ -271,6 +293,10 @@ onAction((act, el) => {
       adoptWallet(owner);
       return render();
     }
+    case "retry":
+      state.venueError = null;
+      render();
+      return void tick();
     case "disconnect": {
       // Two different actions behind one button, because to the person clicking
       // it they are the same gesture: "get me out of this". For a real wallet it
