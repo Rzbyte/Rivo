@@ -23,3 +23,54 @@ jobs:
       # The suite is entirely offline: every venue interaction goes through a
       # fixture, so CI needs no key, no RPC and no funded wallet.
       - run: npm test
+
+  # The image is the self-hosting story, so it is built here rather than trusted.
+  # Two builds, because they can fail for different reasons and only one of them
+  # is this repo's fault:
+  #
+  #   * without the kit — proves the Dockerfile, the dependency install and the
+  #     bundle build are correct. Blocking.
+  #   * with the kit — proves the live-execution path installs against the real
+  #     upstream. Advisory, because a change in somebody else's repo should not
+  #     turn this one red.
+  #
+  # The container is then actually run: an image that builds but cannot start is
+  # a build artefact, not a deployment.
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build (no kit — read-only and dry run only)
+        run: docker build --build-arg KIT_REF= -t rivo:nokit .
+
+      - name: The image starts, and defaults to dry run
+        run: |
+          # The cycle itself talks to the live venue, so its success is not this
+          # repo's to guarantee — the assertion is on the banner, which is
+          # printed before any network call. Crude, and exactly the property
+          # that matters: the only thing between a container and somebody's
+          # money is that this line says DRY.
+          out=$(timeout 180 docker run --rm rivo:nokit src/cli/run.ts --capital 10 --cycles 1 2>&1 || true)
+          echo "$out" | head -20
+          echo "$out" | grep -qE "^mode +DRY" || { echo "::error::a keyless container did not report DRY"; exit 1; }
+
+      - name: The cockpit serves, and refuses an unprotected off-loopback bind
+        run: |
+          # No token: binding 0.0.0.0 must be refused rather than warned about.
+          guard=$(timeout 60 docker run --rm rivo:nokit src/cli/web.ts --host 0.0.0.0 2>&1 || true)
+          echo "$guard"
+          echo "$guard" | grep -q "refusing to bind" \
+            || { echo "::error::the cockpit bound off-loopback without a token"; exit 1; }
+          # With a token it should come up and answer.
+          docker run -d --name cockpit -e RIVO_CONTROL_TOKEN=$(head -c 32 /dev/urandom | base64) \
+            -p 127.0.0.1:3000:3000 rivo:nokit src/cli/web.ts --host 0.0.0.0
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:3000/api/health && break || sleep 2
+          done
+          curl -fsS http://127.0.0.1:3000/api/health
+          docker rm -f cockpit
+
+      - name: Build with the bot kit (advisory)
+        continue-on-error: true
+        run: docker build -t rivo:kit .

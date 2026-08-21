@@ -1,0 +1,81 @@
+# Rivo, self-hosted. `docker compose up -d` and open http://localhost:3000.
+#
+# The two services here are deliberately mutually exclusive, and only one starts
+# by default. Both write the same state file, and two processes writing one
+# portfolio is how a bot forgets a position it owns and buys a second copy — so
+# `headless` sits behind a profile rather than being available by accident.
+#
+#   docker compose up -d                        cockpit; you press Start
+#   docker compose --profile headless up -d     autopilot, no UI, restarts itself
+#
+# Neither trades until told to. Dry run is the default in the image, on the CLI,
+# and here; `--live` is the only thing that changes it.
+
+services:
+  # The product surface: portfolio, live pricing, evidence, and the controls to
+  # start and stop a run.
+  cockpit:
+    build: .
+    image: rivo:latest
+    command:
+      - src/cli/web.ts
+      - --host
+      - 0.0.0.0
+      - --data-dir
+      - /app/data
+    ports:
+      # Bound to the loopback interface of the HOST, not to every interface.
+      # Inside the container the server has to listen on 0.0.0.0 to be reachable
+      # at all, and its own guard then demands RIVO_CONTROL_TOKEN for that — the
+      # publish address is what keeps the port off the network regardless.
+      - "127.0.0.1:3000:3000"
+    environment:
+      # Control endpoints can start live trading with the operator's key, so the
+      # server refuses an off-loopback bind without a token. Set one in .env
+      # beside this file; there is no default, on purpose.
+      RIVO_CONTROL_TOKEN: ${RIVO_CONTROL_TOKEN:?set RIVO_CONTROL_TOKEN in .env — the cockpit can start live trading}
+      NETWORK: ${NETWORK:-testnet}
+    volumes:
+      - state:/app/data
+      # The agent wallet, read-only. The container can sign with it and cannot
+      # alter it; `npm run agent -- sweep` on the host remains the way out.
+      # The DIRECTORY is mounted rather than the file, so a clone that has not
+      # run `npm run agent -- new` yet still starts — it simply finds no key and
+      # stays in dry run, which is the right way for that to fail.
+      - ./.rivo:/run/secrets:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  # Unattended operation. Same image, no UI, and it comes back after a reboot.
+  autopilot:
+    profiles: ["headless"]
+    build: .
+    image: rivo:latest
+    command:
+      - src/cli/run.ts
+      - --capital
+      - ${RIVO_CAPITAL:-25}
+      - --profile
+      - ${RIVO_PROFILE:-balanced}
+      - --data-dir
+      - /app/data
+      # Add --live here, or set it in your own override file, once you have
+      # funded an agent wallet and read DISCLAIMER.md.
+    environment:
+      NETWORK: ${NETWORK:-testnet}
+    volumes:
+      - state:/app/data
+      - ./.rivo:/run/secrets:ro
+    restart: unless-stopped
+
+volumes:
+  # A named volume rather than a bind mount: the portfolio has to survive
+  # `docker compose down`, and losing it means the runtime rebuilds its holdings
+  # from the chain at the next reconcile — which works, but only for positions
+  # the chain can still see.
+  state:

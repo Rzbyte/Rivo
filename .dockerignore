@@ -1,0 +1,32 @@
+# What must never enter the build context.
+#
+# The first three lines are the ones that matter. `docker build` sends this
+# directory to the daemon and every COPY draws from it, so a secret listed here
+# is a secret that cannot end up in a layer by accident — and a layer is
+# forever, even if a later step deletes the file.
+.env
+.env.*
+.rivo/
+
+# Runtime state. A portfolio belongs to one deployment; baking one operator's
+# positions into an image everyone runs would have the container start up
+# believing it owns somebody else's trades.
+data/
+data*/
+*.log
+
+# Rebuilt inside the image by `npm run build:public`, and platform-specific.
+node_modules/
+public/app.js
+public/rivo-public.html
+public/calibration.json
+
+# Not part of what runs.
+.git/
+.github/
+.gitignore
+Dockerfile
+compose.yaml
+*.md
+!DISCLAIMER.md
+rivo-dashboard.html

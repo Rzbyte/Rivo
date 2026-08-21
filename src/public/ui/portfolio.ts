@@ -50,8 +50,8 @@ export function connectGate(s: AppState): string {
           ? `<h3>No wallet detected — that is fine</h3>
              <p class="mut" style="font-size:13.5px;margin-top:6px">
                Shadow Mode runs the real engine against the live venue with paper fills, so it needs
-               no signature and no funds. Start one now; connect a wallet later if you want your own
-               balances alongside it.</p>
+               no signature and no funds. Start one now — if you connect a wallet later, this
+               portfolio comes with you.</p>
              <div style="display:flex;gap:9px;margin-top:14px;flex-wrap:wrap">
                <button class="primary" data-act="demo">Start a portfolio</button>
                <a class="btn" href="#/explorer">Open the explorer</a>
@@ -96,9 +96,16 @@ export function walletChip(s: AppState): string {
             <button data-act="switch">Switch to Somnia</button>`;
   }
   if (isDemo(w.address)) {
+    // A demo identity gets the same way out as a real one. It had none, which
+    // made it the one state in the app you could enter and not leave: no reset,
+    // no route back to the gate, and the only exit was to connect a wallet —
+    // an extension install as the price of undoing a click. The word is
+    // "Discard" rather than "Disconnect" because there is nothing connected;
+    // the portfolio is local, and this throws it away.
     return `
       <span class="tag warn">demo portfolio</span>
-      <button data-act="connect">Connect a wallet</button>`;
+      <button data-act="connect">Connect a wallet</button>
+      <button class="ghost" data-act="disconnect" title="Discard this demo portfolio">×</button>`;
   }
   return `
     <span class="tag mute" title="${esc(w.address)}">${esc(shortAddr(w.address))}</span>
@@ -114,7 +121,8 @@ function walletPanel(w: WalletState): string {
       <h3>Demo portfolio</h3>
       <p class="mut" style="font-size:13px;margin:6px 0 0">
         No wallet connected, and none needed: Shadow Mode prices the live venue and fills on paper,
-        so nothing here is signed or spent. Your policy is stored in this browser only.
+        so nothing here is signed or spent. Your policy is stored in this browser only, and moves
+        onto your wallet if you connect one.
       </p>
       <button style="margin-top:12px" data-act="connect">Connect a wallet to see real balances</button>
     </div>`;

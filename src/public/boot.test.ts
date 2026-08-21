@@ -49,7 +49,16 @@ let win: Window;
 let calls: string[];
 
 beforeAll(async () => {
-  if (!existsSync(BUNDLE)) throw new Error(`${BUNDLE} missing — run \`npm run build:public\` first`);
+  // Build it rather than demand it. `public/app.js` is a build artefact and
+  // therefore gitignored, so on a fresh clone this suite used to be the one red
+  // thing a reader saw after `npm install && npm test` — a failure that says
+  // nothing about the code and everything about a missing step. CI builds first
+  // and never noticed. Building here makes the test self-contained however it is
+  // invoked: `npm test`, a single-file vitest run, or an editor.
+  if (!existsSync(BUNDLE)) {
+    const { execFileSync } = await import("node:child_process");
+    execFileSync(process.execPath, [resolve("node_modules/tsx/dist/cli.mjs"), "scripts/build-public.ts"], { stdio: "inherit" });
+  }
   calls = [];
   win = new Window({ url: "https://rivo.test/" });
   win.document.write(readFileSync(SHELL, "utf8").replace('<script type="module" src="app.js"></script>', ""));

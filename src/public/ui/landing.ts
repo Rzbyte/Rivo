@@ -34,7 +34,11 @@ export function landing(d: LandingData): string {
         the chain, and showing you the binding reason behind every decision.
       </p>
       <div style="display:flex;gap:10px;margin-top:24px;flex-wrap:wrap">
-        <a class="btn primary big" href="#/app">${d.connected ? "Open your portfolio" : "Connect wallet and start"}</a>
+        <!-- No wallet is needed to run one, so the front door must not ask for
+             an extension install. It used to read "Connect wallet and start",
+             which was true before the demo identity landed and is now a toll
+             booth on an open road. -->
+        <a class="btn primary big" href="#/app">${d.connected ? "Open your portfolio" : "Start a portfolio"}</a>
         <a class="btn big" href="#/explorer">See live pricing</a>
         <a class="btn big" href="#/evidence">Read the evidence</a>
       </div>

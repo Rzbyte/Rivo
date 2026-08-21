@@ -135,6 +135,10 @@ async function doConnect(): Promise<void> {
   render();
   try {
     const address = await connect(provider);
+    // Carry a demo portfolio across, so "connect a wallet later" keeps what the
+    // person built instead of silently swapping it for an empty namespace.
+    const previous = state.wallet?.address;
+    if (previous && store.isDemo(previous)) store.adoptInto(previous, address);
     store.rememberWallet(address);
     await refreshWallet(address);
     adoptWallet(address);
@@ -267,13 +271,24 @@ onAction((act, el) => {
       adoptWallet(owner);
       return render();
     }
-    case "disconnect":
+    case "disconnect": {
+      // Two different actions behind one button, because to the person clicking
+      // it they are the same gesture: "get me out of this". For a real wallet it
+      // is forgetting — the address still exists and its policy waits for the
+      // next visit. For a demo identity it is discarding, because a local
+      // portfolio nobody can reconnect to would otherwise be unreachable
+      // forever while still occupying storage.
+      const owner = state.wallet?.address;
+      if (owner && store.isDemo(owner)) store.forgetIdentity(owner);
       store.forgetWallet();
       state.wallet = null;
       state.policy = null;
       state.portfolio = null;
       state.view = null;
+      state.activity = [];
+      state.equity = [];
       return render();
+    }
     case "switch":
       return void (async () => {
         if (!provider) return;

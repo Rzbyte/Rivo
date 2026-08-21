@@ -133,6 +133,62 @@ export function configure(
   return next;
 }
 
+/**
+ * Move a demo portfolio onto a real wallet, once there is one.
+ *
+ * The gate promises that connecting later keeps what you built, and without
+ * this it did not: every stored value is namespaced by owner, so connecting
+ * switched to an empty namespace and the demo run appeared to evaporate. It was
+ * still on disk under the demo id, and reachable only by disconnecting again —
+ * a recovery nobody would guess at.
+ *
+ * Refuses to overwrite. A wallet that already has a policy has a history of its
+ * own, and a demo portfolio is not worth clobbering it for; returns false so the
+ * caller can leave both in place.
+ */
+export function adoptInto(from: string, to: string): boolean {
+  if (from.toLowerCase() === to.toLowerCase()) return false;
+  if (loadPolicy(to)) return false;
+  const policy = loadPolicy(from);
+  if (!policy) return false;
+
+  const moved: PortfolioPolicy = { ...policy, owner: to.toLowerCase() };
+  savePolicy(moved);
+  const pf = loadPortfolio(from, policy);
+  savePortfolio({ ...pf, owner: to.toLowerCase() });
+  write(key(to, "activity"), loadActivity(from));
+  forgetIdentity(from);
+  return true;
+}
+
+/**
+ * Erase an identity's stored portfolio, policy and activity.
+ *
+ * Only the demo path uses this, and the distinction is worth keeping sharp.
+ * Disconnecting a real wallet must NOT delete anything: the person still owns
+ * that address, will very likely reconnect, and would be startled to find their
+ * policy gone. A demo identity has no such continuity — discarding it is the
+ * only way to start over, so the data goes with it, including the identity
+ * itself, so the next demo is genuinely new rather than the old one resurrected.
+ */
+export function forgetIdentity(owner: string): void {
+  const s = store();
+  for (const slot of ["policy", "portfolio", "activity"]) {
+    try {
+      s.removeItem(key(owner, slot));
+    } catch {
+      /* a storage that refuses to delete is one we cannot help */
+    }
+  }
+  if (isDemo(owner)) {
+    try {
+      s.removeItem(`${NS}:demo`);
+    } catch {
+      /* as above */
+    }
+  }
+}
+
 /** The last wallet that connected, so a return visit lands where it left off. */
 export const rememberWallet = (owner: string): void => write(`${NS}:last`, owner.toLowerCase());
 export const lastWallet = (): string | null => read<string>(`${NS}:last`);
