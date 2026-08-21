@@ -21,7 +21,7 @@ const SHELL = resolve("public/index.html");
 
 /** Minimal, deterministic stand-ins for every network call the app makes. */
 function fakeFetch(calls: string[]) {
-  return async (input: unknown): Promise<unknown> => {
+  return async (input: unknown, init?: { body?: string }): Promise<unknown> => {
     const url = String((input as { url?: string })?.url ?? input);
     calls.push(url);
     const json = (data: unknown) => ({ ok: true, status: 200, json: async () => data, text: async () => JSON.stringify(data) });
@@ -39,9 +39,24 @@ function fakeFetch(calls: string[]) {
       });
     }
     if (/\.json$/.test(url)) return { ok: false, status: 404, json: async () => ({}) };
-    // Any GraphQL read: an empty but well-formed venue. The app must render a
-    // venue with nothing live rather than throwing on empty arrays.
-    return json({ data: { BinaryMarket: [], OracleAnswer: [], MarketReferenceLink: [], BinaryOrder: [], Candle: [], PriceUpdate: [] } });
+
+    // Any GraphQL read: an empty but WELL-FORMED venue.
+    //
+    // The root fields are read out of the query rather than listed here. The
+    // hardcoded list this replaces had gone stale — it answered `BinaryMarket`
+    // while the app asks for `Market` — so every venue read inside this suite
+    // was throwing on `undefined.map`, and the suite passed anyway because the
+    // page's indefinite loading text satisfied the assertion. A fixture that
+    // silently stops matching the code is worse than no fixture: it turns a
+    // green suite into evidence of nothing.
+    //
+    // Table names are capitalised in this schema and their fields are not,
+    // which is enough to tell them apart.
+    const query = String(init?.body ? (JSON.parse(init.body) as { query?: string }).query ?? "" : "");
+    const roots = [...query.matchAll(/\b([A-Z][A-Za-z0-9_]*)\s*\(/g)].map((m) => m[1]!);
+    const data: Record<string, unknown[]> = {};
+    for (const r of roots.length > 0 ? roots : ["Market"]) data[r] = [];
+    return json({ data });
   };
 }
 
@@ -109,7 +124,10 @@ describe("the app boots", () => {
   });
 
   it("routes to the explorer and the evidence page", async () => {
-    for (const [hash, expected] of [["#/explorer", /live contract|reading the venue/i], ["#/evidence", /Measured before it was trusted/i]] as const) {
+    // The explorer must reach its own empty state, not sit on a loading string —
+    // that distinction is the whole point of the failure panel, and matching
+    // "reading the venue" here is what let a broken fixture pass for weeks.
+    for (const [hash, expected] of [["#/explorer", /live contract/i], ["#/evidence", /Measured before it was trusted/i]] as const) {
       win.location.hash = hash;
       win.dispatchEvent(new win.Event("hashchange"));
       await new Promise((r) => setTimeout(r, 120));
