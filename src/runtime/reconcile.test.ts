@@ -155,3 +155,38 @@ describe("reconcile — legs are tracked separately", () => {
     expect(d).toHaveLength(0);
   });
 });
+
+describe("findings that repeat forever are marked as such", () => {
+  it("flags an unmanageable holding as recurring, so the log can report it once", () => {
+    // A balance on a window the venue no longer lists. It cannot be adopted (no
+    // expiry means it can never be managed or settled), cannot be dropped (the
+    // chain really does hold it), and so comes back on every single pass. Over a
+    // thousand-cycle run that is thousands of identical lines burying the ones
+    // worth reading.
+    const state = stateWith([]);
+    const out = reconcile({
+      state,
+      chain: chainOf([["0xstale:UP", 0.31]]),
+      meta: new Map(), // the window is not live, so no metadata for it
+      now: NOW,
+    });
+
+    expect(out).toHaveLength(1);
+    expect(out[0]!.action).toBe("kept-pending");
+    expect(out[0]!.recurring).toBe(true);
+    // Still reported — suppression is the caller's business, not this module's.
+    expect(out[0]!.chainShares).toBeCloseTo(0.31);
+  });
+
+  it("does not mark a grace-window hold as recurring, because it resolves itself", () => {
+    // The other kept-pending: a just-filled position the indexer has not caught
+    // up with. It clears within seconds, so repeating it is not noise — and
+    // silencing it would hide a fill that never actually landed.
+    const state = stateWith([pos({ openedAt: NOW - 30 })]);
+    const out = reconcile({ state, chain: new Map(), now: NOW });
+
+    expect(out).toHaveLength(1);
+    expect(out[0]!.action).toBe("kept-pending");
+    expect(out[0]!.recurring).toBeUndefined();
+  });
+});

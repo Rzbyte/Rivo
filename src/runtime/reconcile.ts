@@ -40,6 +40,16 @@ export interface Discrepancy {
   chainShares: number;
   action: "adopted" | "dropped" | "resized" | "kept-pending";
   detail: string;
+  /**
+   * True when this condition will keep reporting itself unchanged every cycle.
+   *
+   * A holding on a window that is no longer live cannot be managed, settled or
+   * dropped — so it is rediscovered on every pass and reported again, forever.
+   * Over a 1,005-cycle run that is thousands of identical lines burying the ones
+   * that matter, which is how a decision log stops being read. The finding is
+   * still returned; only its repetition is the caller's to suppress.
+   */
+  recurring?: boolean;
 }
 
 export interface ReconcileInput {
@@ -162,6 +172,7 @@ export function reconcile(input: ReconcileInput): Discrepancy[] {
         chainShares,
         action: "kept-pending",
         detail: `chain holds ${chainShares.toFixed(4)} but the window is not live — likely unclaimed or off-venue`,
+        recurring: true,
       });
       continue;
     }

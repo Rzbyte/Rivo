@@ -357,6 +357,7 @@ indexers.
 - **[docs/EVIDENCE.md](docs/EVIDENCE.md)** — every claim, its method, and what we ruled out
 - **[docs/SDK-FEEDBACK.md](docs/SDK-FEEDBACK.md)** — findings from building against the SDK and indexer, including the
   on-chain measurement that the Event Contract operator entrypoints exist and are disabled
+- **[docs/DEMO.md](docs/DEMO.md)** — the 3-minute walkthrough, shot by shot, with the commands
 - **[DISCLAIMER.md](DISCLAIMER.md)** — read before running anything with money
 - [docs/evidence/](docs/evidence/) — saved outputs and a dashboard snapshot
 

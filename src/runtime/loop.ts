@@ -75,6 +75,15 @@ const MAX_DRAWDOWN = 0.35;
 const LEG_COOLDOWN_SEC = 180;
 
 /**
+ * Self-repeating reconciliation findings already reported this process.
+ *
+ * Process-scoped rather than persisted, deliberately: a restart is exactly when
+ * an operator wants to be told again what the wallet is carrying that Rivo
+ * cannot manage.
+ */
+const reportedRecurring = new Set<string>();
+
+/**
  * Back off a leg whose orders keep failing: 1, 2, 4, 8… minutes, capped at an hour.
  *
  * Exponential rather than fixed because the two causes look identical from here
@@ -141,7 +150,21 @@ export async function cycle(state: RivoState, deps: LoopDeps): Promise<CycleRepo
     }
     const chain = await idx.outcomeBalances(account);
     reconciled = reconcile({ state, chain, meta, marks, now });
-    for (const d of reconciled) out(`  ${describeDiscrepancy(d)}`);
+    for (const d of reconciled) {
+      // Print a self-repeating finding once, then only when it changes. It is
+      // still in `reconciled` for the report and the state; what is suppressed
+      // is the thousandth identical restatement of a condition nobody can act
+      // on, which is what turns a decision log into something people scroll
+      // past instead of read.
+      if (d.recurring) {
+        const seen = `${d.marketId}:${d.leg}:${d.chainShares.toFixed(4)}`;
+        if (reportedRecurring.has(seen)) continue;
+        reportedRecurring.add(seen);
+        out(`  ${describeDiscrepancy(d)}  (reported once; it will not change on its own)`);
+        continue;
+      }
+      out(`  ${describeDiscrepancy(d)}`);
+    }
     if (reconciled.length > 0) store.save(state);
   }
 
