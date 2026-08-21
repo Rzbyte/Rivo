@@ -42,6 +42,14 @@ services:
       # The DIRECTORY is mounted rather than the file, so a clone that has not
       # run `npm run agent -- new` yet still starts — it simply finds no key and
       # stays in dry run, which is the right way for that to fail.
+      #
+      # The key is mode 600 on the host and the container runs as uid 1000
+      # (`node`). That matches a default Linux desktop account, which is why this
+      # works unchanged for most people. If your host uid differs, the container
+      # reports no signing authority and stays dry rather than failing loudly —
+      # so if Autopilot is unexpectedly unavailable, check this first:
+      #   docker compose run --rm cockpit -e 'require("node:fs").readFileSync("/run/secrets/agent.key")'
+      # Fix by adding `user: "${UID:-1000}:${GID:-1000}"` to this service.
       - ./.rivo:/run/secrets:ro
     restart: unless-stopped
     healthcheck:
