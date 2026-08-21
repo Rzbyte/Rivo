@@ -105,12 +105,14 @@ export function walletChip(s: AppState): string {
     return `
       <span class="tag warn">demo portfolio</span>
       <button data-act="connect">Connect a wallet</button>
-      <button class="ghost" data-act="disconnect" title="Discard this demo portfolio">×</button>`;
+      <button class="ghost" data-act="disconnect" title="Discard this demo portfolio"
+              aria-label="Discard this demo portfolio">×</button>`;
   }
   return `
     <span class="tag mute" title="${esc(w.address)}">${esc(shortAddr(w.address))}</span>
     <span class="tag ok"><i class="dot"></i>${esc(w.network)}</span>
-    <button class="ghost" data-act="disconnect" title="Forget this wallet on this device">×</button>`;
+    <button class="ghost" data-act="disconnect" title="Forget this wallet on this device"
+            aria-label="Forget this wallet on this device">×</button>`;
 }
 
 function walletPanel(w: WalletState): string {

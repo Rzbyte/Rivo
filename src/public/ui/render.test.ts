@@ -14,7 +14,8 @@ import { explain } from "../explain.js";
 import { esc, horizon, meter, signed } from "./dom.js";
 import { landing } from "./landing.js";
 import { explorer } from "./explorer.js";
-import { configure, dashboard, type AppState } from "./portfolio.js";
+import { configure, dashboard, walletChip, type AppState } from "./portfolio.js";
+import * as store from "../store.js";
 
 beforeAll(() => {
   // charts.ts reads CSS custom properties for theme colours. In Node there is no
@@ -308,4 +309,31 @@ describe("nothing overflows a phone", () => {
       expect(wrapped(html)).toBe(true);
     });
   }
+});
+
+describe("a keyboard and a screen reader can use it", () => {
+  // The × that discards a portfolio is the most destructive control on the page
+  // and, announced as "times", the least identifiable. A title attribute is not
+  // a substitute: it is a tooltip, not a name.
+  it("names the icon-only controls", () => {
+    const demo = store.demoIdentity();
+    let checked = 0;
+    for (const address of [demo, "0x1111111111111111111111111111111111111111"]) {
+      const html = walletChip({
+        wallet: {
+          address: address as `0x${string}`, chainId: 50312, network: "testnet", gas: 1, collateral: 1,
+          gasSymbol: "STT", collateralSymbol: "tUSDC",
+        },
+        connecting: false, error: null, policy: null, view: null, backend: null,
+        draft: { capital: 50, profile: "balanced", mode: "shadow" },
+        busy: false, showAdvanced: false, equity: [], activity: [],
+      } as AppState);
+      if (!html.includes("×")) continue;
+      expect(html).toMatch(/aria-label="[^"]{4,}"/);
+      checked++;
+    }
+    // Both the demo and the wallet chip carry one. Without this the loop could
+    // find no × at all and the test would pass having asserted nothing.
+    expect(checked).toBe(2);
+  });
 });
