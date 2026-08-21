@@ -522,9 +522,18 @@ export async function verifyAgainstChain(
   fromIndexer: Map<string, number>,
   state: Pick<RivoState, "open">,
   account: string,
-  read: Pick<OutcomeReader, "balance"> = outcomeReader(),
+  read: Pick<OutcomeReader, "balance"> & { newCycle?: () => void } = outcomeReader(),
 ): Promise<Map<string, number>> {
-  const keys = new Set<string>([...fromIndexer.keys(), ...state.open.map((p) => legKey(p.marketId, p.leg))]);
+  // One generation per pass, for the same reason the executor does it: a pool
+  // serves successive windows and its leg ids move with them.
+  read.newCycle?.();
+  // `reconcile` keys on a LOWERCASED market id and the indexer's map already is
+  // one; `legKey` is not. Today every id the venue returns is lowercase, so the
+  // two agree by luck. Normalising here rather than relying on that: the failure
+  // if it ever stopped being true is silent — a held position simply never gets
+  // verified, and quietly keeps whatever the indexer said.
+  const norm = (marketId: string, leg: Leg) => `${marketId.toLowerCase()}:${leg}`;
+  const keys = new Set<string>([...fromIndexer.keys(), ...state.open.map((p) => norm(p.marketId, p.leg))]);
   if (keys.size === 0) return fromIndexer;
 
   const marketIds = [...new Set([...keys].map((k) => k.slice(0, k.lastIndexOf(":"))))];

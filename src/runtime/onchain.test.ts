@@ -153,7 +153,7 @@ describe("what the cycle does with the answer", () => {
   });
   const stateWith = (open: HeldPosition[]) => ({ ...emptyState(50, "balanced", false), open });
   const idx = { poolsOf: async () => new Map([["0xmkt", POOL]]) };
-  const reader = (value: number | null) => ({ balance: async () => value });
+  const reader = (value: number | null) => ({ balance: async () => value, newCycle: () => {} });
 
   it("overrides an indexer figure the chain contradicts", async () => {
     const out = await verifyAgainstChain(idx, new Map([["0xmkt:UP", 0.31]]), stateWith([]), OWNER, reader(0.07));
@@ -187,6 +187,20 @@ describe("what the cycle does with the answer", () => {
     };
     const from = new Map([["0xmkt:UP", 0.31]]);
     expect(await verifyAgainstChain(broken, from, stateWith([]), OWNER, reader(0))).toBe(from);
+  });
+
+  it("drops cached pool ids every cycle, because pools are recycled between windows", async () => {
+    // The same address serves one window, then the next, and the leg ids move
+    // with the generation. A cache that outlives a cycle eventually reports a
+    // confident balance for the market a pool USED to be.
+    let cleared = 0;
+    await verifyAgainstChain(idx, new Map([["0xmkt:UP", 1]]), stateWith([]), OWNER, {
+      balance: async () => 1,
+      newCycle: () => {
+        cleared++;
+      },
+    });
+    expect(cleared).toBe(1);
   });
 
   it("skips a market with no known pool rather than deleting it", async () => {

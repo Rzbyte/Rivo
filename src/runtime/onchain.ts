@@ -156,6 +156,23 @@ export class OutcomeReader {
     }
   }
 
+  /**
+   * Drop the id cache. Call once per cycle, before anything is read.
+   *
+   * Pools are RECYCLED across successive windows — the same address serves one
+   * market, then the next — and `yesId`/`noId` belong to the generation, not to
+   * the address. `getBinaryPoolParams` returns a `marketNonce` for exactly this
+   * reason. Caching ids across cycles would therefore eventually read the
+   * balance of the window a pool USED to be, and report a confident number for
+   * a position that does not exist. Within one cycle the cache is safe and
+   * still does its job, because both legs of a market share a pool.
+   *
+   * The same discipline as `Executor.newCycle()`, for the same hazard.
+   */
+  newCycle(): void {
+    this.params.clear();
+  }
+
   /** Whether the last few reads all failed — the signal to stop trusting this pass. */
   get degraded(): boolean {
     return this.failures >= 3;
