@@ -10,6 +10,7 @@
 import { loadEnv } from "../src/core/env.js";
 import { Indexer } from "../src/core/indexer.js";
 import { collateralName, COLLATERAL_TOKEN, endpoints, network } from "../src/core/config.js";
+import { authority, authorityStatus } from "../src/runtime/signer.js";
 
 const ok = (s: string) => `  ok    ${s}`;
 const warn = (s: string) => `  warn  ${s}`;
@@ -116,20 +117,37 @@ async function main(): Promise<void> {
   // --- 3. signer ----------------------------------------------------------
   console.log("");
   console.log("SIGNER");
-  const pk = (process.env.PRIVATE_KEY ?? "").trim();
+  // Which key signs is now a decision, not a given: an agent wallet wins over
+  // the raw key in .env when one exists. Asking `authority()` rather than
+  // reading PRIVATE_KEY directly is what keeps this report about the wallet that
+  // will ACTUALLY trade — the earlier version would have cheerfully checked the
+  // gas balance of a wallet the runtime was no longer using.
+  const auth = authority();
+  const status = await authorityStatus();
   let address: string | null = process.env.RIVO_ADDRESS ?? null;
-  if (!pk) {
-    console.log(bad("PRIVATE_KEY belum di-set di .env — Rivo akan tetap dry run"));
+
+  if (!auth.available()) {
+    const pk = (process.env.PRIVATE_KEY ?? "").trim();
+    if (pk && !/^0x[0-9a-fA-F]{64}$/.test(pk)) {
+      console.log(bad(`PRIVATE_KEY bukan kunci 32-byte yang valid (panjang ${pk.length}) — placeholder seperti 0x... ditolak`));
+    } else {
+      console.log(bad("tak ada kunci — Rivo akan tetap dry run"));
+      console.log(`        pilih satu: \`npm run agent -- new\` (disarankan), atau set PRIVATE_KEY di .env`);
+    }
     blockers++;
-  } else if (!/^0x[0-9a-fA-F]{64}$/.test(pk)) {
-    console.log(bad(`PRIVATE_KEY bukan kunci 32-byte yang valid (panjang ${pk.length}) — placeholder seperti 0x... ditolak`));
-    blockers++;
+  } else if (status.kind === "agent-wallet") {
+    address = status.address;
+    console.log(ok(`agent wallet → ${address}`));
+    console.log(`        kunci terpisah, hanya memegang float-nya sendiri — kerugian maksimum = saldo di bawah`);
+    console.log(`        kelola dengan \`npm run agent -- status | fund | sweep\``);
   } else {
+    const pk = (process.env.PRIVATE_KEY ?? "").trim();
     const derived = await deriveAddress(pk);
+    address = derived?.address ?? address;
     if (derived) {
-      address = derived.address;
-      console.log(ok(`kunci valid → ${derived.address}`));
+      console.log(warn(`kunci mentah .env → ${derived.address}`));
       console.log(`        via ${derived.via}`);
+      console.log(`        wewenang penuh atas akun ini. \`npm run agent -- new\` membatasi kerugian ke float saja`);
     } else {
       console.log(warn("kunci valid, tapi alamatnya tak bisa diturunkan — jalankan `npm run link:kit`"));
       if (address) console.log(ok(`memakai RIVO_ADDRESS=${address}`));

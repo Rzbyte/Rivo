@@ -31,7 +31,9 @@
     "coherence": "tsx src/cli/coherence.ts",
     "maker:live": "tsx src/cli/makerlive.ts",
     "build:public": "tsx scripts/build-public.ts",
-    "proof": "tsx src/cli/proof.ts"
+    "proof": "tsx src/cli/proof.ts",
+    "probe:operator": "tsx scripts/probe-operator.ts",
+    "agent": "tsx src/cli/agent.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

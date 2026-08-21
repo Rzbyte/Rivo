@@ -1,0 +1,74 @@
+{
+  "generatedAt": "2026-08-21T19:40:17.987Z",
+  "network": "testnet",
+  "question": "Can an Event Contract order be placed by one key on another account's behalf?",
+  "method": "Differential eth_call. A valid order via placeBinaryOrder establishes that args, market and caller are good; the same args via placeBinaryOrderFor isolate the on-behalf path; breaking one parameter at a time establishes that the pool distinguishes failures rather than answering everything alike.",
+  "market": {
+    "marketId": "0x00000000000000000000000000000000000000000000000000000000000051d3",
+    "asset": "BTC",
+    "intervalSec": 86400,
+    "expiry": 1787356800,
+    "pool": "0xc3e2b06a7a9e35170785a01595a09e4aed8a78df"
+  },
+  "deployment": {
+    "beacon": "0x85c01b5ef4f4ed59cac69749565e309f01b14dbc",
+    "implementation": "0x48e523c9f22f98548d263f0ad444d732e5202c0e",
+    "bytes": 40566,
+    "note": "ec-core's addresses.ts hardcodes binaryPoolImpl 0x82A1FcdaA2daC2fC7D5f9909D43E68021eE966FD, which is not what the beacon resolves to.",
+    "selectors": {
+      "placeBinaryOrder": {
+        "selector": "0x718c2d4d",
+        "present": true
+      },
+      "placeBinaryOrderFor": {
+        "selector": "0x5d97c566",
+        "present": true
+      },
+      "cancelOrder": {
+        "selector": "0xdbc91396",
+        "present": true
+      },
+      "cancelOrderFor": {
+        "selector": "0xe37b444b",
+        "present": true
+      },
+      "isOperatorAuthorized": {
+        "selector": "0xa8cb3794",
+        "present": false
+      },
+      "deposit": {
+        "selector": "0x47e7ef24",
+        "present": true
+      },
+      "withdraw": {
+        "selector": "0xf3fef3a3",
+        "present": true
+      },
+      "setManualVaultMode": {
+        "selector": "0xfc7b1853",
+        "present": false
+      }
+    }
+  },
+  "baseline": {
+    "placeBinaryOrder — valid": "ok",
+    "placeBinaryOrder — price = 0": "0xaf608abb",
+    "placeBinaryOrder — price >= 1": "0x6e4ba61d",
+    "placeBinaryOrder — quantity = 0": "0xeaa68ceb",
+    "placeBinaryOrder — expiry = 0": "0x3154078e"
+  },
+  "onBehalf": {
+    "the owner itself": "0x3fb0ba2e",
+    "an unrelated address": "0x3fb0ba2e",
+    "binaryModule": "0x3fb0ba2e",
+    "collateralRouter": "0x3fb0ba2e",
+    "marketsCore": "0x3fb0ba2e",
+    "binarySettlement": "0x3fb0ba2e",
+    "the pool itself": "0x3fb0ba2e",
+    "cancelOrderFor from the owner itself": "0x3fb0ba2e"
+  },
+  "distinctParameterErrors": 4,
+  "sharedOnBehalfError": "0x3fb0ba2e",
+  "verdict": "DISABLED — every on-behalf call returns 0x3fb0ba2e, from every caller including the owner, while parameter errors are 4 distinct selectors. Compiled in, switched off.",
+  "reproduce": "npm run probe:operator -- --owner <any funded venue address>"
+}

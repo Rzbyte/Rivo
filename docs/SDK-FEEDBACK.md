@@ -236,24 +236,90 @@ part that surprises. Worth one line beside the mint-a-pair recipe.
 
 ---
 
-## 9. `ec-core` has no operator / session-key support
+## 9. Event Contracts ship `placeBinaryOrderFor` and `cancelOrderFor` — and both are disabled
 
-**Severity: medium-high — it blocks the non-custodial UX story for event contracts specifically.**
+**Severity: high — this single flag is what stands between the kit and a non-custodial product.**
 
-`docs/session-keys.md` describes the split-key model well, and spot supports it: `Pool.place`
-detects `ctx.owner` and routes through `placeOrderFor`. **`ec-core::placeLimit` does not** — it
-calls `ctx.exchange.trader.placeOrder` directly, and `grep -rn "placeOrderFor\|OWNER_ADDRESS"
-packages/ec-core/src/` returns nothing.
+This started as a grep. `docs/session-keys.md` describes the split-key model well and spot
+supports it: `Pool.place` detects `ctx.owner` and routes through `placeOrderFor`, while
+`ec-core::placeLimit` calls `trader.placeOrder` directly and `grep -rn
+"placeOrderFor\|OWNER_ADDRESS" packages/ec-core/src/` returns nothing.
 
-The consequence for anyone building a consumer product on Event Contracts: "connect your wallet
-and let it run" degrades to "paste a private key into a web app". That is the difference between
-a product and a script, and it is the main thing standing between this kit and a real front end.
+That grep turned out to understate the situation, in an interesting direction. **The deployed
+BinaryPool has the on-behalf entrypoints.** They are simply switched off.
 
-There is also a structural wrinkle worth flagging even once `ec-core` supports it: operator
-grants are **per pool**, and EC pools are recycled per window. A bot trading the 15m series would
-need a fresh grant every quarter hour, or `setOperatorApprovalGlobal`, which is much broader than
-the per-pool default the docs recommend. Session keys for EC may need a venue-scoped or
-series-scoped grant to be practical.
+Reproduce it with `npm run probe:operator` in the Rivo repo (about a minute, zero gas, no key
+required — it is all `eth_call`). Saved output: [`docs/evidence/operator-probe.json`](evidence/operator-probe.json).
+
+**What is in the bytecode.** The pools are beacon proxies, and the beacon resolves to an
+implementation that is *not* the `binaryPoolImpl` hardcoded in `ec-core/src/addresses.ts` (see the
+smaller note below). In that live implementation:
+
+| selector | | |
+|---|---|---|
+| `0x5d97c566` | `placeBinaryOrderFor(address owner, …)` | **present** |
+| `0xe37b444b` | `cancelOrderFor(address owner, uint128)` | **present** |
+| `0xa8cb3794` | `isOperatorAuthorized(address,address,bytes4)` | absent |
+
+So the on-behalf pair exists on Event Contracts, while the spot-style gate view does not — there
+is no on-chain way to ask a BinaryPool whether an operator is authorised.
+
+**What happens when you call them.** The method is a differential, because "it reverted" is not
+evidence of anything on its own. First establish a working baseline, then change one thing:
+
+```
+placeBinaryOrder      valid args             -> OK, returns an order id
+placeBinaryOrder      price = 0              -> revert 0xaf608abb
+placeBinaryOrder      price >= 1             -> revert 0x6e4ba61d
+placeBinaryOrder      quantity = 0           -> revert 0xeaa68ceb
+placeBinaryOrder      expiry = 0             -> revert 0x3154078e
+
+placeBinaryOrderFor   the SAME valid args    -> revert 0x3fb0ba2e
+cancelOrderFor        owner, order id        -> revert 0x3fb0ba2e
+```
+
+The pool distinguishes its failures — four parameter mistakes, four different selectors. Against
+that baseline a single shared error on both on-behalf paths is not a parameter problem.
+
+Nor is it an authorisation decision. `0x3fb0ba2e` comes back identically from **every** caller we
+could think to try, using `eth_call`'s ability to impersonate any `from`:
+
+```
+the owner itself · an unrelated address · binaryModule · collateralRouter
+marketsCore · binarySettlement · the pool itself
+```
+
+The owner calling `placeBinaryOrderFor(owner, …)` on its own behalf gets the same revert as a
+stranger. No grant can fix that, because no grant is being consulted.
+
+We also eliminated the most plausible innocent explanation — that the on-behalf path draws from a
+pool vault the owner has not funded. `deposit(address,uint256)` and `withdraw(address,uint256)`
+are both present, so we funded it for real: deposit
+[`0x6768744c…`](https://shannon-explorer.somnia.network/tx/0x6768744cf40853fd71bd4be7481dedcb7517a019561ce780afc240fe2f0e8b35)
+succeeded, the call still returned `0x3fb0ba2e`, and the deposit was swept back out with
+[`0xc8ded2fa…`](https://shannon-explorer.somnia.network/tx/0xc8ded2fa23002c244f6b99f7b9b0a9ef445c0871edae42e5997a544604ff72b6).
+(`setManualVaultMode` — the spot precondition — is absent from the binary pool entirely.)
+
+**The reading: compiled in, switched off.**
+
+**Why it matters.** With this enabled, "connect your wallet and let it run" is buildable on Event
+Contracts: an owner grants a hot key permission to place and cancel, the key can never withdraw,
+and revocation is on-chain. With it disabled, every autonomous EC product on this venue degrades
+to "paste a private key into a web app" — which is the difference between a product and a script.
+Rivo ships a bounded agent wallet (`npm run agent`) to make the *loss* small, because that is the
+only lever left when the chain will not scope authority. It is a workaround, not a fix.
+
+**What would help, in order:** enable the two entrypoints; expose `isOperatorAuthorized` on the
+binary pool so a client can check a grant before sending; name the error (a selector with no ABI
+entry is undiagnosable — `0x3fb0ba2e` is not in the SDK's ABIs, and the public 4-byte databases
+have never seen it); then wire `ctx.owner` through `ec-core::placeLimit` the way spot's
+`Pool.place` already does.
+
+One structural wrinkle worth flagging even once it is enabled: operator grants are **per pool**,
+and EC pools are recycled per window. A bot trading the 15m series would need a fresh grant every
+quarter hour, or `setOperatorApprovalGlobal`, which is much broader than the per-pool default the
+docs recommend. Session keys for EC probably need a venue-scoped or series-scoped grant to be
+practical.
 
 ---
 
@@ -367,6 +433,14 @@ to run unattended, and unattended is precisely when nobody notices a hang.
 
 ## Smaller notes
 
+- **`ec-core/src/addresses.ts` hardcodes a stale `binaryPoolImpl`.** It lists
+  `0x82A1FcdaA2daC2fC7D5f9909D43E68021eE966FD`; the beacon a live pool proxy actually delegates to
+  resolves to `0x48e523c9f22f98548d263f0aD444D732e5202C0E` (40,566 bytes against 37,936). Nothing
+  in the kit's own paths breaks, because they go through the SDK rather than the address — which
+  is exactly why it can drift unnoticed. Anyone reasoning about the deployed bytecode from that
+  constant, as we did first, reads the wrong contract. The file's comment says a stale entry "fails
+  loudly"; this one does not, because the code-presence check passes on a contract that is simply
+  an older version of the right thing.
 - **`ec-oracle-follow`'s README is the most useful document in the kit.** Its honesty about the
   signal being a placeholder, and specifically the line *"the version of this strategy that makes
   money is a staleness play... not a forecasting edge"*, saved us from building the wrong thing.

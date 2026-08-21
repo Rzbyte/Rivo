@@ -6,31 +6,40 @@
 //
 // The distinction matters because the honest answer today is unflattering, and
 // burying it inside `makeExecutor` would let the UI imply something better. On
-// DreamDEX Event Contracts as of 2026-08, `ec-core` exposes no session-key or
-// operator path — `placeOrderFor` / `cancelOrderFor` exist on the SPOT pool
-// (packages/core/src/execute.ts) but have no Event Contract counterpart. So the
-// only way to trade EC unattended is a raw key that can do anything the account
-// can do, and every bound on it is enforced by Rivo's own code rather than by
-// the chain.
+// DreamDEX Event Contracts as of 2026-08 there is no way to place an order for
+// somebody else, so the only unattended authority is a key that can do anything
+// the account can do.
 //
-// That is a real limitation, not a design choice, and this file names it so the
-// product can display it truthfully:
+// That claim used to rest on a grep over `ec-core`, which was weak: an absent
+// wrapper is not an absent feature. It now rests on the chain. The deployed
+// BinaryPool *contains* `placeBinaryOrderFor` and `cancelOrderFor`, and both
+// revert with one selector — `0x3fb0ba2e` — for every caller tried, the owner
+// acting for itself included, while each parameter error carries a selector of
+// its own. Compiled in, switched off. `npm run probe:operator` re-runs the whole
+// differential in about a minute and writes docs/evidence/operator-probe.json;
+// the reading is in docs/SDK-FEEDBACK.md §9.
+//
+// So the modes are:
 //
 //   RAW_KEY   — full account authority. Bounds are software-enforced only.
-//   SESSION   — a scoped key the owner granted, revocable on-chain.  (not yet possible)
-//   OPERATOR  — a separate key trading a vault it can never withdraw. (not yet possible)
+//   AGENT     — a raw key that holds nothing but its float. Bounds are the
+//               balance itself, which is enforced by arithmetic. Available.
+//   SESSION   — a scoped key the owner granted, revocable on-chain.  (venue-blocked)
+//   OPERATOR  — a separate key trading a vault it can never withdraw. (venue-blocked)
 //
-// The two unavailable modes are declared rather than omitted: the interface is
-// the shape they will implement, so adopting one is a new `SigningAuthority`
-// and a config line, not a rewrite. `docs/SDK-FEEDBACK.md` carries the finding.
+// The two blocked modes are declared rather than omitted: the interface is the
+// shape they will implement, so adopting one when the venue enables the
+// entrypoint is a new `SigningAuthority` and a config line, not a rewrite.
 //
 // NOTHING in this module returns key material. `describe()` is built for display
 // and deliberately has no field that could carry one.
 
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { loadEnv } from "../core/env.js";
 import { network, type Network } from "../core/config.js";
 
-export type AuthorityKind = "none" | "raw-key" | "session-key" | "operator";
+export type AuthorityKind = "none" | "raw-key" | "agent-wallet" | "session-key" | "operator";
 
 /** What the product may say about the signer. Display-only, by construction. */
 export interface AuthorityDescription {
@@ -120,13 +129,99 @@ export class EnvKeyAuthority implements SigningAuthority {
 }
 
 /**
+ * A key that holds nothing but the float it was given.
+ *
+ * This is the honest answer to "production ready" on a venue with no on-chain
+ * scoping. It does not make a hot key safe — a hot key is a hot key. It makes
+ * the *loss* bounded, and bounds it with arithmetic instead of with a promise:
+ * the account cannot lose more than its balance, and its balance is a number the
+ * owner chose and can sweep back at any time.
+ *
+ * Compare what each authority is risking if the machine running it is taken:
+ *
+ *   raw key from .env  — everything that wallet has ever held.
+ *   agent wallet       — the float, and nothing else. No allowance to the
+ *                        owner's wallet, no ability to pull more.
+ *
+ * The distinction is worth a class rather than a comment because the product
+ * displays it, and because `authority()` prefers this one when it exists. The
+ * key lives on disk beside the process, never in `.env` (so it cannot be
+ * committed with one) and never in the browser (so nothing can round-trip it).
+ *
+ * `npm run agent` creates, funds, inspects and sweeps it.
+ */
+export class AgentWalletAuthority implements SigningAuthority {
+  readonly kind = "agent-wallet" as const;
+  private cachedAddress: `0x${string}` | null = null;
+
+  /** Where the key file lives. Overridable so tests never touch a real one. */
+  static path(): string {
+    return process.env.RIVO_AGENT_KEY_FILE ?? resolve(process.cwd(), ".rivo", "agent.key");
+  }
+
+  key(): string {
+    try {
+      return readFileSync(AgentWalletAuthority.path(), "utf8").trim();
+    } catch {
+      return "";
+    }
+  }
+
+  available(): boolean {
+    return KEY_RE.test(this.key());
+  }
+
+  /**
+   * Make this key the one the SDK signs with.
+   *
+   * `ec-core` builds its signer from `process.env.PRIVATE_KEY` deep inside
+   * `createExchange`, with no parameter to override it, so adopting an agent
+   * wallet means putting it there before the exchange is constructed. Called
+   * from `makeExecutor` at the moment live execution is chosen — never from
+   * `describe()`, because a status endpoint must not change what the process
+   * would sign with.
+   */
+  activate(): boolean {
+    const k = this.key();
+    if (!KEY_RE.test(k)) return false;
+    process.env.PRIVATE_KEY = k;
+    return true;
+  }
+
+  async resolveAddress(): Promise<`0x${string}` | null> {
+    if (this.cachedAddress) return this.cachedAddress;
+    if (!this.available()) return null;
+    this.cachedAddress = await addressFromKey(this.key());
+    return this.cachedAddress;
+  }
+
+  describe(): AuthorityDescription {
+    const ok = this.available();
+    return {
+      kind: ok ? "agent-wallet" : "none",
+      address: this.cachedAddress,
+      network: network(),
+      // The chain does not scope this key — it simply has nothing else to lose.
+      // Calling that "bounded on-chain" would be the exact overstatement this
+      // module exists to prevent.
+      boundedOnChain: false,
+      bounds: ok
+        ? "A dedicated wallet holding only its funded float. Maximum loss is that balance — it holds no other assets and no allowance to the owner's wallet. Sweep it back with `npm run agent -- sweep`."
+        : "No agent wallet — run `npm run agent -- new`.",
+      ...(ok ? {} : { missing: `no key at ${AgentWalletAuthority.path()}` }),
+    };
+  }
+}
+
+/**
  * The authority Rivo wants, kept here so the gap is visible in code rather than
  * only in prose.
  *
- * An owner would grant a scoped key permission to place and cancel EC orders
- * against a deposited vault, revocable on-chain and unable to withdraw. The spot
- * venue already supports exactly this shape via `placeOrderFor`; Event Contracts
- * do not expose it, so this reports unavailable rather than pretending.
+ * An owner would grant a scoped key permission to place and cancel EC orders,
+ * revocable on-chain and unable to withdraw. The spot venue supports exactly
+ * this via `placeOrderFor`. Event Contracts are one step stranger: the deployed
+ * BinaryPool *has* `placeBinaryOrderFor` and `cancelOrderFor`, and both are off.
+ * See the header, and `npm run probe:operator` for the measurement.
  */
 export class SessionKeyAuthority implements SigningAuthority {
   readonly kind = "session-key" as const;
@@ -139,16 +234,27 @@ export class SessionKeyAuthority implements SigningAuthority {
       address: null,
       network: network(),
       boundedOnChain: true,
-      bounds: "Scoped to placing and cancelling Event Contract orders against a deposited vault; cannot withdraw; revocable on-chain.",
+      bounds: "Scoped to placing and cancelling Event Contract orders for an owner; cannot withdraw; revocable on-chain.",
       missing:
-        "ec-core exposes no placeOrderFor/operator path for Event Contracts (the spot pool does). Not implementable against the current venue.",
+        "The deployed BinaryPool contains placeBinaryOrderFor and cancelOrderFor, and both revert 0x3fb0ba2e for every caller including the owner acting for itself — while each parameter error carries its own selector. The feature is compiled in and disabled. Measured by `npm run probe:operator`; reading in docs/SDK-FEEDBACK.md §9.",
     };
   }
 }
 
-/** The authority in force, chosen by what the environment can actually support. */
+/**
+ * The authority in force.
+ *
+ * An agent wallet wins when one exists, because preferring the key with less to
+ * lose is the right default and making the safer option also the automatic one
+ * is most of what "secure by default" means. `RIVO_AUTHORITY=env` forces the raw
+ * key for anyone who genuinely wants to trade their main wallet.
+ */
 export function authority(): SigningAuthority {
+  const prefer = (process.env.RIVO_AUTHORITY ?? "").trim().toLowerCase();
   const env = new EnvKeyAuthority();
+  if (prefer === "env") return env;
+  const agent = new AgentWalletAuthority();
+  if (agent.available()) return agent;
   if (env.available()) return env;
   const session = new SessionKeyAuthority();
   return session.available() ? session : env;
@@ -163,6 +269,8 @@ export function authority(): SigningAuthority {
 export async function authorityStatus(): Promise<AuthorityDescription> {
   const a = authority();
   const base = a.describe();
-  if (a instanceof EnvKeyAuthority) return { ...base, address: await a.resolveAddress() };
+  if (a instanceof EnvKeyAuthority || a instanceof AgentWalletAuthority) {
+    return { ...base, address: await a.resolveAddress() };
+  }
   return base;
 }

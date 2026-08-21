@@ -16,7 +16,7 @@ import { simulateBuy } from "../engine/book.js";
 import { loadEcCore, type EcContext, type EcCore, type MarketOnchain, type UnifiedMarket } from "./ec-core-types.js";
 import { loadEnv } from "../core/env.js";
 import { AllowanceManager } from "./allowance.js";
-import { authority } from "./signer.js";
+import { authority, AgentWalletAuthority } from "./signer.js";
 import { COLLATERAL_TOKEN, network } from "../core/config.js";
 
 export interface OrderRequest {
@@ -153,10 +153,10 @@ export class DryExecutor implements Executor {
  * scanning, allocation, backtests — runs without the SDK, a signer, or an RPC
  * endpoint being reachable.
  *
- * NOTE: this path has not been exercised against the chain in this build; it
- * needs a funded testnet key. It is written against `ec-core`'s documented
- * surface rather than stubbed, so it is one credential away from running, but
- * it should be canaried at minimum size before it is trusted.
+ * This path has been exercised against the chain: 1,005 cycles on Somnia
+ * testnet, 198 positions opened, settled and claimed, with the drawdown breaker
+ * firing at the end and halting new entries exactly as designed. Transaction
+ * hashes and the full stage-by-stage account are in docs/EVIDENCE.md §7.
  */
 /**
  * Lot granularity actually accepted by the venue, in steps per share.
@@ -411,9 +411,21 @@ export class LiveExecutor implements Executor {
   }
 }
 
-/** Pick an executor. Live requires BOTH a signing authority and an explicit opt-out of dry run. */
+/**
+ * Pick an executor. Live requires BOTH a signing authority and an explicit
+ * opt-out of dry run.
+ *
+ * The agent wallet is adopted here and nowhere else. `ec-core` reads its key
+ * from `process.env.PRIVATE_KEY` with no way to pass one in, so choosing that
+ * authority means writing it there — and the only correct moment is this one,
+ * where live execution is actually being chosen. Doing it at import time would
+ * change what unrelated processes sign with; doing it inside `describe()` would
+ * mean a status request could silently switch keys.
+ */
 export function makeExecutor(dryRun: boolean): Executor {
   if (dryRun || !hasSigner()) return new DryExecutor();
+  const a = authority();
+  if (a instanceof AgentWalletAuthority) a.activate();
   return new LiveExecutor();
 }
 

@@ -27,6 +27,10 @@ rivo-dashboard.html
 /calibration.json
 /backtest.json
 
+# The agent wallet's key. Same rule as .env, and more important: this one is
+# generated rather than pasted, so nobody consciously decides where it goes.
+.rivo/
+
 # Secrets. There is no reason a key belongs in this repo, ever.
 .env
 .env.*
