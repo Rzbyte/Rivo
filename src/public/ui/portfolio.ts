@@ -147,6 +147,36 @@ function walletPanel(w: WalletState): string {
   </div>`;
 }
 
+/**
+ * What the backend is about to sign with, before anyone turns Autopilot on.
+ *
+ * Whose key it is, and what that key can lose, is the single most consequential
+ * fact about an autonomous trader, and it was the one thing the configure screen
+ * did not say — a person could enable Autopilot without ever learning whether
+ * the process held a dedicated float or their whole wallet.
+ *
+ * It reads the backend's own description rather than restating it, so the page
+ * cannot drift into claiming a bound the runtime does not have. An agent wallet
+ * is called out as the good case; a raw key is flagged, not hidden.
+ */
+function authorityNote(b: BackendStatus | null): string {
+  const a = b?.authority;
+  if (!b?.canTrade || !a || a.kind === "none") return "";
+  const agent = a.kind === "agent-wallet";
+  return `
+    <div class="note ${agent ? "" : "warn"}" style="margin:12px 0 0;font-size:12.5px">
+      <b>${agent ? "Bounded agent wallet" : "Raw account key"}</b>
+      ${a.address ? `· <span class="mut">${esc(shortAddr(a.address))}</span>` : ""}
+      <div style="margin-top:4px">${esc(a.bounds)}</div>
+      ${
+        agent
+          ? ""
+          : `<div style="margin-top:4px">This key can do anything the account can.
+             <code>npm run agent -- new</code> limits the loss to a float you choose.</div>`
+      }
+    </div>`;
+}
+
 // ----------------------------------------------------------------- configuring
 
 const PROFILE_COPY: Record<ProfileName, string> = {
@@ -209,6 +239,7 @@ export function configure(s: AppState): string {
                 <span class="d">Real orders on Somnia. Needs a Rivo backend that stays awake to sign.</span>
               </button>
             </div>
+            ${authorityNote(s.backend)}
           </div>
         </div>
 

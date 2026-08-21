@@ -123,7 +123,11 @@ export class EnvKeyAuthority implements SigningAuthority {
       bounds: ok
         ? "Full account authority. Capital ceiling, delta budgets, drawdown breaker and kill switch are enforced by Rivo, not by the chain."
         : "No signing authority configured — Shadow Mode only.",
-      ...(ok ? {} : { missing: "PRIVATE_KEY is not set to a 32-byte hex key" }),
+      // Names both routes, because since agent wallets exist "set PRIVATE_KEY"
+      // is no longer the whole answer, and it is the worse of the two.
+      ...(ok
+        ? {}
+        : { missing: "no signing key — run `npm run agent -- new` for a bounded wallet, or set PRIVATE_KEY to a 32-byte hex key" }),
     };
   }
 }
