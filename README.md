@@ -50,6 +50,44 @@ alternative explanations we eliminated first: **[docs/EVIDENCE.md](docs/EVIDENCE
 
 ---
 
+## What we measured about this venue
+
+Rivo is the only thing here that had to *measure* DreamDEX rather than assume it, and four of those
+measurements are findings about the venue itself rather than about Rivo. Every one is reproducible
+against public endpoints, most without a key.
+
+**The non-custodial entrypoint is deployed and switched off.** The BinaryPool running right now
+contains `placeBinaryOrderFor` and `cancelOrderFor`. Both revert with one selector — `0x3fb0ba2e` —
+from every caller we could try, the owner acting for itself included, while each parameter mistake
+returns a selector of its own. Compiled in, disabled. **Enabling it is the single change that would
+let any Event Contract bot on this venue be non-custodial**, which is the difference between a
+product and a script. One minute, no key, no gas:
+
+```bash
+npm run probe:operator
+```
+
+**`OutcomeBalance` is wrong about what a wallet owns, in both directions, and does not converge.**
+Two of five rows on one wallet, checked against the outcome-token contract: two settled positions
+whose tokens were burned still had rows hours later. A bot reading that table sees assets that do
+not exist — and the opposite case, a fill not yet indexed, is the one that already cost ~400
+collateral in re-minted maker inventory.
+
+**The oracle's `numericValue` scale is inconsistent and undeclared.** Opening references at 1e2,
+settlement answers at 1e4, no field saying which. Read one at the other's scale and every
+probability comes out at the boundary, looking perfectly plausible.
+
+**A fresh wallet's first Event Contract order always reverts.** `ec-core` has no allowance handling
+where the spot path does, and the error names nothing: `placeBinaryOrder reverted: for an unknown
+reason`. A developer following the documentation exactly cannot place their first order.
+
+**Fourteen findings in total, each with its method and a way to check it:
+[docs/SDK-FEEDBACK.md](docs/SDK-FEEDBACK.md).** Written for the people who maintain this venue, not
+as a complaint — the kit is genuinely good, and `ec-core` absorbs sixteen sharp edges we would
+otherwise have hit ourselves.
+
+---
+
 ## Tests
 
 ```bash
@@ -354,6 +392,34 @@ Every command except `link:kit` runs with no private key. All `--days` commands 
 indexers.
 
 ---
+
+## What comes next
+
+Three things follow directly from what is already here, and one of them is not ours to do.
+
+**The moment `placeBinaryOrderFor` is enabled, Rivo becomes non-custodial.** This is the one that
+matters and the one we cannot ship. The interface is already written and already reports itself
+unavailable rather than pretending — `SessionKeyAuthority` in
+[`src/runtime/signer.ts`](src/runtime/signer.ts) is the shape it will take, so adopting it is a new
+authority class and a config line, not a rewrite. Today an unattended Rivo must hold a hot key, so
+it holds one that owns nothing but a float the operator chose. That is the honest answer, not a
+good one.
+
+**The user we are actually built for is the person who just made a bot.** `dreamBot Builder` makes
+an Event Contract bot a few clicks away, which means this venue is about to have many of them. Our
+own measurement says what happens next: unconstrained sizing on a plausible signal is bankrupt
+inside 60 trades, across 53,989 real fills. Rivo is the layer that keeps one of those bots alive
+long enough to find out whether its signal was real. It does not promise profit — it refuses the
+trades that end the experiment early, and names the limit each time.
+
+**Making is the open question, and it is the only direction not yet disproven.** Taking liquidity is
+measured and negative at every threshold. The maker replay is negative too, but with a
+methodological limit we state rather than hide: a replay cannot know whether our quote would have
+been hit. `npm run maker:live` puts real two-sided quotes on the venue to find out, and that
+measurement — not a strategy claim — is where we would spend the next month.
+
+What we would not do is add features. The venue is small, the edge is negative, and the useful thing
+this project produces is measurement other builders can act on. More of that beats more of Rivo.
 
 ## Documentation
 
