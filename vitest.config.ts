@@ -34,5 +34,19 @@ export default defineConfig({
     // correctness depends on it, and the symptom would be a rare cross-file
     // flake rather than a clean failure.
     pool: "forks",
+    server: {
+      deps: {
+        // Let vite transform the bot kit and the venue SDK rather than letting
+        // Node resolve them.
+        //
+        // `ec-core` ships raw TypeScript, and `markets-sdk`'s dist uses
+        // extensionless relative imports — legal for a bundler, unresolvable by
+        // Node's ESM loader. `tsx` handles both, which is why every CLI works;
+        // vitest externalises node_modules by default and hands them to Node,
+        // which does not. Only executor.kit.test.ts reaches this code, and only
+        // when the kit is installed.
+        inline: [/@dreamdex-bot-kit/, /@somnia-chain[\\/]markets-sdk/],
+      },
+    },
   },
 });
