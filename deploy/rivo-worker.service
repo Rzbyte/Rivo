@@ -1,0 +1,61 @@
+# Rivo's execution plane, as a systemd unit.
+#
+# For a VPS rather than a container platform. The service that must keep running
+# after the browser closes is this one — the web app can be down for an hour and
+# nothing is lost, while a worker that is down means nothing settles, nothing is
+# claimed, and nothing is redeployed.
+#
+#   sudo cp deploy/rivo-worker.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now rivo-worker
+#   journalctl -u rivo-worker -f
+#
+# Everything secret lives in /etc/rivo/worker.env, mode 600, owned by root. It is
+# never in this file, never in the repository, and never on a command line where
+# `ps` would show it.
+
+[Unit]
+Description=Rivo — autonomous portfolio manager (execution plane)
+Documentation=https://github.com/Rzbyte/rivo
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=rivo
+Group=rivo
+WorkingDirectory=/opt/rivo
+EnvironmentFile=/etc/rivo/worker.env
+ExecStart=/usr/bin/node node_modules/.bin/tsx src/cli/worker.ts
+
+# Restart, but not in a loop. A worker that cannot reach its database should
+# back off rather than hammering it, and `StartLimitBurst` stops a permanent
+# misconfiguration from looking like a transient outage forever.
+Restart=on-failure
+RestartSec=10
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+# SIGTERM, then time to finish. The worker releases its leases on the way out,
+# so a redeploy costs seconds of idle portfolios rather than a full lease TTL.
+KillSignal=SIGTERM
+TimeoutStopSec=90
+
+# Hardening. This process signs transactions; it has no business writing outside
+# its own directory, gaining privileges, or seeing other users' processes.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/rivo/data
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+LockPersonality=true
+MemoryDenyWriteExecute=false
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+[Install]
+WantedBy=multi-user.target

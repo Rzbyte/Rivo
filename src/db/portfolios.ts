@@ -11,7 +11,7 @@
 // that legitimately have no user in hand are the scheduler's, and they are named
 // so that using one by accident in a request handler reads wrong.
 
-import { maybe, one, query, secs } from "./pool.js";
+import { maybe, one, query, secs, tx } from "./pool.js";
 import { parsePolicy, type PortfolioPolicy, type RunMode, type RunState } from "../portfolio/policy.js";
 import type { ProfileName } from "../portfolio/profiles.js";
 import type { Network } from "../core/config.js";
@@ -96,20 +96,30 @@ export async function createPortfolio(input: {
   profile: ProfileName;
   mode?: RunMode;
 }): Promise<Portfolio> {
-  const r = await one<{ id: string }>(
-    `INSERT INTO portfolios (user_id, wallet_id, network, capital, profile, mode, state)
-     VALUES ($1, $2, $3, $4, $5, $6, 'idle') RETURNING id`,
-    [input.userId, input.walletId, input.network, input.capital, input.profile, input.mode ?? "shadow"],
-  );
-  // The runtime row and the lease row are created WITH the portfolio, not
-  // lazily. A worker that has to create its own lock row races every other
+  // All three rows, or none.
+  //
+  // The runtime row and the lease row are created WITH the portfolio rather than
+  // lazily: a worker that has to create its own lock row races every other
   // worker doing the same thing, and the one place that cannot happen is here.
-  await query("INSERT INTO portfolio_runtime (portfolio_id, cash, peak_equity) VALUES ($1, $2, $2)", [
-    r.id,
-    input.capital,
-  ]);
-  await query("INSERT INTO portfolio_leases (portfolio_id) VALUES ($1) ON CONFLICT DO NOTHING", [r.id]);
-  const created = await portfolioOf(input.userId, r.id);
+  // Wrapping them together also means a failure partway through cannot leave a
+  // portfolio that exists and cannot be read — which is exactly what happened
+  // when a malformed wallet address made the read-back throw after the insert
+  // had already committed.
+  const id = await tx(async (c) => {
+    const { rows } = await c.query<{ id: string }>(
+      `INSERT INTO portfolios (user_id, wallet_id, network, capital, profile, mode, state)
+       VALUES ($1, $2, $3, $4, $5, $6, 'idle') RETURNING id`,
+      [input.userId, input.walletId, input.network, input.capital, input.profile, input.mode ?? "shadow"],
+    );
+    const created = rows[0]!.id;
+    await c.query("INSERT INTO portfolio_runtime (portfolio_id, cash, peak_equity) VALUES ($1, $2, $2)", [
+      created,
+      input.capital,
+    ]);
+    await c.query("INSERT INTO portfolio_leases (portfolio_id) VALUES ($1) ON CONFLICT DO NOTHING", [created]);
+    return created;
+  });
+  const created = await portfolioOf(input.userId, id);
   if (!created) throw new Error("portfolio vanished immediately after being created");
   return created;
 }

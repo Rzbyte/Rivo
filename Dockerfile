@@ -57,9 +57,15 @@ RUN if [ -n "$KIT_REF" ]; then \
 FROM node:22-slim AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
+# The web workspace's manifest is copied so the lockfile validates, and nothing
+# else of it is: this image is the EXECUTION plane, and Next.js and React have no
+# business in a container whose job is to run trading cycles. `--workspaces=false`
+# with `--include-workspace-root` installs the root's dependencies only — 210MB
+# rather than half a gigabyte, and a smaller surface to keep patched.
+COPY web/package.json ./web/package.json
 # `npm ci` against the lockfile, so an image built today and one built next month
 # from the same commit contain the same dependency tree.
-RUN npm ci --no-audit --no-fund
+RUN npm ci --workspaces=false --include-workspace-root --no-audit --no-fund
 COPY --from=kit /opt/dreamdex-bot-kit /opt/dreamdex-bot-kit
 # Link the kit if it was fetched. --no-save keeps package.json honest: ec-core is
 # not a dependency of this repo, and a fresh clone must still `npm install`
@@ -101,8 +107,23 @@ ENV RIVO_AGENT_KEY_FILE=/run/secrets/agent.key \
     RIVO_DATA_DIR=/app/data
 EXPOSE 3000
 
-# Dry run is the default here exactly as it is on the CLI. Trading is opted into
-# with `--live` in the command, never by the image.
+# ONE IMAGE, TWO PROCESSES.
+#
+# The default is the single-portfolio runtime this repository started as — a
+# person running Rivo for themselves, with a key on their own machine and state
+# on a mounted volume. That path still works and is still the one that needs no
+# database.
+#
+#   docker run rivo                                  # one portfolio, files
+#   docker run rivo src/cli/worker.ts                # the fleet, PostgreSQL
+#
+# The worker is the same code and the same image, pointed at DATABASE_URL. That
+# is deliberate: two images would eventually be two versions of the engine, and
+# the difference would show up as a portfolio behaving differently depending on
+# which plane happened to run it.
+#
+# Dry run is the default on both, exactly as it is on the CLI. Trading is opted
+# into by configuration, never by the image.
 #
 # tsx is invoked by path rather than through npx: npx resolves, and on a miss
 # will happily reach out to the registry, which is not something a container

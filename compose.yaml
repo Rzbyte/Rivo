@@ -81,9 +81,80 @@ services:
       - ./.rivo:/run/secrets:ro
     restart: unless-stopped
 
+  # ---------------------------------------------------------------------------
+  # The multi-user platform. `docker compose --profile platform up -d`
+  # ---------------------------------------------------------------------------
+  #
+  # A different product from the two services above, and kept behind its own
+  # profile for the same reason they are kept apart from each other: it manages
+  # MANY portfolios out of PostgreSQL rather than one out of a file, and running
+  # both against the same wallet would be two runtimes on one account.
+  #
+  # The web app is not here. It belongs on Vercel — it is request-scoped, scales
+  # to zero, and must never be the thing running a trading loop. For local
+  # development run it directly: `npm run dev:web`.
+  db:
+    profiles: ["platform"]
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: rivo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: rivo
+    ports:
+      # Loopback only. A trading database on an open port is a bad afternoon.
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rivo -d rivo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # The execution plane. Scale it with `--scale worker=3`: workers claim
+  # portfolios with a database lease, so more of them is more throughput and
+  # never two on one portfolio.
+  worker:
+    profiles: ["platform"]
+    build: .
+    image: rivo:latest
+    command:
+      - src/cli/worker.ts
+      - --interval
+      - ${RIVO_INTERVAL_SEC:-45}
+      - --concurrency
+      - ${RIVO_CONCURRENCY:-8}
+    environment:
+      DATABASE_URL: postgres://rivo:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/rivo
+      # In-cluster, over a private network, with no TLS terminator in front of it.
+      DATABASE_SSL: "off"
+      NETWORK: ${NETWORK:-testnet}
+      # Without these the worker runs every portfolio in Shadow Mode, which is
+      # the correct way for a missing credential to fail.
+      PRIVY_APP_ID: ${PRIVY_APP_ID:-}
+      PRIVY_APP_SECRET: ${PRIVY_APP_SECRET:-}
+      PRIVY_AUTHORIZATION_KEY: ${PRIVY_AUTHORIZATION_KEY:-}
+      RIVO_ALERT_WEBHOOK: ${RIVO_ALERT_WEBHOOK:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      # /ready, not /health: a worker that is up and has not completed a pass in
+      # five minutes is not healthy in any sense a user would recognise.
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
 volumes:
   # A named volume rather than a bind mount: the portfolio has to survive
   # `docker compose down`, and losing it means the runtime rebuilds its holdings
   # from the chain at the next reconcile — which works, but only for positions
   # the chain can still see.
   state:
+  # The platform's durable state. Everything: users, portfolios, positions, the
+  # execution ledger, the decision log.
+  pgdata:

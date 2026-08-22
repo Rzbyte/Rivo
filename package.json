@@ -38,7 +38,8 @@
     "dev:pg": "tsx scripts/dev-postgres.ts",
     "worker": "tsx src/cli/worker.ts",
     "build:web": "npm --workspace @rivo/web run build",
-    "dev:web": "npm --workspace @rivo/web run dev"
+    "dev:web": "npm --workspace @rivo/web run dev",
+    "seed:demo": "tsx scripts/seed-demo.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
@@ -46,7 +47,7 @@
     "happy-dom": "^20.11.6",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0",
-    "vitest": "^2.1.9"
+    "vitest": "^4.1.11"
   },
   "dependencies": {
     "@privy-io/server-auth": "^1.32.5",
@@ -55,5 +56,10 @@
   },
   "workspaces": [
     "web"
-  ]
+  ],
+  "overrides": {
+    "ws": "^8.21.3",
+    "axios": "^1.19.0",
+    "uuid": "^11.1.1"
+  }
 }

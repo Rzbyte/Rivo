@@ -50,7 +50,13 @@ CREATE TABLE wallets (
   delegated_at    timestamptz,
   revoked_at      timestamptz,
   created_at      timestamptz NOT NULL DEFAULT now(),
-  CHECK (address = lower(address)),
+  -- An address, lowercased, checked here rather than only in application code.
+  --
+  -- A row that is not an address is not merely wrong, it is CONTAGIOUS: policies
+  -- are parsed on read, and `parsePolicy` rejects an owner that is not an
+  -- address — so one bad wallet row makes every subsequent read of the portfolio
+  -- that references it throw, long after whatever wrote it has been forgotten.
+  CHECK (address ~ '^0x[0-9a-f]{40}$'),
   -- The invariant is about DELEGATION, not about kind.
   --
   -- Privy issues a wallet id only once the user has delegated — before that the

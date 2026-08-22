@@ -45,3 +45,18 @@ rivo-dashboard.html
 # Design canvas working files (artboards, layout, the assembled canvas).
 # Kept out of the repo: they are a design surface, not part of what ships.
 .design/
+
+# The web app's build output and caches. Committing .next/ once put 314 generated
+# files in the history, including webpack cache packs that had inlined the
+# contents of .env.example — harmless there, and exactly the mechanism by which a
+# real .env would have been published.
+web/.next/
+web/out/
+.vercel/
+*.tsbuildinfo
+
+# The development PostgreSQL that scripts/dev-postgres.ts downloads. Already
+# covered by .rivo/, and named here so it is obvious why the directory is large.
+.rivo/pg/
+.rivo/pgdata/
+.rivo/pg.log
