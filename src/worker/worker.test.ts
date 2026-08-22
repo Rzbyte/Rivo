@@ -70,13 +70,60 @@ describe.skipIf(!haveDatabase())("the worker", () => {
     expect(seen).not.toContain(halted.portfolioId);
   });
 
-  it("gives one portfolio to one worker even when two are running", async () => {
+  it("never lets two workers hold one portfolio at the same time", async () => {
+    // The property that matters is CONCURRENT exclusion, not "only one worker
+    // ever touches it" — two workers running a portfolio one after the other is
+    // the fleet working correctly, and an earlier version of this test asserted
+    // the wrong thing and passed only because the spy cycle returned instantly.
+    //
+    // So the cycle is held open. Whichever worker claims first is still inside
+    // its pass when the other asks, and the other must come away with nothing.
     await seedPortfolio();
     const seenA: string[] = [];
     const seenB: string[] = [];
-    // Started together, against the same due portfolio.
-    await Promise.all([spyWorker(seenA).start(), spyWorker(seenB).start()]);
+    let open!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      open = resolve;
+    });
+    const hold = (seen: string[]) =>
+      new Worker({
+        maxPasses: 1,
+        idleMs: 1,
+        out: () => {},
+        runCycle: async (portfolio) => {
+          seen.push(portfolio.id);
+          await gate;
+          return { portfolioId: portfolio.id, ok: true };
+        },
+      });
+
+    const a = hold(seenA).start();
+    const b = hold(seenB).start();
+
+    // Wait for one of them to be inside the cycle, holding the lease.
+    const deadline = Date.now() + 5_000;
+    while (seenA.length + seenB.length === 0 && Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 10));
+    }
     expect(seenA.length + seenB.length).toBe(1);
+
+    open();
+    await Promise.all([a, b]);
+    // Still one: the loser's single pass found a portfolio it could not claim
+    // and finished without it.
+    expect(seenA.length + seenB.length).toBe(1);
+  });
+
+  it("hands a portfolio on to the next worker once the first is done with it", async () => {
+    // The other half, and the reason the test above had to be rewritten rather
+    // than tightened: sequential handover is correct and must keep working.
+    const { portfolioId } = await seedPortfolio();
+    const first: string[] = [];
+    await spyWorker(first).start();
+    expect(first).toEqual([portfolioId]);
+    const second: string[] = [];
+    await spyWorker(second).start();
+    expect(second).toEqual([portfolioId]);
   });
 
   it("keeps going when one portfolio fails", async () => {
