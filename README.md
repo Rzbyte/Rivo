@@ -408,6 +408,7 @@ validates against the real thing.
 | `npm run probe:operator` | can EC be traded non-custodially? measured, not assumed |
 | `npm test` · `npm run typecheck` | 299 tests · strict TypeScript, no emit |
 | `npm run doctor` | can Rivo trade right now — signer, gas, collateral, venue, kit |
+| `npm run faucet` | mint testnet tUSDC — a direct `faucet(uint256)` call, no kit needed |
 | `npm run check:kit` · `npm run link:kit` | verify / install the optional bot kit |
 
 Every command except `link:kit` runs with no private key. All `--days` commands read public

@@ -5,12 +5,27 @@
 // inside it. A wallet with gas and no tUSDC therefore runs perfectly and buys
 // nothing, which is the failure the doctor exists to name and this exists to fix.
 //
+// It calls the token's own `faucet(uint256)` DIRECTLY, which is what the venue
+// team tells people to do:
+//
+//   cast send <tUSDC> "faucet(uint256)" 10000000000 --private-key $KEY
+//
+// It used to go through `ec-core`'s `trader.faucet()`, which meant getting test
+// tokens required cloning a second repository and linking it — for a plain ERC-20
+// call needing nothing but a key. Anyone evaluating this project had to set up
+// the live-trading path before they could fund a wallet to try the live-trading
+// path.
+//
 // THIS SENDS A TRANSACTION. It is the only script in the repo that does anything
 // other than read, and it refuses to run anywhere but testnet.
 
 import { collateralName, COLLATERAL_TOKEN, network } from "../src/core/config.js";
 import { loadEnv } from "../src/core/env.js";
 import { Indexer } from "../src/core/indexer.js";
+import { VENUE } from "../src/core/venue.js";
+
+/** What one call mints, in raw units — the amount the venue team's own command uses. */
+const AMOUNT = 10_000_000_000;
 
 async function balanceOf(rpc: string, token: string, who: string, decimals: number): Promise<number | null> {
   const data = `0x70a08231${who.replace(/^0x/, "").toLowerCase().padStart(64, "0")}`;
@@ -45,33 +60,42 @@ async function main(): Promise<void> {
   const token = process.env.COLLATERAL_TOKEN ?? COLLATERAL_TOKEN[net];
   const name = collateralName(net);
 
-  const core = (await import("@dreamdex-bot-kit/ec-core")) as {
-    createExchange: (o: { withSigner: boolean }) => {
-      exchange?: { walletAddress?: string; trader?: { faucet?: () => Promise<unknown> } };
-    };
-  };
-  const ctx = core.createExchange({ withSigner: true });
-  const me = ctx.exchange?.walletAddress;
-  if (!me) {
-    console.error("could not resolve the signer's address from ec-core.");
-    process.exitCode = 1;
-    return;
-  }
+  const { privateKeyToAccount } = await import("viem/accounts");
+  const me = privateKeyToAccount(pk as `0x${string}`).address;
 
   const before = await balanceOf(rpc, token, me, idx.decimals);
   console.log(`wallet   ${me}`);
   console.log(`token    ${token}`);
   console.log(`${name} sebelum  ${before === null ? "?" : before.toFixed(2)}`);
   console.log("");
-  console.log("mengirim faucet()…");
+  console.log(`mengirim faucet(${AMOUNT / 10 ** idx.decimals})…`);
 
-  const faucet = ctx.exchange?.trader?.faucet;
-  if (!faucet) {
-    console.error("this SDK build exposes no trader.faucet() — use the web faucet at testnet.somnia.network");
+  const { createWalletClient, createPublicClient, http, encodeFunctionData } = await import("viem");
+  const chain = {
+    id: VENUE[net].chainId,
+    name: VENUE[net].chainName,
+    nativeCurrency: { name: "STT", symbol: "STT", decimals: 18 },
+    rpcUrls: { default: { http: [rpc] } },
+  } as const;
+  const account = privateKeyToAccount(pk as `0x${string}`);
+  const wallet = createWalletClient({ account, chain, transport: http(rpc) });
+  const pub = createPublicClient({ chain, transport: http(rpc) });
+
+  const hash = await wallet.sendTransaction({
+    to: token as `0x${string}`,
+    data: encodeFunctionData({
+      abi: [{ type: "function", name: "faucet", stateMutability: "nonpayable", inputs: [{ type: "uint256" }], outputs: [] }],
+      functionName: "faucet",
+      args: [BigInt(AMOUNT)],
+    }),
+  });
+  const receipt = await pub.waitForTransactionReceipt({ hash });
+  console.log(`tx       ${hash}  ${receipt.status}`);
+  if (receipt.status !== "success") {
+    console.error("faucet() reverted — the token may rate-limit, or this wallet has already drawn recently.");
     process.exitCode = 1;
     return;
   }
-  await faucet.call(ctx.exchange!.trader);
 
   // The node confirms in one round trip, but the balance read can still race it.
   // Poll briefly rather than reporting a stale zero and looking like a failure.

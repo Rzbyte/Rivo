@@ -222,9 +222,23 @@ crossing the book needs no minted inventory. So a wallet with gas and no tUSDC r
 perfectly, scans every market, evaluates every leg, and buys nothing, forever. It looks exactly
 like a bot that has found no opportunities.
 
-**Suggested fix:** expose the faucet on the exchange surface, or top up collateral in the same
-place gas is checked (`assertFunded` already reads the native balance and throws a good message
-when it is zero — collateral deserves the same).
+There is a direct path, and it is the one the venue team gives out in the developer chat:
+
+```bash
+cast send 0x70a86D8842FB63C4Ad2b7cdddF530eBf1BB25d8E "faucet(uint256)" 10000000000 \
+  --private-key $KEY --rpc-url https://dream-rpc.somnia.network
+```
+
+That is a plain ERC-20 call needing nothing but a key, and it is not in the developer
+documentation — only in chat. Ours now calls `faucet(uint256)` directly for exactly that reason:
+routing it through the kit meant a developer had to clone a second repository and link it before
+they could fund a wallet, which is a strange prerequisite for getting test tokens.
+
+**Suggested fix:** put the direct `faucet(uint256)` call in the Event Contracts docs beside the
+token address — it is the first thing a new developer needs and it is currently tribal knowledge.
+Then expose the faucet on the exchange surface too, or top up collateral in the same place gas is
+checked (`assertFunded` already reads the native balance and throws a good message when it is zero
+— collateral deserves the same).
 
 ---
 
