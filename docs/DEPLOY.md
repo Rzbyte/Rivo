@@ -61,6 +61,23 @@ Migrations are plain SQL in `src/db/migrations/`, applied in filename order, eac
 transaction, each checksummed. A file that changed after it was applied is refused rather than
 silently ignored.
 
+**On Supabase, pick the Session pooler.** Three connection strings are offered and two of them are
+wrong for Rivo, in ways that fail quietly rather than loudly:
+
+| offered | port | verdict |
+|---|---|---|
+| Transaction pooler | 6543 | **no.** `migrate()` takes `pg_advisory_lock` *outside* a transaction and holds it across the whole run (`src/db/migrate.ts:72`). In transaction mode each statement may land on a different backend, so the lock is not really held — and two workers can migrate at once, which is the exact thing it prevents. |
+| Direct connection | 5432 | IPv6-only on new projects. Works from a laptop; Railway, Render and Fly are frequently IPv4-only, and the failure is a timeout that never mentions IPv6. |
+| **Session pooler** | 5432 | **yes.** IPv4, and session state survives across statements. |
+
+The session pooler's username is `postgres.<project-ref>`, not `postgres` — that difference is how you
+know you copied the right one. Set `PGSSLMODE=no-verify` alongside it: Supabase serves TLS from a
+chain a container often does not carry, and Rivo verifies by default.
+
+Verified against a real Supabase project (PostgreSQL 17.6): both migrations apply, 12 tables, 31
+indexes, and the append-only triggers refuse a DELETE, an intent rewrite, a hash replacement, a
+status rollback and an edit to `decisions`.
+
 Locally, with no Docker and no root:
 
 ```bash
