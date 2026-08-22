@@ -15,6 +15,7 @@ import { esc, horizon, meter, signed } from "./dom.js";
 import { landing } from "./landing.js";
 import { explorer } from "./explorer.js";
 import { configure, dashboard, walletChip, type AppState } from "./portfolio.js";
+import { termChart } from "./charts.js";
 import * as store from "../store.js";
 
 beforeAll(() => {
@@ -36,6 +37,7 @@ const decision = (over: Partial<DecisionView> = {}): DecisionView => ({
   label: "BTC 1h UP",
   fair: 0.62,
   ask: 0.55,
+  bid: 0.53,
   edge: 0.07,
   action: "SKIP",
   shares: 0,
@@ -87,6 +89,17 @@ const view = (over: Partial<PortfolioView> = {}): PortfolioView => ({
   unpriced: [],
   activity: [],
   ...over,
+});
+
+/** A signed-in, running state — the only one most of these screens render. */
+const app = (): AppState => ({
+  wallet: {
+    address: OWNER, chainId: 50312, network: "testnet", gas: 1.5, collateral: 100,
+    gasSymbol: "STT", collateralSymbol: "tUSDC",
+  },
+  connecting: false, error: null, policy, view: view(), backend: null,
+  draft: { capital: 50, profile: "balanced", mode: "shadow" },
+  busy: false, showAdvanced: true, equity: [], activity: [],
 });
 
 describe("every screen renders", () => {
@@ -273,16 +286,6 @@ describe("nothing overflows a phone", () => {
     return true;
   };
 
-  const app = (): AppState => ({
-    wallet: {
-      address: OWNER, chainId: 50312, network: "testnet", gas: 1.5, collateral: 100,
-      gasSymbol: "STT", collateralSymbol: "tUSDC",
-    },
-    connecting: false, error: null, policy, view: view(), backend: null,
-    draft: { capital: 50, profile: "balanced", mode: "shadow" },
-    busy: false, showAdvanced: true, equity: [], activity: [],
-  });
-
   it("the check itself can fail", () => {
     // A convention test that cannot go red is decoration. These four cases pin
     // the walker: bare table, wrapped table, a wrapper that closed before the
@@ -335,5 +338,131 @@ describe("a keyboard and a screen reader can use it", () => {
     // Both the demo and the wallet chip carry one. Without this the loop could
     // find no × at all and the test would pass having asserted nothing.
     expect(checked).toBe(2);
+  });
+});
+
+describe("the front door leads with the refusal", () => {
+  // The strongest claim this project can make is that it turned down a trade it
+  // could see money in, and named the limit that stopped it. That used to live
+  // in a note at the bottom of a panel most visitors never scrolled to.
+  const refused = (binding: string) =>
+    decision({ label: "BTC 15m DOWN", fair: 0.118, ask: 0.059, edge: 0.059, binding, action: "SKIP" });
+
+  it("makes the refused leg the headline, in the product's own numbers", () => {
+    const html = landing({
+      preview: view({ skipped: [refused("BTC delta budget ±2.50/1%")] }),
+      evidence: null,
+      connected: false,
+      error: null,
+    });
+    expect(html).toContain("Rivo turned this down");
+    expect(html).toContain("BTC 15m DOWN");
+    expect(html).toContain("0.059");
+    expect(html).toContain("0.118");
+    expect(html).toContain("BTC delta budget");
+  });
+
+  it("holds the static claim until there is a refusal to name", () => {
+    // The venue read takes seconds. A hero that is empty for that long is worse
+    // than one that says what the product is and then gets specific.
+    const html = landing({ preview: null, evidence: null, connected: false, error: null });
+    expect(html).toContain("into a portfolio");
+    expect(html).not.toContain("Rivo turned this down");
+  });
+
+  it("will not headline a refusal that was only about the price", () => {
+    // "Edge below floor" is Rivo declining a bad trade, which every bot does.
+    // Only a PORTFOLIO limit demonstrates the thing this page is arguing.
+    const html = landing({
+      preview: view({ skipped: [refused("edge below floor")] }),
+      evidence: null,
+      connected: false,
+      error: null,
+    });
+    expect(html).not.toContain("Rivo turned this down");
+    expect(html).toContain("into a portfolio");
+  });
+});
+
+describe("the decision ledger shows the pattern the cards hide", () => {
+  const leg = (label: string, binding: string, action: "BUY" | "SKIP" = "SKIP") =>
+    decision({ label, binding, action, edge: 0.05, kellyTarget: 2, cost: action === "BUY" ? 1 : 0 });
+
+  it("marks a constraint that bound repeatedly, and counts it", () => {
+    const budget = "BTC delta budget ±2.50/1%";
+    const html = dashboard({
+      ...app(),
+      view: view({
+        accepted: [leg("BTC 4h DOWN", budget, "BUY")],
+        skipped: [leg("BTC 15m DOWN", budget), leg("BTC 1h DOWN", budget), leg("ETH 1h UP", "edge below floor")],
+      }),
+    });
+    expect(html).toContain("×3");
+    // And says out loud what the repetition means, rather than leaving the
+    // reader to notice a column of identical strings.
+    expect(html).toMatch(/bound 3 of the 4 legs/);
+  });
+
+  it("says nothing about a pattern when there is not one", () => {
+    const html = dashboard({
+      ...app(),
+      view: view({
+        accepted: [],
+        skipped: [leg("BTC 15m DOWN", "edge below floor"), leg("ETH 1h UP", "max position 20%")],
+      }),
+    });
+    expect(html).not.toContain("×3");
+    expect(html).not.toMatch(/bound \d+ of the/);
+  });
+
+  it("still carries the prose for the legs that earn it", () => {
+    // The ledger is added ALONGSIDE the cards, not instead of them: the table
+    // carries the shape, the cards carry the argument.
+    const html = dashboard({ ...app(), view: view({ skipped: [leg("BTC 15m DOWN", "BTC delta budget ±2.50/1%")] }) });
+    expect(html).toContain("Refused with positive edge");
+    expect(html).toContain("every constraint the allocator applied");
+  });
+});
+
+describe("the term structure shows both legs, around agreement", () => {
+  const row = (asset: string, tenor: string, up: number | null, down: number | null) => ({
+    asset,
+    tenor,
+    label: `${asset} ${tenor}`,
+    up: up === null ? null : { fair: 0.5 + up, ask: 0.5 },
+    down: down === null ? null : { fair: 0.5 + down, ask: 0.5 },
+  });
+
+  it("calls out an asset whose windows all lean the same way", () => {
+    // This is the entire portfolio argument, and the old absolute-scale chart
+    // could not show it: four windows at wildly different prices, all priced
+    // above the book by the same amount, looked like four unrelated bars.
+    const html = termChart([
+      row("BTC", "15m", 0.04, 0.05),
+      row("BTC", "1h", 0.03, 0.06),
+      row("BTC", "4h", 0.05, 0.04),
+      row("BTC", "1d", 0.001, 0.001),
+    ]);
+    expect(html).toMatch(/3 of 4 windows lean the same way/);
+  });
+
+  it("says so plainly when there is no lean", () => {
+    const html = termChart([row("ETH", "15m", 0.001, -0.002), row("ETH", "1h", -0.001, 0.002)]);
+    expect(html).toContain("no consistent lean");
+  });
+
+  it("takes its scale from the data rather than clipping", () => {
+    // A quiet cycle must not be flattened to noise, and a violent one must not
+    // run off the end of the axis.
+    expect(termChart([row("BTC", "15m", 0.01, 0.01)])).toContain("+0.05");
+    expect(termChart([row("BTC", "15m", 0.17, 0.02)])).toContain("+0.20");
+  });
+
+  it("draws a leg with no offer as absent rather than as agreement", () => {
+    // An unquoted leg has no distance from the book to draw. Showing it at the
+    // centre line would claim the model and the book agree, which is a stronger
+    // statement than "nobody is quoting it".
+    const html = termChart([row("BTC", "1d", null, 0.04)]);
+    expect(html).toContain("—");
   });
 });

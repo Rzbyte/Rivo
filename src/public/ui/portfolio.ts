@@ -15,7 +15,7 @@ import type { BackendStatus } from "../backend.js";
 import { addressUrl, tenorLabel, type Network } from "../../core/venue.js";
 import { isDemo } from "../store.js";
 import { clock, cls, esc, f2, f3, horizon, meter, pct, relTime, shortAddr, signed } from "./dom.js";
-import { equityChart, exposureBar, termChart } from "./charts.js";
+import { equityChart, exposureBar, termChart, type TermRow } from "./charts.js";
 
 export interface AppState {
   wallet: WalletState | null;
@@ -381,11 +381,27 @@ export function dashboard(s: AppState): string {
 const stat = (k: string, v: string, s = "", klass = ""): string =>
   `<div class="panel stat"><div class="k">${k}</div><div class="v ${klass}">${v}</div>${s ? `<div class="s">${s}</div>` : ""}</div>`;
 
-function termRows(v: PortfolioView): { label: string; fair: number; ask: number | null; bid: number | null }[] {
-  const seen = new Map<string, { label: string; fair: number; ask: number | null; bid: number | null }>();
+/**
+ * One row per window, carrying BOTH legs.
+ *
+ * This used to keep only the UP leg, on the reasoning that DOWN is its
+ * complement. It is not, once a spread is involved — and on this venue the DOWN
+ * side is usually the better supplied one, because buying Down crosses a resting
+ * Buy-Up. Dropping it hid half of what Rivo actually prices.
+ */
+function termRows(v: PortfolioView): TermRow[] {
+  const seen = new Map<string, TermRow>();
   for (const d of [...v.accepted, ...v.skipped]) {
-    if (d.leg !== "UP") continue; // one row per market; the Down leg is its complement
-    seen.set(d.marketId, { label: `${d.asset} ${d.tenor}`, fair: d.fair, ask: d.ask, bid: d.bid });
+    const row = seen.get(d.marketId) ?? {
+      asset: d.asset,
+      tenor: d.tenor,
+      label: `${d.asset} ${d.tenor}`,
+      up: null,
+      down: null,
+    };
+    if (d.leg === "UP") row.up = { fair: d.fair, ask: d.ask };
+    else row.down = { fair: d.fair, ask: d.ask };
+    seen.set(d.marketId, row);
   }
   return [...seen.values()];
 }
@@ -532,7 +548,8 @@ function decisionsPanel(v: PortfolioView): string {
   const interesting = v.skipped.filter((d) => (d.edge ?? 0) > 0);
   const rest = v.skipped.filter((d) => (d.edge ?? 0) <= 0);
   return `
-  <div class="grid g2">
+  ${ledger(v)}
+  <div class="grid g2" style="margin-top:14px">
     <div>
       <h3 style="margin-bottom:9px">Taken · ${v.accepted.length}</h3>
       ${v.accepted.length === 0 ? `<p class="empty">nothing this cycle</p>` : v.accepted.map((d) => card(d, v, "buy")).join("")}
@@ -554,6 +571,81 @@ function decisionsPanel(v: PortfolioView): string {
       }
     </div>
   </div>`;
+}
+
+/**
+ * Every leg this cycle, as one ruled table.
+ *
+ * The cards below say WHY, one at a time, and they are the most persuasive thing
+ * on the page — but stacked they read as a feed, and a feed hides the pattern.
+ * The pattern is the argument: three refusals naming the SAME budget is one
+ * directional view charged once, and you should be able to see that without
+ * reading three paragraphs. So the ledger carries the shape and the cards keep
+ * the prose, rather than one replacing the other.
+ *
+ * Sorted by what was funded, then by edge, so the two things a reader looks for
+ * — what got money, and what was turned away despite deserving it — are at the
+ * top in that order.
+ */
+function ledger(v: PortfolioView): string {
+  const all = [...v.accepted, ...v.skipped].sort((a, b) => {
+    if ((a.action === "BUY") !== (b.action === "BUY")) return a.action === "BUY" ? -1 : 1;
+    return (b.edge ?? 0) - (a.edge ?? 0);
+  });
+  if (all.length === 0) return "";
+
+  // How often each constraint bound, so the repeated one can be marked. A
+  // constraint that refused four legs is not four decisions; it is one budget.
+  const bindCount = new Map<string, number>();
+  for (const d of all) bindCount.set(d.binding, (bindCount.get(d.binding) ?? 0) + 1);
+  const repeated = [...bindCount.entries()].filter(([, n]) => n >= 3).map(([name]) => name);
+
+  const row = (d: DecisionView): string => {
+    const bought = d.action === "BUY";
+    // What the constraint allowed, against what Kelly asked for: the bar is how
+    // much of the request survived, which is the number the cards spell out.
+    const asked = d.kellyTarget;
+    const allowed = bought ? d.cost : 0;
+    const share = asked > 0 ? Math.max(0, Math.min(1, allowed / asked)) : 0;
+    const isRepeat = repeated.includes(d.binding);
+    return `
+    <tr>
+      <td style="width:4px;padding:0;background:${bought ? "var(--pos)" : "var(--line-2)"}"></td>
+      <td style="font-family:var(--mono);font-weight:640;font-size:12.5px">${esc(d.label)}</td>
+      <td class="n">${f3(d.fair)}</td>
+      <td class="n mut">${d.ask === null ? "—" : f3(d.ask)}</td>
+      <td class="n" style="${(d.edge ?? 0) > 0 ? "color:var(--pos);font-weight:600" : "color:var(--muted)"}">
+        ${d.edge === null ? "—" : signed(d.edge * 100, 1)}</td>
+      <td class="n mut">${asked > 0 ? f2(asked) : "—"}</td>
+      <td class="n" style="font-weight:600">${f2(allowed)}</td>
+      <td style="text-align:left">
+        <div style="display:flex;align-items:center;gap:9px">
+          <span class="meter" style="width:64px;flex:none;margin:0"><i style="width:${Math.round(share * 100)}%"></i></span>
+          <span style="font-size:12px;${allowed === 0 ? "color:var(--neg);font-weight:600" : "color:var(--muted)"}">
+            ${esc(d.binding)}${isRepeat ? ` <span class="tag mute" style="margin-left:4px">×${bindCount.get(d.binding)}</span>` : ""}
+          </span>
+        </div>
+      </td>
+    </tr>`;
+  };
+
+  return `
+  <div class="panel"><div class="scroll"><table>
+    <thead><tr>
+      <th></th><th>Leg</th><th>Fair</th><th>Ask</th><th>Edge</th>
+      <th>Kelly asked</th><th>Allowed</th><th style="text-align:left">Bound by</th>
+    </tr></thead>
+    <tbody>${all.map(row).join("")}</tbody>
+  </table></div></div>
+  ${
+    repeated.length > 0
+      ? `<p class="note" style="margin-top:10px">
+           <b>${esc(repeated[0]!)}</b> bound ${bindCount.get(repeated[0]!)} of the ${all.length} legs priced this
+           cycle. That is the portfolio layer doing its job: one budget, spoken for once, refusing the same
+           directional view at several tenors rather than funding it several times.
+         </p>`
+      : ""
+  }`;
 }
 
 function card(d: DecisionView, v: PortfolioView, kind: "buy" | "skip"): string {

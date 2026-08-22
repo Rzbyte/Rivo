@@ -8,8 +8,8 @@
 // It deliberately does NOT open with the model, the mathematics, or the venue.
 // Those are the reason the product works; they are not the product.
 
-import { esc, f2, pct, pending, signed } from "./dom.js";
-import { termChart } from "./charts.js";
+import { esc, f2, f3, pct, pending, relTime, signed } from "./dom.js";
+import { termChart, type TermRow } from "./charts.js";
 import type { PortfolioView } from "../engine.js";
 
 export interface LandingData {
@@ -23,11 +23,41 @@ export interface LandingData {
   errorAt?: number;
 }
 
-export function landing(d: LandingData): string {
-  const p = d.preview;
-  return `
-  <div class="wrap">
-    <div style="max-width:820px;padding:38px 0 8px">
+/** The portfolio-level constraints, as opposed to "the price was bad". */
+const PORTFOLIO_LIMIT = /delta budget|combined delta|expiry bucket|deployed cap|max position|tenor cap|cash floor|free cash/;
+
+/**
+ * The strongest thing this project can say, said first.
+ *
+ * The page used to open with a paragraph about what Rivo is, and buried the one
+ * claim no competitor can make — that it turned down a trade it could see money
+ * in, and named the limit that stopped it — in a note at the bottom of a panel
+ * most visitors never scrolled to. Now the refusal IS the headline, in the
+ * product's own live numbers.
+ *
+ * It only becomes the headline once there is a refusal to name. The venue read
+ * takes a few seconds, so the static claim holds the space until then and the
+ * block reserves its height, which keeps the swap from moving anything below it.
+ */
+function hero(d: LandingData): string {
+  const refusal = d.preview?.skipped
+    .filter((x) => (x.edge ?? 0) > 0)
+    .find((x) => PORTFOLIO_LIMIT.test(x.binding));
+
+  const cta = `
+      <div style="display:flex;gap:10px;margin-top:26px;flex-wrap:wrap">
+        <!-- No wallet is needed to run one, so the front door must not ask for
+             an extension install. It used to read "Connect wallet and start",
+             which was true before the demo identity landed and is now a toll
+             booth on an open road. -->
+        <a class="btn primary big" href="#/app">${d.connected ? "Open your portfolio" : "Give it a budget"}</a>
+        <a class="btn big" href="#/app">See every constraint it applied</a>
+        <a class="btn big" href="#/evidence">Read the evidence</a>
+      </div>`;
+
+  if (!refusal) {
+    return `
+    <div style="max-width:820px;padding:38px 0 8px;min-height:360px">
       <span class="tag ok" style="margin-bottom:16px"><i class="dot"></i>live on Somnia testnet</span>
       <h1 style="margin-top:14px">Rivo turns DreamDEX bots<br>into a portfolio.</h1>
       <p class="lede" style="margin-top:18px">
@@ -37,16 +67,36 @@ export function landing(d: LandingData): string {
         portfolio-wide BTC and ETH limits, managing positions through settlement, reconciling against
         the chain, and showing you the binding reason behind every decision.
       </p>
-      <div style="display:flex;gap:10px;margin-top:24px;flex-wrap:wrap">
-        <!-- No wallet is needed to run one, so the front door must not ask for
-             an extension install. It used to read "Connect wallet and start",
-             which was true before the demo identity landed and is now a toll
-             booth on an open road. -->
-        <a class="btn primary big" href="#/app">${d.connected ? "Open your portfolio" : "Start a portfolio"}</a>
-        <a class="btn big" href="#/explorer">See live pricing</a>
-        <a class="btn big" href="#/evidence">Read the evidence</a>
-      </div>
-    </div>
+      ${cta}
+    </div>`;
+  }
+
+  const points = ((refusal.edge ?? 0) * 100).toFixed(1);
+  return `
+    <div style="max-width:960px;padding:38px 0 8px;min-height:360px">
+      <span class="tag ok"><i class="dot"></i>live on Somnia testnet · cycle ${d.preview!.cycles}</span>
+      <p style="font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.13em;
+                color:var(--faint);margin:20px 0 12px">
+        ${esc(relTime(d.preview!.at))}, Rivo turned this down
+      </p>
+      <h1 style="line-height:1.04">
+        <span style="font-family:var(--mono);font-weight:500;letter-spacing:-.02em">${esc(refusal.label)}</span><br>
+        priced ${refusal.ask === null ? "—" : f3(refusal.ask)}. Worth ${f3(refusal.fair)}.
+      </h1>
+      <p class="lede" style="margin-top:20px;max-width:680px">
+        ${points} points of edge, depth available, and Rivo refused it — because ${esc(refusal.binding)}.
+        A signal bot takes it. Rivo counts it against exposure that is already spoken for, and holds
+        the whole term structure as one book instead.
+      </p>
+      ${cta}
+    </div>`;
+}
+
+export function landing(d: LandingData): string {
+  const p = d.preview;
+  return `
+  <div class="wrap">
+    ${hero(d)}
 
     <div style="margin-top:30px">${p ? livePreview(p) : pending("reading the live venue", d.error ?? null, d.errorAt)}</div>
 
@@ -125,9 +175,12 @@ function livePreview(p: PortfolioView): string {
   const refused = p.skipped.filter((d) => (d.edge ?? 0) > 0);
   const PORTFOLIO_LIMIT = /delta budget|combined delta|expiry bucket|deployed cap|max position|tenor cap|cash floor|free cash/;
   const headline = refused.find((d) => PORTFOLIO_LIMIT.test(d.binding)) ?? refused[0];
-  const rows = new Map<string, { label: string; fair: number; ask: number | null; bid: number | null }>();
+  const rows = new Map<string, TermRow>();
   for (const d of [...p.accepted, ...p.skipped]) {
-    if (d.leg === "UP") rows.set(d.marketId, { label: `${d.asset} ${d.tenor}`, fair: d.fair, ask: d.ask, bid: d.bid });
+    const row = rows.get(d.marketId) ?? { asset: d.asset, tenor: d.tenor, label: `${d.asset} ${d.tenor}`, up: null, down: null };
+    if (d.leg === "UP") row.up = { fair: d.fair, ask: d.ask };
+    else row.down = { fair: d.fair, ask: d.ask };
+    rows.set(d.marketId, row);
   }
   return `
   <div class="panel" style="margin-top:30px">

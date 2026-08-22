@@ -15,7 +15,7 @@ import type { Snapshot } from "../../engine/scan.js";
 import { bestBid } from "../../engine/book.js";
 import { collateralName, tenorLabel, type Network } from "../../core/venue.js";
 import { cls, esc, f2, f3, horizon, pct, pending, signed } from "./dom.js";
-import { termChart } from "./charts.js";
+import { termChart, type TermRow } from "./charts.js";
 import { sigmaPerMinute } from "../../model/vol.js";
 import { DEFAULT_VOL_LOOKBACK_MIN } from "../../calibration/dataset.js";
 
@@ -32,6 +32,30 @@ interface Row {
 }
 
 /** One row per market, from its UP leg — the DOWN leg is its complement. */
+/**
+ * Both legs of every window, for the deviation chart.
+ *
+ * Built from the opportunities rather than from `rowsOf` above, which keeps only
+ * the UP leg because the table below is one row per window. The chart wants the
+ * DOWN leg too — it is separately priced and separately supplied.
+ */
+function termRowsOf(snap: Snapshot): TermRow[] {
+  const byMarket = new Map<string, TermRow>();
+  for (const o of snap.opportunities) {
+    const row = byMarket.get(o.marketId) ?? {
+      asset: o.asset,
+      tenor: tenorLabel(o.intervalSec),
+      label: `${o.asset} ${tenorLabel(o.intervalSec)}`,
+      up: null,
+      down: null,
+    };
+    if (o.leg === "UP") row.up = { fair: o.fair, ask: o.ask };
+    else row.down = { fair: o.fair, ask: o.ask };
+    byMarket.set(o.marketId, row);
+  }
+  return [...byMarket.values()];
+}
+
 export function rowsOf(snap: Snapshot): Row[] {
   const byMarket = new Map<string, Row>();
   for (const o of snap.opportunities) {
@@ -97,7 +121,7 @@ export function explorer(
         .join("")}
     </div>
 
-    <div class="panel pad" style="margin-top:14px">${termChart(rows.map((r) => ({ label: r.label, fair: r.fair, ask: r.ask, bid: r.bid })))}</div>
+    <div class="panel pad" style="margin-top:14px">${termChart(termRowsOf(snap))}</div>
 
     <div class="sec-head"><h2>Every live window</h2>
       <span class="hint">gap = book − model. Negative means the UP leg is cheap relative to the model.</span></div>

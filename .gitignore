@@ -41,3 +41,7 @@ rivo-dashboard.html
 *.swp
 .idea/
 .vscode/
+
+# Design canvas working files (artboards, layout, the assembled canvas).
+# Kept out of the repo: they are a design surface, not part of what ships.
+.design/

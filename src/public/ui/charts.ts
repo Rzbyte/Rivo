@@ -6,90 +6,140 @@
 
 import { cssVar, esc, f2, f3 } from "./dom.js";
 
-interface TermRow {
-  label: string;
-  /** Rivo's probability that this window closes above its opening price. */
+/** One leg of one window, as Rivo priced it against the book. */
+export interface TermLeg {
+  /** Rivo's probability for THIS leg. */
   fair: number;
-  /** What the book charges to buy that outcome. */
+  /** What the book charges to buy it, or null when nothing is offered. */
   ask: number | null;
-  /** What the book pays to sell it. */
-  bid: number | null;
+}
+
+export interface TermRow {
+  asset: string;
+  tenor: string;
+  label: string;
+  up: TermLeg | null;
+  down: TermLeg | null;
 }
 
 /**
- * Rivo's model against the book, one row per live window.
+ * The term structure as a deviation plot: model minus book, both legs, one axis.
  *
- * Drawn as a dumbbell — a filled dot for the model, a hollow ring for the ask,
- * and a thick line between them — because the quantity that matters is the GAP,
- * and a gap is a distance. An earlier version drew the two as separate ticks
- * with a faint band between, and it was unreadable: the band collapsed to two
- * invisible pixels whenever the book had no bid (which is most of the time on
- * this venue), the legend described a band that was not there, and the edge
- * column was clipped by the viewBox. None of that was a styling problem. The
- * chart was asking the reader to compute the story instead of showing it.
+ * The previous chart drew each window's UP leg as a dumbbell on an absolute
+ * 0–100% scale. It was honest and it answered the wrong question. What the whole
+ * portfolio argument rests on is not "what is this window worth" — a table says
+ * that better — it is that the windows lean the SAME WAY AT THE SAME TIME. On an
+ * absolute scale that is invisible: a 4h window sitting at 0.29 and a 1d window
+ * at 0.99 are far apart on the page even when the model disagrees with the book
+ * by the same amount in the same direction on both.
+ *
+ * So every leg is drawn as a deviation from a shared centre line. Left is the
+ * book above the model; right is the book below it. Reading the sign off which
+ * side of the line a mark sits on is faster than reading a signed number, and
+ * the thing worth seeing becomes a shape: when four BTC windows all push right
+ * at once, that is one bet expressed four times, and it is a column.
+ *
+ * Both legs are shown because both trade. The DOWN leg is not the UP leg's
+ * complement once a spread is involved, and on this venue it is often the
+ * better-supplied side — drawing only UP hid half the venue.
  */
 export function termChart(rows: TermRow[]): string {
   if (rows.length === 0) return `<p class="empty">no live windows</p>`;
 
-  const L = 92, R = 74, ROW = 34, TOP = 46;
-  const W = 720, H = TOP + rows.length * ROW + 16;
-  const x = (p: number) => L + Math.max(0, Math.min(1, p)) * (W - L - R);
-  const line = cssVar("--line"), muted = cssVar("--muted"), ink = cssVar("--ink");
-  const accent = cssVar("--accent"), pos = cssVar("--pos"), neg = cssVar("--neg"), panel = cssVar("--panel");
+  const line = cssVar("--line"), line2 = cssVar("--line-2"), muted = cssVar("--muted");
+  const ink = cssVar("--ink"), faint = cssVar("--faint");
+  const pos = cssVar("--pos"), neg = cssVar("--neg");
 
-  const grid = [0, 0.25, 0.5, 0.75, 1]
-    .map(
-      (p) =>
-        `<line x1="${x(p)}" y1="${TOP - 12}" x2="${x(p)}" y2="${H - 12}" stroke="${line}" stroke-width="1"/>` +
-        `<text x="${x(p)}" y="${TOP - 20}" fill="${muted}" font-size="10.5" text-anchor="middle">${(p * 100).toFixed(0)}%</text>`,
-    )
-    .join("");
+  const dev = (l: TermLeg | null): number | null => (l && l.ask !== null ? l.fair - l.ask : null);
 
-  const bars = rows
-    .map((r, i) => {
-      const y = TOP + 6 + i * ROW;
-      const xf = x(r.fair);
+  // The scale is taken from the data and rounded up to a readable step, so a
+  // quiet cycle is not flattened into noise and a violent one is not clipped.
+  const magnitudes = rows.flatMap((r) => [dev(r.up), dev(r.down)]).flatMap((d) => (d === null ? [] : [Math.abs(d)]));
+  const peak = magnitudes.length > 0 ? Math.max(...magnitudes) : 0.05;
+  const scale = Math.max(0.05, Math.ceil(peak * 20) / 20);
 
-      if (r.ask === null) {
-        return (
-          `<text x="0" y="${y + 4}" fill="${ink}" font-size="12.5" font-weight="600">${esc(r.label)}</text>` +
-          `<circle cx="${xf}" cy="${y}" r="5" fill="${accent}"/>` +
-          `<text x="${W - R + 8}" y="${y + 4}" fill="${muted}" font-size="10.5">no offer</text>`
-        );
-      }
+  // Group by asset, keeping the venue's own tenor order rather than sorting by
+  // value — the point is the shape of the curve across horizons.
+  const assets = [...new Set(rows.map((r) => r.asset))];
 
-      const edge = r.fair - r.ask;          // positive: the book is selling it below what Rivo thinks it is worth
-      const c = edge > 0.005 ? pos : edge < -0.005 ? neg : muted;
-      const xa = x(r.ask);
-      const [lo, hi] = xf < xa ? [xf, xa] : [xa, xf];
+  const L = 58, R = 116, ROW = 26, GROUP_HEAD = 30, TOP = 34;
+  const W = 720;
+  const plotW = W - L - R;
+  const mid = L + plotW / 2;
+  const H = TOP + assets.reduce((n, a) => n + GROUP_HEAD + rows.filter((r) => r.asset === a).length * ROW + 10, 0);
+  const at = (d: number) => mid + Math.max(-1, Math.min(1, d / scale)) * (plotW / 2);
 
-      return (
-        `<text x="0" y="${y + 4}" fill="${ink}" font-size="12.5" font-weight="600">${esc(r.label)}</text>` +
-        // The gap, as a physical distance.
-        `<line x1="${lo}" y1="${y}" x2="${hi}" y2="${y}" stroke="${c}" stroke-width="4" stroke-linecap="round" opacity=".45"/>` +
-        // Where the book will sell it to you: a ring, because it is a price you can choose to pay.
-        `<circle cx="${xa}" cy="${y}" r="4.5" fill="${panel}" stroke="${c}" stroke-width="2"/>` +
-        // Rivo's own number: filled, because it is not negotiable.
-        `<circle cx="${xf}" cy="${y}" r="5" fill="${accent}"/>` +
-        `<text x="${W - R + 8}" y="${y + 4}" fill="${c}" font-size="11.5" font-family="ui-monospace,monospace">` +
-        `${edge >= 0 ? "+" : "\u2212"}${Math.abs(edge * 100).toFixed(1)}</text>`
-      );
+  let y = TOP;
+  const body = assets
+    .map((asset) => {
+      const mine = rows.filter((r) => r.asset === asset);
+      // "Leaning" counts legs the model prices meaningfully ABOVE the book — the
+      // ones Rivo would want to buy. Three or more at once is the correlation
+      // the delta budget exists to refuse.
+      const leaning = mine.filter((r) => {
+        const u = dev(r.up), d = dev(r.down);
+        return (u !== null && u > 0.02) || (d !== null && d > 0.02);
+      }).length;
+      const summary =
+        leaning >= 3
+          ? `${leaning} of ${mine.length} windows lean the same way — one view, ${leaning} tenors`
+          : `no consistent lean this cycle`;
+
+      const head =
+        `<text x="0" y="${y + 10}" fill="${ink}" font-size="11" font-weight="700" ` +
+        `font-family="ui-monospace,monospace" letter-spacing="1">${esc(asset)}</text>` +
+        `<text x="${L}" y="${y + 10}" fill="${leaning >= 3 ? ink : faint}" font-size="10.5">${esc(summary)}</text>` +
+        `<line x1="0" y1="${y + 18}" x2="${W}" y2="${y + 18}" stroke="${line}" stroke-width="1"/>`;
+      y += GROUP_HEAD;
+
+      const legs = mine
+        .map((r) => {
+          const ry = y + ROW / 2;
+          const u = dev(r.up), d = dev(r.down);
+          const bar = (v: number | null, colour: string, top: number, height: number, opacity: string) => {
+            if (v === null) return "";
+            const xEnd = at(v);
+            const x0 = Math.min(mid, xEnd), w = Math.abs(xEnd - mid);
+            return `<rect x="${x0}" y="${ry + top}" width="${Math.max(1, w)}" height="${height}" fill="${colour}" opacity="${opacity}"/>`;
+          };
+          const fmt = (v: number | null) => (v === null ? "  —  " : `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(3)}`);
+          const out =
+            `<text x="0" y="${ry + 4}" fill="${muted}" font-size="10.5" font-family="ui-monospace,monospace">${esc(r.tenor)}</text>` +
+            `<line x1="${mid}" y1="${ry - 9}" x2="${mid}" y2="${ry + 9}" stroke="${line2}" stroke-width="1"/>` +
+            bar(u, pos, -8, 7, "1") +
+            bar(d, neg, 1, 7, ".55") +
+            `<text x="${W}" y="${ry + 4}" fill="${muted}" font-size="10.5" text-anchor="end" ` +
+            `font-family="ui-monospace,monospace">${fmt(u)} / ${fmt(d)}</text>`;
+          y += ROW;
+          return out;
+        })
+        .join("");
+
+      y += 10;
+      return head + legs;
     })
     .join("");
 
+  const axis =
+    `<text x="0" y="12" fill="${faint}" font-size="10.5">model minus book, per leg</text>` +
+    `<text x="${mid}" y="12" fill="${faint}" font-size="10.5" text-anchor="middle">agrees</text>` +
+    `<text x="${L}" y="12" fill="${faint}" font-size="10.5">−${scale.toFixed(2)}</text>` +
+    `<text x="${W - R}" y="12" fill="${faint}" font-size="10.5" text-anchor="end">+${scale.toFixed(2)}</text>`;
+
   return (
     `<div class="scroll"><svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:520px" role="img" ` +
-    `aria-label="Rivo's model against the order book for every live window">` +
-    `<text x="0" y="14" fill="${muted}" font-size="10.5">chance this window closes ABOVE its opening price</text>` +
-    `${grid}${bars}</svg></div>` +
+    `aria-label="Every live leg, drawn as Rivo's model minus the book's price, around a shared centre line">` +
+    `${axis}${body}</svg></div>` +
     `<div class="note" style="margin-top:12px;font-size:13px">` +
-    `<svg width="52" height="12" style="display:inline-block;vertical-align:-2px" aria-hidden="true">` +
-    `<line x1="8" y1="6" x2="44" y2="6" stroke="${muted}" stroke-width="4" stroke-linecap="round" opacity=".45"/>` +
-    `<circle cx="8" cy="6" r="5" fill="${accent}"/>` +
-    `<circle cx="44" cy="6" r="4.5" fill="${panel}" stroke="${muted}" stroke-width="2"/></svg> ` +
-    `<b>Filled dot</b> is Rivo's model. <b>Ring</b> is what the book charges. The line between them is the ` +
-    `edge, in percentage points, shown on the right — <span style="color:${pos}">green</span> when the book ` +
-    `is selling below Rivo's value, <span style="color:${neg}">red</span> when above.` +
+    `<svg width="46" height="12" style="display:inline-block;vertical-align:-2px" aria-hidden="true">` +
+    `<rect x="0" y="1" width="20" height="5" fill="${pos}"/>` +
+    `<rect x="0" y="7" width="30" height="5" fill="${neg}" opacity=".55"/>` +
+    `<line x1="0" y1="0" x2="0" y2="12" stroke="${line2}" stroke-width="1"/></svg> ` +
+    `<b style="color:${pos}">UP</b> and <b style="color:${neg}">DOWN</b> for each window, as the distance ` +
+    `from Rivo's model to the book. To the <b>right</b> the book is selling below Rivo's value; to the ` +
+    `<b>left</b>, above it. The centre line is agreement. What to look for is a <b>column</b>: several ` +
+    `windows of one asset pushing the same way at once is a single directional view, and it is charged ` +
+    `once against that asset's delta budget rather than funded four times.` +
     `</div>`
   );
 }
