@@ -5,7 +5,7 @@ Findings from building [Rivo](../README.md) against `@somnia-chain/markets-sdk` 
 August 2026 on the DreamDEX testnet venue
 (`0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c`).
 
-**Fourteen findings.** Every one is reproducible; where a snippet is given it runs against public
+**Fifteen findings.** Every one is reproducible; where a snippet is given it runs against public
 endpoints with no key. Ordered roughly by how much time each cost us.
 
 Five of them (#4–#8) came out of taking Rivo live rather than reading the docs — they are the
@@ -18,6 +18,13 @@ things that only appear once a real wallet sends a real order. Three are worth p
   converge.** Two of five rows on one wallet. A bot cannot guess at its own holdings.
 - **#9 — the on-chain permission that would make non-custodial Event Contract bots possible is
   already deployed and switched off.** One flag away from changing what can be built here.
+
+And one that arrived last, from building the product rather than the bot:
+
+- **#15 — `createExchange` forwards only a private key, which makes the SDK's own signer
+  flexibility invisible.** The SDK accepts any viem `Account`; the kit's entry point does not
+  expose it. That gap is the difference between "users must paste private keys" and a wallet whose
+  key never leaves a TEE, and it is five lines wide.
 
 The kit is genuinely good — `ec-core` is 1,585 lines that absorb sixteen documented sharp edges,
 and `docs/gotchas.md` and `docs/measuring-edge.md` are better than most production trading
@@ -483,6 +490,81 @@ const res = await fetch(url, { ..., signal: AbortSignal.timeout(20_000) });
 **Suggestion:** give `DreamDexRest` a `timeoutMs` option defaulting to something finite, and say in
 the docs that an autonomous bot must bound every read. Bots built on this kit are explicitly meant
 to run unattended, and unattended is precisely when nobody notices a hang.
+
+---
+
+## 15. `createExchange` hides the SDK's own signer flexibility, and that hides a whole product tier
+
+**Severity: medium — nothing is broken, but the shape of the kit's entry point makes a supported
+capability look impossible, and we nearly wrote it off on that basis.**
+
+`ec-core`'s `createExchange` takes `{ withSigner?: boolean }` and forwards exactly one signing
+source:
+
+```ts
+// packages/ec-core/src/exchange.ts
+if (opts.withSigner && !config.privateKey) throw new Error("PRIVATE_KEY is required for trading…");
+const exchange = new SomniaMarkets({ …, privateKey: opts.withSigner ? config.privateKey : undefined });
+```
+
+Read that alone — and every example does read it alone — and the conclusion is that trading with
+`ec-core` means putting a raw private key in the process environment. For a bot that is fine. For
+a **product**, it is disqualifying: it means either asking users to paste private keys, or holding
+strangers' keys on a server. We had written §9 above on the assumption that the venue left no
+third option.
+
+The SDK underneath does not have that limitation, and says so:
+
+```ts
+// markets-sdk/dist/unified/exchange.d.ts
+export type SomniaMarketsConfig = ClientConfig & Pick<TraderConfig, "privateKey" | "account" | "walletClient">;
+setSigner(signer: Pick<TraderConfig, "privateKey" | "account" | "walletClient">): void;
+
+// markets-sdk/dist/writer.js — how a signer is resolved
+if (config.privateKey) localAccount = privateKeyToAccount(config.privateKey, { nonceManager });
+else if (typeof config.account === "object" && "signTransaction" in config.account) localAccount = config.account;
+```
+
+**Any object with a `signTransaction` method is accepted as the local-signing fast path** — it
+signs locally and confirms in one round trip, exactly as a private key does. And `setSigner` rebinds
+an exchange after construction, which the docstring describes for browser wallet-connect flows.
+
+Those two facts together are the difference between a script and a product:
+
+```ts
+const ctx = createExchange({ withSigner: false });
+ctx.exchange.setSigner({ account });   // any viem Account
+// every ec-core verb — placeLimit, sellableSize, maybeClaim, cancelTracked — now signs as `account`
+```
+
+The `account` can be a key. It can equally be a viem `LocalAccount` whose `signTransaction` is an
+authenticated call to a TEE that holds the key share — which is what Privy's
+`createViemAccount({ walletId, address, privy })` returns. Rivo uses exactly that: each user's
+portfolio wallet signs its own orders, server-side, while the user is offline, and **Rivo's
+database holds an address and a wallet id and no key material at all.**
+
+**What we would change.** Not the SDK — it is already right. `ec-core`:
+
+```ts
+export function createExchange(opts: {
+  withSigner?: boolean;
+  /** A pre-built signer: viem Account, or a wallet client. Anything the SDK accepts. */
+  account?: Account;
+  walletClient?: WalletClient;
+} = {}): EcContext
+```
+
+Five lines, and one sentence in the README pointing out that a signer need not be a private key.
+As it stands, the kit's most consequential capability for anyone building a consumer product is
+reachable only by reading `dist/writer.js` in a transitive dependency.
+
+**This does not weaken §9.** On-chain scoping and key custody are different questions. The venue
+still offers no way to bound what a signer may do with Event Contracts — `placeBinaryOrderFor` is
+still compiled in and disabled — so the limits remain software-enforced. What changes is who holds
+the key, and that is the half a hosted product cannot compromise on.
+
+Verified rather than asserted: `npm run check:kit` in the Rivo repo builds an exchange with no
+signer, binds a throwaway viem account, and checks the exchange reports it as its wallet.
 
 ---
 

@@ -1,0 +1,201 @@
+# Deploying Rivo
+
+Three planes, deployed separately because they fail differently and scale differently.
+
+```
+                 ┌──────────────────────────────────────────────┐
+   a person ───▶ │  WEB / CONTROL      Next.js on Vercel        │
+                 │  request-scoped, scales to zero, no loops    │
+                 └───────────────────┬──────────────────────────┘
+                                     │
+                 ┌───────────────────▼──────────────────────────┐
+                 │  DURABLE STATE     managed PostgreSQL        │
+                 │  the only thing both other planes trust      │
+                 └───────────────────┬──────────────────────────┘
+                                     │
+                 ┌───────────────────▼──────────────────────────┐
+   the venue ◀── │  EXECUTION         long-running worker       │
+                 │  container. Never a serverless function.     │
+                 └──────────────────────────────────────────────┘
+                                     ▲
+                 ┌───────────────────┴──────────────────────────┐
+                 │  IDENTITY / SIGNING   Privy                  │
+                 │  holds the keys, so Rivo does not            │
+                 └──────────────────────────────────────────────┘
+```
+
+**Why the worker is not on Vercel.** A trading cycle is not a request. It settles, claims,
+reconciles and allocates on a clock that has nothing to do with anybody being logged in, and it has
+to be able to run for hours holding a lease. A serverless function cannot do that, and the whole
+promise of the product — configure once, close the browser — is that this keeps running when
+nothing else is.
+
+---
+
+## 0. What you need
+
+| | | required for |
+|---|---|---|
+| PostgreSQL 14+ | Neon, Supabase, Railway, RDS, or your own | web and worker |
+| a Privy app | [dashboard.privy.io](https://dashboard.privy.io) | sign-in and signing |
+| somewhere to run a container | Railway, Render, Fly, a VPS | the worker |
+| a Vercel account | | the web app |
+
+Nothing is needed for the CLI, the backtester, the evidence commands or the test suite. Those work
+on a laptop with a checkout and `npm install`.
+
+---
+
+## 1. The database
+
+```bash
+export DATABASE_URL="postgres://user:password@host:5432/rivo"
+npm run db:migrate
+```
+
+**The worker migrates on boot; the web app only checks.** Exactly one component may alter a schema,
+or a deploy that starts both races itself. `/api/health` reports a pending migration rather than
+failing mysteriously.
+
+Migrations are plain SQL in `src/db/migrations/`, applied in filename order, each in its own
+transaction, each checksummed. A file that changed after it was applied is refused rather than
+silently ignored.
+
+Locally, with no Docker and no root:
+
+```bash
+npx tsx scripts/dev-postgres.ts start     # downloads a self-contained PostgreSQL 16
+export DATABASE_URL="postgres://rivo@127.0.0.1:55432/rivo"
+npm run db:migrate
+```
+
+---
+
+## 2. Privy
+
+In the dashboard:
+
+1. Create an app. Note the **App ID** and **App Secret**.
+2. Enable **Email**, **Google** and **Wallet** login.
+3. Enable **embedded wallets**, created for **all users** — including users who signed in with an
+   external wallet, who are precisely the people who most want trading capital kept separate from
+   their main wallet.
+4. Add Somnia as a custom EVM chain: **50312** (testnet) and **5031** (mainnet).
+5. **Register an authorization keypair.** With one, a stolen app secret alone cannot move a wallet.
+6. Consider attaching a transaction policy. Rivo declares the policy it wants in `POLICY_INTENT`
+   (`src/signing/privy.ts`); attaching it is your action, not Rivo's, and Rivo describes it as
+   *requested* until it is.
+
+---
+
+## 3. The web app — Vercel
+
+Import the repository. `vercel.json` at the root already sets the build:
+
+```
+buildCommand      npm run build:web
+outputDirectory   web/.next
+```
+
+Environment variables:
+
+```
+DATABASE_URL              postgres://…
+PGSSLMODE                 no-verify        # most managed providers
+PRIVY_APP_ID              …
+PRIVY_APP_SECRET          …                # server-side only, never NEXT_PUBLIC_
+PRIVY_AUTHORIZATION_KEY   …                # if you registered one
+NEXT_PUBLIC_PRIVY_APP_ID  …                # the id again, for the browser
+NEXT_PUBLIC_NETWORK       testnet
+NETWORK                   testnet
+```
+
+Check `/api/health` after deploying. It answers without authentication and reports whether the
+database responds, whether the schema is current, and how many workers are alive.
+
+---
+
+## 4. The worker — a container that stays up
+
+Same image as the CLI, pointed at a database:
+
+```bash
+docker build -t rivo .
+docker run -d --restart unless-stopped \
+  -e DATABASE_URL="postgres://…" \
+  -e PRIVY_APP_ID="…" -e PRIVY_APP_SECRET="…" \
+  -e NETWORK=testnet \
+  -p 8080:8080 \
+  rivo src/cli/worker.ts --interval 45 --concurrency 8
+```
+
+On Railway / Render / Fly: the same image, the same command, the same variables. Point the
+platform's health check at **`/ready`** rather than `/health` — a worker that is up and has not
+completed a pass in five minutes is not healthy in any sense a user would recognise.
+
+On a VPS: `deploy/rivo-worker.service`, which carries the systemd hardening a process that signs
+transactions should have.
+
+**Scaling.** Run more than one. Workers claim portfolios with a database lease
+(`FOR UPDATE … SKIP LOCKED`), so more of them is more throughput, with no coordinator to configure
+and no partition to rebalance — and never two on one portfolio.
+
+```bash
+docker compose --profile platform up -d --scale worker=3
+```
+
+**Without `PRIVY_APP_ID` / `PRIVY_APP_SECRET`, every portfolio runs in Shadow Mode.** It decides,
+records and reports, and sends nothing. That is the correct way for a missing credential to fail.
+
+---
+
+## 5. Everything at once, locally
+
+```bash
+cp .env.example .env       # fill in POSTGRES_PASSWORD and the Privy values
+docker compose --profile platform up -d
+npm run dev:web            # the web app, on :3001
+```
+
+The web app is deliberately absent from compose. It belongs on Vercel, and running it under a
+process supervisor beside a trading worker blurs the one boundary this architecture exists to keep.
+
+---
+
+## 6. Seeing it work without signing in
+
+```bash
+npm run seed:demo          # a user, a wallet, a portfolio — all Shadow Mode
+npm run worker -- --once   # one pass against the live venue
+```
+
+The seeder cannot arm live trading: the wallet it creates has no Privy wallet id and is not
+delegated, so `mayTradeLive` is false and the worker runs it dry whatever the flags say.
+
+---
+
+## 7. Operating it
+
+| question | where |
+|---|---|
+| is the fleet alive? | `GET /health` on any worker, `workers` in `/api/health` |
+| is it doing anything? | `GET /ready` — 503 if no pass in five minutes |
+| why did it stop? | the `events` table; the dashboard's Events tab |
+| what did it decide? | the `decisions` table; the dashboard's Decisions tab |
+| what did it send? | the `executions` table — append-only, survives the position |
+| tell me when it breaks | `RIVO_ALERT_WEBHOOK` (Slack/Discord) or `RIVO_ALERT_TELEGRAM_*` |
+
+**A halted portfolio does not restart itself.** A breaker that resets on its own is not a breaker.
+Halting is recorded as an event, alerted, and shown at the top of the dashboard; resuming is a
+person's decision.
+
+---
+
+## 8. Backups
+
+The database is the product's memory: positions, the execution ledger, the decision log. Losing it
+does not lose money — reconciliation rebuilds holdings from the chain at the next cycle — but it
+does lose the record, and the record is most of what makes this auditable.
+
+Use your provider's point-in-time recovery. The two tables that cannot be reconstructed from
+anywhere else are `executions` and `decisions`.

@@ -8,21 +8,90 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+
+    # A real PostgreSQL, because the durable layer's tests are integration tests
+    # on purpose. A fenced lease, FOR UPDATE SKIP LOCKED, an append-only trigger
+    # and an optimistic version check are all behaviour of the server; an
+    # emulator agrees with every one of them right up until production does not.
+    #
+    # Without DATABASE_URL those tests SKIP rather than fail, which is what keeps
+    # the suite runnable on a laptop with nothing installed — and exactly why CI
+    # has to provide one, or the coverage silently disappears.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: rivo
+          POSTGRES_PASSWORD: rivo
+          POSTGRES_DB: rivo
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rivo"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://rivo:rivo@127.0.0.1:5432/rivo
+      DATABASE_SSL: "off"
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
       - run: npm ci
+      # Covers the engine, the public bundle and the web app in one command.
       - run: npm run typecheck
       # Before the tests: boot.test.ts runs the SHIPPED bundle in a DOM, so the
       # build is part of what the suite covers. It caught a bare `process`
       # reference that typechecked cleanly and would have thrown in any browser.
       - run: npm run build:public
-      # The suite is entirely offline: every venue interaction goes through a
-      # fixture, so CI needs no key, no RPC and no funded wallet.
+      # The web app is a deployable artefact; a type error that only shows up at
+      # `next build` should fail here rather than on Vercel.
+      - run: npm run build:web
+      # Every venue interaction goes through a fixture, so this needs no key, no
+      # RPC and no funded wallet — only the database above.
       - run: npm test
+
+      # The database tests are the ones most easily lost by accident: delete the
+      # service block and they SKIP, silently, forever — a green build with the
+      # lease, the append-only trigger and the ownership boundary untested.
+      #
+      # Asserted on the JSON report rather than on log text. The first version of
+      # this grepped stdout for "passed", which was worse than useless: the
+      # reporter it used had been removed, vitest failed at startup, exited 0 and
+      # printed a stack trace that happened not to contain the word.
+      - name: The database tests actually ran
+        run: |
+          npx vitest run src/db web/lib --reporter=json --outputFile=/tmp/db-report.json
+          node -e '
+            const r = require("/tmp/db-report.json");
+            const skipped = r.numPendingTests ?? 0;
+            const passed = r.numPassedTests ?? 0;
+            console.log(`${passed} passed, ${skipped} skipped`);
+            if (passed < 40) { console.log("::error::too few database tests ran — is the postgres service still configured?"); process.exit(1); }
+            if (skipped > 0) { console.log("::error::database tests skipped, which means DATABASE_URL is not reaching them"); process.exit(1); }
+          '
+
+      # Migrations, applied to an empty database and then applied again. The
+      # second run proving a no-op is the half that matters: a migration that is
+      # not idempotent turns every deploy into a coin toss.
+      - name: Migrations apply, and re-apply as a no-op
+        run: |
+          npm run db:migrate
+          out=$(npm run db:migrate 2>&1)
+          echo "$out"
+          echo "$out" | grep -q "already up to date" \
+            || { echo "::error::a second migration run was not a no-op"; exit 1; }
+
+      # Nothing above proves the vulnerability floor stays where it was put.
+      # High and critical fail the build; the remaining lows are listed in
+      # docs/SECURITY.md with the reason each one is tolerated.
+      - name: No high or critical advisories
+        run: npm audit --audit-level=high
 
   # The image is the self-hosting story, so it is built here rather than trusted.
   # Two builds, because they can fail for different reasons and only one of them
@@ -70,6 +139,38 @@ jobs:
           done
           curl -fsS http://127.0.0.1:3000/api/health
           docker rm -f cockpit
+
+      - name: The worker refuses to start without a database, and says why
+        run: |
+          # The most likely first mistake in a deployment, and the message is the
+          # only thing standing between an operator and half an hour of guessing.
+          out=$(timeout 60 docker run --rm rivo:nokit src/cli/worker.ts 2>&1 || true)
+          echo "$out"
+          echo "$out" | grep -q "DATABASE_URL is not set" \
+            || { echo "::error::a worker with no database did not say so"; exit 1; }
+          echo "$out" | grep -q "npm start" \
+            || { echo "::error::the worker did not point at the single-portfolio path"; exit 1; }
+
+      - name: The worker runs a pass against a real database
+        run: |
+          # End to end through the execution plane: migrate, register, claim,
+          # release. The cycle itself reaches a live venue and so is not this
+          # repo's to guarantee — what is asserted is that the plane came up,
+          # took a lease and gave it back.
+          docker network create rivonet
+          docker run -d --name pg --network rivonet \
+            -e POSTGRES_USER=rivo -e POSTGRES_PASSWORD=rivo -e POSTGRES_DB=rivo postgres:16-alpine
+          for i in $(seq 1 30); do
+            docker exec pg pg_isready -U rivo && break || sleep 2
+          done
+          out=$(docker run --rm --network rivonet \
+            -e DATABASE_URL=postgres://rivo:rivo@pg:5432/rivo -e DATABASE_SSL=off \
+            rivo:nokit src/cli/worker.ts --once 2>&1 || true)
+          echo "$out"
+          echo "$out" | grep -q "RIVO WORKER" || { echo "::error::the worker did not start"; exit 1; }
+          echo "$out" | grep -q "migrations 001_init.sql" \
+            || { echo "::error::the worker did not migrate an empty database"; exit 1; }
+          docker rm -f pg && docker network rm rivonet
 
       - name: Build with the bot kit (advisory)
         continue-on-error: true
