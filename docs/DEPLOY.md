@@ -73,6 +73,17 @@ npm run db:migrate
 
 ## 2. Privy
 
+Check what is missing before configuring anything, and again after:
+
+```bash
+npm run privy:check
+```
+
+It authenticates with the server's own credentials, reports which login methods the app actually has
+enabled, catches the classic mistake of a browser and server pointed at two different apps, and
+lists the dashboard steps Rivo cannot perform. It never signs anything and never touches a user's
+wallet.
+
 In the dashboard:
 
 1. Create an app. Note the **App ID** and **App Secret**.
@@ -108,7 +119,12 @@ PRIVY_AUTHORIZATION_KEY   …                # if you registered one
 NEXT_PUBLIC_PRIVY_APP_ID  …                # the id again, for the browser
 NEXT_PUBLIC_NETWORK       testnet
 NETWORK                   testnet
+RIVO_DEMO_PORTFOLIO_ID    …                # optional: publishes ONE portfolio read-only at /demo
 ```
+
+Without `PRIVY_APP_ID` and `PRIVY_APP_SECRET` the app still runs: users can sign in if
+`NEXT_PUBLIC_PRIVY_APP_ID` is set, and every portfolio stays in Shadow Mode because nothing can
+sign. That is the correct way for a missing credential to fail.
 
 Check `/api/health` after deploying. It answers without authentication and reports whether the
 database responds, whether the schema is current, and how many workers are alive.
@@ -183,6 +199,8 @@ delegated, so `mayTradeLive` is false and the worker runs it dry whatever the fl
 | why did it stop? | the `events` table; the dashboard's Events tab |
 | what did it decide? | the `decisions` table; the dashboard's Decisions tab |
 | what did it send? | the `executions` table — append-only, survives the position |
+| prove all of it | `npm run proof -- --portfolio <id>` — four counts kept apart, every hash re-checked against the chain |
+| the same, readable | `npm run report -- --portfolio <id>` — including what actually refuses this portfolio's trades |
 | tell me when it breaks | `RIVO_ALERT_WEBHOOK` (Slack/Discord) or `RIVO_ALERT_TELEGRAM_*` |
 
 **A halted portfolio does not restart itself.** A breaker that resets on its own is not a breaker.
