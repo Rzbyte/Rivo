@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-22T22:44:36.183Z",
+  "generatedAt": "2026-08-22T22:47:11.391Z",
   "source": "postgres",
   "network": "testnet",
   "venueId": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
@@ -20,35 +20,35 @@
     "collateralSymbol": "tUSDC"
   },
   "runtime": {
-    "cycles": 43,
+    "cycles": 48,
     "startedAt": 1787437234,
-    "lastCycleAt": 1787438651,
-    "sinceLastCycleSec": 25,
+    "lastCycleAt": 1787438819,
+    "sinceLastCycleSec": 12,
     "capital": 50,
     "cash": 49.3361492236,
     "contributed": 0,
-    "realizedPnl": -0.0849276047,
+    "realizedPnl": -0.6638507764,
     "halted": null,
     "dryRun": true,
     "tradedBy": null,
-    "stateVersion": 44
+    "stateVersion": 49
   },
   "ledger": {
     "identity": "cash + open cost == capital + contributed + realised",
     "cash": 49.3361492236,
-    "openCost": 0.5789231717,
+    "openCost": 0,
     "capital": 50,
     "contributed": 0,
-    "realizedPnl": -0.0849276047,
+    "realizedPnl": -0.6638507764,
     "imbalance": 0,
     "balances": true
   },
   "counts": {
-    "decisions": 689,
+    "decisions": 769,
     "decisionsEntered": 1,
-    "decisionsRefused": 687,
-    "lotsOpen": 1,
-    "lotsClosed": 1,
+    "decisionsRefused": 767,
+    "lotsOpen": 0,
+    "lotsClosed": 2,
     "executionAttempts": 5,
     "executionsByStatus": {
       "confirmed": 5
@@ -135,17 +135,18 @@
   ],
   "receipts": [],
   "positions": {
-    "open": [
+    "open": [],
+    "closed": [
       {
         "market": "0x0000000000000000000000000000000000000000000000000000000000006def",
         "leg": "BTC 15m DOWN",
         "shares": 0.7077300387,
         "cost": 0.5789231717,
-        "expiry": 1787438700,
-        "adopted": false
-      }
-    ],
-    "closed": [
+        "proceeds": 0,
+        "exit": "settled",
+        "closedAt": 1787438718,
+        "txHashes": []
+      },
       {
         "market": "0x0000000000000000000000000000000000000000000000000000000000006def",
         "leg": "BTC 15m DOWN",
@@ -159,7 +160,7 @@
     ]
   },
   "settlement": {
-    "settled": 0,
+    "settled": 1,
     "sold": 1,
     "merged": 0,
     "voided": 0,
@@ -183,17 +184,17 @@
     {
       "name": "DISCOVER",
       "proven": true,
-      "evidence": "43 cycles against the live venue"
+      "evidence": "48 cycles against the live venue"
     },
     {
       "name": "ANALYZE",
       "proven": true,
-      "evidence": "689 decisions recorded, 687 of them refusals"
+      "evidence": "769 decisions recorded, 767 of them refusals"
     },
     {
       "name": "ALLOCATE",
       "proven": true,
-      "evidence": "1 open lots, 1 closed"
+      "evidence": "0 open lots, 2 closed"
     },
     {
       "name": "RISK CHECK",
@@ -223,7 +224,7 @@
     {
       "name": "PERSIST",
       "proven": true,
-      "evidence": "PostgreSQL, state version 44"
+      "evidence": "PostgreSQL, state version 49"
     },
     {
       "name": "LEDGER",
@@ -232,8 +233,8 @@
     },
     {
       "name": "SETTLE",
-      "proven": false,
-      "evidence": "0 positions resolved against the venue's oracle"
+      "proven": true,
+      "evidence": "1 positions resolved against the venue's oracle"
     },
     {
       "name": "CLAIM",

@@ -66,13 +66,13 @@ jobs:
       # printed a stack trace that happened not to contain the word.
       - name: The database tests actually ran
         run: |
-          npx vitest run src/db web/lib --reporter=json --outputFile=/tmp/db-report.json
+          npx vitest run src/db src/proof src/worker src/ledger web/lib --reporter=json --outputFile=/tmp/db-report.json
           node -e '
             const r = require("/tmp/db-report.json");
             const skipped = r.numPendingTests ?? 0;
             const passed = r.numPassedTests ?? 0;
             console.log(`${passed} passed, ${skipped} skipped`);
-            if (passed < 40) { console.log("::error::too few database tests ran — is the postgres service still configured?"); process.exit(1); }
+            if (passed < 120) { console.log("::error::too few database tests ran — is the postgres service still configured?"); process.exit(1); }
             if (skipped > 0) { console.log("::error::database tests skipped, which means DATABASE_URL is not reaching them"); process.exit(1); }
           '
 
