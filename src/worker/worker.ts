@@ -29,7 +29,7 @@ import { Indexer } from "../core/indexer.js";
 import type { Network } from "../core/config.js";
 import { claimDue, heartbeat, registerWorker, release, releaseAll, LEASE_TTL_SEC, type Lease } from "../db/leases.js";
 import { portfolioById } from "../db/portfolios.js";
-import { record } from "../db/events.js";
+import { record, recordOnce } from "../db/events.js";
 import { runPortfolioCycle, summarise } from "./cycle.js";
 import { migrate } from "../db/migrate.js";
 import { closeDb, configured, safeTarget } from "../db/pool.js";
@@ -73,7 +73,36 @@ export interface WorkerHealth {
   holding: number;
   lastPassAt: number;
   lastError: string | null;
+  /**
+   * The last time a portfolio cycle completed successfully, anywhere in this
+   * process.
+   *
+   * Distinct from `lastPassAt`, and the distinction is the whole point: a
+   * scheduler pass that finds nothing due is a healthy tick, and a worker can
+   * tick happily for an hour while every cycle it runs fails against a dead
+   * indexer. One number says "the process is alive"; this one says "the work is
+   * getting done".
+   */
+  lastSuccessfulCycleAt: number;
+  /**
+   * Consecutive failed cycles across every portfolio this worker holds.
+   *
+   * Fleet-wide rather than per portfolio, on purpose. One portfolio failing
+   * repeatedly is that portfolio's problem and is recorded against it; EVERY
+   * portfolio failing is the venue, the RPC or the network, and it is the shape
+   * that deserves waking somebody.
+   */
+  consecutiveCycleFailures: number;
 }
+
+/**
+ * How many cycles must fail in a row before the venue is presumed down.
+ *
+ * High enough that a single bad indexer response is not news — those happen and
+ * the Indexer already retries — and low enough that a genuinely dead venue is
+ * reported within a few minutes rather than at the end of a shift.
+ */
+export const VENUE_DOWN_AFTER = 6;
 
 export class Worker {
   private readonly indexers = new Map<Network, Indexer>();
@@ -90,6 +119,8 @@ export class Worker {
     holding: 0,
     lastPassAt: 0,
     lastError: null,
+    lastSuccessfulCycleAt: 0,
+    consecutiveCycleFailures: 0,
   };
 
   constructor(options: WorkerOptions = {}) {
@@ -194,7 +225,14 @@ export class Worker {
         out: (l) => this.opts.out(l),
       });
       this.health.cycles++;
-      if (!outcome.ok) this.health.failures++;
+      if (outcome.ok) {
+        this.health.lastSuccessfulCycleAt = Math.floor(Date.now() / 1000);
+        this.health.consecutiveCycleFailures = 0;
+      } else {
+        this.health.failures++;
+        this.health.consecutiveCycleFailures++;
+        await this.reportIfVenueDown(outcome.error ?? "unknown");
+      }
       this.opts.out(summarise(portfolio, outcome));
     } catch (e) {
       this.health.failures++;
@@ -205,6 +243,30 @@ export class Worker {
       // stops trading until the TTL expires, and the user cannot see why.
       await release(lease).catch(() => undefined);
     }
+  }
+
+  /**
+   * Say so when nothing is working, once.
+   *
+   * Recorded against no portfolio, because it is not a portfolio's problem: a run
+   * of failed cycles across everything this worker holds is the venue, the RPC or
+   * the network. `recordOnce` bounds it to one report an hour, so a venue that
+   * stays down does not become a thousand identical rows.
+   */
+  private async reportIfVenueDown(lastError: string): Promise<void> {
+    if (this.health.consecutiveCycleFailures !== VENUE_DOWN_AFTER) return;
+    const since = this.health.lastSuccessfulCycleAt;
+    await recordOnce(
+      null,
+      "venue.unreachable",
+      "error",
+      `${VENUE_DOWN_AFTER} consecutive cycles failed. ` +
+        (since > 0
+          ? `The last one that worked was ${new Date(since * 1000).toISOString()}. `
+          : `No cycle has succeeded since this worker started. `) +
+        `Most recent error: ${lastError}`,
+      { workerId: this.health.workerId, consecutiveFailures: this.health.consecutiveCycleFailures },
+    ).catch(() => undefined);
   }
 
   /**

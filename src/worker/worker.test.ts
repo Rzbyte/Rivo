@@ -15,7 +15,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { haveDatabase, seedPortfolio, truncateAll, withSchema } from "../db/testing.js";
 import { query } from "../db/pool.js";
-import { Worker } from "./worker.js";
+import { Worker, VENUE_DOWN_AFTER } from "./worker.js";
 import type { CycleOutcome } from "./cycle.js";
 import { setState } from "../db/portfolios.js";
 import { claimDue, registerWorker } from "../db/leases.js";
@@ -168,6 +168,62 @@ describe.skipIf(!haveDatabase())("the worker", () => {
     expect(w.health.failures).toBe(0);
     expect(w.health.lastPassAt).toBeGreaterThan(0);
     expect(w.health.workerId).not.toBeNull();
+  });
+
+  it("tells a ticking process apart from one getting work done", async () => {
+    // The distinction a health endpoint must not lose. A worker whose cycles all
+    // fail is still passing, still heartbeating, and doing nothing.
+    await seedPortfolio();
+    const good = spyWorker([]);
+    await good.start();
+    expect(good.health.lastSuccessfulCycleAt).toBeGreaterThan(0);
+    expect(good.health.consecutiveCycleFailures).toBe(0);
+
+    const bad = spyWorker([], async (id) => ({ portfolioId: id, ok: false, error: "indexer down" }));
+    await bad.start();
+    expect(bad.health.lastSuccessfulCycleAt).toBe(0);
+    expect(bad.health.consecutiveCycleFailures).toBe(1);
+    expect(bad.health.passes).toBe(1); // the PASS was fine
+  });
+
+  it("reports the venue as unreachable only after a run of failures", async () => {
+    // One bad indexer response is not news — the Indexer already retries. Every
+    // portfolio failing repeatedly is the venue, and deserves waking somebody.
+    await seedPortfolio();
+    const w = new Worker({
+      maxPasses: VENUE_DOWN_AFTER + 2,
+      idleMs: 1,
+      out: () => {},
+      runCycle: async (portfolio) => ({ portfolioId: portfolio.id, ok: false, error: "ECONNREFUSED" }),
+    });
+    await w.start();
+    expect(w.health.consecutiveCycleFailures).toBeGreaterThanOrEqual(VENUE_DOWN_AFTER);
+
+    const events = await query<{ kind: string; portfolio_id: string | null; message: string }>(
+      "SELECT kind, portfolio_id, message FROM events WHERE kind = 'venue.unreachable'",
+    );
+    expect(events).toHaveLength(1);
+    // Against no portfolio: it is not one portfolio's problem.
+    expect(events[0]!.portfolio_id).toBeNull();
+    expect(events[0]!.message).toContain("ECONNREFUSED");
+  });
+
+  it("clears the failure run as soon as one cycle works", async () => {
+    await seedPortfolio();
+    let fail = true;
+    const w = new Worker({
+      maxPasses: 4,
+      idleMs: 1,
+      out: () => {},
+      runCycle: async (portfolio) => {
+        const ok = !fail;
+        fail = false;
+        return ok ? { portfolioId: portfolio.id, ok: true } : { portfolioId: portfolio.id, ok: false, error: "blip" };
+      },
+    });
+    await w.start();
+    expect(w.health.consecutiveCycleFailures).toBe(0);
+    expect(w.health.lastSuccessfulCycleAt).toBeGreaterThan(0);
   });
 
   it("counts a failed cycle as a failure without failing the pass", async () => {

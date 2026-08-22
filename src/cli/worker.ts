@@ -17,7 +17,7 @@ import { createServer } from "node:http";
 import { loadEnv } from "../core/env.js";
 import { configured, safeTarget } from "../db/pool.js";
 import { liveWorkers } from "../db/leases.js";
-import { Worker } from "../worker/worker.js";
+import { Worker, VENUE_DOWN_AFTER } from "../worker/worker.js";
 
 const arg = (flag: string, fallback?: string): string | undefined => {
   const i = process.argv.indexOf(flag);
@@ -54,6 +54,12 @@ async function main(): Promise<void> {
     const now = Math.floor(Date.now() / 1000);
     const since = worker.health.lastPassAt === 0 ? null : now - worker.health.lastPassAt;
     const stalled = since !== null && since > 300;
+    // Two different questions, and a health endpoint that conflates them is
+    // worse than none: `secondsSinceLastPass` says the process is ticking,
+    // `secondsSinceSuccessfulCycle` says the work is getting done. A worker can
+    // tick happily for an hour while every cycle fails against a dead indexer.
+    const sinceCycle =
+      worker.health.lastSuccessfulCycleAt === 0 ? null : now - worker.health.lastSuccessfulCycleAt;
     const body = {
       ok: !stalled,
       workerId: worker.health.workerId,
@@ -62,6 +68,9 @@ async function main(): Promise<void> {
       cycles: worker.health.cycles,
       failures: worker.health.failures,
       secondsSinceLastPass: since,
+      secondsSinceSuccessfulCycle: sinceCycle,
+      consecutiveCycleFailures: worker.health.consecutiveCycleFailures,
+      venueReachable: worker.health.consecutiveCycleFailures < VENUE_DOWN_AFTER,
       lastError: worker.health.lastError,
       database: safeTarget(),
     };
