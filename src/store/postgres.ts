@@ -310,10 +310,30 @@ export class PostgresStateStore implements StateSink {
     );
   }
 
-  /** Close whatever moved into `state.closed` since the last save. */
+  /**
+   * Close whatever moved into `state.closed` since the last save.
+   *
+   * A closed entry carries the id of the position it came from, and that id is
+   * NOT enough to decide what to do with the row — because a REDUCE produces a
+   * closed entry for the part that was sold while the position itself stays
+   * open, holding the same id.
+   *
+   * Closing the row on the strength of the id alone therefore deleted the
+   * surviving lot: the row was marked closed and resized to the sold slice, and
+   * on the next reload the remainder was simply gone. Measured on a live run —
+   * one REDUCE of 0.66 shares, and the very next cycle repaired the ledger by
+   * -0.31, which is precisely the remainder's cost.
+   *
+   * So the id is only followed when the position is genuinely finished, which is
+   * exactly the case where it no longer appears in `state.open`. A partial sale
+   * falls through to an insert and gets a row of its own — which is also the
+   * more honest record, since two slices of one position sold at two prices are
+   * two events.
+   */
   private async persistClosed(c: PoolClient, state: RivoState): Promise<void> {
+    const stillOpen = new Set(state.open.map((p) => p.id).filter(Boolean) as string[]);
     for (const p of state.closed.slice(this.closedWatermark)) {
-      if (p.id) {
+      if (p.id && !stillOpen.has(p.id)) {
         const closed = await c.query(
           `UPDATE positions
               SET status = 'closed', closed_at = $3, won = $4, proceeds = $5, exit = $6,

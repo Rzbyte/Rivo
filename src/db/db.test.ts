@@ -388,6 +388,45 @@ describe.skipIf(!haveDatabase())("the durable layer", () => {
       expect(ledgerBalances(reloaded)).toBe(true);
     });
 
+    it("keeps the remainder of a partially sold position", async () => {
+      // The regression. A REDUCE records a closed entry for the slice that was
+      // sold while the position stays open carrying the same id, so closing the
+      // row on the id alone deleted the surviving lot. Live run: one REDUCE of
+      // 0.66 shares, and the next cycle repaired the ledger by -0.31 — exactly
+      // the remainder's cost.
+      const { portfolioId } = await seedPortfolio();
+      const store = new PostgresStateStore(portfolioId);
+      const state = await store.load();
+      state.open.push(held1({ shares: 10, cost: 4 }));
+      state.cash -= 4;
+      await store.save(state);
+
+      const p = state.open[0]!;
+      const soldShares = 4;
+      const soldCost = 1.6;
+      p.shares -= soldShares;
+      p.cost -= soldCost;
+      state.cash += 2;
+      state.realizedPnl += 2 - soldCost;
+      state.closed.push({
+        id: p.id!,
+        marketId: p.marketId, asset: p.asset, intervalSec: p.intervalSec, leg: p.leg,
+        shares: soldShares, entryPrice: p.entryPrice, cost: soldCost, fairAtEntry: p.fairAtEntry,
+        openedAt: p.openedAt, closedAt: 1_800_000_100, won: 0, proceeds: 2, exit: "sold",
+      });
+      await store.save(state);
+
+      const reloaded = await new PostgresStateStore(portfolioId).load();
+      expect(reloaded.open).toHaveLength(1);
+      expect(reloaded.open[0]!.shares).toBe(6);
+      expect(reloaded.open[0]!.cost).toBeCloseTo(2.4, 8);
+      expect(reloaded.closed).toHaveLength(1);
+      expect(reloaded.closed[0]!.shares).toBe(4);
+      // The identity the lost remainder was breaking.
+      expect(ledgerBalances(reloaded)).toBe(true);
+      expect(reloaded.contributed ?? 0).toBe(0);
+    });
+
     it("links a closed position to the executions that produced it", async () => {
       // The audit trail. This is what the execution ledger was built for: a
       // position that no longer exists still names the transactions that opened
