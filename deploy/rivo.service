@@ -1,0 +1,67 @@
+# Keep the autopilot running across reboots, crashes and sleep.
+#
+# A user unit rather than a system one: the key it signs with lives in the
+# operator's home directory, and a service running as root would be a larger
+# blast radius for no benefit.
+#
+#   cp deploy/rivo.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now rivo
+#   journalctl --user -u rivo -f
+#
+# `loginctl enable-linger $USER` makes it survive logout, which is the difference
+# between a service and a terminal you must not close.
+#
+# The single-instance lock in the runtime makes restarts safe: if systemd starts
+# a second copy while the first is somehow alive, the second refuses and exits 1
+# rather than both trading the same wallet.
+
+[Unit]
+Description=Rivo — autonomous portfolio manager for DreamDEX Event Contracts
+Documentation=https://github.com/Rzbyte/Rivo
+# The venue lives on the internet; starting before there is a route just burns a
+# restart and logs a confusing first error.
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# EDIT THIS to wherever the repo is checked out.
+WorkingDirectory=%h/projects/rivo-hackathon
+# EDIT the capital and profile. --live is deliberately spelled out rather than
+# defaulted: a unit file that trades by accident is not a convenience.
+ExecStart=/usr/bin/env npx tsx src/cli/run.ts --capital 25 --profile balanced --live --data-dir ./data-agent
+
+# Always come back, but back off — a runtime that cannot reach the venue should
+# not retry sixty times a minute and fill the journal with the same failure.
+Restart=always
+RestartSec=30s
+# If it fails five times inside ten minutes, something is broken that restarting
+# will not fix. Stop, and let the alerter and the journal say why.
+StartLimitBurst=5
+StartLimitIntervalSec=600
+
+# Give the current cycle time to finish and save. The runtime handles SIGTERM by
+# completing the pass in flight; killing it mid-write is the one thing that could
+# leave state behind the chain.
+KillSignal=SIGTERM
+TimeoutStopSec=180
+
+# The alert webhook belongs here rather than in .env, so a service that runs
+# without a terminal still has somewhere to shout.
+# Environment=RIVO_ALERT_WEBHOOK=https://hooks.slack.com/services/...
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=rivo
+
+# Modest hardening. The process needs the network, its own directory and nothing
+# else — certainly not write access to the rest of the filesystem.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/projects/rivo-hackathon
+
+[Install]
+WantedBy=default.target

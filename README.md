@@ -114,7 +114,7 @@ otherwise have hit ourselves.
 npm test
 ```
 
-**299 tests** across the things that either move money or produce a published number: the
+**322 tests** across the things that either move money or produce a published number: the
 dual-crossing-path book, the fair-value model and volatility estimator, the scoring rules behind
 every figure in [EVIDENCE.md](docs/EVIDENCE.md), the capital allocator, the position manager, settlement, and
 on-chain reconciliation.
@@ -283,7 +283,7 @@ src/
   web/         cockpit server + static snapshot export
   public/      the public pricing page — browser bundle, shares the runtime's math
   cli/         start · web · report · calibrate · scan · allocate · backtest · diagnose · band · maker · concentration · agent
-  *.test.ts    299 tests, colocated with what they cover
+  *.test.ts    322 tests, colocated with what they cover
 ```
 
 The cycle:
@@ -358,6 +358,35 @@ That is a real bound and a narrow one. It does not make a hot key safe; it makes
 The distinction is stated in the product rather than glossed, in
 [`src/runtime/signer.ts`](src/runtime/signer.ts) and in what `doctor` prints.
 
+### Keeping it alive, and being told when it is not
+
+```bash
+# where to shout when the breaker fires or cycles start failing
+echo "RIVO_ALERT_WEBHOOK=https://hooks.slack.com/services/..." >> .env
+
+cp deploy/rivo.service ~/.config/systemd/user/   # edit the paths and capital
+systemctl --user enable --now rivo
+loginctl enable-linger $USER                     # survive logout
+```
+
+Two things an unattended trader owes its operator, and neither was here until
+they were needed twice.
+
+**It says when it stops.** The drawdown breaker firing is the one event nobody
+should learn from a log the next morning — and that is exactly how both canary
+halts were found. Alerts fire on the breaker, on three consecutive cycle errors,
+and on the run ending. They fire **once** per distinct condition: a halt is true
+on every subsequent cycle, and an alerter that repeats it every 45 seconds is an
+alerter that gets muted, which makes the next real one invisible too.
+
+**Only one runtime per data directory.** Two were started against one directory
+here, by accident, and both allocated against the same capital and sent orders
+from the same wallet — the wallet drained while each process's ledger still
+balanced to itself, and what surfaced was twenty-five "not enough collateral"
+errors pointing at everything except the cause. A second runtime now refuses to
+start, names the pid and command holding the directory, and exits non-zero. A
+lock whose owner is gone is taken over rather than becoming an outage.
+
 ### Self-hosting
 
 ```bash
@@ -406,7 +435,7 @@ validates against the real thing.
 | `npm run proof` | capture the live execution chain as a checkable artefact |
 | `npm run agent -- new \| status \| fund \| sweep` | the wallet Rivo signs with, and what it may lose |
 | `npm run probe:operator` | can EC be traded non-custodially? measured, not assumed |
-| `npm test` · `npm run typecheck` | 299 tests · strict TypeScript, no emit |
+| `npm test` · `npm run typecheck` | 322 tests · strict TypeScript, no emit |
 | `npm run doctor` | can Rivo trade right now — signer, gas, collateral, venue, kit |
 | `npm run faucet` | mint testnet tUSDC — a direct `faucet(uint256)` call, no kit needed |
 | `npm run check:kit` · `npm run link:kit` | verify / install the optional bot kit |

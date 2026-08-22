@@ -12,6 +12,8 @@ import { Indexer } from "../core/indexer.js";
 import { profile } from "../portfolio/profiles.js";
 import { cycle, type CycleReport } from "../runtime/loop.js";
 import { hasSigner, makeExecutor } from "../runtime/executor.js";
+import { acquire, release } from "../runtime/lock.js";
+import { alerterFromEnv } from "../runtime/alert.js";
 import {
   DecisionLog,
   decisionLogPath,
@@ -41,6 +43,21 @@ async function main(): Promise<void> {
   // Dry run unless BOTH a real key is present and it is explicitly disabled.
   const wantsLive = (process.env.DRY_RUN ?? "true") === "false" || process.argv.includes("--live");
   const dryRun = !wantsLive || !hasSigner();
+
+  // Before anything opens the state file. Two runtimes on one directory both
+  // allocate against the same capital and send orders from the same wallet —
+  // measured here once, and it drained the wallet while each process's ledger
+  // still looked correct to itself.
+  const lock = acquire(dataDir);
+  if (!lock.ok) {
+    const held = lock.heldBy!;
+    console.error(`another Rivo already owns ${dataDir} — pid ${held.pid}, started ${new Date(held.startedAt * 1000).toISOString()}.`);
+    console.error(`  ${held.argv}`);
+    console.error(`Stop it first, or run this one with a different --data-dir.`);
+    process.exitCode = 1;
+    return;
+  }
+  process.on("exit", () => release(dataDir));
 
   const idx = new Indexer();
   const store = new StateStore(statePath(dataDir));
@@ -74,6 +91,9 @@ async function main(): Promise<void> {
         `realised ${money(state.realizedPnl)}`,
     );
   }
+  if (lock.tookOverFrom) {
+    console.log(`lock       took over from pid ${lock.tookOverFrom.pid}, which is no longer running`);
+  }
   if (state.halted) console.log(`HALTED     ${state.halted}`);
   console.log("");
 
@@ -85,6 +105,13 @@ async function main(): Promise<void> {
   };
   process.on("SIGINT", () => stop("SIGINT"));
   process.on("SIGTERM", () => stop("SIGTERM"));
+
+  const alerter = alerterFromEnv();
+  console.log(`alerts     ${alerter.configured ? "configured" : "none — set RIVO_ALERT_WEBHOOK to be told when it stops"}`);
+  console.log("");
+  if (executor.mode === "live") {
+    void alerter.fire("started", `live run started on ${dataDir} with ${money(state.capital)} of capital`);
+  }
 
   let consecutiveErrors = 0;
   // Generous against a normal cycle (seconds) and decisive against a hang.
@@ -103,7 +130,14 @@ async function main(): Promise<void> {
         CYCLE_DEADLINE_MS,
       );
       consecutiveErrors = 0;
+      // A pass that completed is the recovery signal: let a future failure be
+      // news again rather than staying suppressed by the last one.
+      alerter.clear("errors");
       heartbeat(r, state.capital, equityOf(state), state.realizedPnl, state.open.length);
+      // The breaker firing is the single thing an operator must not learn from a
+      // log the next morning. Fired from here rather than from the loop so the
+      // loop stays free of I/O that is not the venue's.
+      if (state.halted) void alerter.fire("halted", `circuit breaker fired — ${state.halted}`);
     } catch (e) {
       consecutiveErrors++;
       const msg = e instanceof Error ? e.message : String(e);
@@ -112,8 +146,11 @@ async function main(): Promise<void> {
       // A transient indexer hiccup should not end a multi-day run, but a wall of
       // errors means something is genuinely broken and grinding on will only
       // make the state harder to reason about.
+      // Three is worth telling somebody about; ten is worth stopping for.
+      if (consecutiveErrors === 3) void alerter.fire("errors", `3 consecutive cycle errors — latest: ${msg.slice(0, 200)}`);
       if (consecutiveErrors >= 10) {
         console.error("\n10 consecutive cycle errors — stopping rather than looping on a broken state.");
+        await alerter.fire("stopped", `stopped after 10 consecutive cycle errors — latest: ${msg.slice(0, 200)}`);
         process.exitCode = 1;
         return;
       }
@@ -126,6 +163,10 @@ async function main(): Promise<void> {
 
   console.log("");
   console.log(`stopped after ${state.cycles} cycles · equity ${money(equityOf(state))} · realised ${money(state.realizedPnl)}`);
+  if (executor.mode === "live") {
+    await alerter.fire("stopped", `run stopped after ${state.cycles} cycles · equity ${money(equityOf(state))}`);
+  }
+  release(dataDir);
 }
 
 /**
