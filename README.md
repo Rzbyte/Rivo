@@ -119,7 +119,7 @@ otherwise have hit ourselves.
 npm test
 ```
 
-**478 tests** across the things that either move money or produce a published number: the
+**513 tests** across the things that either move money or produce a published number: the
 dual-crossing-path book, the fair-value model and volatility estimator, the scoring rules behind
 every figure in [EVIDENCE.md](docs/EVIDENCE.md), the capital allocator, the position manager, settlement, and
 on-chain reconciliation.
@@ -191,6 +191,9 @@ npm run db:migrate
 npm run seed:demo                        # a portfolio, without signing in
 npm run worker -- --once                 # one pass against the live venue
 npm run dev:web                          # the product, on :3001
+
+npm run privy:check                      # what still needs configuring, checked for real
+npm run proof -- --portfolio <id>        # the evidence, out of the database
 ```
 
 Deployment — Vercel for the web tier, a container for the worker, managed PostgreSQL between them —
@@ -370,7 +373,7 @@ src/
   web/         the original cockpit server + static snapshot export
   public/      the public pricing page — browser bundle, shares the runtime's math
   cli/         start · worker · web · report · calibrate · scan · allocate · backtest · … · agent
-  *.test.ts    478 tests, colocated with what they cover
+  *.test.ts    513 tests, colocated with what they cover
 web/
   app/         Next.js — landing, the product, and the control-plane API
   components/  the dashboard, built around decisions rather than fills
@@ -533,10 +536,12 @@ validates against the real thing.
 | `npm run maker:live -- --live --mint` | two-sided quoting on testnet — measured, and negative |
 | `npm run coherence -- --days 30` | cross-tenor arbitrage bound — derived, tested, rejected on size |
 | `npm run build:public` | build the public page — static, no backend |
-| `npm run proof` | capture the live execution chain as a checkable artefact |
+| `npm run proof` | capture the live execution chain as a checkable artefact (`--portfolio <id>` for a database portfolio) |
+| `npm run report -- --portfolio <id>` | the same report over PostgreSQL, with the constraint histogram |
+| `npm run privy:check` | is this deployment's Privy set up? authenticates for real, lists what is missing |
 | `npm run agent -- new \| status \| fund \| sweep` | the wallet Rivo signs with, and what it may lose |
 | `npm run probe:operator` | can EC be traded non-custodially? measured, not assumed |
-| `npm test` · `npm run typecheck` | 478 tests · strict TypeScript across engine, page and web app |
+| `npm test` · `npm run typecheck` | 513 tests · strict TypeScript across engine, page and web app |
 | `npm run doctor` | can Rivo trade right now — signer, gas, collateral, venue, kit |
 | `npm run faucet` | mint testnet tUSDC — a direct `faucet(uint256)` call, no kit needed |
 | `npm run check:kit` · `npm run link:kit` | verify / install the optional bot kit |

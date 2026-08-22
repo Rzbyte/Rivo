@@ -1,173 +1,271 @@
-# Rivo — architecture and migration assessment
+# Rivo — architecture
 
-Written against the code at `pre-production-restructure` (53 commits, 17,548 lines of TypeScript,
-322 tests). It records what already exists, what production needs that does not exist yet, and the
-one measurement that decided the shape of the answer.
+What the system is, how the pieces divide, and why each boundary is where it is.
+For how to deploy it, see [DEPLOY.md](DEPLOY.md); for what it protects against, [SECURITY.md](SECURITY.md).
 
 ---
 
-## 0. Baseline, measured before anything moved
+## 1. Four planes
 
 ```
-npm test          23 files, 322 tests, all passing        2.0s
-npm run typecheck tsc --noEmit x2 (app + public bundle)   clean
-npm run build:public  99.4 kB bundle, 150.2 kB single-file page  clean
+      a person                                        DreamDEX / Somnia
+         │                                                    ▲
+         ▼                                                    │
+  ┌──────────────────────┐                    ┌───────────────┴──────────────┐
+  │ WEB / CONTROL        │                    │ EXECUTION                    │
+  │ Next.js on Vercel    │                    │ long-running worker fleet    │
+  │ request-scoped       │                    │ many portfolios, one process │
+  │ never runs a loop    │                    │ leases, not assignments      │
+  └──────────┬───────────┘                    └───────────────┬──────────────┘
+             │                                                │
+             └───────────────────┬────────────────────────────┘
+                                 ▼
+                   ┌─────────────────────────────┐    ┌──────────────────────┐
+                   │ DURABLE STATE               │    │ IDENTITY / SIGNING   │
+                   │ managed PostgreSQL          │    │ Privy                │
+                   │ the only shared truth       │    │ holds the keys, so   │
+                   │ append-only where it counts │    │ Rivo does not        │
+                   └─────────────────────────────┘    └──────────────────────┘
 ```
 
-Restore point: `git tag pre-production-restructure`.
+**The worker is not a serverless function and cannot be.** A trading cycle settles, claims, reconciles
+and allocates on a clock that has nothing to do with anybody being logged in, and it holds a lease
+while it does. The product's whole promise — configure once, close the browser — is that this plane
+keeps running when the others are idle.
+
+**The web tier never trades.** It reads and writes policy; it does not execute. The only thing it can
+start is a portfolio's `running` state, and the worker decides what that means.
 
 ---
 
-## 1. What exists, and is kept
+## 2. The engine, unchanged
 
-The engine is not a prototype. It is layered, and the layers are already separable.
+The trading intelligence predates the product and did not move to accommodate it. `allocate`,
+`manage`, `reconcile`, `cycle` and the cash-ledger identity are the same functions with the same
+tests they had before there was a database.
 
-| plane | modules | what it owns |
-|---|---|---|
-| pricing | `model/fairvalue`, `model/vol`, `calibration/` | conditional Φ(z) fair value, the calibration harness, AUC/Brier |
-| discovery | `core/indexer`, `engine/scan`, `engine/book` | venue reads, the eight-market term structure, depth ladders |
-| evaluation | `engine/opportunity` | edge, confidence, fillable size, per-leg delta |
-| allocation | `portfolio/allocator` | Kelly sizing under **every** portfolio constraint at once |
-| risk | `portfolio/risk`, `portfolio/profiles`, `portfolio/policy` | correlated exposure through ρ, expiry buckets, tenor caps, profiles |
-| lifecycle | `runtime/loop`, `runtime/position`, `runtime/settlement` | the cycle, post-entry management, settle → claim → recycle |
-| execution | `runtime/executor`, `runtime/allowance`, `runtime/maker` | ec-core order placement, inline pool approval, lot quantisation |
-| truth | `runtime/reconcile`, `runtime/onchain`, `runtime/state` | chain-wins reconciliation, the ledger identity, atomic state writes |
-| authority | `runtime/signer` | who signs, and what bounds that authority carries |
-| safety | `runtime/lock`, `runtime/alert` | single-writer locking, breaker alerts |
-| product | `public/`, `web/` | the static cockpit, the control server, the per-owner registry |
+| module | owns |
+|---|---|
+| `model/` | realized volatility, conditional fair value |
+| `engine/` | dual-crossing-path book, opportunity scoring, live snapshot |
+| `portfolio/` | risk profiles, correlated delta and expiry-bucket risk, the capital allocator |
+| `runtime/` | the cycle, position management, settlement, reconciliation, execution, authority |
+| `calibration/`, `backtest/`, `research/` | the evidence harness |
 
-Three properties in here are load-bearing and must survive every change below:
+Two seams were added underneath it, and nothing else:
 
-1. **The allocator is portfolio-level.** `allocate()` scores every leg across every market, then
-   spends a single budget through correlated-delta, expiry-bucket and tenor headroom. Three
-   individually-positive BTC legs do not produce three buys. This is the product.
-2. **The chain is the authority.** `reconcile()` treats local state as a claim and the outcome-token
-   contract as the fact. A restart cannot re-buy what the wallet already holds.
-3. **The ledger identity is enforced.** `cash + Σ open cost == capital + contributed + realised`,
-   checked every cycle. This caught a live run that had drifted 426 of phantom cash.
+```ts
+// src/store/types.ts — the cycle writes into this and does not know what it is
+export interface StateSink    { save(state: RivoState): void | Promise<void>; }
+export interface DecisionSink { append(records: DecisionRecord[]): void | Promise<void>; }
 
----
+// src/runtime/signer.ts — the executor asks for authority and does not know whose
+export interface ChainSigner extends SigningAuthority { account(): Promise<Account>; }
+```
 
-## 2. What production needs, and does not have
-
-| # | gap | today | consequence |
-|---|---|---|---|
-| 1 | durable state | `data/state.json` + `decisions.jsonl` per directory | one machine, one disk; no concurrent readers; no query |
-| 2 | **execution provenance** | `txHash` lives on `HeldPosition` only | closing a position **erases its tx hash**. `proof.ts` already works around this. This is the "208 positions, 10 hashes" defect, and it is real |
-| 3 | identity | a wallet address typed or connected in the browser | no accounts, no sessions, no email/social onboarding |
-| 4 | autonomous signing | **one** backend key; Autopilot allowed only for that key's own address (`web/registry.ts`) | Rivo is single-tenant by construction. This is the blocker that makes it a script rather than a product |
-| 5 | worker | web server spawns `tsx src/cli/run.ts` per owner, PID-file lock | no scheduler, no leases, no fleet; a dead box is a dead portfolio |
-| 6 | idempotency | crash-safety rests on reconcile alone | a crash between submit and confirm has no intent record to recover against |
-| 7 | web | vanilla-TS static SPA, hash routes | not Next.js, not on Vercel, no server session |
+Both are satisfied structurally by what already existed. `StateStore` and `DecisionLog` write files;
+`PostgresStateStore` and `PostgresDecisionLog` write rows. `EnvKeyAuthority` reads a key from the
+environment; `PrivyDelegatedAuthority` asks a TEE. The cycle cannot tell.
 
 ---
 
-## 3. The measurement that decided the architecture
+## 3. Signing: whose authority, and what bounds it
 
-Gap 4 is the hard one, and the repo's own conclusion was that it could not be closed:
+This is the part that turns a script into a product, and the part most worth being precise about.
 
-> "On DreamDEX Event Contracts as of 2026-08 there is no way to place an order for somebody else,
-> so the only unattended authority is a key that can do anything the account can do."
-> — `src/runtime/signer.ts`
-
-That conclusion is **correct about the chain and wrong about the product**, and the difference is
-worth being precise about, because it is what turns Rivo into something a stranger can use.
-
-**On-chain delegation is genuinely unavailable.** The deployed BinaryPool contains
-`placeBinaryOrderFor` and `cancelOrderFor`; both revert `0x3fb0ba2e` from every caller tried,
+**On-chain scoping is unavailable, measured rather than assumed.** The deployed BinaryPool contains
+`placeBinaryOrderFor` and `cancelOrderFor`; both revert `0x3fb0ba2e` for every caller tried,
 including the owner acting for itself, while each parameter mistake returns a selector of its own.
-Compiled in, switched off. Reproducible in one minute with `npm run probe:operator`. Nothing below
-changes that, and nothing below pretends otherwise.
+Compiled in, switched off. `npm run probe:operator` re-runs the differential in about a minute.
 
-**Off-chain custody of the signing key is available, and is a different question.** Reading the
-installed SDK rather than assuming:
+**Key custody is a separate question, and it has an answer.** Reading the installed SDK rather than
+the kit's entry point:
 
 ```ts
-// @somnia-chain/markets-sdk/dist/unified/exchange.d.ts
-export type SomniaMarketsConfig = ClientConfig & Pick<TraderConfig, "privateKey" | "account" | "walletClient">;
-setSigner(signer: Pick<TraderConfig, "privateKey" | "account" | "walletClient">): void;
-
-// @somnia-chain/markets-sdk/dist/writer.js — how a signer is resolved
-if (config.privateKey) localAccount = privateKeyToAccount(config.privateKey, { nonceManager });
+// markets-sdk/dist/writer.js
 else if (typeof config.account === "object" && "signTransaction" in config.account) localAccount = config.account;
+// markets-sdk/dist/unified/exchange.d.ts
+setSigner(signer: Pick<TraderConfig, "privateKey" | "account" | "walletClient">): void;
+// @privy-io/server-auth/viem
+declare const createViemAccount: (input: {walletId, address, privy}) => Promise<LocalAccount>;
 ```
 
-Any object with a `signTransaction` method is accepted as the local-signing fast path. And:
-
-```ts
-// @privy-io/server-auth/dist/dts/viem.d.ts
-declare const createViemAccount: (input: { walletId: string; address: Hex; privy: PrivyClient })
-  => Promise<LocalAccount>;
-```
-
-A viem `LocalAccount` whose `signTransaction` is an authenticated call to Privy's TEE. The two
-interfaces meet exactly. `ec-core`'s own `createExchange` only forwards `privateKey`, but it returns
-the exchange, and `setSigner` is a documented, supported method on it:
+Any object with `signTransaction` is the SDK's local-signing fast path, and Privy's server SDK
+returns exactly that. So:
 
 ```
-createExchange({ withSigner: false })  ->  ctx.exchange.setSigner({ account: privyAccount })
+createExchange({ withSigner: false })  →  ctx.exchange.setSigner({ account })
 ```
 
-Every ec-core verb Rivo already calls — `placeLimit`, `sellableSize`, `maybeClaim`,
-`cancelTracked` — then signs as the **user's** wallet, from the server, with the user offline, and
-**no key material ever exists inside Rivo**. The user grants this once via Privy delegated actions
-and revokes it whenever they like.
+Every ec-core verb then signs as **that user's** wallet, from the server, with the user offline, and
+Rivo's database holds an address and a wallet id. `npm run check:kit` binds a throwaway account and
+checks the exchange reports it; `src/runtime/executor.kit.test.ts` proves two executors in one
+process get two different wallets and that an injected signer never falls back to `PRIVATE_KEY`.
 
-So the honest statement of the authority model becomes:
+**What is enforced, and by what:**
 
-```
-BOUNDS ENFORCED ON-CHAIN        none. The venue's operator entrypoint is disabled. (measured)
-BOUNDS ENFORCED BY CUSTODY      Rivo cannot exfiltrate the key, because it never has it.
-                                Privy holds it; Rivo holds a revocable right to ask for signatures.
-BOUNDS ENFORCED IN SOFTWARE     capital ceiling, correlated delta budget, expiry buckets, tenor
-                                caps, drawdown breaker, per-portfolio kill switch. Real, and only
-                                as strong as Rivo's own correctness.
-BOUNDS ENFORCED BY ARITHMETIC   the portfolio wallet holds only its float.
-```
+| | |
+|---|---|
+| on-chain | *nothing*. The venue's operator entrypoint is disabled. |
+| by custody | Rivo cannot exfiltrate a key it never has. Revocation ends its authority. |
+| by Privy policy | transaction policies, **where an operator has attached them**. Rivo declares what it wants in `POLICY_INTENT` and says "requested", not "enforced", until then. |
+| by software | capital ceiling, correlated delta budget, expiry buckets, tenor caps, drawdown breaker, kill switch. Real, tested, and exactly as strong as Rivo's own correctness. |
+| by arithmetic | the Rivo Portfolio holds only what its owner funded it with. |
 
-That is a materially stronger position than "we hold your key", strictly weaker than an on-chain
-scope, and it is stated that way everywhere it is displayed.
+The grant is checked in both directions. Turning Autopilot off stops the portfolio server-side and
+calls Privy's `revokeWallets`; a user who revokes inside Privy instead is discovered by the worker,
+which asks for the signer once per cycle and, on a revocation-shaped refusal, clears the grant and
+pauses the portfolio. A timeout does neither — a flaky network must not switch a user off.
 
 ---
 
-## 4. Target shape, adapted to this repository
+## 4. Durable state
 
-No big-bang move. `src/` stays where it is and keeps its meaning; the new planes are added beside
-it and the existing ones are given a seam rather than a rewrite.
+```
+users ─── wallets ─── portfolios ─┬─ portfolio_runtime   the mutable half of RivoState
+                                  ├─ positions           lots. NOT unique per leg — see below
+                                  ├─ executions          the ledger. append-only, enforced
+                                  ├─ position_executions which transactions produced which lot
+                                  ├─ decisions           the forward-test record. append-only
+                                  ├─ events              what needed attention
+                                  └─ portfolio_leases    one worker per portfolio, fenced
+workers                                                  the fleet, heartbeating
+```
+
+**Isolation is a query parameter, not a check.** Every accessor takes the owner id as well as the
+resource id, so a route that forgets to check ownership finds nothing rather than succeeding
+against someone else's portfolio.
+
+**`executions` is append-only and the database enforces it.** A trigger refuses every DELETE,
+refuses to rewrite what was intended, refuses to replace a recorded transaction hash with a
+different one, and refuses to move a row backwards through its state machine. The one exception is a
+user's right to erasure, and it must be *declared*: `SET LOCAL rivo.erase = 'on'` lasts a single
+transaction and appears in `eraseUser()` rather than nowhere.
+
+**Positions are lots, deliberately.** The allocator tops a leg up by adding a lot so each keeps the
+price it was actually filled at, and `reconcile` corrects them proportionally. A partial unique
+index on `(portfolio, market, leg)` looked like an invariant worth enforcing and was the opposite —
+see §7.
+
+**Saves are version-checked.** The lease stops two workers touching one portfolio; the `version`
+column is the assertion behind it. A save built on a stale snapshot throws rather than overwriting.
+
+---
+
+## 5. The execution ledger
+
+One row per action that touches the chain, written **before** it is attempted and never deleted.
+
+```
+intended   durable, nothing signed. Crashing here costs nothing.
+submitted  handed to the chain, hash known. Crashing here is why the row exists.
+confirmed  receipt seen.
+failed     rejected or reverted, with the reason.
+orphaned   sent, and no receipt could be found.
+```
+
+`orphaned` is not a synonym for `failed`. An RPC that will not answer looks exactly like a
+transaction that was never sent, and calling that a failure is a guess in the one direction that
+duplicates a trade. Position truth for such a row comes from `reconcile`, against the outcome-token
+contract.
+
+Crash safety has two independent defences and needs both. The ledger stops a repeat **within** a
+pass — an intent is durable before anything is signed, so a retry finds the earlier attempt.
+Reconciliation stops a repeat **across** passes — the kit returns a hash only after the write
+completes, so there is an instant in which Rivo has sent a transaction and cannot name it. The chain
+can. `src/ledger/idempotency.test.ts` tests both halves against both stores.
+
+---
+
+## 6. The worker
+
+```
+register → heartbeat → claim what is due → recover → cycle → release → repeat
+```
+
+Nothing assigns work. Each worker asks for portfolios that are due and unleased, and
+`FOR UPDATE ... SKIP LOCKED` makes that a queue rather than a stampede — adding a worker adds
+throughput with no coordinator and no partition to rebalance.
+
+Leases carry a **fencing token** that only increases, so a worker that stalls past its expiry, loses
+the lease and then wakes up is refused a renew, a release and a read. A timeout alone would not make
+that safe; it would move the collision later.
+
+**Recovery runs before the cycle**, not after. A pass that allocates while a transaction from the
+previous process is unaccounted for is reasoning from a portfolio that may already own what it is
+about to buy.
+
+Nothing in a portfolio's cycle touches `process.env`. That is what lets one process manage forty
+portfolios that sign as forty different wallets.
+
+---
+
+## 7. Three bugs of one shape, and what they cost
+
+All three were found by running the system against the live venue, not by reading it. All three are
+the same mistake in different disguises: **a mutation that moves capital without leaving a record
+the store can follow.**
+
+| | what happened | how it showed up |
+|---|---|---|
+| lot overwrite | a partial UNIQUE index made a second lot's upsert overwrite the first | 3 ledger repairs in 40 cycles, drifting negative; BTC exposure reached 200% of a budget that was never broken — the exposure it was applied to was wrong |
+| lost provenance | `position_executions` was never written | every closed position's audit trail was an empty list |
+| partial sale | a REDUCE closed the whole position's row | one REDUCE of 0.66 shares, next cycle repaired the ledger by −0.31 — exactly the remainder's cost |
+| merged position | a full merge removed the position with no closed record | 59 ledger repairs in one run; nothing closed the row, so the position came back on reload with the merge's capital already credited |
+
+Each has a regression test. The store now also closes rows the state no longer accounts for, loudly,
+because the class has appeared four times and the next disguise is not predictable — leaving an
+orphaned row open means the position resurrects, which is worse than closing it and shouting.
+
+The `LEDGER REPAIRED` warning is why any of this was visible. An accounting identity checked every
+cycle is the cheapest bug detector in the system.
+
+---
+
+## 8. Where the code is
 
 ```
 src/
-  core/ model/ engine/ portfolio/ calibration/ backtest/ research/   unchanged
-  runtime/          engine lifecycle — gains an execution ledger and an authority seam
-  db/               NEW  pg pool, migrations, typed queries
-  store/            NEW  StateStore interface: FileStateStore | PostgresStateStore
-  ledger/           NEW  permanent execution record, append-only
-  worker/           NEW  lease-based multi-portfolio scheduler
-  public/ web/      the existing static cockpit and control server, kept working
-web/                NEW  Next.js app — Privy auth, control-plane API, dashboard (Vercel)
+  core/ model/ engine/ portfolio/ calibration/ backtest/ research/   the engine, unchanged
+  runtime/     the cycle, execution, reconciliation, authority, receipts
+  signing/     Privy delegated authority — per-user signing, no key material held
+  ledger/      the permanent execution record, and crash recovery
+  store/       the seam: file (dev, tests, one portfolio) | PostgreSQL (production)
+  db/          pool, migrations, accounts, portfolios, leases, events, the view model
+  worker/      lease-based scheduler
+  proof/       evidence tooling over the database
+  public/      the public pricing page — browser bundle, shares the runtime's math
+  web/         the original single-portfolio cockpit
+  cli/         start · worker · web · report · proof · calibrate · scan · … · agent
+web/
+  app/         Next.js — landing, the product, the control-plane API, a read-only demo
+  components/  the dashboard, built around decisions rather than fills
+  lib/         auth (one path from token to identity), validation, chain metadata
 ```
-
-Plane separation, as required:
-
-| plane | where | why there |
-|---|---|---|
-| web / control | Next.js on Vercel | request-scoped, scales to zero, never runs a loop |
-| durable state | managed PostgreSQL | the only thing both planes trust |
-| execution | long-running worker container | a trading cycle is not a serverless function |
-| identity / signing | Privy | key custody is not Rivo's business to be in |
 
 ---
 
-## 5. Order of work
+## 9. What is verified, and what is not
 
-1. `src/db` + migrations, verified against a real PostgreSQL. ← storage plane
-2. Permanent execution ledger, and the intent → submit → confirm → finalize state machine. ← gap 2, 6
-3. `StateStore` seam; `FileStateStore` keeps every existing CLI, test and backtest working.
-4. `PrivyAuthority` behind the existing `SigningAuthority` interface. ← gap 4
-5. Worker with database leases; per-portfolio isolation preserved. ← gap 5
-6. Next.js app, Privy onboarding, portfolio dashboard built around SKIP decisions. ← gap 3, 7
-7. Observability, security pass, deployment, full verification.
+Stated here rather than implied anywhere, because the difference is the whole value of the record.
 
-Everything in step 3 onward is additive to the engine. The engine's own tests are the regression
-gate: if a change makes `allocate`, `manage`, `reconcile` or the ledger identity behave differently,
-that is a bug in the change, not a test to update.
+**Verified by running it:**
+
+- 513 tests, including 60+ against a real PostgreSQL 16 — leases, fencing, append-only triggers,
+  optimistic concurrency, ownership boundaries, idempotency, crash recovery.
+- The worker managing a portfolio against the **live DreamDEX testnet venue**: market discovery,
+  correlated allocation, position management including REDUCE and EXIT, settlement, claim sweeps,
+  and the ledger identity holding to 1e-15 across hundreds of cycles.
+- Per-user signing bound through the **real kit and SDK** — two executors in one process signing as
+  two different wallets, and an injected signer not falling back to `PRIVATE_KEY`.
+- `next build`, `build:public`, `typecheck` across engine, page and web app.
+
+**Not verified, and why:**
+
+- **Privy sign-in, delegation, and a real server-side signature.** These need credentials this
+  environment does not have. Every code path around them is tested with the credentials absent, and
+  `npm run privy:check` reports exactly what is missing and what must be configured by hand.
+- **A live transaction from a Privy-delegated wallet.** Blocked by the same thing. The execution
+  path itself is verified with a local key; what is unproven is Privy's half of the round trip.
+- **The Docker image build.** Docker is unavailable here. The workspace-free install it depends on
+  was verified directly instead, and CI builds and runs the image.
