@@ -238,3 +238,142 @@ describe("allocate — the portfolio layer earning its keep", () => {
     for (const d of r.decisions) expect(d.binding.length).toBeGreaterThan(0);
   });
 });
+
+describe("the refusal the product exists to make", () => {
+  // Three windows on one underlying, each with genuine positive edge. A strategy
+  // scoring markets independently buys all three and discovers it has one
+  // directional view at triple size. This is the test for the alternative.
+  const btcTenors = [900, 3600, 14400];
+
+  /** Three BTC UP legs, same view, different tenors, all attractive on their own. */
+  function threeBtcWindows(): Opportunity[] {
+    return btcTenors.map((intervalSec, i) =>
+      opp({
+        marketId: `0xbtc${i}`,
+        intervalSec,
+        // Each is a real edge, and they differ so there is a best one.
+        fair: 0.62 - i * 0.02,
+        ask: 0.5,
+        edge: 0.12 - i * 0.02,
+        // Big enough that the DELTA budget binds before the per-position cost cap
+        // does — otherwise this fixture tests the cost cap and quietly proves
+        // nothing about correlated exposure.
+        //
+        //   budget      100 x 0.05                       = 5.00 per 1%
+        //   per share   5e-4 x 68000 x 0.01              = 0.34 per 1%
+        //   cost cap    100 x 0.2 = 20 -> 40 shares      = 13.6 per 1%
+        //
+        // So one leg exhausts the budget at ~15 shares, well inside what the
+        // cost cap would have allowed.
+        deltaPerShare: 5e-4,
+      }),
+    );
+  }
+
+  it("does not buy the same view three times", () => {
+    const o = threeBtcWindows();
+    const a = allocate(inputs({ opportunities: o }));
+    const bought = a.decisions.filter((d) => d.action === "BUY");
+    expect(bought.length).toBeGreaterThan(0);
+    expect(bought.length).toBeLessThan(o.length);
+
+    // Whatever it took, the resulting BTC exposure respects the budget — which
+    // is the actual guarantee. "Bought fewer" without that would just be luck.
+    const cap = 100 * PROFILES.balanced.maxAssetDeltaPer1Pct;
+    const delta = a.riskAfter.assetDelta.get("BTC") ?? 0;
+    expect(Math.abs(delta)).toBeLessThanOrEqual(cap + 1e-9);
+  });
+
+  it("names the correlated budget as the reason, not a generic refusal", () => {
+    // The reason string reaches a user's screen. "Skipped" is useless; "BTC
+    // delta budget" is the whole argument.
+    const a = allocate(inputs({ opportunities: threeBtcWindows() }));
+    const refused = a.decisions.filter((d) => d.action === "SKIP");
+    expect(refused.length).toBeGreaterThan(0);
+    expect(refused.some((d) => /delta budget/i.test(d.binding))).toBe(true);
+  });
+
+  it("reports the exposure arithmetic behind each decision", () => {
+    const a = allocate(inputs({ opportunities: threeBtcWindows() }));
+    const cap = 100 * PROFILES.balanced.maxAssetDeltaPer1Pct;
+
+    for (const d of a.decisions) {
+      // Every leg that reached the delta budget carries its arithmetic; the
+      // ones rejected earlier legitimately do not, and must not invent it.
+      if (!d.exposure) continue;
+      expect(d.exposure.cap).toBeCloseTo(cap, 10);
+      if (d.action === "SKIP") {
+        // A refusal changes nothing, and saying so is the point of showing it.
+        expect(d.exposure.after).toBe(d.exposure.before);
+      } else {
+        expect(d.exposure.after).not.toBe(d.exposure.before);
+      }
+    }
+
+    // At least one refusal happened with the budget already spent — the case the
+    // dashboard renders as "the budget for BTC was already spent by another
+    // tenor".
+    const spent = a.decisions.filter(
+      (d) => d.action === "SKIP" && d.exposure && Math.abs(d.exposure.before) > 0.9 * d.exposure.cap,
+    );
+    expect(spent.length).toBeGreaterThan(0);
+  });
+
+  it("accumulates exposure across the pass, not from the state it started in", () => {
+    // The figure a refusal is judged against has to include what was taken
+    // EARLIER IN THE SAME CYCLE, or the second leg is measured against a
+    // portfolio that no longer exists by the time it is considered.
+    const a = allocate(inputs({ opportunities: threeBtcWindows() }));
+    const withExposure = a.decisions.filter((d) => d.exposure);
+    const firstBefore = Math.abs(withExposure[0]?.exposure?.before ?? 0);
+    const lastBefore = Math.abs(withExposure[withExposure.length - 1]?.exposure?.before ?? 0);
+    expect(lastBefore).toBeGreaterThan(firstBefore);
+  });
+
+  it("still takes an uncorrelated leg while refusing a correlated one", () => {
+    // The behaviour that distinguishes a portfolio manager from a rate limiter.
+    // ETH is a different underlying with its own budget, so it is not refused
+    // just because BTC's is spent.
+    const o = [
+      ...threeBtcWindows(),
+      opp({ marketId: "0xeth", asset: "ETH", intervalSec: 3600, fair: 0.6, ask: 0.5, edge: 0.1, deltaPerShare: 1.6e-2 }),
+    ];
+    const a = allocate(inputs({ opportunities: o }));
+    const boughtAssets = a.decisions.filter((d) => d.action === "BUY").map((d) => d.opportunity.asset);
+    expect(boughtAssets).toContain("ETH");
+    expect(a.decisions.filter((d) => d.action === "SKIP" && d.opportunity.asset === "BTC").length).toBeGreaterThan(0);
+  });
+
+  it("lets an OFFSETTING leg through, where an identical same-direction leg is refused", () => {
+    // Signed, not absolute. A DOWN leg against existing UP exposure is a hedge,
+    // and treating delta as a magnitude would refuse the hedge and permit the
+    // concentration — exactly backwards.
+    //
+    // Note what is NOT asserted: that the result is closer to zero. `headroom`
+    // deliberately lets an offsetting leg run all the way through neutral to the
+    // far side of the budget, so a large enough hedge legitimately ends up
+    // pointing the other way. The guarantee is the BUDGET, not the direction —
+    // and an earlier version of this test asserted the direction and failed
+    // against behaviour the allocator documents.
+    const existing = () => held({ marketId: "0xbtc0", shares: 100, deltaPer1PctPerShare: 0.02, cost: 20 });
+    const cap = 100 * PROFILES.balanced.maxAssetDeltaPer1Pct;
+
+    const hedge = opp({ marketId: "0xbtc9", leg: "DOWN", fair: 0.6, ask: 0.5, edge: 0.1, deltaPerShare: -5e-4 });
+    const hedged = allocate(
+      inputs({ opportunities: [hedge], held: [existing()], books: new Map([["0xbtc9", deepBook(0.5)]]) }),
+    );
+    expect(hedged.decisions.find((d) => d.opportunity.marketId === "0xbtc9")?.action).toBe("BUY");
+    expect(Math.abs(hedged.riskAfter.assetDelta.get("BTC") ?? 0)).toBeLessThanOrEqual(cap + 1e-9);
+
+    // The same leg pointing the SAME way as what is already held is capped far
+    // harder, because it concentrates rather than offsets.
+    const doubleDown = opp({ marketId: "0xbtc9", leg: "UP", fair: 0.6, ask: 0.5, edge: 0.1, deltaPerShare: 5e-4 });
+    const concentrated = allocate(
+      inputs({ opportunities: [doubleDown], held: [existing()], books: new Map([["0xbtc9", deepBook(0.5)]]) }),
+    );
+    const same = concentrated.decisions.find((d) => d.opportunity.marketId === "0xbtc9");
+    const hedgeShares = hedged.decisions.find((d) => d.opportunity.marketId === "0xbtc9")?.shares ?? 0;
+    expect(same?.shares ?? 0).toBeLessThan(hedgeShares);
+    expect(Math.abs(concentrated.riskAfter.assetDelta.get("BTC") ?? 0)).toBeLessThanOrEqual(cap + 1e-9);
+  });
+});
