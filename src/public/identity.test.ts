@@ -121,7 +121,7 @@ describe("connecting a wallet keeps what the demo built", () => {
     const demo = store.demoIdentity();
     const policy = store.configure(demo, { capital: 77, profile: "active", mode: "shadow" });
     store.savePortfolio(emptyPortfolio(policy));
-    store.appendActivity(demo, [{ at: 1, kind: "note", text: "hello" }]);
+    store.appendActivity(demo, [{ at: 1, kind: "info", text: "hello" }]);
 
     expect(store.adoptInto(demo, WALLET)).toBe(true);
 

@@ -7,5 +7,11 @@
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "types": []
   },
+  // `exclude` is INHERITED from the base config, which excludes src/public — and
+  // exclude filters include, so without this line every file this config exists
+  // to check was silently skipped. `npm run typecheck` reported success on a
+  // browser bundle it had never looked at; a deliberate `const x: number =
+  // "nope"` in charts.ts passed. Verified by that probe before and after.
+  "exclude": [],
   "include": ["src/public/**/*.ts", "src/model/**/*.ts", "src/engine/book.ts", "src/core/venue.ts", "src/core/timeout.ts"]
 }

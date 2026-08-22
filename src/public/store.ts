@@ -152,10 +152,12 @@ export function adoptInto(from: string, to: string): boolean {
   const policy = loadPolicy(from);
   if (!policy) return false;
 
-  const moved: PortfolioPolicy = { ...policy, owner: to.toLowerCase() };
+  // `owner` is an address type, and `.toLowerCase()` widens it back to string.
+  const owner = to.toLowerCase() as PortfolioPolicy["owner"];
+  const moved: PortfolioPolicy = { ...policy, owner };
   savePolicy(moved);
   const pf = loadPortfolio(from, policy);
-  savePortfolio({ ...pf, owner: to.toLowerCase() });
+  savePortfolio({ ...pf, owner });
   write(key(to, "activity"), loadActivity(from));
   forgetIdentity(from);
   return true;
