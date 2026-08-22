@@ -17,6 +17,15 @@ Somnia × DreamDEX Event Contracts Hackathon.
 > management, autonomous lifecycle orchestration, on-chain state reconciliation, explainability, and
 > a consumer-facing product.
 >
+> Every order Rivo sends goes through the kit. `ec-core` is 1,585 lines absorbing sixteen documented
+> sharp edges — `placeLimit` alone handles tick and lot quantisation in integer space, the mandatory
+> order expiry, and the fact that a reverted write does not throw — and reimplementing that would
+> mean relearning all of it with real money. What Rivo did instead was go deep enough into this
+> venue to find three places the kit has no answer for yet: allowance handling
+> ([#4](docs/SDK-FEEDBACK.md)), the granularity the venue's lot actually accepts (#5), and reading
+> holdings from the chain rather than the indexer (#8). Each became a finding rather than a silent
+> fork.
+>
 > **Rivo is the portfolio and evidence layer for DreamDEX Event Contracts.**
 
 ---
@@ -319,6 +328,8 @@ regardless of the flag, and a placeholder like `0x...` is rejected rather than a
 
 ```bash
 git clone https://github.com/somnia-chain/dreamdex-bot-kit ../dreamdex-bot-kit
+# The commit Rivo is built and verified against — the same one the image pins.
+git -C ../dreamdex-bot-kit checkout 9718fd9
 npm --prefix ../dreamdex-bot-kit install
 npm run link:kit        # makes @dreamdex-bot-kit/ec-core resolvable
 npm run check:kit       # verify the exports Rivo calls still exist

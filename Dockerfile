@@ -25,13 +25,30 @@
 # command and dry runs, which is the whole product minus the trading.
 FROM node:22-slim AS kit
 ARG KIT_REPO=https://github.com/somnia-chain/dreamdex-bot-kit
-ARG KIT_REF=main
+# PINNED, not `main`.
+#
+# `ec-core` is not a registry package — it is raw TypeScript from a repo — so
+# without a pin, an image built today and one built next month from this exact
+# commit can contain different code on the path that signs transactions. That is
+# the one dependency in this project that was still a moving target while
+# package-lock.json pinned everything else to the byte.
+#
+# This is the commit Rivo was built and verified against; `npm run check:kit`
+# checks the exports it calls still exist. Move it deliberately, re-run that
+# check, and say so in the commit — never bump it as a side effect.
+ARG KIT_REF=9718fd9fa7645a10d2dbb5bebe001f9ba0183e6d
 RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /opt
+# Fetch by ref rather than clone --branch: a branch name works, and so does a
+# commit SHA, which `--branch` cannot take. Shallow either way.
 RUN if [ -n "$KIT_REF" ]; then \
-      git clone --depth 1 --branch "$KIT_REF" "$KIT_REPO" dreamdex-bot-kit \
-      && rm -rf dreamdex-bot-kit/.git ; \
+      mkdir -p dreamdex-bot-kit && cd dreamdex-bot-kit \
+      && git init -q . \
+      && git remote add origin "$KIT_REPO" \
+      && git fetch -q --depth 1 origin "$KIT_REF" \
+      && git checkout -q FETCH_HEAD \
+      && rm -rf .git ; \
     else \
       mkdir -p dreamdex-bot-kit ; \
     fi
