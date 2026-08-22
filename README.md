@@ -33,6 +33,17 @@ executed**, every edge band is negative, and losses grow with claimed edge. The 
 measured: selecting the leg that maximises `model − price` selects for the leg where the model's
 own error is largest.
 
+**What that result is, and is not.** It is a verdict on **one strategy** — crossing the spread to
+take whichever leg maximises `model − price` — and not on Event Contracts or on this venue. The
+reason it loses is a selection effect rather than anything about DreamDEX: maximising a noisy
+estimate selects for the cases where the estimate is most wrong. That is the winner's curse, and it
+would appear on any market with a book worth crossing. This book, measured, is doing its job — it
+is systematically path-anchored, which is what a book that prices rather than guesses looks like,
+and it is the correlated bias that makes a portfolio layer worth building at all. What the result
+rules out is a family of naive taker strategies, which is a useful thing to know **before** funding
+one. Making — the structural alternative — was measured separately, with real quotes on-chain
+rather than a replay, and its own limits stated: [EVIDENCE §6](docs/EVIDENCE.md).
+
 So Rivo is not "a bot that makes money". It is an autonomous portfolio manager with a validated
 forecasting model, a measurement apparatus honest enough to find its own negative results, and
 portfolio constraints that **demonstrably prevent ruin even when the underlying edge is negative**:
@@ -418,8 +429,11 @@ methodological limit we state rather than hide: a replay cannot know whether our
 been hit. `npm run maker:live` puts real two-sided quotes on the venue to find out, and that
 measurement — not a strategy claim — is where we would spend the next month.
 
-What we would not do is add features. The venue is small, the edge is negative, and the useful thing
-this project produces is measurement other builders can act on. More of that beats more of Rivo.
+Where we would spend the next month is measurement, not surface area. The venue is young and its
+microstructure is barely documented — the reference oracle's scale, the direction depth actually
+comes from, what a maker's queue really looks like — and every one of those is something the next
+builder currently has to rediscover at their own expense. We would rather answer three more of them
+than add three more features to Rivo. That is the work we would like to keep doing here.
 
 ## Documentation
 
