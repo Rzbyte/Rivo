@@ -69,6 +69,63 @@ export const EC_CORE_EXPORTS = [
   "cancelTracked",
 ] as const;
 
+/**
+ * The signer-binding surface, which `ec-core` itself does not expose.
+ *
+ * `createExchange` forwards only `privateKey`, so a caller with a signer that is
+ * not a private key — a wallet whose key lives in somebody else's enclave, say —
+ * appears to be locked out of the whole kit. It is not. `createExchange` returns
+ * the exchange, and the SDK underneath it takes any of three signing sources and
+ * can be rebound after construction:
+ *
+ *   markets-sdk/dist/unified/exchange.d.ts
+ *     export type SomniaMarketsConfig = ClientConfig
+ *       & Pick<TraderConfig, "privateKey" | "account" | "walletClient">;
+ *     setSigner(signer: Pick<TraderConfig, "privateKey" | "account" | "walletClient">): void;
+ *
+ *   markets-sdk/dist/writer.js
+ *     else if (typeof config.account === "object" && "signTransaction" in config.account)
+ *         localAccount = config.account;
+ *
+ * So `createExchange({ withSigner: false })` followed by `setSigner({ account })`
+ * gives every ec-core verb a signer of the caller's choosing, on the SDK's own
+ * fast path — it signs locally and confirms in one round trip, exactly as it does
+ * with a private key. This is what makes per-user autonomous signing possible
+ * without Rivo holding anybody's key.
+ *
+ * Recorded here rather than in a comment at the call site because it is a fact
+ * about the kit's surface, and because `check:kit` asserts it still holds.
+ */
+export interface EcExchangeContext {
+  exchange: {
+    setSigner(signer: { account?: unknown; privateKey?: string; walletClient?: unknown }): void;
+    readonly walletAddress?: string;
+  };
+  canTrade: boolean;
+}
+
+/**
+ * Point an ec-core context at a signer the caller built.
+ *
+ * Throws rather than degrading. A silent no-op here would produce an exchange
+ * that reads fine and cannot write, and the symptom would be every order failing
+ * with the SDK's "signer required" long after the cause.
+ */
+export function bindSigner(ctx: EcContext, account: unknown): void {
+  const c = ctx as Partial<EcExchangeContext>;
+  if (typeof c?.exchange?.setSigner !== "function") {
+    throw new Error(
+      "this build of the bot kit's exchange has no setSigner(), so a caller-supplied signer cannot be bound. " +
+        "Rivo needs it for per-user signing — see src/signing/privy.ts. Run `npm run check:kit`.",
+    );
+  }
+  c.exchange.setSigner({ account });
+  // `canTrade` is what ec-core's own guards read. Constructing without a signer
+  // left it false, and it is true now, so say so rather than leaving a flag that
+  // contradicts the object it describes.
+  (c as { canTrade?: boolean }).canTrade = true;
+}
+
 /** Where the kit is expected to live, unless RIVO_EC_CORE points elsewhere. */
 export const DEFAULT_EC_CORE_SPECIFIER = "@dreamdex-bot-kit/ec-core";
 

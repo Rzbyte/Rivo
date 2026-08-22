@@ -13,10 +13,10 @@
 
 import type { Leg, MarketBook } from "../engine/book.js";
 import { simulateBuy } from "../engine/book.js";
-import { loadEcCore, type EcContext, type EcCore, type MarketOnchain, type UnifiedMarket } from "./ec-core-types.js";
+import { bindSigner, loadEcCore, type EcContext, type EcCore, type MarketOnchain, type UnifiedMarket } from "./ec-core-types.js";
 import { loadEnv } from "../core/env.js";
 import { AllowanceManager } from "./allowance.js";
-import { authority, AgentWalletAuthority } from "./signer.js";
+import { authority, AgentWalletAuthority, canSign, type ChainSigner } from "./signer.js";
 import { COLLATERAL_TOKEN, network } from "../core/config.js";
 
 export interface OrderRequest {
@@ -195,11 +195,38 @@ export class LiveExecutor implements Executor {
   private core: EcCore | null = null;
   private readonly marketCache = new Map<string, { market: UnifiedMarket; onchain: MarketOnchain }>();
   private allowances: AllowanceManager | null = null;
+  private signerAccount: import("viem").Account | null = null;
+
+  /**
+   * @param signer whose authority this executor trades under.
+   *
+   * Optional, and the two cases are genuinely different products:
+   *
+   *   ABSENT — the single-operator path this repository started as.
+   *     `ec-core` builds its signer from `process.env.PRIVATE_KEY` inside
+   *     `createExchange`, so the process itself is the account. One key, one
+   *     portfolio, and the CLI keeps working exactly as it did.
+   *
+   *   PRESENT — the product. Every portfolio has its own wallet and its own
+   *     authority, bound per executor rather than per process, so one worker can
+   *     manage forty users' portfolios without any of them sharing a key or
+   *     Rivo holding one. See src/signing/privy.ts.
+   */
+  constructor(private readonly signer?: ChainSigner) {}
 
   private async load(): Promise<EcCore> {
     if (!this.core) {
       this.core = await loadEcCore();
-      this.ctx = this.core.createExchange({ withSigner: true });
+      if (this.signer) {
+        // Build without a signer, then bind the one we were given. The kit's
+        // own entry point only forwards a private key; the SDK beneath it takes
+        // any viem account. See bindSigner in ec-core-types.ts for the reading.
+        this.signerAccount = await this.signer.account();
+        this.ctx = this.core.createExchange({ withSigner: false });
+        bindSigner(this.ctx, this.signerAccount);
+      } else {
+        this.ctx = this.core.createExchange({ withSigner: true });
+      }
     }
     return this.core;
   }
@@ -237,17 +264,26 @@ export class LiveExecutor implements Executor {
   private allowanceManager(): AllowanceManager | null {
     if (this.allowances) return this.allowances;
     loadEnv();
-    const pk = (process.env.PRIVATE_KEY ?? "").trim();
-    if (!/^0x[0-9a-fA-F]{64}$/.test(pk)) return null;
     const net = network();
-    this.allowances = new AllowanceManager({
+    const common = {
       rpcUrl:
         process.env.RPC_URL ??
         (net === "mainnet" ? "https://api.infra.mainnet.somnia.network" : "https://api.infra.testnet.somnia.network"),
       chainId: net === "mainnet" ? 5031 : 50312,
-      privateKey: pk,
       token: (process.env.COLLATERAL_TOKEN ?? COLLATERAL_TOKEN[net]) as `0x${string}`,
-    });
+    };
+    // An approval is a chain write and has to come from the SAME account that
+    // will place the order — approving from one wallet and trading from another
+    // produces the exact revert this manager exists to prevent. So when a signer
+    // was injected, the approval uses it; otherwise it falls back to the key in
+    // the environment, which is what the process is signing with anyway.
+    if (this.signerAccount) {
+      this.allowances = new AllowanceManager({ ...common, account: this.signerAccount });
+      return this.allowances;
+    }
+    const pk = (process.env.PRIVATE_KEY ?? "").trim();
+    if (!/^0x[0-9a-fA-F]{64}$/.test(pk)) return null;
+    this.allowances = new AllowanceManager({ ...common, privateKey: pk });
     return this.allowances;
   }
 
@@ -443,6 +479,23 @@ export function makeExecutor(dryRun: boolean): Executor {
   const a = authority();
   if (a instanceof AgentWalletAuthority) a.activate();
   return new LiveExecutor();
+}
+
+/**
+ * An executor for ONE portfolio, trading under ONE user's authority.
+ *
+ * The multi-user path. Nothing about it touches `process.env`, which is the
+ * property that makes a worker fleet possible: two portfolios running in the
+ * same process at the same time sign as two different wallets, and neither can
+ * change what the other signs with.
+ *
+ * Returns a dry executor when the authority cannot sign, rather than throwing.
+ * A user who has not granted authority, or has revoked it, gets Shadow Mode —
+ * which is the correct product behaviour and also the safe one.
+ */
+export function executorFor(signer: ChainSigner, dryRun: boolean): Executor {
+  if (dryRun || !signer.available() || !canSign(signer)) return new DryExecutor();
+  return new LiveExecutor(signer);
 }
 
 /**

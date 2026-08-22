@@ -17,7 +17,7 @@
 // so the set of addresses needing approval is small and stable. One approval per
 // pool, cached, is enough.
 
-import { createPublicClient, createWalletClient, defineChain, http, maxUint256, type Address } from "viem";
+import { createPublicClient, createWalletClient, defineChain, http, maxUint256, type Account, type Address } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
 const ERC20 = [
@@ -46,8 +46,20 @@ const ERC20 = [
 export interface AllowanceConfig {
   rpcUrl: string;
   chainId: number;
-  privateKey: string;
   token: Address;
+  /**
+   * The key to sign with, when Rivo holds one.
+   *
+   * Exactly one of `privateKey` and `account` is required. The split exists
+   * because approval is a chain write like any other, and the whole point of the
+   * Privy authority is that Rivo never holds key material — so this had to stop
+   * being a key-shaped hole. A viem `Account` covers both: a local key produces
+   * one, and so does a wallet whose signing happens inside somebody else's
+   * enclave.
+   */
+  privateKey?: string;
+  /** A pre-built signer. Anything with `signTransaction` — see src/signing/privy.ts. */
+  account?: Account;
 }
 
 export class AllowanceManager {
@@ -60,7 +72,10 @@ export class AllowanceManager {
 
   constructor(cfg: AllowanceConfig) {
     this.token = cfg.token;
-    this.account = privateKeyToAccount(cfg.privateKey as `0x${string}`);
+    if (!cfg.account && !cfg.privateKey) {
+      throw new Error("AllowanceManager needs either an account or a private key to sign an approval");
+    }
+    this.account = cfg.account ?? privateKeyToAccount(cfg.privateKey as `0x${string}`);
     const chain = defineChain({
       id: cfg.chainId,
       name: `somnia-${cfg.chainId}`,

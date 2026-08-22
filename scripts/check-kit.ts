@@ -30,12 +30,46 @@ async function main(): Promise<void> {
     console.log(`  ${ok ? "ok  " : "MISS"}  ${name}`);
     if (!ok) missing++;
   }
+
+  // The signer-binding path, checked by USING it rather than by grepping.
+  //
+  // Per-user autonomous signing rests on one fact about somebody else's package:
+  // an exchange built without a signer can be given one afterwards, and the SDK
+  // accepts any viem account as its local-signing path. That is documented on
+  // `bindSigner` in src/runtime/ec-core-types.ts, and a documented fact about a
+  // dependency is a fact that will be wrong one day. This is where we find out —
+  // in a check that takes a second, rather than in a live cycle that cannot sign.
+  console.log("");
+  console.log("checking the signer-binding path Rivo uses for per-user wallets");
+  try {
+    const ctx = (mod.createExchange as (o: { withSigner?: boolean }) => unknown)({ withSigner: false });
+    const ex = (ctx as { exchange?: { setSigner?: unknown; walletAddress?: unknown } }).exchange;
+    const hasSetSigner = typeof ex?.setSigner === "function";
+    console.log(`  ${hasSetSigner ? "ok  " : "MISS"}  exchange.setSigner`);
+    if (!hasSetSigner) missing++;
+    // Bind a throwaway account and check the exchange reports it. Nothing is
+    // signed and nothing is sent; this only proves the wiring exists.
+    if (hasSetSigner) {
+      const { privateKeyToAccount, generatePrivateKey } = await import("viem/accounts");
+      const account = privateKeyToAccount(generatePrivateKey());
+      (ex as { setSigner: (s: { account: unknown }) => void }).setSigner({ account });
+      const bound = String((ctx as { exchange: { walletAddress?: string } }).exchange.walletAddress ?? "").toLowerCase();
+      const ok = bound === account.address.toLowerCase();
+      console.log(`  ${ok ? "ok  " : "MISS"}  a bound viem account becomes the exchange's wallet`);
+      if (!ok) missing++;
+    }
+  } catch (e) {
+    console.log(`  MISS  binding a signer threw: ${e instanceof Error ? e.message : String(e)}`);
+    missing++;
+  }
+
   console.log("");
   if (missing > 0) {
-    console.error(`${missing} export(s) missing — the kit has moved. Update src/runtime/ec-core-types.ts.`);
+    console.error(`${missing} check(s) failed — the kit has moved. Update src/runtime/ec-core-types.ts.`);
     process.exitCode = 1;
   } else {
-    console.log(`all ${EC_CORE_EXPORTS.length} exports present — the live executor's contract holds.`);
+    console.log(`all ${EC_CORE_EXPORTS.length} exports present, and a caller-supplied signer binds.`);
+    console.log(`The live executor's contract holds, including per-user signing.`);
   }
 }
 

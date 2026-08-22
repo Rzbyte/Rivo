@@ -36,10 +36,22 @@
 
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import type { Account } from "viem";
 import { loadEnv } from "../core/env.js";
 import { network, type Network } from "../core/config.js";
 
-export type AuthorityKind = "none" | "raw-key" | "agent-wallet" | "session-key" | "operator";
+export type AuthorityKind =
+  | "none"
+  | "raw-key"
+  | "agent-wallet"
+  /**
+   * The user's own wallet, held by Privy, which Rivo may ask to sign for as long
+   * as the user's grant stands. See src/signing/privy.ts — including what this
+   * does and does not bound, which is the part worth reading.
+   */
+  | "privy-delegated"
+  | "session-key"
+  | "operator";
 
 /** What the product may say about the signer. Display-only, by construction. */
 export interface AuthorityDescription {
@@ -62,6 +74,28 @@ export interface SigningAuthority {
   /** Display-safe summary. Never includes key material. */
   describe(): AuthorityDescription;
 }
+
+/**
+ * An authority that can produce a signer the chain libraries understand.
+ *
+ * Separate from `SigningAuthority` on purpose. Everything that DISPLAYS an
+ * authority — the status endpoint, the dashboard, the startup banner — needs
+ * only `describe()`, and giving those callers a type that can hand out a signer
+ * would make it possible for a display path to acquire one by accident. Only the
+ * executor asks for this, and it has to ask for it by name.
+ *
+ * The type is viem's `Account`, which is what the venue's SDK accepts as its
+ * local-signing path — a private key produces one, and so does a wallet whose
+ * key lives inside somebody else's enclave. That equivalence is what makes
+ * autonomous signing possible without custody; see src/signing/privy.ts.
+ */
+export interface ChainSigner extends SigningAuthority {
+  account(): Promise<Account>;
+}
+
+/** Whether an authority can hand out a signer, narrowed for the executor. */
+export const canSign = (a: SigningAuthority): a is ChainSigner =>
+  typeof (a as ChainSigner).account === "function";
 
 const KEY_RE = /^0x[0-9a-fA-F]{64}$/;
 
@@ -92,7 +126,7 @@ async function addressFromKey(pk: string): Promise<`0x${string}` | null> {
  * Rivo is the only thing holding the key. That is a materially weaker guarantee
  * than an on-chain scope, and it is stated as such.
  */
-export class EnvKeyAuthority implements SigningAuthority {
+export class EnvKeyAuthority implements ChainSigner {
   readonly kind = "raw-key" as const;
   private cachedAddress: `0x${string}` | null = null;
 
@@ -111,6 +145,20 @@ export class EnvKeyAuthority implements SigningAuthority {
     if (!this.available()) return null;
     this.cachedAddress = await addressFromKey(this.key());
     return this.cachedAddress;
+  }
+
+  /**
+   * The signer, as viem sees it.
+   *
+   * Same shape a delegated Privy wallet produces, which is what lets the
+   * executor take one path for both. The difference between them is not in the
+   * interface — it is that this one is a key this process can read.
+   */
+  async account(): Promise<Account> {
+    const { privateKeyToAccount } = await import("viem/accounts");
+    const k = this.key();
+    if (!KEY_RE.test(k)) throw new Error("no PRIVATE_KEY configured");
+    return privateKeyToAccount(k as `0x${string}`);
   }
 
   describe(): AuthorityDescription {
@@ -154,7 +202,7 @@ export class EnvKeyAuthority implements SigningAuthority {
  *
  * `npm run agent` creates, funds, inspects and sweeps it.
  */
-export class AgentWalletAuthority implements SigningAuthority {
+export class AgentWalletAuthority implements ChainSigner {
   readonly kind = "agent-wallet" as const;
   private cachedAddress: `0x${string}` | null = null;
 
@@ -197,6 +245,14 @@ export class AgentWalletAuthority implements SigningAuthority {
     if (!this.available()) return null;
     this.cachedAddress = await addressFromKey(this.key());
     return this.cachedAddress;
+  }
+
+  /** The signer, as viem sees it. See the note on `EnvKeyAuthority.account`. */
+  async account(): Promise<Account> {
+    const { privateKeyToAccount } = await import("viem/accounts");
+    const k = this.key();
+    if (!KEY_RE.test(k)) throw new Error(`no agent key at ${AgentWalletAuthority.path()}`);
+    return privateKeyToAccount(k as `0x${string}`);
   }
 
   describe(): AuthorityDescription {
