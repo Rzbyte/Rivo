@@ -6,6 +6,10 @@ Give it a budget and a risk profile once. It prices every live window against th
 settlement reference, sizes the whole term structure as a single exposure, manages what it holds,
 redeems what settles, and redeploys the proceeds — without being prompted.
 
+**Sign in with an email address. Fund a portfolio wallet. Set a budget. Close the tab.** Rivo keeps
+managing it, server-side, with no private key to paste and no per-trade approval — because it never
+holds the key at all. [How that works ↓](#the-product)
+
 Built on the official [`dreamdex-bot-kit`](https://github.com/somnia-chain/dreamdex-bot-kit).
 Somnia × DreamDEX Event Contracts Hackathon.
 
@@ -21,10 +25,11 @@ Somnia × DreamDEX Event Contracts Hackathon.
 > sharp edges — `placeLimit` alone handles tick and lot quantisation in integer space, the mandatory
 > order expiry, and the fact that a reverted write does not throw — and reimplementing that would
 > mean relearning all of it with real money. What Rivo did instead was go deep enough into this
-> venue to find three places the kit has no answer for yet: allowance handling
-> ([#4](docs/SDK-FEEDBACK.md)), the granularity the venue's lot actually accepts (#5), and reading
-> holdings from the chain rather than the indexer (#8). Each became a finding rather than a silent
-> fork.
+> venue to find four places the kit has no answer for yet: allowance handling
+> ([#4](docs/SDK-FEEDBACK.md)), the granularity the venue's lot actually accepts (#5), reading
+> holdings from the chain rather than the indexer (#8), and the signer flexibility the SDK has and
+> `createExchange` does not expose (#15) — which is the five-line gap between "users must paste
+> private keys" and a product. Each became a finding rather than a silent fork.
 >
 > **Rivo is the portfolio and evidence layer for DreamDEX Event Contracts.**
 
@@ -114,7 +119,7 @@ otherwise have hit ourselves.
 npm test
 ```
 
-**322 tests** across the things that either move money or produce a published number: the
+**478 tests** across the things that either move money or produce a published number: the
 dual-crossing-path book, the fair-value model and volatility estimator, the scoring rules behind
 every figure in [EVIDENCE.md](docs/EVIDENCE.md), the capital allocator, the position manager, settlement, and
 on-chain reconciliation.
@@ -139,6 +144,57 @@ Three of the fixtures were wrong before the code was, and each failure demonstra
 working: a book helper offering only `SELL_YES` left a DOWN leg with no asks at all, a comment
 claiming "40% of 3600s = 1440s" ignored that `headroomSec` caps at 300s, and an assertion demanded
 ten decimal places from an approximation documented to 1.5e-7.
+
+---
+
+## The product
+
+A person should be able to use this without ever seeing a private key, and without approving
+anything at 3am. So:
+
+1. **Sign in** with an email address, a Google account, or a wallet they already have.
+2. **Get a Rivo portfolio wallet** — a Privy embedded wallet, created for them, separate from
+   anything they already hold.
+3. **Fund it.** Their money moves once, to an address they control.
+4. **Set a budget and a risk profile.** Three profiles do most of the work; the advanced panel is
+   there for the people who want it, and only ever *tightens*.
+5. **Enable Autopilot.** One consent prompt, from Privy, granting Rivo the right to ask for
+   signatures on that wallet. Revocable, by them, at any moment.
+6. **Close the tab.**
+
+From then on a worker somewhere else discovers windows, prices them, allocates across the whole
+term structure, manages what it holds, redeems what settles, and redeploys the proceeds — with no
+browser open and no per-trade approval.
+
+**Rivo never holds the key.** Privy does. That is not a detail: it is the difference between a
+product a stranger can use and a script you run for yourself. It works because the venue's SDK
+accepts any object with a `signTransaction` method as its local-signing path, and Privy's server
+SDK returns exactly that — a viem account whose signing happens inside a TEE. `npm run check:kit`
+verifies that binding against the real kit rather than asserting it.
+[SDK-FEEDBACK §15](docs/SDK-FEEDBACK.md) has the reading; [SECURITY.md](docs/SECURITY.md) has the
+threat model, including what a full compromise of Rivo's servers would and would not get.
+
+**What is enforced, and by what.** Stated here because overclaiming it would be the most damaging
+dishonesty in the product:
+
+| | |
+|---|---|
+| **on-chain** | *nothing*. The venue's operator entrypoint is compiled in and disabled — `npm run probe:operator` |
+| **by custody** | Rivo cannot exfiltrate a key it never has. Revoking delegation ends its authority immediately |
+| **by software** | capital ceiling, correlated delta budget, expiry buckets, tenor caps, drawdown breaker, kill switch — real, and exactly as strong as Rivo's own correctness |
+| **by arithmetic** | the portfolio wallet holds only what its owner funded it with |
+
+```bash
+npx tsx scripts/dev-postgres.ts start   # a real PostgreSQL, no docker, no root
+export DATABASE_URL=postgres://rivo@127.0.0.1:55432/rivo
+npm run db:migrate
+npm run seed:demo                        # a portfolio, without signing in
+npm run worker -- --once                 # one pass against the live venue
+npm run dev:web                          # the product, on :3001
+```
+
+Deployment — Vercel for the web tier, a container for the worker, managed PostgreSQL between them —
+is in **[docs/DEPLOY.md](docs/DEPLOY.md)**.
 
 ---
 
@@ -270,6 +326,32 @@ size multiplier — the same market can be a full position under one and no posi
 
 ## Architecture
 
+Four planes, deployed apart because they fail apart:
+
+```
+      a person                       the venue
+         │                               ▲
+         ▼                               │
+  ┌─────────────────┐            ┌───────┴────────────┐
+  │ WEB / CONTROL   │            │ EXECUTION          │
+  │ Next.js, Vercel │            │ worker container   │
+  │ request-scoped  │            │ many portfolios    │
+  └────────┬────────┘            └───────┬────────────┘
+           │                             │
+           └──────────┬──────────────────┘
+                      ▼
+           ┌────────────────────────┐      ┌──────────────────┐
+           │ DURABLE STATE          │      │ IDENTITY/SIGNING │
+           │ managed PostgreSQL     │      │ Privy — holds    │
+           │ the only shared truth  │      │ the keys, so     │
+           └────────────────────────┘      │ Rivo does not    │
+                                           └──────────────────┘
+```
+
+The worker is not a serverless function and cannot be. A trading cycle settles, claims, reconciles
+and allocates on a clock that has nothing to do with anybody being logged in — and the entire
+promise of the product is that it keeps going when nothing else is.
+
 ```
 src/
   core/        config, indexer (markets, orders, fills, oracle, price feed)
@@ -280,11 +362,25 @@ src/
   backtest/    fill-grounded replay · competing sizers · diagnostics · maker replay
   research/    cross-tenor coherence — the derivation and its test
   runtime/     durable state · execution adapter · position manager · reconciliation · the cycle
-  web/         cockpit server + static snapshot export
+  signing/     Privy delegated authority — per-user signing, no key material held
+  ledger/      the permanent execution record + crash recovery
+  store/       the seam: file state (dev, tests, one portfolio) | PostgreSQL (production)
+  db/          pool · migrations · accounts · portfolios · leases · events · the view model
+  worker/      lease-based scheduler — many portfolios, one process, none shared
+  web/         the original cockpit server + static snapshot export
   public/      the public pricing page — browser bundle, shares the runtime's math
-  cli/         start · web · report · calibrate · scan · allocate · backtest · diagnose · band · maker · concentration · agent
-  *.test.ts    322 tests, colocated with what they cover
+  cli/         start · worker · web · report · calibrate · scan · allocate · backtest · … · agent
+  *.test.ts    478 tests, colocated with what they cover
+web/
+  app/         Next.js — landing, the product, and the control-plane API
+  components/  the dashboard, built around decisions rather than fills
+  lib/         auth (one path from token to identity) · validation · chain metadata
 ```
+
+**The engine did not change to make any of this possible.** `allocate`, `manage`, `reconcile` and
+the cash-ledger identity are the same functions they were, with the same tests. What changed is
+what sits underneath them: a `StateSink` the cycle writes into without knowing whether it is a file
+or a row, and a `ChainSigner` the executor asks for authority without knowing whose it is.
 
 The cycle:
 
@@ -418,8 +514,13 @@ validates against the real thing.
 
 | | |
 |---|---|
-| `npm start -- --capital 50 --profile balanced` | the autopilot (dry run by default) |
-| `npm run web` | dashboard at localhost:3000 (`--snapshot out.html` freezes it to one file) |
+| `npm start -- --capital 50 --profile balanced` | one portfolio, files, no database — the CLI autopilot (dry run by default) |
+| `npm run worker` | the execution plane: many portfolios out of PostgreSQL (`--once`, `--interval`, `--concurrency`) |
+| `npm run dev:web` | the product — sign-in, funding, dashboard — on localhost:3001 |
+| `npm run db:migrate` | bring a database up to date (the worker also does this on boot) |
+| `npm run dev:pg` | a real PostgreSQL locally, no Docker and no root (`start`/`stop`/`reset`) |
+| `npm run seed:demo` | a portfolio to look at without signing in — Shadow Mode, enforced |
+| `npm run web` | the original single-portfolio cockpit at localhost:3000 (`--snapshot out.html` freezes it) |
 | `npm run report` | what it did, and why |
 | `npm run scan` | price every live leg right now |
 | `npm run allocate -- --capital 50` | one allocation pass, with the binding constraint per leg |
@@ -435,7 +536,7 @@ validates against the real thing.
 | `npm run proof` | capture the live execution chain as a checkable artefact |
 | `npm run agent -- new \| status \| fund \| sweep` | the wallet Rivo signs with, and what it may lose |
 | `npm run probe:operator` | can EC be traded non-custodially? measured, not assumed |
-| `npm test` · `npm run typecheck` | 322 tests · strict TypeScript, no emit |
+| `npm test` · `npm run typecheck` | 478 tests · strict TypeScript across engine, page and web app |
 | `npm run doctor` | can Rivo trade right now — signer, gas, collateral, venue, kit |
 | `npm run faucet` | mint testnet tUSDC — a direct `faucet(uint256)` call, no kit needed |
 | `npm run check:kit` · `npm run link:kit` | verify / install the optional bot kit |
@@ -449,13 +550,22 @@ indexers.
 
 Three things follow directly from what is already here, and one of them is not ours to do.
 
-**The moment `placeBinaryOrderFor` is enabled, Rivo becomes non-custodial.** This is the one that
-matters and the one we cannot ship. The interface is already written and already reports itself
-unavailable rather than pretending — `SessionKeyAuthority` in
+**The moment `placeBinaryOrderFor` is enabled, Rivo's limits become enforceable on-chain.** This is
+the one that matters and the one we cannot ship. The interface is already written and already
+reports itself unavailable rather than pretending — `SessionKeyAuthority` in
 [`src/runtime/signer.ts`](src/runtime/signer.ts) is the shape it will take, so adopting it is a new
-authority class and a config line, not a rewrite. Today an unattended Rivo must hold a hot key, so
-it holds one that owns nothing but a float the operator chose. That is the honest answer, not a
-good one.
+authority class and a config line, not a rewrite.
+
+What *has* changed since that was first written is custody, which is a different question and
+turned out to have an answer. Rivo no longer holds anybody's key: each user's portfolio wallet is
+held by Privy, Rivo holds a revocable right to ask it to sign, and the venue's SDK accepts that
+signer on its normal fast path ([SDK-FEEDBACK §15](docs/SDK-FEEDBACK.md)). So a full compromise of
+Rivo's servers gets an attacker the ability to place Event Contract orders from delegated wallets
+until their owners revoke — not the keys, and nothing after revocation.
+
+What is still missing is the *scope*. Rivo's trading limits are enforced by Rivo, in software. They
+are real and they are tested, and they are strictly weaker than a bound the chain would hold. That
+gap is one flag wide and it is not ours to close.
 
 **The user we are actually built for is the person who just made a bot.** `dreamBot Builder` makes
 an Event Contract bot a few clicks away, which means this venue is about to have many of them. Our
@@ -479,6 +589,10 @@ than add three more features to Rivo. That is the work we would like to keep doi
 ## Documentation
 
 - **[docs/EVIDENCE.md](docs/EVIDENCE.md)** — every claim, its method, and what we ruled out
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — what the engine already was, what production
+  needed from it, and the measurement that decided the shape of the answer
+- **[docs/DEPLOY.md](docs/DEPLOY.md)** — the three planes, and why the worker cannot be serverless
+- **[docs/SECURITY.md](docs/SECURITY.md)** — threat model, what is enforced by what, and six known gaps
 - **[docs/SDK-FEEDBACK.md](docs/SDK-FEEDBACK.md)** — findings from building against the SDK and indexer, including the
   on-chain measurement that the Event Contract operator entrypoints exist and are disabled
 - **[docs/DEMO.md](docs/DEMO.md)** — the 3-minute walkthrough, shot by shot, with the commands
