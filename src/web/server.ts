@@ -117,10 +117,16 @@ function stopChild(): void {
  * funds to a destination the caller supplies. Anyone deploying this beyond a
  * hackathon should put an origin allowlist here.
  */
-const CORS = {
+export const CORS = {
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "GET, POST, PUT, OPTIONS",
-  "access-control-allow-headers": "content-type",
+  // The control token rides in `authorization` or `x-rivo-token`, and a browser
+  // will not send a header the preflight did not name. Listing only
+  // content-type meant that the moment a token was configured — which is
+  // MANDATORY off-loopback, and which compose.yaml requires — every control
+  // request was blocked before it left the browser. The guard was working and
+  // the door was welded shut behind it.
+  "access-control-allow-headers": "content-type, authorization, x-rivo-token",
 } as const;
 
 function json(res: import("node:http").ServerResponse, code: number, body: unknown): void {
