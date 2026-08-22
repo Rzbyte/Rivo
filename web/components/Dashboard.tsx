@@ -71,6 +71,15 @@ export function Dashboard({
             {view.runtime.sinceLastCycleSec === null
               ? "no cycle yet"
               : `last ${formatAgo(view.runtime.sinceLastCycleSec)} ago`}
+            {" · "}
+            {/* The heartbeat, said plainly. A user who closed their browser an
+                hour ago is entitled to see, in one glance, that something is
+                still running on their behalf. */}
+            <span className={view.worker.healthy ? "pos" : "neg"}>
+              {view.worker.sinceHeartbeatSec === null
+                ? "no worker has reported"
+                : `worker alive ${formatAgo(view.worker.sinceHeartbeatSec)} ago`}
+            </span>
           </span>
         </div>
         {!readOnly && (
@@ -126,6 +135,8 @@ export function Dashboard({
         </div>
       </div>
 
+      <Reconciliation view={view} />
+
       <nav className="row" style={{ marginTop: 22, marginBottom: 12, gap: 4 }}>
         {(
           [
@@ -165,7 +176,7 @@ export function Dashboard({
             <CapitalEditor current={view.capital} busy={busy} onSave={onSave} />
           </div>
           <div>
-            <span className="label">Wallet</span>
+            <span className="label">Rivo Portfolio</span>
             <p className="mono" style={{ fontSize: 12.5, wordBreak: "break-all" }}>
               {view.address}
             </p>
@@ -244,6 +255,66 @@ export function Meter({ used }: { used: number }) {
   return (
     <div className="meter">
       <span className={used > 1 ? "over" : used > 0.8 ? "hot" : ""} style={{ width: `${pct}%` }} />
+    </div>
+  );
+}
+
+/**
+ * What the chain and Rivo disagreed about, and what is still in flight.
+ *
+ * Hidden entirely when there is nothing to say, which is the normal state — a
+ * permanently-visible "0 mismatches" panel trains people to stop reading it, and
+ * this is precisely the panel that must be read on the day it says something.
+ */
+function Reconciliation({ view }: { view: PortfolioView }) {
+  const r = view.reconciliation;
+  const quiet =
+    r.adopted === 0 && r.pendingExecutions === 0 && r.failedExecutions === 0 && r.orphanedExecutions === 0;
+  if (quiet) return null;
+  return (
+    <div className="panel" style={{ marginTop: 14 }}>
+      <span className="label">Chain vs. Rivo</span>
+      <h3 style={{ marginTop: 6 }}>Reconciliation</h3>
+      <div className="grid cols-4" style={{ marginTop: 10 }}>
+        {r.adopted > 0 && (
+          <Note
+            label="Adopted positions"
+            value={r.adopted}
+            tone="warn"
+            note="Found on-chain, not opened by Rivo. Their entry price is an estimate — nothing on-chain records what was paid."
+          />
+        )}
+        {r.pendingExecutions > 0 && (
+          <Note label="In flight" value={r.pendingExecutions} note="Sent, or about to be. Resolved against the chain on the next cycle." />
+        )}
+        {r.failedExecutions > 0 && (
+          <Note label="Failed" value={r.failedExecutions} tone="neg" note="Rejected or reverted, each with its reason on the Transactions tab." />
+        )}
+        {r.orphanedExecutions > 0 && (
+          <Note
+            label="Outcome unknown"
+            value={r.orphanedExecutions}
+            tone="warn"
+            note="Sent, and no receipt could be found. NOT the same as failed — what the wallet holds comes from the chain instead."
+          />
+        )}
+      </div>
+      {r.lastAt !== null && (
+        <p className="hint" style={{ marginTop: 8, marginBottom: 0 }}>
+          {r.events} reconciliation finding{r.events === 1 ? "" : "s"} recorded · last{" "}
+          {new Date(r.lastAt * 1000).toISOString().slice(5, 16).replace("T", " ")}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function Note({ label, value, note, tone }: { label: string; value: number; note: string; tone?: "warn" | "neg" }) {
+  return (
+    <div className="stat">
+      <span className="label">{label}</span>
+      <span className={`value ${tone ?? ""}`}>{value}</span>
+      <span className="sub">{note}</span>
     </div>
   );
 }

@@ -179,7 +179,7 @@ export function Configure({
         <span className="label">Step 4</span>
         <h2 style={{ marginTop: 8 }}>Turn on Autopilot</h2>
         <p style={{ maxWidth: "66ch" }}>
-          Rivo will ask Privy for permission to sign for your portfolio wallet. You approve it once, in
+          Rivo will ask Privy for permission to sign for your Rivo Portfolio. You approve it once, in
           Privy&rsquo;s own prompt. After that Rivo can place, manage, exit and redeem Event Contract positions
           from that wallet while you are offline — and you will not be asked to approve individual trades,
           because that is the entire point.

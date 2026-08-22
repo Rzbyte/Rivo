@@ -22,12 +22,13 @@ import { resolvePolicy } from "../portfolio/policy.js";
 import { cycle, type CycleReport } from "../runtime/loop.js";
 import { executorFor } from "../runtime/executor.js";
 import { RpcReceiptReader, defaultRpcUrl } from "../runtime/receipt.js";
-import { PrivyDelegatedAuthority } from "../signing/privy.js";
+import { PrivyDelegatedAuthority, looksRevoked } from "../signing/privy.js";
 import { PostgresExecutionLedger } from "../ledger/postgres.js";
 import { RecordingExecutor, recover } from "../ledger/recording.js";
 import { PostgresDecisionLog, PostgresStateStore } from "../store/postgres.js";
 import { StaleStateError } from "../store/types.js";
 import { mayTradeLive, scheduleNext, setState, type Portfolio } from "../db/portfolios.js";
+import { setDelegated } from "../db/accounts.js";
 import { record, recordOnce } from "../db/events.js";
 import { held, renew, type Lease } from "../db/leases.js";
 import { equityOf } from "../runtime/state.js";
@@ -86,7 +87,44 @@ export async function runPortfolioCycle(
       { walletId: portfolio.privyWalletId ?? "", address: portfolio.address },
       portfolio.delegated,
     );
-    const live = mayTradeLive(portfolio) && authority.available();
+    let live = mayTradeLive(portfolio) && authority.available();
+
+    // Ask for the signer once, before the cycle, rather than discovering it is
+    // gone one order at a time.
+    //
+    // A user can withdraw Rivo's permission inside Privy without telling Rivo,
+    // and the database would go on believing it may sign — so every cycle would
+    // attempt orders that cannot be signed, forever. The same principle the
+    // reconciler applies to holdings applies here: the authority that issues the
+    // grant is the one that decides whether it still stands, and local state
+    // loses to it.
+    //
+    // Only a revocation-shaped failure demotes. A timeout must not switch a
+    // user's Autopilot off.
+    if (live) {
+      try {
+        await authority.account();
+      } catch (e) {
+        if (looksRevoked(e)) {
+          live = false;
+          await setDelegated(portfolio.userId, portfolio.walletId, false);
+          await setState(null, id, "paused", "Rivo's permission to sign for this wallet was withdrawn");
+          await record(id, "autopilot.revoked", "warn",
+            "Privy refused to sign for this portfolio, so the permission has been withdrawn. " +
+              "Autopilot is paused; re-enable it to grant permission again.",
+            { address: portfolio.address });
+          out(`  signing permission withdrawn — pausing and running this cycle in Shadow Mode`);
+        } else {
+          // Not a revocation. Run dry this pass rather than trading blind, and
+          // say so, but leave the grant and the portfolio's state alone.
+          live = false;
+          await recordOnce(id, "signer.unavailable", "warn",
+            `Could not obtain a signer this cycle: ${e instanceof Error ? e.message : String(e)}`);
+          out(`  signer unavailable this cycle — running dry, grant left intact`);
+        }
+      }
+    }
+
     const inner = executorFor(authority, !live);
     if (state.dryRun !== (inner.mode === "dry")) {
       // A portfolio that switches between shadow and live is a fact worth

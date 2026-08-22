@@ -22,15 +22,16 @@ export function Fund({ address, balances }: { address: string; balances: Balance
   return (
     <div className="panel">
       <span className="label">Step 2</span>
-      <h2 style={{ marginTop: 8 }}>Fund your Rivo portfolio</h2>
+      <h2 style={{ marginTop: 8 }}>Fund your Rivo Portfolio</h2>
       <p style={{ maxWidth: "64ch" }}>
-        This address is your trading account. Rivo can place Event Contract orders from it once you enable
-        Autopilot, and it can never move funds anywhere else. Send only what you are willing to put under
-        management — everything Rivo does is bounded by this balance.
+        Your Rivo Portfolio is a trading account of your own, kept apart from whatever wallet you normally
+        use. Rivo can place Event Contract orders from it once you enable Autopilot, and it can never move
+        funds anywhere else. Send only what you are willing to put under management — everything Rivo does is
+        bounded by this balance.
       </p>
 
       <div className="field">
-        <span className="label">Your Rivo wallet</span>
+        <span className="label">Your Rivo Portfolio</span>
         <div className="row">
           <code className="mono" style={{ fontSize: 13, wordBreak: "break-all", flex: "1 1 320px" }}>
             {address}

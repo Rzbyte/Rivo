@@ -6,7 +6,7 @@
 // what a user reads before deciding to fund a wallet.
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { POLICY_INTENT, PrivyDelegatedAuthority, privyConfigured, resetPrivyClient, verifyAccessToken } from "./privy.js";
+import { POLICY_INTENT, PrivyDelegatedAuthority, looksRevoked, preflight, privyConfigured, resetPrivyClient, verifyAccessToken } from "./privy.js";
 import { canSign, type SigningAuthority } from "../runtime/signer.js";
 import { DryExecutor, executorFor } from "../runtime/executor.js";
 
@@ -24,6 +24,7 @@ beforeEach(() => {
   set("PRIVY_APP_ID", undefined);
   set("PRIVY_APP_SECRET", undefined);
   set("PRIVY_AUTHORIZATION_KEY", undefined);
+  set("NEXT_PUBLIC_PRIVY_APP_ID", undefined);
 });
 afterEach(() => {
   for (const [k, v] of Object.entries(saved)) {
@@ -149,6 +150,99 @@ describe("choosing an executor per portfolio", () => {
     set("PRIVY_APP_ID", "app123");
     set("PRIVY_APP_SECRET", "secret123");
     expect(executorFor(new PrivyDelegatedAuthority(WALLET, true), true)).toBeInstanceOf(DryExecutor);
+  });
+});
+
+describe("the preflight", () => {
+  it("names every missing variable rather than failing at the first", async () => {
+    // An operator setting this up should get the whole list once, not one item
+    // per attempt.
+    const p = await preflight();
+    expect(p.configured).toBe(false);
+    expect(p.reachable).toBeNull();
+    const joined = p.problems.join(" ");
+    expect(joined).toContain("PRIVY_APP_ID");
+    expect(joined).toContain("PRIVY_APP_SECRET");
+    expect(joined).toContain("NEXT_PUBLIC_PRIVY_APP_ID");
+  });
+
+  it("does not contact Privy when there is nothing to try", async () => {
+    // `reachable: null` is "not attempted", which is different from "failed" and
+    // must not be reported as a rejection.
+    const p = await preflight();
+    expect(p.reachable).toBeNull();
+    expect(p.problems.join(" ")).not.toMatch(/rejected these credentials/);
+  });
+
+  it("catches a browser and server pointed at two different apps", async () => {
+    // The mistake that produces a sign-in which works and a token the server
+    // will not accept — and nothing anywhere says why.
+    set("PRIVY_APP_ID", "app-server");
+    set("PRIVY_APP_SECRET", "secret");
+    set("NEXT_PUBLIC_PRIVY_APP_ID", "app-browser");
+    const p = await preflight();
+    expect(p.problems.join(" ")).toMatch(/two different apps/);
+  });
+
+  it("treats a missing authorization key as advice, not a failure", async () => {
+    set("PRIVY_APP_ID", "app");
+    set("PRIVY_APP_SECRET", "secret");
+    set("NEXT_PUBLIC_PRIVY_APP_ID", "app");
+    const p = await preflight();
+    expect(p.authorizationKey).toBe(false);
+    const advisory = p.problems.filter((x) => x.startsWith("PRIVY_AUTHORIZATION_KEY"));
+    expect(advisory).toHaveLength(1);
+    expect(advisory[0]).toMatch(/recommended/);
+  });
+
+  it("carries no secret in what it reports", async () => {
+    set("PRIVY_APP_ID", "app");
+    set("PRIVY_APP_SECRET", "secret-that-must-not-leak");
+    set("PRIVY_AUTHORIZATION_KEY", "authkey-that-must-not-leak");
+    set("NEXT_PUBLIC_PRIVY_APP_ID", "app");
+    const p = await preflight();
+    const serialised = JSON.stringify(p);
+    expect(serialised).not.toContain("secret-that-must-not-leak");
+    expect(serialised).not.toContain("authkey-that-must-not-leak");
+  });
+});
+
+describe("telling a withdrawn grant from a bad afternoon", () => {
+  // The distinction decides whether a user gets switched off. A revocation
+  // should pause Autopilot and clear the grant; a timeout must not, or a flaky
+  // network becomes a product that turns itself off.
+  it("recognises a withdrawn grant", () => {
+    for (const message of [
+      "wallet is not delegated to this app",
+      "Delegation for this wallet has been revoked",
+      "401 Unauthorized",
+      "user is not authorized for this action",
+      "403 Forbidden",
+      "wallet not found",
+    ]) {
+      expect(looksRevoked(new Error(message)), message).toBe(true);
+    }
+  });
+
+  it("does NOT treat a transient failure as a revocation", () => {
+    for (const message of [
+      "fetch failed",
+      "ETIMEDOUT",
+      "socket hang up",
+      "502 Bad Gateway",
+      "rate limit exceeded",
+      "ECONNRESET",
+      "internal server error",
+    ]) {
+      expect(looksRevoked(new Error(message)), message).toBe(false);
+    }
+  });
+
+  it("errs toward transient for anything it does not recognise", () => {
+    // The safer direction: retry next cycle rather than switch a user off on an
+    // error nobody anticipated.
+    expect(looksRevoked(new Error("something nobody has seen before"))).toBe(false);
+    expect(looksRevoked("a bare string")).toBe(false);
   });
 });
 

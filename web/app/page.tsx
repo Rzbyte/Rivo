@@ -71,7 +71,7 @@ function LandingWithAuth() {
         <section className="grid cols-3" style={{ marginTop: 34 }}>
           <Feature
             title="No private keys"
-            body="Sign in with an email address. Rivo gives you a portfolio wallet held by Privy — Rivo never has the key, and you can withdraw its permission to sign at any moment."
+            body="Sign in with an email address. Rivo opens you a Rivo Portfolio — a trading account held by Privy, separate from any wallet you already use. Rivo never has the key, and you can withdraw its permission to sign at any moment."
           />
           <Feature
             title="No per-trade popups"

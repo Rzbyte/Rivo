@@ -10,7 +10,8 @@
 // THE SEQUENCE, and why it is in this order:
 //
 //   1. sign in            Privy. Email, Google, or an existing wallet.
-//   2. portfolio wallet   Created by Privy, registered with Rivo. Automatic.
+//   2. Rivo Portfolio     The trading account Privy creates, registered with Rivo.
+//                         Automatic — the user is never asked to make a wallet.
 //   3. fund it            The user's own money moves once, to an address they
 //                         control. Rivo cannot do this for them and does not try.
 //   4. configure          Capital and risk. Defaults that are already sane.
@@ -48,7 +49,7 @@ export default function AppPage() {
 
 function Portfolio() {
   const { ready, authenticated, getAccessToken, user } = usePrivy();
-  const { delegateWallet } = useHeadlessDelegatedActions();
+  const { delegateWallet, revokeWallets } = useHeadlessDelegatedActions();
   const { logout } = useLogout();
   const router = useRouter();
 
@@ -184,14 +185,38 @@ function Portfolio() {
     if (!bundle) return;
     setBusy("autopilot");
     try {
+      // Rivo's own switch FIRST, and it is the one that actually stops trading.
+      // The portfolio is set to stopped and the wallet marked undelegated
+      // server-side, so the worker will not touch it from the next scheduler
+      // pass onwards — whatever happens next.
       await api(token, `/api/portfolios/${bundle.view.id}/autopilot`, { method: "POST", body: { enabled: false } });
+
+      // Then withdraw the grant at Privy itself.
+      //
+      // This used to be missing, and the omission was the kind that reads fine:
+      // the UI said "revokes the permission", Rivo stopped trading, and the
+      // grant quietly stood. Stopping is not revoking. A user who turns
+      // Autopilot off is entitled to have Rivo lose the ability to ask, not
+      // merely the intention to.
+      //
+      // Failure here is reported and does not undo the stop above — a portfolio
+      // that is stopped with a standing grant does nothing, which is the safe
+      // half of the two.
+      try {
+        await revokeWallets();
+      } catch {
+        setError(
+          "Autopilot is off and Rivo will not trade this portfolio. Withdrawing the signing permission at Privy " +
+            "did not complete — you can remove it from your Privy account settings.",
+        );
+      }
       await refresh();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "could not switch Autopilot off");
     } finally {
       setBusy(null);
     }
-  }, [bundle, token, refresh]);
+  }, [bundle, token, refresh, revokeWallets]);
 
   const save = useCallback(
     async (patch: { capital?: number; profile?: string; overrides?: Record<string, unknown> }) => {
@@ -237,7 +262,7 @@ function Portfolio() {
       {!on && (
         <Steps
           steps={[
-            { label: "Rivo wallet", done: Boolean(address) },
+            { label: "Rivo Portfolio", done: Boolean(address) },
             { label: "Funded", done: funded },
             { label: "Configured", done: configured },
             { label: "Autopilot", done: on },
@@ -247,10 +272,10 @@ function Portfolio() {
 
       {!address && (
         <div className="panel">
-          <h2>Creating your Rivo wallet…</h2>
+          <h2>Opening your Rivo Portfolio…</h2>
           <p style={{ marginBottom: 0 }}>
-            This is the account Rivo trades from. It is yours, held by Privy, and separate from any wallet you
-            already use.
+            This is the trading account Rivo manages. It is yours, held by Privy, and deliberately separate
+            from any wallet you already use — so what Rivo can act on is only ever what you put in it.
           </p>
         </div>
       )}

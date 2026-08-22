@@ -113,6 +113,92 @@ export const POLICY_INTENT = {
  */
 export interface PrivyServer {
   verifyAuthToken(token: string): Promise<{ userId: string }>;
+  /** App configuration, as Privy holds it. Used by the preflight to check the setup. */
+  getAppSettings(): Promise<{
+    id?: string;
+    name?: string;
+    emailAuth?: boolean;
+    googleOAuth?: boolean;
+    walletAuth?: boolean;
+  }>;
+}
+
+/** What a deployment needs before any of this works, and whether it has it. */
+export interface PrivyPreflight {
+  configured: boolean;
+  /** Reached Privy and authenticated. Null when there was nothing to try. */
+  reachable: boolean | null;
+  appId: string | null;
+  appName: string | null;
+  loginMethods: { email: boolean; google: boolean; wallet: boolean };
+  /** True when an authorization keypair is configured on this server. */
+  authorizationKey: boolean;
+  problems: string[];
+}
+
+/**
+ * Check the Privy setup for real, rather than describing it.
+ *
+ * The point of this is that "did I configure Privy correctly" should be a
+ * command with an answer, not a thing an operator discovers when a user's first
+ * Autopilot attempt fails. It authenticates against Privy with the server's own
+ * credentials and reports what the app actually has enabled — so a missing login
+ * method or a wrong secret is caught before a person meets it.
+ *
+ * It never signs anything and never touches a user's wallet.
+ */
+export async function preflight(): Promise<PrivyPreflight> {
+  loadEnv();
+  const appId = process.env.PRIVY_APP_ID?.trim() ?? "";
+  const out: PrivyPreflight = {
+    configured: privyConfigured(),
+    reachable: null,
+    appId: appId || null,
+    appName: null,
+    loginMethods: { email: false, google: false, wallet: false },
+    authorizationKey: Boolean(process.env.PRIVY_AUTHORIZATION_KEY?.trim()),
+    problems: [],
+  };
+
+  if (!appId) out.problems.push("PRIVY_APP_ID is not set — the server cannot talk to Privy.");
+  if (!process.env.PRIVY_APP_SECRET?.trim()) out.problems.push("PRIVY_APP_SECRET is not set — the server cannot talk to Privy.");
+  const publicAppId = process.env.NEXT_PUBLIC_PRIVY_APP_ID?.trim();
+  if (!publicAppId) {
+    out.problems.push("NEXT_PUBLIC_PRIVY_APP_ID is not set — the browser cannot show a sign-in.");
+  } else if (appId && publicAppId !== appId) {
+    out.problems.push(
+      "NEXT_PUBLIC_PRIVY_APP_ID does not match PRIVY_APP_ID — the browser and the server would be talking to two different apps.",
+    );
+  }
+  if (!out.authorizationKey) {
+    out.problems.push(
+      "PRIVY_AUTHORIZATION_KEY is not set. Optional, and recommended: with an authorization keypair registered, " +
+        "a stolen app secret alone cannot move a wallet.",
+    );
+  }
+  if (!out.configured) return out;
+
+  try {
+    const privy = await privyClient();
+    const settings = await privy.getAppSettings();
+    out.reachable = true;
+    out.appName = settings.name ?? null;
+    out.loginMethods = {
+      email: settings.emailAuth === true,
+      google: settings.googleOAuth === true,
+      wallet: settings.walletAuth === true,
+    };
+    for (const [name, enabled] of Object.entries(out.loginMethods)) {
+      if (!enabled) out.problems.push(`${name} login is not enabled on this Privy app — Rivo's sign-in offers it.`);
+    }
+  } catch (e) {
+    out.reachable = false;
+    out.problems.push(
+      `Privy rejected these credentials: ${e instanceof Error ? e.message : String(e)}. ` +
+        `Check PRIVY_APP_ID and PRIVY_APP_SECRET against the dashboard.`,
+    );
+  }
+  return out;
 }
 
 // The client is expensive to build and safe to share, so it is built once. It is
@@ -168,6 +254,29 @@ export async function verifyAccessToken(token: string): Promise<{ userId: string
     // token failed is not something an unauthenticated caller should learn.
     return null;
   }
+}
+
+/**
+ * Does this error mean the grant is gone?
+ *
+ * Privy's API rejects a signing request for a wallet the app is no longer
+ * delegated over, and the two cases Rivo has to tell apart are "the user
+ * revoked" and "the network hiccuped" — because the first should stop Autopilot
+ * and the second must not. Matched on the shape of the message rather than a
+ * code, deliberately narrow: anything unrecognised is treated as transient,
+ * which errs toward retrying rather than toward switching a user off.
+ */
+export function looksRevoked(error: unknown): boolean {
+  const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
+  return (
+    message.includes("not delegated") ||
+    message.includes("delegation") ||
+    message.includes("unauthorized") ||
+    message.includes("not authorized") ||
+    message.includes("forbidden") ||
+    message.includes("no owner") ||
+    message.includes("wallet not found")
+  );
 }
 
 /**

@@ -39,7 +39,8 @@
     "worker": "tsx src/cli/worker.ts",
     "build:web": "npm --workspace @rivo/web run build",
     "dev:web": "npm --workspace @rivo/web run dev",
-    "seed:demo": "tsx scripts/seed-demo.ts"
+    "seed:demo": "tsx scripts/seed-demo.ts",
+    "privy:check": "tsx scripts/privy-check.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

@@ -101,7 +101,35 @@ export interface PortfolioView {
     dryRun: boolean;
     tradedBy: string | null;
   };
-  worker: { alive: number; healthy: boolean };
+  worker: {
+    alive: number;
+    healthy: boolean;
+    /** Unix seconds of the most recent heartbeat in the fleet, or null. */
+    lastHeartbeatAt: number | null;
+    /** Seconds since that heartbeat. Null when no worker has ever reported. */
+    sinceHeartbeatSec: number | null;
+  };
+  /**
+   * What the chain and Rivo disagreed about, and what is still in flight.
+   *
+   * Separate from `events` because these are STATES rather than occurrences: how
+   * many positions came from the chain rather than from a fill, and how many
+   * executions are unresolved right now. An operator reading a log of past
+   * events cannot answer either.
+   */
+  reconciliation: {
+    /** Positions found on-chain that Rivo did not open. Cost basis is estimated. */
+    adopted: number;
+    /** Reconciliation findings recorded, ever. */
+    events: number;
+    lastAt: number | null;
+    /** Executions written but not yet resolved — intended or submitted. */
+    pendingExecutions: number;
+    /** Executions that failed outright. */
+    failedExecutions: number;
+    /** Submitted, and no receipt could be found. Not the same as failed. */
+    orphanedExecutions: number;
+  };
   counts: { decisions: number; executions: number; openPositions: number; closedPositions: number };
 }
 
@@ -200,14 +228,31 @@ export async function buildView(portfolio: Portfolio): Promise<PortfolioView> {
     };
   });
 
-  const counts = await one<{ decisions: string; executions: string; closed: string }>(
+  const counts = await one<{
+    decisions: string; executions: string; closed: string; adopted: string;
+    pending: string; failed: string; orphaned: string;
+  }>(
     `SELECT (SELECT count(*) FROM decisions WHERE portfolio_id = $1)::text AS decisions,
             (SELECT count(*) FROM executions WHERE portfolio_id = $1)::text AS executions,
-            (SELECT count(*) FROM positions WHERE portfolio_id = $1 AND status = 'closed')::text AS closed`,
+            (SELECT count(*) FROM positions WHERE portfolio_id = $1 AND status = 'closed')::text AS closed,
+            (SELECT count(*) FROM positions WHERE portfolio_id = $1 AND status = 'open' AND adopted)::text AS adopted,
+            (SELECT count(*) FROM executions WHERE portfolio_id = $1 AND status IN ('intended','submitted'))::text AS pending,
+            (SELECT count(*) FROM executions WHERE portfolio_id = $1 AND status = 'failed')::text AS failed,
+            (SELECT count(*) FROM executions WHERE portfolio_id = $1 AND status = 'orphaned')::text AS orphaned`,
+    [portfolio.id],
+  );
+
+  const reconEvents = await one<{ n: string; last_at: Date | null }>(
+    `SELECT count(*)::text AS n, max(at) AS last_at FROM events
+      WHERE portfolio_id = $1 AND kind LIKE 'reconcile.%'`,
     [portfolio.id],
   );
 
   const fleet = await liveWorkers();
+  // The freshest heartbeat in the fleet. "Is Rivo alive" is a question about the
+  // fleet, not about whichever worker happens to hold this portfolio right now —
+  // a portfolio between leases is still being managed.
+  const heartbeat = fleet.length > 0 ? Math.max(...fleet.map((w) => w.lastHeartbeatAt)) : null;
   const lastCycleAt = rt.last_cycle_at ? secs(rt.last_cycle_at) : null;
   const now = Math.floor(Date.now() / 1000);
 
@@ -246,7 +291,20 @@ export async function buildView(portfolio: Portfolio): Promise<PortfolioView> {
       dryRun: rt.dry_run,
       tradedBy: rt.traded_by,
     },
-    worker: { alive: fleet.length, healthy: fleet.length > 0 },
+    worker: {
+      alive: fleet.length,
+      healthy: fleet.length > 0,
+      lastHeartbeatAt: heartbeat,
+      sinceHeartbeatSec: heartbeat === null ? null : now - heartbeat,
+    },
+    reconciliation: {
+      adopted: Number(counts.adopted),
+      events: Number(reconEvents.n),
+      lastAt: reconEvents.last_at ? secs(reconEvents.last_at) : null,
+      pendingExecutions: Number(counts.pending),
+      failedExecutions: Number(counts.failed),
+      orphanedExecutions: Number(counts.orphaned),
+    },
     counts: {
       decisions: Number(counts.decisions),
       executions: Number(counts.executions),
