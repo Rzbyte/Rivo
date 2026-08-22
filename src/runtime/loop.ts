@@ -28,10 +28,9 @@ import { legKey, manage, type PositionDecision } from "./position.js";
 import { OutcomeReader } from "./onchain.js";
 import { describe as describeDiscrepancy, reconcile, type Discrepancy } from "./reconcile.js";
 import type { Executor } from "./executor.js";
+import type { DecisionSink, StateSink } from "../store/types.js";
 import {
-  DecisionLog,
   equityOf,
-  StateStore,
   type ClosedPosition,
   type DecisionRecord,
   type HeldPosition,
@@ -43,8 +42,14 @@ import {
 export interface LoopDeps {
   idx: Indexer;
   executor: Executor;
-  store: StateStore;
-  log: DecisionLog;
+  /**
+   * Where state is written. A file on disk locally, a row in PostgreSQL in
+   * production — see src/store. The cycle does not care which, and that is the
+   * whole reason the seam exists: the trading logic must not acquire opinions
+   * about storage.
+   */
+  store: StateSink;
+  log: DecisionSink;
   profile: RiskProfile;
   out: (line: string) => void;
 }
@@ -168,7 +173,7 @@ export async function cycle(state: RivoState, deps: LoopDeps): Promise<CycleRepo
       }
       out(`  ${describeDiscrepancy(d)}`);
     }
-    if (reconciled.length > 0) store.save(state);
+    if (reconciled.length > 0) await store.save(state);
   }
 
   // --- SETTLE ------------------------------------------------------------
@@ -312,7 +317,7 @@ export async function cycle(state: RivoState, deps: LoopDeps): Promise<CycleRepo
       // window in which a crash makes Rivo forget a position it owns — and then
       // buy a second copy. Reconciliation above repairs that after the fact;
       // saving here mostly prevents it.
-      store.save(state);
+      await store.save(state);
       bought++;
       spent += res.cost;
       records.push(record(now, state.cycles, o, "BUY", res.filled, res.cost, d.binding));
@@ -323,8 +328,8 @@ export async function cycle(state: RivoState, deps: LoopDeps): Promise<CycleRepo
     }
   }
 
-  log.append(records);
-  store.save(state);
+  await log.append(records);
+  await store.save(state);
 
   return {
     cycle: state.cycles,

@@ -52,7 +52,8 @@ export async function withSchema(name: string): Promise<() => Promise<void>> {
   // Prove the pinning worked before any test trusts it. Getting this wrong
   // silently means a test suite quietly migrating and truncating the real
   // schema, which is the one mistake worth a round-trip to rule out.
-  const [{ current }] = await query<{ current: string }>("SELECT current_schema()::text AS current");
+  const pinned = await query<{ current: string }>("SELECT current_schema()::text AS current");
+  const current = pinned[0]?.current;
   if (current !== schema) throw new Error(`expected to be pinned to ${schema}, got ${current}`);
 
   return async () => {

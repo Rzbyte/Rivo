@@ -253,18 +253,16 @@ describe.skipIf(!haveDatabase())("the postgres execution ledger", () => {
   it("cascades from the user, so deleting an account leaves nothing behind", async () => {
     const led = new PostgresExecutionLedger();
     await led.intend(intent({ portfolioId }));
-    const [{ user_id }] = await query<{ user_id: string }>(
-      "SELECT user_id FROM portfolios WHERE id = $1",
-      [portfolioId],
-    );
+    const owner = await query<{ user_id: string }>("SELECT user_id FROM portfolios WHERE id = $1", [portfolioId]);
+    const user_id = owner[0]!.user_id;
     // The append-only trigger protects the ledger from being edited, not from
     // the user exercising their right to be forgotten. Those are different
     // things and the schema treats them differently on purpose — but the
     // difference has to be DECLARED, which is what eraseUser does.
     await expect(query("DELETE FROM users WHERE id = $1", [user_id])).rejects.toThrow(/append-only/);
     await eraseUser(user_id);
-    const [{ n }] = await query<{ n: string }>("SELECT count(*)::text AS n FROM executions");
-    expect(n).toBe("0");
+    const left = await query<{ n: string }>("SELECT count(*)::text AS n FROM executions");
+    expect(left[0]!.n).toBe("0");
   });
 });
 
