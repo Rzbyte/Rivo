@@ -35,7 +35,8 @@
     "probe:operator": "tsx scripts/probe-operator.ts",
     "agent": "tsx src/cli/agent.ts",
     "db:migrate": "tsx src/cli/migrate.ts",
-    "dev:pg": "tsx scripts/dev-postgres.ts"
+    "dev:pg": "tsx scripts/dev-postgres.ts",
+    "worker": "tsx src/cli/worker.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

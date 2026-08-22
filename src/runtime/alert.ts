@@ -21,6 +21,18 @@ import { timeoutSignal } from "../core/timeout.js";
 /** What happened. Used for de-duplication, so a persistent state alerts once. */
 export type AlertKind = "halted" | "errors" | "low-gas" | "low-collateral" | "started" | "stopped";
 
+/**
+ * A kind an alerter will accept.
+ *
+ * The closed union above is the single-runtime vocabulary and stays closed —
+ * those are the conditions `npm start` knows how to detect, and a typo in one of
+ * them should not compile. The worker's vocabulary is open, because its alerts
+ * come from the `events` table and that table's `kind` is whatever the code that
+ * recorded it chose. The `event:` prefix keeps the two apart, so a de-duplication
+ * key from one can never collide with one from the other.
+ */
+export type AlertTopic = AlertKind | `event:${string}`;
+
 export interface AlertOptions {
   /** Generic JSON webhook. Slack and Discord incoming webhooks both work. */
   webhook?: string;
@@ -73,7 +85,7 @@ export class Alerter {
    * Returns whether anything was dispatched, which is what the tests assert on —
    * never whether it arrived, which this cannot know and does not claim.
    */
-  async fire(kind: AlertKind, message: string): Promise<boolean> {
+  async fire(kind: AlertTopic, message: string): Promise<boolean> {
     const key = `${kind}:${message}`;
     if (this.sent.has(key) || !this.configured) return false;
     this.sent.add(key);
