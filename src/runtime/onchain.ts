@@ -55,6 +55,19 @@ export interface PoolOutcomeIds {
   noId: bigint;
   /** Raw units per whole share, straight from the pool rather than assumed. */
   oneCollateral: bigint;
+  /**
+   * The market this pool serves RIGHT NOW.
+   *
+   * Load-bearing, not informational. Pools are recycled: when a window ends its
+   * pool is handed to the next one and `yesId`/`noId` move with it. Asking a
+   * rolled pool for the balance of a finished window returns a confident zero
+   * for a token id that belongs to somebody else's window — and a zero from
+   * here authorises deleting a position. So every read is checked against the
+   * market it was supposed to be about.
+   */
+  market: `0x${string}`;
+  /** The generation counter, for diagnostics. */
+  marketNonce: bigint;
 }
 
 const word = (hex: string): string => hex.replace(/^0x/, "").padStart(64, "0").toLowerCase();
@@ -120,10 +133,12 @@ export class OutcomeReader {
       // The struct is returned inline: collateralToken, market, outcomeToken,
       // yesId, noId, oneCollateral, …
       const ids: PoolOutcomeIds = {
+        market: `0x${at(raw, 1).slice(24)}`,
         outcomeToken: `0x${at(raw, 2).slice(24)}`,
         yesId: BigInt(`0x${at(raw, 3)}`),
         noId: BigInt(`0x${at(raw, 4)}`),
         oneCollateral: BigInt(`0x${at(raw, 5)}`),
+        marketNonce: BigInt(`0x${at(raw, 13)}`),
       };
       if (!/^0x[0-9a-f]{40}$/.test(ids.outcomeToken) || ids.oneCollateral <= 0n) {
         this.params.set(key, null);
@@ -142,9 +157,17 @@ export class OutcomeReader {
    *
    * `null` means "could not be established" and must never be treated as zero.
    */
-  async balance(pool: string, owner: string, leg: "UP" | "DOWN"): Promise<number | null> {
+  async balance(pool: string, owner: string, leg: "UP" | "DOWN", market?: string): Promise<number | null> {
     const ids = await this.idsFor(pool);
     if (!ids) return null;
+    // The caller names the window it means. If the pool has since been handed to
+    // a different one, this read cannot answer the question that was asked —
+    // and answering it anyway is worse than not answering, because the answer
+    // would be zero and zero deletes positions. Measured on a live run: four
+    // finalised windows whose pools had rolled (nonces 29, 29, 33, 48) each
+    // returned zero for shares the wallet genuinely still held, and the runtime
+    // wrote roughly 7 shares out of the ledger before this check existed.
+    if (market && ids.market.toLowerCase() !== market.toLowerCase()) return null;
     const id = leg === "UP" ? ids.yesId : ids.noId;
     const data = BALANCE_OF_SELECTOR + addressArg(owner) + word(id.toString(16));
     const raw = await this.call(ids.outcomeToken, data);

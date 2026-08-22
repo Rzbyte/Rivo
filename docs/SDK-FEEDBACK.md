@@ -261,6 +261,16 @@ the record of ownership. Ours is now read from the pool's own ERC-6909 singleton
 (`getBinaryPoolParams()` → `outcomeToken`, `yesId`/`noId`, then `balanceOf(owner, id)`) and the
 indexer is treated as a hint. That works, and it is three calls where one indexed read should do.
 
+**A trap for anyone who does what we did.** Reading the balance off the pool instead is correct
+only for the window the pool is *currently* serving. Pools are recycled — a finished window's pool
+is handed to the next one and `yesId`/`noId` move with it — so asking a rolled pool about a
+finished window returns a confident **zero** for a token id belonging to somebody else's window.
+Measured: four finalised windows whose pools had rolled (`marketNonce` 29, 29, 33, 48) each read
+zero for shares the wallet genuinely still held. `getBinaryPoolParams().market` is the guard —
+compare it against the market you meant before trusting the answer. Worth a line in the docs
+beside the pool-recycling gotcha, because the failure is silent and the wrong answer is the one
+that authorises deleting a position.
+
 **What would help:** treat a burn on settlement as an event that zeroes the row, the same way a
 mint creates it; and document, beside the mint-a-pair recipe, that this table must not be used as
 the authority on holdings by anything that spends money on the answer.

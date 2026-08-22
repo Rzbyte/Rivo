@@ -537,7 +537,7 @@ export async function verifyAgainstChain(
   if (keys.size === 0) return fromIndexer;
 
   const marketIds = [...new Set([...keys].map((k) => k.slice(0, k.lastIndexOf(":"))))];
-  let pools: Map<string, string>;
+  let pools: Map<string, { pool: string; marketAddress: string }>;
   try {
     pools = await idx.poolsOf(marketIds);
   } catch {
@@ -549,9 +549,9 @@ export async function verifyAgainstChain(
     const cut = k.lastIndexOf(":");
     const marketId = k.slice(0, cut);
     const leg = k.slice(cut + 1) as Leg;
-    const pool = pools.get(marketId);
-    if (!pool) continue;
-    const truth = await read.balance(pool, account, leg);
+    const entry = pools.get(marketId);
+    if (!entry) continue;
+    const truth = await read.balance(entry.pool, account, leg, entry.marketAddress);
     if (truth === null) continue;
     // Zero is a real answer and the most consequential one: it is what tells
     // reconciliation that a position it believes in does not exist. It only ever

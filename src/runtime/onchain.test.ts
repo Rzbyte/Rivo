@@ -21,8 +21,10 @@ const OWNER = "0x3333333333333333333333333333333333333333";
 
 const w = (hex: string) => hex.replace(/^0x/, "").padStart(64, "0");
 /** A `getBinaryPoolParams()` return: the fields we read are at slots 2..5. */
-const paramsReturn = (token = TOKEN, yes = 7n, no = 8n, one = 1_000_000n) =>
-  "0x" + w("0xaaaa") + w("0xbbbb") + w(token) + w(yes.toString(16)) + w(no.toString(16)) + w(one.toString(16)) + w("0x0").repeat(9);
+const MKT = "0x4444444444444444444444444444444444444444";
+const paramsReturn = (token = TOKEN, yes = 7n, no = 8n, one = 1_000_000n, market = MKT) =>
+  "0x" + w("0xaaaa") + w(market) + w(token) + w(yes.toString(16)) + w(no.toString(16)) + w(one.toString(16)) +
+  w("0x0").repeat(7) + w("0x1d") + w("0x0");
 const uint = (v: bigint) => "0x" + w(v.toString(16));
 
 /** A fetch that answers pool-params and balanceOf from a script. */
@@ -152,7 +154,8 @@ describe("what the cycle does with the answer", () => {
     ...over,
   });
   const stateWith = (open: HeldPosition[]) => ({ ...emptyState(50, "balanced", false), open });
-  const idx = { poolsOf: async () => new Map([["0xmkt", POOL]]) };
+  const MARKET = "0x4444444444444444444444444444444444444444";
+  const idx = { poolsOf: async () => new Map([["0xmkt", { pool: POOL, marketAddress: MARKET }]]) };
   const reader = (value: number | null) => ({ balance: async () => value, newCycle: () => {} });
 
   it("overrides an indexer figure the chain contradicts", async () => {
@@ -181,7 +184,7 @@ describe("what the cycle does with the answer", () => {
 
   it("leaves everything alone when the pool lookup fails", async () => {
     const broken = {
-      poolsOf: async () => {
+      poolsOf: async (): Promise<Map<string, { pool: string; marketAddress: string }>> => {
         throw new Error("indexer down");
       },
     };
@@ -204,8 +207,53 @@ describe("what the cycle does with the answer", () => {
   });
 
   it("skips a market with no known pool rather than deleting it", async () => {
-    const none = { poolsOf: async () => new Map<string, string>() };
+    const none = { poolsOf: async () => new Map<string, { pool: string; marketAddress: string }>() };
     const out = await verifyAgainstChain(none, new Map([["0xmkt:UP", 0.31]]), stateWith([]), OWNER, reader(0));
     expect(out.get("0xmkt:UP")).toBeCloseTo(0.31);
+  });
+});
+
+describe("a recycled pool cannot answer for a window it no longer serves", () => {
+  // The regression this exists to stop, in full. Pools are handed from one
+  // window to the next, and the leg ids go with them. Reading a finished
+  // window's balance off its old pool therefore asks about somebody else's
+  // token id, and the answer is a confident zero — which authorises a DROP.
+  //
+  // Measured on a live run before this check existed: four finalised windows
+  // whose pools had already rolled (nonces 29, 29, 33, 48) each returned zero
+  // for shares the wallet genuinely still held. The runtime wrote roughly seven
+  // shares out of the ledger as phantom, the drawdown breaker fired at 39.9%,
+  // and the tokens are still sitting on-chain unredeemed.
+  const OTHER = "0x9999999999999999999999999999999999999999";
+
+  it("returns null, not zero, when the pool has moved on", async () => {
+    globalThis.fetch = rpc((b) => (b.params[0].to === POOL ? paramsReturn() : uint(0n))) as never;
+    const r = new OutcomeReader("http://rpc.test");
+    // Asking about the window the pool actually serves: answered.
+    expect(await r.balance(POOL, OWNER, "UP", MKT)).toBe(0);
+    // Asking about a different window on the same pool: refused.
+    r.newCycle();
+    expect(await r.balance(POOL, OWNER, "UP", OTHER)).toBeNull();
+  });
+
+  it("still answers when the caller names no window, for callers that cannot", async () => {
+    globalThis.fetch = rpc((b) => (b.params[0].to === POOL ? paramsReturn() : uint(2_000_000n))) as never;
+    expect(await new OutcomeReader("http://rpc.test").balance(POOL, OWNER, "UP")).toBeCloseTo(2);
+  });
+
+  it("leaves the position alone rather than dropping it, end to end", async () => {
+    // The property that matters is not the null — it is that the cycle keeps
+    // believing in a position the chain cannot be asked about.
+    const rolled = {
+      poolsOf: async () => new Map([["0xmkt", { pool: POOL, marketAddress: OTHER }]]),
+    };
+    const reader = {
+      balance: async (_p: string, _o: string, _l: "UP" | "DOWN", market?: string) =>
+        market && market.toLowerCase() !== MKT.toLowerCase() ? null : 0,
+      newCycle: () => {},
+    };
+    const state = { ...emptyState(50, "balanced", false), open: [] as HeldPosition[] };
+    const out = await verifyAgainstChain(rolled, new Map([["0xmkt:UP", 4.16]]), state, OWNER, reader);
+    expect(out.get("0xmkt:UP")).toBeCloseTo(4.16);
   });
 });

@@ -424,20 +424,28 @@ export class Indexer {
    * is where the indexer's balance table is most often stale. Chunked and
    * cached by the caller; pools are stable within a window's generation.
    */
-  async poolsOf(marketIds: string[]): Promise<Map<string, string>> {
-    const out = new Map<string, string>();
+  async poolsOf(marketIds: string[]): Promise<Map<string, { pool: string; marketAddress: string }>> {
+    const out = new Map<string, { pool: string; marketAddress: string }>();
     const ids = [...new Set(marketIds.map((m) => m.toLowerCase()))];
     for (let i = 0; i < ids.length; i += 100) {
-      const data = await gql<{ Market: { marketId: string; binaryPoolAddress: string | null }[] }>(
+      const data = await gql<{ Market: { marketId: string; binaryPoolAddress: string | null; marketAddress: string | null }[] }>(
         this.url,
         "poolsOf",
         `query($ids:[String!]){
-           Market(where:{ marketId:{_in:$ids} }, limit:200){ marketId binaryPoolAddress }
+           Market(where:{ marketId:{_in:$ids} }, limit:200){ marketId binaryPoolAddress marketAddress }
          }`,
         { ids: ids.slice(i, i + 100) },
       );
       for (const m of data.Market) {
-        if (m.binaryPoolAddress) out.set(String(m.marketId).toLowerCase(), m.binaryPoolAddress.toLowerCase());
+        // Both, or neither. The pool alone cannot be trusted: it is recycled
+        // between windows, and the market address is what says which window the
+        // pool is currently serving.
+        if (m.binaryPoolAddress && m.marketAddress) {
+          out.set(String(m.marketId).toLowerCase(), {
+            pool: m.binaryPoolAddress.toLowerCase(),
+            marketAddress: m.marketAddress.toLowerCase(),
+          });
+        }
       }
     }
     return out;
