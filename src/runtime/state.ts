@@ -41,6 +41,16 @@ export interface HeldPosition extends Position {
   fairAtEntry: number;
   /** Tx hash, when live. Absent in dry runs. */
   txHash?: string;
+  /**
+   * The execution ledger row that opened this position.
+   *
+   * Carried on the position so that whichever store persists it can record the
+   * link — the position's id and the execution's id only exist together at that
+   * moment. Without it, `position_executions` stays empty and a closed
+   * position's audit trail is a list of no transactions, which is the exact
+   * defect the ledger was built to fix.
+   */
+  openedBy?: string;
   /** True once the window settled and the payout was accounted for. */
   resolved?: boolean;
   /**
@@ -72,6 +82,8 @@ export interface ClosedPosition {
   won: 0 | 1;
   /** Collateral received: `shares` if won, else 0. Or the sale proceeds on an exit. */
   proceeds: number;
+  /** Execution ledger rows that ended this position — a sale, a merge, a claim. */
+  closedBy?: string[];
   /**
    * How the position ended.
    *

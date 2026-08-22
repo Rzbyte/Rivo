@@ -308,6 +308,9 @@ export async function cycle(state: RivoState, deps: LoopDeps): Promise<CycleRepo
         openedAt: now,
         fairAtEntry: o.fair,
         ...(res.txHash ? { txHash: res.txHash } : {}),
+        // The ledger row this fill was recorded against. The store links the two
+        // once the position has an id of its own; a file store ignores it.
+        ...(res.executionId ? { openedBy: res.executionId } : {}),
       };
       state.open.push(pos);
       state.cash -= res.cost;
@@ -467,6 +470,7 @@ async function applyPositionAction(
     state.realizedPnl += proceeds - costOut;
     state.closed.push({
       ...(p.id ? { id: p.id } : {}),
+      ...(res.executionId ? { closedBy: [res.executionId] } : {}),
       marketId: p.marketId,
       asset: p.asset,
       intervalSec: p.intervalSec,

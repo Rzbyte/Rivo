@@ -213,10 +213,23 @@ export class PostgresStateStore implements StateSink {
   /**
    * Write every open position, assigning ids to the ones that do not have one.
    *
-   * The conflict target is the PARTIAL unique index on open positions, which is
-   * what makes "one open position per leg" a fact rather than an intention. A
-   * position Rivo opened twice in one leg — which the allocator will not do, but
-   * a bug could — collides here instead of silently doubling the exposure.
+   * LOTS ARE ROWS. The engine holds several lots of one leg on purpose — the
+   * allocator tops a leg up by adding a lot rather than resizing the existing
+   * one, so each keeps the price it was actually filled at, and `reconcile`
+   * corrects them proportionally.
+   *
+   * This used to upsert against a unique index on (portfolio, market, leg),
+   * which meant a second lot silently overwrote the first. The portfolio lost a
+   * position's cost on every reload; the ledger identity was repaired three
+   * times in forty cycles, drifting negative; and because each cycle reloads
+   * from the database, the allocator saw less exposure than it held and kept
+   * buying — measured at 200% of the BTC delta budget on a live run.
+   *
+   * So: a lot with an id is an UPDATE, a lot without one is an INSERT, and
+   * nothing here collapses two lots into one row. A failed update falls through
+   * to an insert rather than dropping the position, which also covers the case
+   * where a rolled-back transaction left an id pointing at a row that never
+   * committed.
    */
   private async persistOpen(c: PoolClient, state: RivoState): Promise<void> {
     for (const p of state.open) {
@@ -248,10 +261,6 @@ export class PostgresStateStore implements StateSink {
         `INSERT INTO positions (portfolio_id, market_id, asset, interval_sec, leg, shares, entry_price,
                                 cost, fair_at_entry, delta_per_share, expiry, opened_at, adopted, status)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'open')
-         ON CONFLICT (portfolio_id, market_id, leg) WHERE status = 'open' DO UPDATE
-            SET shares = EXCLUDED.shares, cost = EXCLUDED.cost, entry_price = EXCLUDED.entry_price,
-                fair_at_entry = EXCLUDED.fair_at_entry, delta_per_share = EXCLUDED.delta_per_share,
-                expiry = EXCLUDED.expiry, adopted = EXCLUDED.adopted
          RETURNING id`,
         [
           this.portfolioId,
@@ -270,9 +279,35 @@ export class PostgresStateStore implements StateSink {
         ],
       );
       // Hand the id back to the in-memory position, so the next save updates
-      // this row instead of racing the index for it again.
+      // this row rather than inserting a second one.
       p.id = inserted.rows[0]!.id;
+      await this.link(c, p.id, p.openedBy, "open");
     }
+  }
+
+  /**
+   * Record that an execution acted on a position.
+   *
+   * This is the join that makes a closed position traceable to the transactions
+   * that produced it. It exists because the two ids only come together here:
+   * the execution is written before anything is signed, the position gets its
+   * id when it is first persisted, and nothing else in the system holds both.
+   *
+   * `ON CONFLICT DO NOTHING` because a position saved twice in a cycle would
+   * otherwise fail on the primary key, and re-recording a link is a no-op.
+   */
+  private async link(
+    c: PoolClient,
+    positionId: string,
+    executionId: string | undefined,
+    role: "open" | "increase" | "reduce" | "close" | "claim",
+  ): Promise<void> {
+    if (!executionId) return;
+    await c.query(
+      `INSERT INTO position_executions (position_id, execution_id, role) VALUES ($1, $2, $3)
+       ON CONFLICT DO NOTHING`,
+      [positionId, executionId, role],
+    );
   }
 
   /** Close whatever moved into `state.closed` since the last save. */
@@ -286,16 +321,20 @@ export class PostgresStateStore implements StateSink {
             WHERE id = $2 AND portfolio_id = $1 AND status = 'open'`,
           [this.portfolioId, p.id, at(p.closedAt), p.won === 1, p.proceeds, p.exit, p.shares, p.cost],
         );
-        if (closed.rowCount !== 0) continue;
+        if (closed.rowCount !== 0) {
+          for (const executionId of p.closedBy ?? []) await this.link(c, p.id, executionId, "close");
+          continue;
+        }
       }
       // No row to close: a position opened and ended inside one cycle, or a
       // partial sale, which leaves the original open and needs a record of the
       // part that left.
-      await c.query(
+      const row = await c.query<{ id: string }>(
         `INSERT INTO positions (portfolio_id, market_id, asset, interval_sec, leg, shares, entry_price,
                                 cost, fair_at_entry, delta_per_share, expiry, opened_at,
                                 status, closed_at, won, proceeds, exit)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 0, $10, $11, 'closed', $12, $13, $14, $15)`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 0, $10, $11, 'closed', $12, $13, $14, $15)
+         RETURNING id`,
         [
           this.portfolioId,
           p.marketId,
@@ -314,6 +353,7 @@ export class PostgresStateStore implements StateSink {
           p.exit,
         ],
       );
+      for (const executionId of p.closedBy ?? []) await this.link(c, row.rows[0]!.id, executionId, "close");
     }
   }
 }

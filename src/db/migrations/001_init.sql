@@ -154,9 +154,25 @@ CREATE TABLE positions (
   exit            text CHECK (exit IN ('settled', 'sold', 'merged', 'voided', 'dropped')),
   CHECK (status = 'open' OR closed_at IS NOT NULL)
 );
--- One open position per leg per portfolio. The engine already assumes this; the
--- database is where the assumption becomes true.
-CREATE UNIQUE INDEX positions_open_leg ON positions(portfolio_id, market_id, leg) WHERE status = 'open';
+-- NOT unique on (portfolio, market, leg).
+--
+-- An earlier version of this schema had a partial UNIQUE index there, on the
+-- reasoning that one open position per leg was an invariant the engine assumed
+-- and the database should enforce. The engine assumes the opposite, and says so:
+--
+--   reconcile.ts:85  "Rivo can hold several lots of one leg; the chain reports
+--                     one number. Compare in aggregate and apply any correction
+--                     proportionally across the lots."
+--
+-- The allocator tops a leg up by pushing a NEW lot rather than resizing the old
+-- one, so that each lot keeps the entry price it was actually filled at. With
+-- the unique index in place the second lot's upsert OVERWROTE the first, the
+-- portfolio silently lost a position's cost on every reload, and the ledger
+-- identity was repaired three times in forty cycles — drifting negative, which
+-- is exactly what losing an open position looks like.
+--
+-- Storage does not get to change what the engine holds. Lots are rows.
+CREATE INDEX positions_open_leg ON positions(portfolio_id, market_id, leg) WHERE status = 'open';
 CREATE INDEX positions_portfolio ON positions(portfolio_id, status);
 CREATE INDEX positions_expiry ON positions(expiry) WHERE status = 'open';
 

@@ -33,12 +33,21 @@ export function Dashboard({
   bundle,
   balances,
   busy,
+  readOnly = false,
   onDisable,
   onSave,
 }: {
   bundle: Bundle;
   balances: Balances | null;
   busy: string | null;
+  /**
+   * Hide every control rather than disabling it.
+   *
+   * A disabled Stop button on a public page reads as "you could stop this if you
+   * were signed in", which is not what it means — this portfolio is not yours.
+   * Absent is the honest rendering.
+   */
+  readOnly?: boolean;
   onDisable: () => Promise<void>;
   onSave: (patch: { capital?: number; profile?: string }) => Promise<void>;
 }) {
@@ -64,9 +73,11 @@ export function Dashboard({
               : `last ${formatAgo(view.runtime.sinceLastCycleSec)} ago`}
           </span>
         </div>
-        <button className="danger" disabled={busy !== null} onClick={() => void onDisable()}>
-          {busy === "autopilot" ? "Stopping…" : "Stop Autopilot"}
-        </button>
+        {!readOnly && (
+          <button className="danger" disabled={busy !== null} onClick={() => void onDisable()}>
+            {busy === "autopilot" ? "Stopping…" : "Stop Autopilot"}
+          </button>
+        )}
       </div>
 
       <section className="grid cols-4">
@@ -141,6 +152,7 @@ export function Dashboard({
       {tab === "transactions" && <Executions rows={bundle.executions} />}
       {tab === "events" && <Events rows={bundle.events} />}
 
+      {!readOnly && (
       <details className="panel" style={{ marginTop: 18 }}>
         <summary style={{ cursor: "pointer", fontWeight: 600 }}>Settings</summary>
         <div className="grid cols-2" style={{ marginTop: 12 }}>
@@ -171,6 +183,7 @@ export function Dashboard({
           </div>
         </div>
       </details>
+      )}
     </>
   );
 }

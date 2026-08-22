@@ -16,6 +16,8 @@ import { claim, claimDue, held, heartbeat, liveWorkers, registerWorker, release,
 import { createPortfolio, mayTradeLive, portfolioById, portfolioOf, portfoliosOf, scheduleNext, setState, updatePolicy } from "./portfolios.js";
 import { eraseUser, setDelegated, upsertUser, upsertWallet, walletsOf } from "./accounts.js";
 import { PostgresDecisionLog, PostgresStateStore } from "../store/postgres.js";
+import { PostgresExecutionLedger } from "../ledger/postgres.js";
+import { closedPositions } from "./view.js";
 import { StaleStateError } from "../store/types.js";
 import { emptyState, ledgerBalances, type HeldPosition, type RivoState } from "../runtime/state.js";
 
@@ -316,20 +318,54 @@ describe.skipIf(!haveDatabase())("the durable layer", () => {
       expect((await new PostgresStateStore(portfolioId).load()).cycles).toBe(1);
     });
 
-    it("cannot hold two open positions in one leg", async () => {
+    it("keeps several lots of one leg, because the engine does", async () => {
+      // The regression this exists for. A partial UNIQUE index on
+      // (portfolio, market, leg) looked like an invariant worth enforcing and
+      // was the opposite: the allocator tops a leg up by adding a LOT, each
+      // with the price it was actually filled at, and the upsert against that
+      // index overwrote the first lot with the second. The portfolio lost a
+      // position's cost on every reload — three ledger repairs in forty live
+      // cycles, drifting negative — and because each cycle reloads from the
+      // database, the allocator saw less exposure than it held and kept buying.
       const { portfolioId } = await seedPortfolio();
-      await query(
-        `INSERT INTO positions (portfolio_id, market_id, asset, interval_sec, leg, shares, entry_price, cost, fair_at_entry, expiry)
-         VALUES ($1, '0xm', 'BTC', 900, 'UP', 1, 0.5, 0.5, 0.5, now())`,
-        [portfolioId],
-      );
-      await expect(
-        query(
-          `INSERT INTO positions (portfolio_id, market_id, asset, interval_sec, leg, shares, entry_price, cost, fair_at_entry, expiry)
-           VALUES ($1, '0xm', 'BTC', 900, 'UP', 1, 0.5, 0.5, 0.5, now())`,
-          [portfolioId],
-        ),
-      ).rejects.toThrow();
+      const store = new PostgresStateStore(portfolioId);
+      const state = await store.load();
+
+      state.open.push(held1({ shares: 10, cost: 4, entryPrice: 0.4 }));
+      state.cash -= 4;
+      await store.save(state);
+
+      // A top-up: same market, same leg, a different fill price.
+      state.open.push(held1({ shares: 5, cost: 2.5, entryPrice: 0.5 }));
+      state.cash -= 2.5;
+      await store.save(state);
+
+      const reloaded = await new PostgresStateStore(portfolioId).load();
+      expect(reloaded.open).toHaveLength(2);
+      expect(reloaded.open.reduce((n, p) => n + p.shares, 0)).toBe(15);
+      expect(reloaded.open.reduce((n, p) => n + p.cost, 0)).toBe(6.5);
+      // The identity that the lost lot was breaking.
+      expect(ledgerBalances(reloaded)).toBe(true);
+      expect(reloaded.contributed ?? 0).toBe(0);
+    });
+
+    it("does not renumber a lot it has already written", async () => {
+      // Each lot keeps its row across saves, or the update path degenerates into
+      // an insert and the position count grows every cycle.
+      const { portfolioId } = await seedPortfolio();
+      const store = new PostgresStateStore(portfolioId);
+      const state = await store.load();
+      state.open.push(held1());
+      state.cash -= 4;
+      await store.save(state);
+      const firstId = state.open[0]!.id;
+      state.open[0]!.shares = 12;
+      await store.save(state);
+      await store.save(state);
+      expect(state.open[0]!.id).toBe(firstId);
+      const reloaded = await new PostgresStateStore(portfolioId).load();
+      expect(reloaded.open).toHaveLength(1);
+      expect(reloaded.open[0]!.shares).toBe(12);
     });
 
     it("records a position dropped by reconciliation rather than deleting it", async () => {
@@ -350,6 +386,49 @@ describe.skipIf(!haveDatabase())("the durable layer", () => {
       const reloaded = await new PostgresStateStore(portfolioId).load();
       expect(reloaded.closed[0]!.exit).toBe("dropped");
       expect(ledgerBalances(reloaded)).toBe(true);
+    });
+
+    it("links a closed position to the executions that produced it", async () => {
+      // The audit trail. This is what the execution ledger was built for: a
+      // position that no longer exists still names the transactions that opened
+      // and ended it, because the ledger rows outlive it.
+      const { portfolioId } = await seedPortfolio();
+      const ledger = new PostgresExecutionLedger();
+      const opened = await ledger.intend({
+        portfolioId, idempotencyKey: "1:BUY:0xmarket1:UP", cycle: 1,
+        marketId: "0xmarket1", action: "BUY", leg: "UP", mode: "live",
+      });
+      await ledger.submitted(opened.id, "0xopenhash");
+      await ledger.confirmed(opened.id, { filledQty: 10, filledPrice: 0.4, cost: 4 });
+
+      const store = new PostgresStateStore(portfolioId);
+      const state = await store.load();
+      state.open.push(held1({ openedBy: opened.id }));
+      state.cash -= 4;
+      await store.save(state);
+
+      const sold = await ledger.intend({
+        portfolioId, idempotencyKey: "2:EXIT:0xmarket1:UP", cycle: 2,
+        marketId: "0xmarket1", action: "EXIT", leg: "UP", mode: "live",
+      });
+      await ledger.submitted(sold.id, "0xexithash");
+      await ledger.confirmed(sold.id, { filledQty: 10, filledPrice: 0.6, cost: -6 });
+
+      const p = state.open.pop()!;
+      state.closed.push({
+        id: p.id!, closedBy: [sold.id],
+        marketId: p.marketId, asset: p.asset, intervalSec: p.intervalSec, leg: p.leg,
+        shares: p.shares, entryPrice: p.entryPrice, cost: p.cost, fairAtEntry: p.fairAtEntry,
+        openedAt: p.openedAt, closedAt: 1_800_000_100, won: 0, proceeds: 6, exit: "sold",
+      });
+      state.cash += 6;
+      state.realizedPnl += 2;
+      await store.save(state);
+
+      const [closed] = await closedPositions(portfolioId);
+      expect(closed).toBeDefined();
+      expect(closed!.exit).toBe("sold");
+      expect(closed!.txHashes.sort()).toEqual(["0xexithash", "0xopenhash"]);
     });
 
     it("keeps decisions, in order, per portfolio", async () => {
