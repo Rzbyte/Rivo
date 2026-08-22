@@ -33,6 +33,15 @@ export interface OrderRequest {
    * the caller has to check `rested` rather than assume.
    */
   type?: "ioc" | "post-only";
+  /**
+   * Why this order is being sent, for the execution ledger.
+   *
+   * A sell is a REDUCE or an EXIT depending on what the position manager
+   * decided, and only the caller knows which. The executor does not act on it;
+   * it exists so the permanent record says what the action MEANT rather than
+   * only what it was.
+   */
+  intent?: "BUY" | "REDUCE" | "EXIT" | "SELL";
 }
 
 export interface OrderResult {
@@ -46,6 +55,8 @@ export interface OrderResult {
   orderId?: string;
   /** Set when nothing happened and why. */
   rejected?: string;
+  /** The execution ledger row this result was recorded against, when one exists. */
+  executionId?: string;
 }
 
 export interface Executor {
@@ -68,8 +79,13 @@ export interface Executor {
    * Pools are recycled across successive windows, so a snapshot is valid for one
    * pass and no longer. Holding one across cycles means eventually acting on the
    * pool a market USED to live in.
+   *
+   * The cycle number is passed for the benefit of anything that scopes state to
+   * a pass — the execution ledger keys its idempotency on it. Executors that
+   * only need to drop caches ignore it, which is every executor that touches
+   * the chain.
    */
-  newCycle(): void;
+  newCycle(cycle?: number): void;
   /**
    * The wallet whose holdings this executor's state should mirror, or null.
    *

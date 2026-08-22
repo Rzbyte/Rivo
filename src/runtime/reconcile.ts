@@ -121,6 +121,32 @@ export function reconcile(input: ReconcileInput): Discrepancy[] {
       for (const p of lots) {
         state.contributed = (state.contributed ?? 0) - p.cost;
         state.open.splice(state.open.indexOf(p), 1);
+        // Keep the position in the record rather than deleting it.
+        //
+        // It used to simply disappear, which is the same defect as a tx hash
+        // that vanished when its position closed: the one event worth auditing
+        // — local state and the chain disagreed, and the chain won — left no
+        // trace anywhere a user could see. `dropped` is its own exit reason
+        // precisely so it cannot be mistaken for a settlement that paid nothing.
+        //
+        // No cash and no realised P&L move here, because none did: the value
+        // left through `contributed`, above. The ledger identity is unchanged.
+        state.closed.push({
+          ...(p.id ? { id: p.id } : {}),
+          marketId: p.marketId,
+          asset: p.asset,
+          intervalSec: p.intervalSec,
+          leg: p.leg,
+          shares: p.shares,
+          entryPrice: p.entryPrice,
+          cost: p.cost,
+          fairAtEntry: p.fairAtEntry,
+          openedAt: p.openedAt,
+          closedAt: now,
+          won: 0,
+          proceeds: 0,
+          exit: "dropped",
+        });
       }
       out.push({
         marketId,

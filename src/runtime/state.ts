@@ -22,6 +22,19 @@ export const STATE_VERSION = 1;
 
 /** One position, plus what we need to resolve it after settlement. */
 export interface HeldPosition extends Position {
+  /**
+   * Stable identity, assigned by whichever store persists this position.
+   *
+   * The file store has no use for one — a position is identified by its place in
+   * an array it rewrites whole. A database does: it needs to know that the row
+   * it wrote last cycle and the object it is holding now are the same position,
+   * so that an execution can be linked to it and so that an update is an update
+   * rather than a second position in the same leg.
+   *
+   * Optional, and the engine never reads it. Nothing in allocation, risk or
+   * position management may depend on a position having been persisted.
+   */
+  id?: string;
   /** Unix seconds when the position was opened. */
   openedAt: number;
   /** Model probability at entry — what we believed when we paid. */
@@ -42,6 +55,8 @@ export interface HeldPosition extends Position {
 
 /** A settled position, kept for the performance record. */
 export interface ClosedPosition {
+  /** The same identity the position carried while it was open, when a store assigned one. */
+  id?: string;
   marketId: string;
   asset: Asset;
   /** Series cadence, kept so the performance report can break results down by tenor. */
@@ -57,8 +72,15 @@ export interface ClosedPosition {
   won: 0 | 1;
   /** Collateral received: `shares` if won, else 0. Or the sale proceeds on an exit. */
   proceeds: number;
-  /** How the position ended. */
-  exit: "settled" | "sold" | "merged" | "voided";
+  /**
+   * How the position ended.
+   *
+   * `dropped` is distinct from `voided` on purpose: a voided market paid nobody,
+   * while a dropped position is one reconciliation removed because the chain
+   * says the wallet never held it. Collapsing them would hide the only signal
+   * that local state and the chain had diverged.
+   */
+  exit: "settled" | "sold" | "merged" | "voided" | "dropped";
 }
 
 /** One cycle's worth of reasoning, for the forward-test record. */

@@ -109,7 +109,7 @@ export async function cycle(state: RivoState, deps: LoopDeps): Promise<CycleRepo
   // One generation of on-chain state per pass. Pools are recycled across
   // windows, so a snapshot held from a previous cycle can point at the pool a
   // market used to live in.
-  executor.newCycle();
+  executor.newCycle(state.cycles);
 
   // --- DISCOVER + ANALYZE ------------------------------------------------
   // First, because reconciliation needs it. Adopting a position the chain holds
@@ -386,6 +386,7 @@ export async function resolveSettled(state: RivoState, idx: Indexer, now: number
     state.cash += proceeds;
     state.realizedPnl += proceeds - p.cost;
     state.closed.push({
+      ...(p.id ? { id: p.id } : {}),
       marketId: p.marketId,
       asset: p.asset,
       intervalSec: p.intervalSec,
@@ -446,7 +447,10 @@ async function applyPositionAction(
 
   if (d.action === "EXIT" || d.action === "REDUCE") {
     const res = await executor.sell(
-      { marketId: p.marketId, leg: p.leg, size: d.size, limitPrice: d.limitPrice },
+      // `intent` is for the execution ledger, not for the executor: the venue
+      // sees one sell either way, and the permanent record should say whether
+      // the position manager was trimming a position or leaving it.
+      { marketId: p.marketId, leg: p.leg, size: d.size, limitPrice: d.limitPrice, intent: d.action },
       book,
     );
     if (res.filled <= 0) return;
@@ -457,6 +461,7 @@ async function applyPositionAction(
     state.cash += proceeds;
     state.realizedPnl += proceeds - costOut;
     state.closed.push({
+      ...(p.id ? { id: p.id } : {}),
       marketId: p.marketId,
       asset: p.asset,
       intervalSec: p.intervalSec,
