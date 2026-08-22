@@ -52,6 +52,13 @@ async function main(): Promise<void> {
   const out = arg("--out", "docs/evidence/live-canary.json");
   const net = network();
 
+  // A portfolio id means the durable store, which is a different and strictly
+  // better record: it can tell decisions from lots from execution attempts from
+  // confirmed transactions, where a file state can only report hashes that
+  // happened to survive on the positions still holding them.
+  const portfolioId = arg("--portfolio");
+  if (portfolioId) return portfolioProof(portfolioId, out);
+
   const state: RivoState = new StateStore(`${dataDir}/state.json`).load(() => {
     throw new Error(`no state at ${dataDir}/state.json — run the runtime first`);
   });
@@ -219,6 +226,77 @@ async function main(): Promise<void> {
   console.log("");
   console.log(unproven.length === 0 ? "every stage evidenced." : `NOT YET EVIDENCED: ${unproven.join(", ")}`);
   console.log(`written to ${out}`);
+}
+
+/**
+ * Proof for a portfolio in PostgreSQL.
+ *
+ * Prints the four counts separately and next to each other, because the useful
+ * thing about them is the gaps: decisions greatly exceed lots, lots exceed
+ * confirmed transactions, and a reader who is handed only one of those numbers
+ * cannot tell an active portfolio from an idle one.
+ */
+async function portfolioProof(portfolioId: string, out: string): Promise<void> {
+  const { buildPortfolioProof } = await import("../proof/portfolio.js");
+  const { closeDb, configured, safeTarget } = await import("../db/pool.js");
+  if (!configured()) throw new Error("--portfolio needs DATABASE_URL");
+
+  try {
+    const proof = await buildPortfolioProof(portfolioId);
+    writeFileSync(out, JSON.stringify(proof, null, 2));
+
+    const c = proof.counts;
+    console.log(`RIVO PORTFOLIO PROOF  ·  ${proof.network}  ·  ${safeTarget()}`);
+    console.log("=".repeat(78));
+    console.log(`portfolio  ${proof.portfolio.id}`);
+    console.log(`wallet     ${proof.portfolio.address}  (${proof.portfolio.url})`);
+    console.log(
+      `           ${proof.wallet.gas === null ? "?" : proof.wallet.gas.toFixed(4)} ${proof.wallet.gasSymbol} · ` +
+        `${proof.wallet.collateral === null ? "?" : proof.wallet.collateral.toFixed(4)} ${proof.wallet.collateralSymbol}`,
+    );
+    console.log(
+      `mode       ${proof.portfolio.mode}/${proof.portfolio.state}` +
+        `   signing ${proof.portfolio.signable ? (proof.portfolio.delegated ? "delegated" : "granted then revoked") : "none — Shadow Mode"}` +
+        `   ${proof.runtime.dryRun ? "DRY" : "LIVE"}`,
+    );
+    console.log("");
+    console.log("what these numbers are, kept apart on purpose:");
+    console.log(`  decisions            ${c.decisions.toLocaleString().padStart(9)}   every leg considered (${c.decisionsEntered} entered, ${c.decisionsRefused} refused)`);
+    console.log(`  position lots        ${String(c.lotsOpen + c.lotsClosed).padStart(9)}   ${c.lotsOpen} open, ${c.lotsClosed} closed`);
+    console.log(`  execution attempts   ${String(c.executionAttempts).padStart(9)}   ${Object.entries(c.executionsByStatus).map(([k, v]) => `${v} ${k}`).join(", ") || "none"}`);
+    console.log(`  with a tx hash       ${String(c.executionsWithTxHash).padStart(9)}   handed to the chain`);
+    console.log(`  confirmed on-chain   ${String(c.confirmedOnChain).padStart(9)}   receipts read back and verified here`);
+    console.log("");
+    for (const s of proof.stages) console.log(`  ${s.proven ? "✓" : "·"}  ${s.name.padEnd(11)} ${s.evidence}`);
+    console.log("");
+    console.log(
+      `settlement   ${proof.settlement.settled} settled · ${proof.settlement.sold} sold · ${proof.settlement.merged} merged · ` +
+        `${proof.settlement.voided} voided · ${proof.settlement.dropped} dropped · ${proof.settlement.claimSweeps} claim sweeps`,
+    );
+    console.log(
+      `reconcile    ${proof.reconciliation.events} events · ${proof.reconciliation.adoptedOpen} adopted positions` +
+        (proof.reconciliation.lastAt ? ` · last ${new Date(proof.reconciliation.lastAt * 1000).toISOString()}` : ""),
+    );
+    console.log(`risk         ${proof.risk.breakerEvents} breaker events · ${proof.risk.halted ?? "not halted"}`);
+    console.log(`fleet        ${proof.fleet.liveWorkers} live worker(s)`);
+    console.log(`ledger       ${proof.ledger.balances ? "balances" : "DOES NOT BALANCE"} (imbalance ${proof.ledger.imbalance.toExponential(2)})`);
+
+    if (proof.receipts.length > 0) {
+      console.log("");
+      console.log("transactions, verified against the chain:");
+      for (const r of proof.receipts.slice(0, 8)) {
+        console.log(`  ${r.succeeded ? "✓" : r.found ? "✗" : "?"} ${r.hash}  block ${r.block?.toLocaleString() ?? "—"}`);
+        console.log(`     ${r.url}`);
+      }
+    }
+
+    const unproven = proof.stages.filter((s) => !s.proven).map((s) => s.name);
+    console.log("");
+    console.log(unproven.length === 0 ? "every stage evidenced." : `NOT YET EVIDENCED: ${unproven.join(", ")}`);
+    console.log(`written to ${out}`);
+  } finally {
+    await closeDb().catch(() => undefined);
+  }
 }
 
 main().catch((e) => {

@@ -69,6 +69,14 @@ export async function runPortfolioCycle(
   try {
     const store = new PostgresStateStore(id);
     const log = new PostgresDecisionLog(id);
+    // An orphaned position row means something removed a position without
+    // recording how it ended. The store closes it so it cannot resurrect; this
+    // makes sure a person finds out, because the cause is a bug upstream of the
+    // store and it will not fix itself.
+    store.onOrphan = (message) => {
+      out(`  ${message}`);
+      void record(id, "position.orphaned", "error", message).catch(() => undefined);
+    };
     const state = await store.load();
 
     // The user's authority, or the honest absence of it. `mayTradeLive` reads

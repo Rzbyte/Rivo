@@ -31,6 +31,13 @@ const money = (x: number) => `${x >= 0 ? "+" : "-"}${Math.abs(x).toFixed(2)}`;
 const pct = (x: number) => (Number.isFinite(x) ? `${(x * 100).toFixed(1)}%` : "n/a");
 
 function main(): void {
+  // A portfolio id means the durable store. Everything below reads a state file,
+  // which is still the right answer for a local single-portfolio run.
+  const portfolioId = arg("--portfolio");
+  if (portfolioId) {
+    void portfolioMain(portfolioId);
+    return;
+  }
   const dir = arg("--data-dir", defaultDataDir())!;
   const sp = statePath(dir);
   if (!existsSync(sp)) {
@@ -194,6 +201,25 @@ function byGroup(title: string, rows: ClosedPosition[], key: (c: ClosedPosition)
       `    ${k.padEnd(8)} n=${String(list.length).padStart(4)}  hit ${pct(wins / list.length).padStart(6)}  ` +
         `staked ${staked.toFixed(2).padStart(8)}  P&L ${money(ret - staked).padStart(8)}  ret/stake ${pct(staked > 0 ? (ret - staked) / staked : 0).padStart(7)}`,
     );
+  }
+}
+
+/** The database path. Async, and it closes the pool or the process hangs. */
+async function portfolioMain(portfolioId: string): Promise<void> {
+  const { closeDb, configured } = await import("../db/pool.js");
+  if (!configured()) {
+    console.error("--portfolio needs DATABASE_URL");
+    process.exitCode = 1;
+    return;
+  }
+  try {
+    const { reportPortfolio } = await import("../proof/report.js");
+    await reportPortfolio(portfolioId);
+  } catch (e) {
+    console.error(e instanceof Error ? e.message : String(e));
+    process.exitCode = 1;
+  } finally {
+    await closeDb().catch(() => undefined);
   }
 }
 

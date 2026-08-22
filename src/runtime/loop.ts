@@ -271,20 +271,20 @@ export async function cycle(state: RivoState, deps: LoopDeps): Promise<CycleRepo
     for (const d of result.decisions) {
       const o = d.opportunity;
       if (d.action !== "BUY" || d.shares <= 0) {
-        records.push(record(now, state.cycles, o, "SKIP", 0, 0, d.binding));
+        records.push(record(now, state.cycles, o, "SKIP", 0, 0, d.binding, d.exposure));
         continue;
       }
       const key = legKey(o.marketId, o.leg);
       const since = now - (state.lastTradedAt?.[key] ?? 0);
       if (since < LEG_COOLDOWN_SEC) {
-        records.push(record(now, state.cycles, o, "SKIP", 0, 0, `cooling down (${LEG_COOLDOWN_SEC - since}s left) — traded this leg recently`));
+        records.push(record(now, state.cycles, o, "SKIP", 0, 0, `cooling down (${LEG_COOLDOWN_SEC - since}s left) — traded this leg recently`, d.exposure));
         continue;
       }
       // Confirm on-chain that the window still accepts orders. The indexer lags
       // by seconds and only `Trading` accepts an order; acting on a stale row is
       // how a cycle burns gas on a locked market.
       if (!(await executor.isTradable(o.marketId))) {
-        records.push(record(now, state.cycles, o, "SKIP", 0, 0, "not Trading on-chain at send time"));
+        records.push(record(now, state.cycles, o, "SKIP", 0, 0, "not Trading on-chain at send time", d.exposure));
         continue;
       }
       const res = await executor.buy(
@@ -292,7 +292,7 @@ export async function cycle(state: RivoState, deps: LoopDeps): Promise<CycleRepo
         snap.books.get(o.marketId),
       );
       if (res.filled <= 0) {
-        records.push(record(now, state.cycles, o, "SKIP", 0, 0, res.rejected ?? "no fill"));
+        records.push(record(now, state.cycles, o, "SKIP", 0, 0, res.rejected ?? "no fill", d.exposure));
         continue;
       }
       const pos: HeldPosition = {
@@ -323,7 +323,7 @@ export async function cycle(state: RivoState, deps: LoopDeps): Promise<CycleRepo
       await store.save(state);
       bought++;
       spent += res.cost;
-      records.push(record(now, state.cycles, o, "BUY", res.filled, res.cost, d.binding));
+      records.push(record(now, state.cycles, o, "BUY", res.filled, res.cost, d.binding, d.exposure));
       out(
         `  BUY  ${o.asset}-${Math.round(o.intervalSec / 60)}m ${o.leg}  ${res.filled.toFixed(2)} @ ${res.avgPrice.toFixed(3)}  ` +
           `cost ${res.cost.toFixed(2)}  (${d.binding})`,
@@ -448,6 +448,32 @@ async function applyPositionAction(
     const recovered = res.filled * 0.5;
     state.cash += recovered;
     state.realizedPnl += recovered - releasedCost;
+    // Record the merged slice, exactly as a sale is recorded.
+    //
+    // It used to be omitted, and a full merge therefore removed the position
+    // from `state.open` with no trace anywhere. On a file store that lost the
+    // history; on a database it was worse — nothing closed the row, so the
+    // position came BACK on the next reload with its shares intact while the
+    // cash from the merge had already been credited. The same shape as the
+    // partial-sale and lost-lot bugs: a mutation that moves capital without
+    // leaving a record for the store to follow.
+    state.closed.push({
+      ...(p.id ? { id: p.id } : {}),
+      ...(res.executionId ? { closedBy: [res.executionId] } : {}),
+      marketId: p.marketId,
+      asset: p.asset,
+      intervalSec: p.intervalSec,
+      leg: p.leg,
+      shares: res.filled,
+      entryPrice: p.entryPrice,
+      cost: releasedCost,
+      fairAtEntry: p.fairAtEntry,
+      openedAt: p.openedAt,
+      closedAt: now,
+      won: 0,
+      proceeds: recovered,
+      exit: "merged",
+    });
     if (p.shares <= 1e-9) state.open = state.open.filter((x) => x !== p);
     out(`  MERGE ${p.asset} ${p.leg} ${res.filled.toFixed(2)} -> collateral  (${d.reason})`);
     return;
@@ -594,6 +620,12 @@ const record = (
   shares: number,
   cost: number,
   binding: string,
+  /**
+   * The correlated-exposure arithmetic, when the allocator got far enough to
+   * compute it. Threaded through rather than recomputed, so what is recorded is
+   * exactly what the decision was made against.
+   */
+  exposure?: DecisionRecord["exposure"],
 ): DecisionRecord => ({
   at,
   cycle,
@@ -608,4 +640,5 @@ const record = (
   shares,
   cost,
   binding,
+  ...(exposure ? { exposure } : {}),
 });

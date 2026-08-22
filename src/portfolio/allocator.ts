@@ -61,6 +61,15 @@ export interface Decision {
   binding: string;
   /** Everything that limited this leg, in the order it was applied. */
   limits: { name: string; allowedCost: number }[];
+  /**
+   * Correlated exposure to this leg's underlying, before and after, against its
+   * budget — in collateral per 1% move.
+   *
+   * The number that makes a refusal legible. Three BTC windows can each carry
+   * positive edge and still be one view held three times; this is what says so.
+   * Absent for legs rejected before the delta budget was reached.
+   */
+  exposure?: { before: number; after: number; cap: number };
 }
 
 export interface Allocation {
@@ -157,6 +166,13 @@ export function allocate(input: AllocatorInputs): Allocation {
     const dPerShare = deltaPer1Pct(opp.deltaPerShare, spot);
     const costPerShare = ask;
 
+    // Captured before anything is decided, so a refusal can report the exposure
+    // that refused it. `positions` accumulates within this pass, so this is the
+    // exposure INCLUDING everything already taken this cycle — which is the
+    // figure that actually bound, not the one the cycle started with.
+    const exposureBefore = current.assetDelta.get(opp.asset) ?? 0;
+    const exposureContext = { before: exposureBefore, after: exposureBefore, cap: budget.assetDelta };
+
     if (Math.abs(dPerShare) > 1e-12) {
       // How many shares before this asset's delta budget is exhausted, in the
       // direction this leg pushes. Signed, so a leg that OFFSETS existing
@@ -191,7 +207,7 @@ export function allocate(input: AllocatorInputs): Allocation {
     const binding = limits.reduce((a, b) => (b.allowedCost < a.allowedCost ? b : a)).name;
 
     if (allowedCost <= 0) {
-      decisions.push(skip(opp, binding, limits));
+      decisions.push(skip(opp, binding, limits, exposureContext));
       continue;
     }
     // Refuse trades too small to be worth their spread. Without this the
@@ -200,14 +216,14 @@ export function allocate(input: AllocatorInputs): Allocation {
     const minTrade = Math.max(MIN_TRADE_ABS, totalCapital * MIN_TRADE_FRACTION);
     if (allowedCost < minTrade) {
       decisions.push(
-        skip(opp, `top-up of ${allowedCost.toFixed(2)} below minimum trade ${minTrade.toFixed(2)} — not worth the spread`, limits),
+        skip(opp, `top-up of ${allowedCost.toFixed(2)} below minimum trade ${minTrade.toFixed(2)} — not worth the spread`, limits, exposureContext),
       );
       continue;
     }
 
     const fill = fillableFor(opp, book, allowedCost);
     if (fill.shares <= 0 || fill.cost <= 0) {
-      decisions.push(skip(opp, "no depth at or below fair value", limits));
+      decisions.push(skip(opp, "no depth at or below fair value", limits, exposureContext));
       continue;
     }
     const depthBound = fill.cost < allowedCost * 0.999;
@@ -236,6 +252,7 @@ export function allocate(input: AllocatorInputs): Allocation {
       kellyTarget,
       binding: depthBound ? "book depth at or below fair value" : binding,
       limits,
+      exposure: { ...exposureContext, after: exposureBefore + fill.shares * dPerShare },
     });
   }
 
@@ -285,7 +302,12 @@ function score(o: Opportunity): number {
   return edge / Math.sqrt(risk);
 }
 
-const skip = (opportunity: Opportunity, binding: string, limits: Decision["limits"]): Decision => ({
+const skip = (
+  opportunity: Opportunity,
+  binding: string,
+  limits: Decision["limits"],
+  exposure?: Decision["exposure"],
+): Decision => ({
   opportunity,
   action: "SKIP",
   shares: 0,
@@ -295,4 +317,8 @@ const skip = (opportunity: Opportunity, binding: string, limits: Decision["limit
   kellyTarget: 0,
   binding,
   limits,
+  // A refusal's exposure is unchanged by definition — `after` equals `before` —
+  // and that identity is the whole message: this is what the portfolio already
+  // carries, and it is why nothing was added to it.
+  ...(exposure ? { exposure } : {}),
 });

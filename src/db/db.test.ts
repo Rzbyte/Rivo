@@ -427,6 +427,60 @@ describe.skipIf(!haveDatabase())("the durable layer", () => {
       expect(reloaded.contributed ?? 0).toBe(0);
     });
 
+    it("does not resurrect a position that left state without a closed record", async () => {
+      // The third bug of this shape, and the reason the store now has a safety
+      // net rather than trusting the caller. A fully merged position used to be
+      // removed from state.open with nothing pushed to state.closed: on a file
+      // store that lost the history, and here it was worse — no row was closed,
+      // so the next load brought the position back with its shares intact while
+      // the capital the merge released had already been credited.
+      const { portfolioId } = await seedPortfolio();
+      const store = new PostgresStateStore(portfolioId);
+      const warnings: string[] = [];
+      store.onOrphan = (m) => warnings.push(m);
+      const state = await store.load();
+      state.open.push(held1());
+      state.cash -= 4;
+      await store.save(state);
+
+      // Remove it the wrong way — no closed record, as the merge path did.
+      state.open = [];
+      state.cash += 2;
+      state.realizedPnl += -2;
+      await store.save(state);
+
+      expect(warnings).toHaveLength(1);
+      expect(warnings[0]).toMatch(/orphaned position row closed/);
+      const reloaded = await new PostgresStateStore(portfolioId).load();
+      expect(reloaded.open).toHaveLength(0);
+      expect(ledgerBalances(reloaded)).toBe(true);
+    });
+
+    it("says nothing when every position is accounted for", async () => {
+      // The check must be quiet in the normal case, or it becomes noise nobody
+      // reads and the one time it matters is the one time it is ignored.
+      const { portfolioId } = await seedPortfolio();
+      const store = new PostgresStateStore(portfolioId);
+      const warnings: string[] = [];
+      store.onOrphan = (m) => warnings.push(m);
+      const state = await store.load();
+      state.open.push(held1());
+      state.cash -= 4;
+      await store.save(state);
+      state.open[0]!.shares = 8;
+      await store.save(state);
+      const p = state.open.pop()!;
+      state.closed.push({
+        id: p.id!, marketId: p.marketId, asset: p.asset, intervalSec: p.intervalSec, leg: p.leg,
+        shares: p.shares, entryPrice: p.entryPrice, cost: p.cost, fairAtEntry: p.fairAtEntry,
+        openedAt: p.openedAt, closedAt: 1_800_000_100, won: 1, proceeds: 8, exit: "settled",
+      });
+      state.cash += 8;
+      state.realizedPnl += 8 - p.cost;
+      await store.save(state);
+      expect(warnings).toHaveLength(0);
+    });
+
     it("links a closed position to the executions that produced it", async () => {
       // The audit trail. This is what the execution ledger was built for: a
       // position that no longer exists still names the transactions that opened

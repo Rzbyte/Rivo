@@ -111,6 +111,20 @@ export interface DecisionRecord {
   cost: number;
   /** The constraint that determined the outcome. */
   binding: string;
+  /**
+   * What this decision did to correlated exposure, in collateral per 1% move.
+   *
+   * The arithmetic behind Rivo's most important refusal. A leg can have positive
+   * edge and still be wrong to take, because the portfolio already holds the
+   * same directional view at another tenor — and "already holds" is a number,
+   * not an opinion. `after` equals `before` for a refusal, which is exactly what
+   * makes a SKIP worth showing.
+   *
+   * Absent when the decision was reached before the delta budget was consulted:
+   * a leg with no offer, or a window inside its expiry headroom, has no exposure
+   * arithmetic to report and zero would misrepresent that.
+   */
+  exposure?: { before: number; after: number; cap: number };
 }
 
 export interface RivoState {

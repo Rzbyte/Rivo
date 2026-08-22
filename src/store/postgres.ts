@@ -120,6 +120,16 @@ export class PostgresStateStore implements StateSink {
   private version = 0;
   /** How many entries of `state.closed` are already rows. */
   private closedWatermark = 0;
+  /**
+   * Whether this instance read the state it is about to write.
+   *
+   * The orphan check below is only meaningful for a store that loaded: it
+   * compares the rows the database holds against the positions the caller has,
+   * and a caller that never loaded has no such claim to compare.
+   */
+  private loaded = false;
+  /** Called when the store finds a row the state no longer accounts for. */
+  onOrphan?: (message: string) => void;
 
   constructor(readonly portfolioId: string) {}
 
@@ -167,6 +177,7 @@ export class PostgresStateStore implements StateSink {
       ...(r.leg_state?.failures ? { failures: r.leg_state.failures } : {}),
     };
     this.closedWatermark = state.closed.length;
+    this.loaded = true;
     // The same repair the file store performs, for the same reason: a state that
     // does not balance is one whose P&L is already wrong, and absorbing the
     // difference somewhere visible beats leaving it hidden inside cash.
@@ -206,8 +217,43 @@ export class PostgresStateStore implements StateSink {
 
       await this.persistOpen(c, state);
       await this.persistClosed(c, state);
+      await this.closeOrphans(c, state);
     });
     this.closedWatermark = state.closed.length;
+  }
+
+  /**
+   * Close rows the state no longer accounts for, loudly.
+   *
+   * This should never fire. `load()` reads every open row, so anything the
+   * caller is still holding is in `state.open` and anything it finished with is
+   * in `state.closed` — unless a mutation removed a position without recording
+   * how it ended, which has happened three times in this codebase and each time
+   * looked different from the outside.
+   *
+   * Leaving such a row open is not a cosmetic problem: the next `load()` brings
+   * the position back with its shares intact while the capital it released has
+   * already been counted, so the portfolio holds something it sold. Closing it
+   * is the lesser wrong, and the warning is how the underlying bug stays
+   * visible rather than being absorbed.
+   */
+  private async closeOrphans(c: PoolClient, state: RivoState): Promise<void> {
+    if (!this.loaded) return;
+    const known = state.open.map((p) => p.id).filter(Boolean) as string[];
+    const orphans = await c.query<{ id: string; market_id: string; leg: string }>(
+      `UPDATE positions
+          SET status = 'closed', closed_at = now(), won = false, proceeds = 0, exit = 'dropped'
+        WHERE portfolio_id = $1 AND status = 'open' AND NOT (id = ANY($2::uuid[]))
+        RETURNING id, market_id, leg`,
+      [this.portfolioId, known],
+    );
+    for (const row of orphans.rows) {
+      const message =
+        `orphaned position row closed: ${row.leg} on ${row.market_id.slice(0, 10)}… was open in the database ` +
+        `but absent from the portfolio's own state. Something removed it without recording how it ended. ` +
+        `Closed as 'dropped' so it cannot come back; the cause is upstream of this store.`;
+      (this.onOrphan ?? ((m: string) => console.warn(`[${this.portfolioId}] ${m}`)))(message);
+    }
   }
 
   /**
@@ -386,9 +432,10 @@ export class PostgresDecisionLog implements DecisionSink {
     if (records.length === 0) return;
     // One statement for the whole cycle. A cycle produces up to sixteen legs and
     // a round-trip each would put the network on the hot path of every pass.
+    const COLS = 17;
     const values: unknown[] = [];
     const rows = records.map((r, i) => {
-      const b = i * 13;
+      const b = i * COLS;
       values.push(
         this.portfolioId,
         r.cycle,
@@ -403,13 +450,20 @@ export class PostgresDecisionLog implements DecisionSink {
         r.edge,
         r.shares,
         r.cost,
+        r.binding,
+        // Null, not zero, when the decision never reached the delta budget. A
+        // leg with no offer has no exposure arithmetic, and zero would claim it
+        // had one that happened to be neutral.
+        r.exposure?.before ?? null,
+        r.exposure?.after ?? null,
+        r.exposure?.cap ?? null,
       );
-      return `($${b + 1}, $${b + 2}, $${b + 3}, $${b + 4}, $${b + 5}, $${b + 6}, $${b + 7}, $${b + 8}, $${b + 9}, $${b + 10}, $${b + 11}, $${b + 12}, $${b + 13}, $${records.length * 13 + i + 1})`;
+      return `(${Array.from({ length: COLS }, (_, k) => `$${b + k + 1}`).join(", ")})`;
     });
-    values.push(...records.map((r) => r.binding));
     await query(
       `INSERT INTO decisions (portfolio_id, cycle, at, market_id, asset, interval_sec, leg, action,
-                              fair, ask, edge, shares, cost, binding)
+                              fair, ask, edge, shares, cost, binding,
+                              exposure_before, exposure_after, exposure_cap)
        VALUES ${rows.join(", ")}`,
       values,
     );
@@ -430,8 +484,12 @@ export class PostgresDecisionLog implements DecisionSink {
       shares: string | null;
       cost: string | null;
       binding: string;
+      exposure_before: string | null;
+      exposure_after: string | null;
+      exposure_cap: string | null;
     }>(
-      `SELECT cycle, at, market_id, asset, interval_sec, leg, action, fair, ask, edge, shares, cost, binding
+      `SELECT cycle, at, market_id, asset, interval_sec, leg, action, fair, ask, edge, shares, cost, binding,
+              exposure_before, exposure_after, exposure_cap
          FROM decisions WHERE portfolio_id = $1 ORDER BY at DESC, id DESC LIMIT $2`,
       [this.portfolioId, Math.min(5000, Math.max(1, limit))],
     );
@@ -450,6 +508,15 @@ export class PostgresDecisionLog implements DecisionSink {
         shares: num(r.shares),
         cost: num(r.cost),
         binding: r.binding,
+        ...(r.exposure_cap !== null
+          ? {
+              exposure: {
+                before: num(r.exposure_before),
+                after: num(r.exposure_after),
+                cap: num(r.exposure_cap),
+              },
+            }
+          : {}),
       }))
       .reverse();
   }
