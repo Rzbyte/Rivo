@@ -51,7 +51,14 @@ CREATE TABLE wallets (
   revoked_at      timestamptz,
   created_at      timestamptz NOT NULL DEFAULT now(),
   CHECK (address = lower(address)),
-  CHECK (kind <> 'portfolio' OR privy_wallet_id IS NOT NULL),
+  -- The invariant is about DELEGATION, not about kind.
+  --
+  -- Privy issues a wallet id only once the user has delegated — before that the
+  -- embedded wallet has an address and nothing else — so requiring an id at
+  -- creation would make it impossible to record the wallet the browser just
+  -- provisioned. What must never be true is the other direction: a row claiming
+  -- Rivo may sign, with nothing to sign through.
+  CHECK (NOT delegated OR privy_wallet_id IS NOT NULL),
   UNIQUE (user_id, address)
 );
 CREATE INDEX wallets_user ON wallets(user_id);

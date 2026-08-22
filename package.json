@@ -9,7 +9,7 @@
   },
   "scripts": {
     "calibrate": "tsx src/calibration/cli.ts",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.public.json",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.public.json && npm --workspace @rivo/web run typecheck",
     "scan": "tsx src/cli/scan.ts",
     "allocate": "tsx src/cli/allocate.ts",
     "backtest": "tsx src/cli/backtest.ts",
@@ -36,7 +36,9 @@
     "agent": "tsx src/cli/agent.ts",
     "db:migrate": "tsx src/cli/migrate.ts",
     "dev:pg": "tsx scripts/dev-postgres.ts",
-    "worker": "tsx src/cli/worker.ts"
+    "worker": "tsx src/cli/worker.ts",
+    "build:web": "npm --workspace @rivo/web run build",
+    "dev:web": "npm --workspace @rivo/web run dev"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
@@ -50,5 +52,8 @@
     "@privy-io/server-auth": "^1.32.5",
     "pg": "^8.23.0",
     "viem": "^2.55.19"
-  }
+  },
+  "workspaces": [
+    "web"
+  ]
 }

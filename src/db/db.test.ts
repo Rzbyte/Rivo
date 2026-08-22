@@ -39,11 +39,16 @@ describe.skipIf(!haveDatabase())("the durable layer", () => {
       expect(b.lastSeenAt).toBeGreaterThanOrEqual(a.lastSeenAt);
     });
 
-    it("refuses a portfolio wallet with no way to sign", async () => {
+    it("accepts a portfolio wallet before it has a way to sign, and refuses to call it delegated", async () => {
+      // Privy issues a wallet id only once the user delegates, so the wallet the
+      // browser just created legitimately has an address and nothing else.
       const u = await upsertUser("did:privy:nosign");
-      await expect(
-        query("INSERT INTO wallets (user_id, address, kind) VALUES ($1, '0xaaaa', 'portfolio')", [u.id]),
-      ).rejects.toThrow();
+      const w = await upsertWallet({ userId: u.id, address: "0x2222222222222222222222222222222222222222", kind: "portfolio" });
+      expect(w.privyWalletId).toBeNull();
+      expect(w.delegated).toBe(false);
+      // But a row that claims Rivo may sign, with nothing to sign through, is a
+      // lie the database refuses to store.
+      await expect(query("UPDATE wallets SET delegated = true WHERE id = $1", [w.id])).rejects.toThrow();
     });
 
     it("stores addresses lowercased, and refuses anything else", async () => {

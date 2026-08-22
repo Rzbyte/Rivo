@@ -1,8 +1,24 @@
 import { defineConfig } from "vitest/config";
+import { fileURLToPath } from "node:url";
+
+/**
+ * The web app's imports, resolved the way Next resolves them.
+ *
+ * The API routes are a trust boundary — they are where a token becomes an
+ * identity and where a portfolio id becomes somebody's portfolio — so they need
+ * tests, and tests need the aliases. Duplicated from web/tsconfig.json because
+ * vitest reads a config rather than a tsconfig; kept short enough that the
+ * duplication is visible rather than buried.
+ */
+const alias = {
+  "@rivo": fileURLToPath(new URL("./src", import.meta.url)),
+  "@": fileURLToPath(new URL("./web", import.meta.url)),
+};
 
 export default defineConfig({
+  resolve: { alias },
   test: {
-    include: ["src/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "web/**/*.test.ts"],
     // These tests are pure: no network, no clock, no filesystem beyond a temp dir.
     // Anything that needs the venue belongs in the CLIs, which are exercised by
     // running them against it — a unit test that depends on a live order book
