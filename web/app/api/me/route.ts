@@ -7,7 +7,7 @@
 // needs it at 3am. This is where the two meet.
 
 import { NextResponse } from "next/server";
-import { withUser, badRequest } from "@/lib/auth";
+import { badRequest, withUser, withUserWrite } from "@/lib/auth";
 import { jsonBody } from "@/lib/validate";
 import { upsertWallet, walletsOf } from "@rivo/db/accounts.js";
 import { portfoliosOf } from "@rivo/db/portfolios.js";
@@ -58,7 +58,7 @@ export const GET = withUser(async (user) => {
  * kind on conflict, so a client cannot turn the user's hardware wallet into
  * something Rivo signs with by re-posting it with a different label.
  */
-export const POST = withUser(async (user, req) => {
+export const POST = withUserWrite(async (user, req) => {
   const body = await jsonBody(req);
   const address = String(body.address ?? "");
   if (!ADDRESS.test(address)) badRequest("address must be a 20-byte hex address");

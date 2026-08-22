@@ -1,7 +1,7 @@
 // Portfolios: list, and create.
 
 import { NextResponse } from "next/server";
-import { badRequest, withUser } from "@/lib/auth";
+import { badRequest, withUser, withUserWrite } from "@/lib/auth";
 import { amount, isProfile, jsonBody } from "@/lib/validate";
 import { createPortfolio, portfoliosOf } from "@rivo/db/portfolios.js";
 import { walletsOf } from "@rivo/db/accounts.js";
@@ -33,7 +33,7 @@ export const GET = withUser(async (user) => {
  * Enabling Autopilot is a separate, explicit act with its own consent step, and
  * collapsing the two into "create" would mean a POST that begins spending money.
  */
-export const POST = withUser(async (user, req) => {
+export const POST = withUserWrite(async (user, req) => {
   const body = await jsonBody(req);
   const capital = amount(body.capital, "capital");
   if (capital <= 0) badRequest("capital must be greater than zero");

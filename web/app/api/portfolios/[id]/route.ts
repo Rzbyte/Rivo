@@ -1,7 +1,7 @@
 // One portfolio: the whole picture, and the settings form.
 
 import { NextResponse } from "next/server";
-import { badRequest, notFound, withUser } from "@/lib/auth";
+import { badRequest, notFound, withUser, withUserWrite } from "@/lib/auth";
 import { amount, isProfile, jsonBody, overrides } from "@/lib/validate";
 import { portfolioOf, updatePolicy } from "@rivo/db/portfolios.js";
 import type { ProfileName } from "@rivo/portfolio/profiles.js";
@@ -37,7 +37,7 @@ export const GET = withUser(async (user, req, ctx: Ctx) => {
  * those are lifecycle transitions with their own rules, and a settings form that
  * could resume a halted portfolio would silently undo a circuit breaker.
  */
-export const PATCH = withUser(async (user, req, ctx: Ctx) => {
+export const PATCH = withUserWrite(async (user, req, ctx: Ctx) => {
   const { id } = await ctx.params;
   const body = await jsonBody(req);
 

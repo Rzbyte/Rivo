@@ -15,7 +15,7 @@
 // browser succeeding at anything.
 
 import { NextResponse } from "next/server";
-import { badRequest, notFound, withUser } from "@/lib/auth";
+import { badRequest, notFound, withUser, withUserWrite } from "@/lib/auth";
 import { jsonBody } from "@/lib/validate";
 import { portfolioOf, setState, updatePolicy } from "@rivo/db/portfolios.js";
 import { setDelegated, upsertWallet } from "@rivo/db/accounts.js";
@@ -27,7 +27,7 @@ export const dynamic = "force-dynamic";
 
 type Ctx = { params: Promise<{ id: string }> };
 
-export const POST = withUser(async (user, req, ctx: Ctx) => {
+export const POST = withUserWrite(async (user, req, ctx: Ctx) => {
   const { id } = await ctx.params;
   const body = await jsonBody(req);
   const enabled = body.enabled === true;

@@ -18,6 +18,7 @@ import { NextResponse } from "next/server";
 import { verifyAccessToken } from "@rivo/signing/privy.js";
 import { upsertUser, type User } from "@rivo/db/accounts.js";
 import { configured } from "@rivo/db/pool.js";
+import { take } from "./ratelimit";
 
 export class HttpError extends Error {
   constructor(
@@ -51,6 +52,28 @@ export async function requireUser(req: Request): Promise<User> {
   const claims = await verifyAccessToken(token);
   if (!claims) throw new HttpError(401, "not signed in");
   return upsertUser(claims.userId);
+}
+
+/**
+ * Wrap a handler, rate-limited per user.
+ *
+ * Only for routes that CHANGE something. Reads are left alone deliberately: the
+ * dashboard polls, and a limiter that fought the product's own refresh would be
+ * a limiter somebody eventually removes.
+ */
+export function withUserWrite<T>(
+  handler: (user: User, req: Request, ctx: T) => Promise<Response>,
+): (req: Request, ctx: T) => Promise<Response> {
+  return withUser(async (user, req, ctx) => {
+    const verdict = take(`user:${user.id}`);
+    if (!verdict.ok) {
+      return NextResponse.json(
+        { error: "too many changes in a short time — slow down and try again" },
+        { status: 429, headers: { "retry-after": String(verdict.retryAfter) } },
+      );
+    }
+    return handler(user, req, ctx);
+  });
 }
 
 /**

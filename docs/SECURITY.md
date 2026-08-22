@@ -59,6 +59,13 @@ wrong scheme, another user's portfolio on read, on write, and on the Autopilot s
 attempt to re-post an external wallet as a signer. The database is real in those tests — an
 ownership check that passes against a mock is a mock of an ownership check.
 
+**The schema is asserted about directly**, in `src/db/security.test.ts`. A column named
+`private_key` added in six months by someone who was not here for the reasoning would pass every
+behavioural test in this repository and destroy the product's central claim — so there is a test
+that reads `information_schema` and fails on one. The same file pins that the append-only triggers
+are still attached, that a wallet cannot be marked delegated with nothing to sign through, and that
+two portfolios produce two different signing authorities.
+
 **CSRF is not applicable, by construction.** Authentication is a bearer token in an `Authorization`
 header, never a cookie, so a cross-site request cannot carry credentials. This is worth stating
 because the usual mitigation (a CSRF token) would be theatre here, and its absence should not read
@@ -126,20 +133,31 @@ The remaining risk is a bug in Rivo, not a request from a user. That is the hone
 
 ## 6. Rate limiting
 
-**There is none in the application, and that is a gap rather than a decision.**
+**Mutating routes are limited per user: 30 changes per 60-second sliding window.** Reads are not,
+deliberately — the dashboard polls, and a limiter that fought the product's own refresh is a limiter
+somebody eventually removes.
 
-The honest position: every mutating route is authenticated and scoped to one user, and the
-expensive paths (a trading cycle) are not reachable from a request at all — they belong to the
-worker, on a schedule the API cannot influence. So the damage an authenticated user can do by
-looping a request is bounded by their own database rows. That makes this a lower priority than it
-would be on a public write API, not a non-issue.
+A sliding window rather than a fixed one, because a fixed window lets a caller send the whole
+allowance at 59 seconds and again at 61, which is twice the intended rate at exactly the moment it
+matters. `web/lib/ratelimit.test.ts` pins that with staggered requests; an earlier version of the
+test sent them at one instant, so they expired together and proved nothing.
 
-What a production deployment should do:
+**The honest limit of this.** It is in-memory, therefore **per instance**. On Vercel that means a
+burst spread across cold starts sees a higher effective ceiling than the number above. That is a
+real weakening, and it is written here rather than in a footnote. A deployment needing a hard global
+limit needs a shared store or a limiter at the edge; this is the floor beneath that, not a
+replacement for it.
 
-* Put a rate limit in front of the API — Vercel's, or a WAF, or a middleware keyed by user id.
-* Cap `DATABASE_POOL_MAX` so a burst cannot exhaust the database's connection slots.
-* `DATABASE_STATEMENT_TIMEOUT_MS` is already set (30s default), so no single query can pin a
-  connection indefinitely.
+The reason it is a floor rather than a wall: every mutating route is authenticated and scoped to one
+user, and the expensive path — a trading cycle — is not reachable from a request at all. It belongs
+to the worker, on a schedule the API cannot influence. So the damage an authenticated user can do by
+looping is bounded by their own rows.
+
+Also in place:
+
+* `DATABASE_POOL_MAX` caps connections so a burst cannot exhaust the database's slots.
+* `DATABASE_STATEMENT_TIMEOUT_MS` (30s default) means no single query can pin a connection
+  indefinitely.
 
 ---
 
@@ -186,18 +204,24 @@ every advisory above — are absent from the process that signs transactions.
 
 Stated rather than omitted:
 
-1. **No application rate limiting.** §6.
+1. **Rate limiting is per instance, not global.** §6. A floor, not a wall.
 2. **Trading limits are software-enforced.** §1. This is a property of the venue and cannot be
    fixed here.
 3. **Privy transaction policies are requested, not verified by Rivo.** `POLICY_INTENT` describes
    what should be attached; Rivo does not currently read back the policy attached to a wallet and
    compare it. A deployment should check the dashboard.
-4. **A crash between signing and the return of a transaction hash is unattributable.** The kit
+4. **Privy sign-in, delegation and a real server-side signature are unverified.** No credentials
+   were available in the environment this was built in. Every code path around them is tested with
+   the credentials absent — a wallet that is not delegated refuses to build a signer, a revoked
+   grant degrades to Shadow Mode, nothing displayable can carry a secret — and the signer BINDING is
+   verified against the real kit and SDK with a local key. What is unproven is Privy's half of the
+   round trip. `npm run privy:check` authenticates for real and reports exactly what is missing.
+5. **A crash between signing and the return of a transaction hash is unattributable.** The kit
    returns a hash only after the write completes, so there is a window in which Rivo has sent a
    transaction and cannot name it. The execution ledger records such rows as `orphaned` — not
    `failed` — and position truth comes from on-chain reconciliation instead. See
    `src/ledger/idempotency.test.ts`, which tests both halves.
-5. **The Docker build is verified in CI, not locally.** Docker is unavailable in the development
+6. **The Docker build is verified in CI, not locally.** Docker is unavailable in the development
    environment used for this work; the workspace-free install it depends on was verified directly
    instead.
-6. **No penetration testing has been done.** This is a hackathon project.
+7. **No penetration testing has been done.** This is a hackathon project.
