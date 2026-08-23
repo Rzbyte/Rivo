@@ -236,14 +236,21 @@ function Headline({ bundle }: { bundle: Bundle }) {
     line = "Watching every market.";
   }
 
-  const considered = latest ? latest.entered.length + latest.skipped.length + latest.managed.length : 0;
+  // Legs, not markets. A DreamDEX market has two sides, so the engine prices
+  // sixteen contracts across eight markets and an earlier version of this line
+  // reported that as "16 markets" — double the venue's actual size. Both numbers
+  // are worth saying: the contract count is the work done, the market count is
+  // the breadth, and the breadth is the thing a single-market bot cannot claim.
+  const legs = latest ? [...latest.entered, ...latest.skipped, ...latest.managed] : [];
+  const considered = legs.length;
+  const markets = new Set(legs.map((d) => `${d.asset}-${d.intervalSec}`)).size;
 
   return (
     <div className="panel" style={{ marginBottom: 14 }}>
       <p style={{ fontSize: 17, color: "var(--ink)", margin: 0, lineHeight: 1.45 }}>{line}</p>
       <p className="hint" style={{ marginTop: 6, marginBottom: 0 }}>
         {view.runtime.cycles.toLocaleString()} checks since you switched it on
-        {considered > 0 && ` · ${considered} markets priced in the last one`}
+        {considered > 0 && ` · ${considered} contracts across ${markets} markets priced in the last one`}
         {view.realizedPnl !== 0 &&
           ` · ${view.realizedPnl >= 0 ? "up" : "down"} ${Math.abs(view.realizedPnl).toFixed(2)} so far`}
       </p>
