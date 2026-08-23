@@ -146,6 +146,34 @@ sign. That is the correct way for a missing credential to fail.
 Check `/api/health` after deploying. It answers without authentication and reports whether the
 database responds, whether the schema is current, and how many workers are alive.
 
+### Connection budget — the arithmetic nobody does until it breaks
+
+Every process opens its own pool of `DATABASE_POOL_MAX` (default 10). The
+provider's ceiling is finite and smaller than people assume: a Supabase free
+project reports **60**, with 3 reserved and around a dozen already in use by its
+own services — so roughly **45 are yours**.
+
+```
+workers × DATABASE_POOL_MAX  +  concurrent web instances × DATABASE_POOL_MAX  ≤  budget
+```
+
+Three workers at the default is 30. Vercel is the half that surprises people: it
+is not one process, it is as many as traffic creates, and each opens its own
+pool. Three concurrent instances at the default is another 30, and 60 is the
+whole ceiling.
+
+So on Vercel set **`DATABASE_POOL_MAX=2`**. A request handler runs a handful of
+queries and returns; it has nothing to do with a spare connection, and holding
+ten of them starves the plane that actually needs them. Leave the worker at the
+default — it runs up to eight portfolios at once and genuinely uses them.
+
+Check what you are actually using:
+
+```sql
+select count(*) from pg_stat_activity;
+select name, setting from pg_settings where name = 'max_connections';
+```
+
 ---
 
 ## 4. The worker — a container that stays up
@@ -162,9 +190,13 @@ docker run -d --restart unless-stopped \
   rivo src/cli/worker.ts --interval 45 --concurrency 8
 ```
 
-On Railway / Render / Fly: the same image, the same command, the same variables. Point the
-platform's health check at **`/ready`** rather than `/health` — a worker that is up and has not
-completed a pass in five minutes is not healthy in any sense a user would recognise.
+On Render, `render.yaml` at the repository root is a Blueprint: **New → Blueprint**, point it at the
+repository, and it prompts for the secrets rather than reading them from the repo. On Railway or Fly
+it is the same image and the same command, configured in their own dashboard.
+
+Point the platform's health check at **`/ready`**, not `/health` — a worker that is up and has not
+completed a pass in five minutes is not healthy in any sense a user would recognise. `render.yaml`
+already does.
 
 On a VPS: `deploy/rivo-worker.service`, which carries the systemd hardening a process that signs
 transactions should have.

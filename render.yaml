@@ -1,0 +1,48 @@
+# Rivo's execution plane on Render.
+#
+# The web app is deliberately NOT here. It belongs on Vercel: it is
+# request-scoped, scales to zero, and must never be the thing running a trading
+# loop. What this file deploys is the worker — the process that keeps managing
+# portfolios after the browser closes.
+#
+#   render.com -> New -> Blueprint -> point at this repository
+#
+# Secrets are marked `sync: false`, so Render prompts for them and never reads
+# them from the repository. Nothing sensitive is in this file and nothing should
+# be added to it.
+
+services:
+  - type: worker
+    name: rivo-worker
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    # Same image as the CLI, pointed at a database. Two images would eventually
+    # be two versions of the engine, and the difference would surface as a
+    # portfolio behaving differently depending on which plane ran it.
+    dockerCommand: node_modules/.bin/tsx src/cli/worker.ts --interval 45 --concurrency 8
+    healthCheckPath: /ready
+    envVars:
+      # /ready, not /health: a worker that is up and has not completed a pass in
+      # five minutes is not healthy in any sense a user would recognise.
+      - key: PORT
+        value: 8080
+      - key: NETWORK
+        value: testnet
+      # Session pooler, not the transaction pooler — see docs/DEPLOY.md §1.
+      - key: DATABASE_URL
+        sync: false
+      - key: PGSSLMODE
+        value: no-verify
+      # Without these every portfolio runs in Shadow Mode, which is the correct
+      # way for a missing credential to fail.
+      - key: PRIVY_APP_ID
+        sync: false
+      - key: PRIVY_APP_SECRET
+        sync: false
+      - key: PRIVY_AUTHORIZATION_KEY
+        sync: false
+      # Where to shout when a breaker fires. An unattended trader that halts at
+      # 3am and tells nobody has done half its job.
+      - key: RIVO_ALERT_WEBHOOK
+        sync: false
