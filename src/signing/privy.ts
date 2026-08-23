@@ -114,14 +114,32 @@ export const POLICY_INTENT = {
 export interface PrivyServer {
   verifyAuthToken(token: string): Promise<{ userId: string }>;
   /** App configuration, as Privy holds it. Used by the preflight to check the setup. */
-  getAppSettings(): Promise<{
-    id?: string;
-    name?: string;
-    emailAuth?: boolean;
-    googleOAuth?: boolean;
-    walletAuth?: boolean;
-  }>;
+  getAppSettings(): Promise<Record<string, unknown> & { id?: string; name?: string }>;
 }
+
+/**
+ * Every sign-in method Privy can offer, and the flag that reports it.
+ *
+ * Rivo does not choose from this list — the dashboard does. `loginMethods` is
+ * absent from the client config on purpose (see web/app/providers.tsx), so
+ * whatever is enabled here is what a user sees. This exists only so the
+ * preflight can SHOW an operator what is live rather than making them guess.
+ */
+export const LOGIN_METHODS: { name: string; flag: string }[] = [
+  { name: "email", flag: "emailAuth" },
+  { name: "sms", flag: "smsAuth" },
+  { name: "wallet", flag: "walletAuth" },
+  { name: "google", flag: "googleOAuth" },
+  { name: "apple", flag: "appleOAuth" },
+  { name: "twitter / X", flag: "twitterOAuth" },
+  { name: "discord", flag: "discordOAuth" },
+  { name: "github", flag: "githubOAuth" },
+  { name: "linkedin", flag: "linkedInOAuth" },
+  { name: "tiktok", flag: "tiktokOAuth" },
+  { name: "farcaster", flag: "farcasterAuth" },
+  { name: "telegram", flag: "telegramAuth" },
+  { name: "passkey", flag: "passkeyAuth" },
+];
 
 /** What a deployment needs before any of this works, and whether it has it. */
 export interface PrivyPreflight {
@@ -130,10 +148,20 @@ export interface PrivyPreflight {
   reachable: boolean | null;
   appId: string | null;
   appName: string | null;
-  loginMethods: { email: boolean; google: boolean; wallet: boolean };
+  /** Sign-in methods the Privy dashboard has switched on. Rivo shows all of them. */
+  methodsEnabled: string[];
+  methodsDisabled: string[];
   /** True when an authorization keypair is configured on this server. */
   authorizationKey: boolean;
   problems: string[];
+}
+
+/** Which sign-in methods this Privy app actually offers, from its own settings. */
+export function enabledMethods(settings: Record<string, unknown>): { enabled: string[]; disabled: string[] } {
+  const enabled: string[] = [];
+  const disabled: string[] = [];
+  for (const m of LOGIN_METHODS) (settings[m.flag] === true ? enabled : disabled).push(m.name);
+  return { enabled, disabled };
 }
 
 /**
@@ -155,7 +183,8 @@ export async function preflight(): Promise<PrivyPreflight> {
     reachable: null,
     appId: appId || null,
     appName: null,
-    loginMethods: { email: false, google: false, wallet: false },
+    methodsEnabled: [],
+    methodsDisabled: [],
     authorizationKey: Boolean(process.env.PRIVY_AUTHORIZATION_KEY?.trim()),
     problems: [],
   };
@@ -183,13 +212,14 @@ export async function preflight(): Promise<PrivyPreflight> {
     const settings = await privy.getAppSettings();
     out.reachable = true;
     out.appName = settings.name ?? null;
-    out.loginMethods = {
-      email: settings.emailAuth === true,
-      google: settings.googleOAuth === true,
-      wallet: settings.walletAuth === true,
-    };
-    for (const [name, enabled] of Object.entries(out.loginMethods)) {
-      if (!enabled) out.problems.push(`${name} login is not enabled on this Privy app — Rivo's sign-in offers it.`);
+    const { enabled, disabled } = enabledMethods(settings);
+    out.methodsEnabled = enabled;
+    out.methodsDisabled = disabled;
+    // Not a problem to have some switched off — that is the operator's choice,
+    // and Rivo shows whatever they chose. The only real failure is NONE, which
+    // means nobody can sign in at all.
+    if (enabled.length === 0) {
+      out.problems.push("No sign-in method is enabled on this Privy app — nobody can log in.");
     }
   } catch (e) {
     out.reachable = false;
@@ -326,9 +356,12 @@ export class PrivyDelegatedAuthority implements ChainSigner {
     this.built = await createViemAccount({
       walletId: this.wallet.walletId,
       address: this.wallet.address,
-      // The cast crosses the two declaration trees described on `PrivyServer`.
-      // It is the same object either way — this is the SDK's own client.
-      privy: privy as Parameters<typeof createViemAccount>[0]["privy"],
+      // Through `unknown`, because `PrivyServer` is an index-signature type and
+      // TypeScript will not narrow one to a class directly. It is the same
+      // object either way — this IS the SDK's own client; `PrivyServer` only
+      // exists because the package ships two parallel declaration trees whose
+      // `PrivyClient` classes are structurally identical and nominally distinct.
+      privy: privy as unknown as Parameters<typeof createViemAccount>[0]["privy"],
     });
     return this.built;
   }

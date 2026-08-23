@@ -6,7 +6,7 @@
 // what a user reads before deciding to fund a wallet.
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { POLICY_INTENT, PrivyDelegatedAuthority, looksRevoked, preflight, privyConfigured, resetPrivyClient, verifyAccessToken } from "./privy.js";
+import { LOGIN_METHODS, POLICY_INTENT, PrivyDelegatedAuthority, enabledMethods, looksRevoked, preflight, privyConfigured, resetPrivyClient, verifyAccessToken } from "./privy.js";
 import { canSign, type SigningAuthority } from "../runtime/signer.js";
 import { DryExecutor, executorFor } from "../runtime/executor.js";
 
@@ -172,6 +172,22 @@ describe("the preflight", () => {
     const p = await preflight();
     expect(p.reachable).toBeNull();
     expect(p.problems.join(" ")).not.toMatch(/rejected these credentials/);
+  });
+
+  it("reports enabled methods rather than judging them", async () => {
+    // Rivo shows whatever the dashboard turned on, so a method being off is the
+    // operator's choice and not a fault. The only real failure is none at all.
+    const { enabled, disabled } = enabledMethods({ emailAuth: true, walletAuth: true, googleOAuth: false });
+    expect(enabled).toEqual(["email", "wallet"]);
+    expect(disabled).toContain("google");
+    expect(disabled).toContain("passkey");
+    expect(enabled.length + disabled.length).toBe(LOGIN_METHODS.length);
+  });
+
+  it("treats a flag that is merely present as off", () => {
+    // Privy omits flags it has no opinion on, and `undefined` is not `true`.
+    const { enabled } = enabledMethods({ emailAuth: undefined, googleOAuth: "yes" as unknown as boolean });
+    expect(enabled).toEqual([]);
   });
 
   it("catches a browser and server pointed at two different apps", async () => {

@@ -34,7 +34,23 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <PrivyProvider
       appId={APP_ID}
       config={{
-        loginMethods: ["email", "google", "wallet"],
+        // `loginMethods` is deliberately ABSENT.
+        //
+        // Privy's own docs are explicit that this parameter "enables you to
+        // display a SUBSET of the login methods specified in the developer
+        // dashboard", and that anything listed here "must also be enabled as a
+        // login method in the developer dashboard". So hard-coding it can only
+        // ever narrow what an operator has turned on — never widen it.
+        //
+        // It was hard-coded to email/google/wallet, and that was worse than
+        // pointless: the dashboard had Google switched off, so the code offered
+        // a method the app could not serve, and enabling Apple or Discord or a
+        // passkey later would have required a code change and a redeploy to
+        // become visible.
+        //
+        // Omitting it makes the dashboard the single source of truth. Turn a
+        // method on at dashboard.privy.io and it appears here on the next page
+        // load. `npm run privy:check` reports which are live.
         appearance: {
           theme: "dark",
           accentColor: "#a8cf9a",

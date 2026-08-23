@@ -58,8 +58,11 @@ function LandingWithAuth() {
         </p>
 
         <div className="row" style={{ marginTop: 26, marginBottom: 44 }}>
+          {/* Deliberately does not name the methods. Which ones exist is the
+              Privy dashboard's decision, and a button promising Google on a
+              deployment that has not enabled it is a button that lies. */}
           <button className="primary" disabled={!ready} onClick={() => login()}>
-            Continue with email, Google, or a wallet
+            Get started
           </button>
           <a className="btn" href="https://github.com/somnia-chain/dreamdex-bot-kit">
             Built on the official kit
@@ -71,7 +74,7 @@ function LandingWithAuth() {
         <section className="grid cols-3" style={{ marginTop: 34 }}>
           <Feature
             title="No private keys"
-            body="Sign in with an email address. Rivo opens you a Rivo Portfolio — a trading account held by Privy, separate from any wallet you already use. Rivo never has the key, and you can withdraw its permission to sign at any moment."
+            body="Sign in however you like — an email address, a social account, or a wallet you already have. Rivo opens you a Rivo Portfolio: a trading account held by Privy, separate from anything you already use. Rivo never has the key, and you can withdraw its permission to sign at any moment."
           />
           <Feature
             title="No per-trade popups"

@@ -33,9 +33,12 @@ async function main(): Promise<void> {
     console.log("  Privy was not contacted — there are no credentials to try.");
   } else if (p.reachable) {
     console.log(`  ok    authenticated with Privy${p.appName ? ` as "${p.appName}"` : ""}`);
-    console.log(`  ${tick(p.loginMethods.email)}  email login`);
-    console.log(`  ${tick(p.loginMethods.google)}  google login`);
-    console.log(`  ${tick(p.loginMethods.wallet)}  external wallet login`);
+    console.log("");
+    console.log("  SIGN-IN METHODS — whatever is on here is what users see.");
+    console.log("  Rivo does not pick from this list; the dashboard does.");
+    console.log("");
+    console.log(`    on   ${p.methodsEnabled.join(", ") || "(none — nobody can sign in)"}`);
+    console.log(`    off  ${p.methodsDisabled.join(", ") || "(none)"}`);
   } else {
     console.log("  MISS  Privy rejected these credentials.");
   }
