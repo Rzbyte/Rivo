@@ -55,11 +55,48 @@ export function Decisions({ groups }: { groups: DecisionGroup[] }) {
             </div>
           )}
 
-          {[...g.entered, ...g.managed, ...g.skipped].map((d, i) => (
-            <Card key={`${d.marketId}-${d.leg}-${d.action}-${i}`} d={d} />
-          ))}
+          <Legs group={g} />
         </div>
       ))}
+    </>
+  );
+}
+
+/**
+ * The legs, with the repetitive ones folded away.
+ *
+ * A cycle considers sixteen legs and most passes refuse twelve of them for the
+ * identical reason — a window inside its expiry headroom, an edge below the
+ * floor. Rendering each as a full-width row with its own reason bar turned every
+ * cycle into a wall in which the one interesting decision was indistinguishable
+ * from the twelve boring ones.
+ *
+ * So a leg is shown in full when it is worth reading: anything Rivo acted on,
+ * and any refusal where the edge was POSITIVE — which is the case the whole
+ * product is about, a good opportunity declined for a portfolio reason. The rest
+ * collapse into one line that can be opened.
+ */
+function Legs({ group }: { group: DecisionGroup }) {
+  const all = [...group.entered, ...group.managed, ...group.skipped];
+  const notable = all.filter((d) => d.action !== "SKIP" || (d.edge ?? 0) > 0);
+  const routine = all.filter((d) => !notable.includes(d));
+  return (
+    <>
+      {notable.map((d, i) => (
+        <Card key={`n-${d.marketId}-${d.leg}-${i}`} d={d} />
+      ))}
+      {routine.length > 0 && (
+        <details style={{ marginTop: notable.length > 0 ? 8 : 0 }}>
+          <summary className="faint" style={{ cursor: "pointer", fontSize: 12.5, padding: "6px 0" }}>
+            {routine.length} more refused with no edge to give up
+          </summary>
+          <div style={{ marginTop: 4 }}>
+            {routine.map((d, i) => (
+              <Card key={`r-${d.marketId}-${d.leg}-${i}`} d={d} />
+            ))}
+          </div>
+        </details>
+      )}
     </>
   );
 }
@@ -97,7 +134,7 @@ function Card({ d }: { d: DecisionRecord }) {
         )}
       </span>
 
-      <div className="why">
+      <div className="why" title={d.binding}>
         <strong>{d.action}</strong>
         {d.shares > 0 && (
           <span className="mono">
@@ -105,12 +142,26 @@ function Card({ d }: { d: DecisionRecord }) {
             {d.shares.toFixed(2)} shares · {d.cost.toFixed(2)}
           </span>
         )}{" "}
-        — {d.binding}
+        — {shorten(d.binding)}
       </div>
 
       {e && <ExposureLine asset={d.asset} e={e} taken={taken} />}
     </div>
   );
+}
+
+/**
+ * A reason, cut to something readable.
+ *
+ * Most bindings are a phrase. A few are whatever the chain library threw, and
+ * one of those ran to six lines of encoded calldata and a documentation link —
+ * inside a card, in a list of sixteen. The full text stays in the title
+ * attribute and in the database; what is rendered is the part a person reads.
+ */
+function shorten(binding: string, max = 150): string {
+  const firstSentence = binding.split(/(?<=\.)\s/)[0] ?? binding;
+  const text = firstSentence.length < binding.length && firstSentence.length > 40 ? firstSentence : binding;
+  return text.length <= max ? text : `${text.slice(0, max).trimEnd()}…`;
 }
 
 /**
@@ -186,7 +237,12 @@ function Correlated({ group }: { group: DecisionGroup }) {
     const positive = all.filter((d) => d.asset === asset && (d.edge ?? 0) > 0);
     if (positive.length < 2) continue;
     const took = positive.filter((d) => d.action !== "SKIP");
-    const refused = positive.filter((d) => d.action === "SKIP");
+    // Only refusals the BUDGET actually made. This used to count every refusal,
+    // and so claimed "the BTC budget was already committed" on a cycle where the
+    // legs had failed for an unrelated reason — a signing error, in the run that
+    // caught it. Asserting the product's own argument on evidence that does not
+    // support it is worse than not asserting it.
+    const refused = positive.filter((d) => d.action === "SKIP" && /delta budget/i.test(d.binding));
     if (refused.length === 0) continue;
     const best = took[0];
     return (
