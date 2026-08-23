@@ -113,6 +113,31 @@ export function Fund({ address, balances }: { address: string; balances: Balance
         />
       </div>
 
+      {/* The dead end this closes: a wallet with no gas cannot mint test
+          collateral either, because the mint is itself a transaction. The page
+          said "you need gas" and stopped there, which leaves a new user — or a
+          judge trying the product for the first time — with nowhere to go.
+
+          There is no self-serve faucet URL to link to; Somnia's own docs route
+          this through people. So the page names the routes that exist rather
+          than inventing one that does not. */}
+      {NETWORK === "testnet" && typeof gas === "number" && gas <= 0.001 && (
+        <div className="banner warn" style={{ marginTop: 14, marginBottom: 0 }}>
+          <strong>No {GAS_SYMBOL} yet, so nothing can move.</strong> Every transaction needs gas — including
+          the button above that mints test collateral. Somnia hands out testnet {GAS_SYMBOL} through people
+          rather than a self-serve tap: ask in{" "}
+          <a href="https://discord.gg/somnia" target="_blank" rel="noreferrer">
+            Somnia&rsquo;s Discord
+          </a>{" "}
+          <span className="mono">#dev-chat</span> with the address above, or email{" "}
+          <span className="mono">developers@somnia.foundation</span> with what you are building. The{" "}
+          <a href="https://testnet.somnia.network/" target="_blank" rel="noreferrer">
+            testnet hub
+          </a>{" "}
+          has the network details if your wallet does not have Somnia yet.
+        </div>
+      )}
+
       {unknown && (
         <div className="banner warn" style={{ marginTop: 14, marginBottom: 0 }}>
           Could not read the balance just now. That is a failed check, not an empty wallet — nothing has been
