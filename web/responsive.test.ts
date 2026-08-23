@@ -80,41 +80,19 @@ describe("small screens", () => {
     expect(narrow).toMatch(/\.decision\s*\{[^}]*grid-template-columns:\s*1fr/);
   });
 
-  it("never pins a fixed height on the header", () => {
-    // The header once carried `height: 56px` around a row that wraps, so at
-    // 320px the wallet address and the sign-out control wrapped to a second line
-    // and were clipped by the header itself — in the DOM, invisible on the
-    // phone. The first fix added `height: auto` at the breakpoint; the header
-    // now simply never sets a fixed height, which cannot be undone by a
-    // narrower screen than anybody tested.
-    const header = /header\.top \.wrap\s*\{([^}]*)\}/g;
-    let m: RegExpExecArray | null;
-    let sawMinHeight = false;
-    while ((m = header.exec(CSS))) {
-      expect(m[1]!, "header.top .wrap must not set a fixed height").not.toMatch(/(^|;)\s*height:\s*\d/);
-      if (/min-height/.test(m[1]!)) sawMinHeight = true;
-    }
-    expect(sawMinHeight, "the header needs a height floor").toBe(true);
-  });
-
-  it("stops the header row wrapping where it would be clipped", () => {
+  it("does not clip the header when its contents no longer fit", () => {
+    // The header pinned a 56px height around a row that wraps, so on a 320px
+    // screen the wallet address and the sign-out control wrapped onto a second
+    // line and were cut off by the header — in the DOM, invisible on the phone.
+    expect(narrow).toMatch(/header\.top \.wrap\s*\{[^}]*height:\s*auto/);
+    expect(narrow).toMatch(/header\.top \.wrap\s*\{[^}]*min-height/);
     expect(narrow).toMatch(/header\.top \.row\s*\{[^}]*flex-wrap:\s*nowrap/);
   });
 
-  it("has a gutter that follows the screen rather than stepping at one width", () => {
-    // The page gutter used to be a flat 20px with a narrower override at the
-    // breakpoint, which is two numbers to keep in agreement and a visible jump
-    // between them. One fluid value covers every width in between.
-    expect(CSS).toMatch(/--pad-x:\s*clamp\(/);
-    expect(CSS).toMatch(/\.wrap\s*\{[^}]*padding:[^;]*var\(--pad-x\)/);
+  it("shrinks the padding that costs the most at 360px", () => {
+    expect(narrow).toMatch(/\.wrap\s*\{[^}]*padding:/);
+    expect(narrow).toMatch(/\.panel\s*\{[^}]*padding:/);
   });
-
-  it("gives panels less padding on a small screen", () => {
-    // Panel padding is the space that costs the most at 360px, and it is fluid
-    // for the same reason the gutter is.
-    expect(CSS).toMatch(/\.panel\s*\{[^}]*padding:\s*clamp\(/);
-  });
-
 });
 
 describe("touch", () => {

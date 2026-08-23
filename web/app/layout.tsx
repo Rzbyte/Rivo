@@ -1,26 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
 /**
- * Three faces, three jobs.
+ * No web fonts.
  *
- * Geist is the house sans — it is what safehands.fun is set in, and Rivo is by
- * the same hand. Geist Mono carries every number, because a price, a share count
- * and a transaction hash all need to line up in a column and none of them is
- * prose.
- *
- * Instrument Serif is the deliberate one. Every trading interface in existence
- * is sans plus mono, which is why they all look alike; a high-contrast serif at
- * display size says RECORD rather than TERMINAL, and a record is what this
- * product actually keeps — a decision log that says what was considered, what
- * was refused, and why. It is used only at display size and never below it.
+ * A previous version of this file loaded Geist, Geist Mono and Instrument Serif
+ * through next/font. They were a foreign import: the cockpit at
+ * rzbyte.github.io/Rivo is set in the system stacks and reads better for it, and
+ * two surfaces of one product should not disagree about what they are set in.
+ * The system mono is also the one face guaranteed to have real tabular figures
+ * on every platform, which matters more here than a typeface with a name does.
  */
-const sans = Geist({ subsets: ["latin"], variable: "--font-sans", display: "swap" });
-const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono", display: "swap" });
-const serif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-serif", display: "swap" });
-
 export const metadata: Metadata = {
   title: "Rivo — autonomous portfolio manager for DreamDEX Event Contracts",
   description:
@@ -43,12 +34,11 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#08090F",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${sans.variable} ${mono.variable} ${serif.variable}`}>
+    <html lang="en">
       <body>
         <Providers>{children}</Providers>
       </body>

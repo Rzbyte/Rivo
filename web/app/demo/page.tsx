@@ -40,6 +40,7 @@ export default function DemoPage() {
       <header className="top">
         <div className="wrap">
           <a className="brand" href="/">
+            <span className="brand-dot" aria-hidden="true" />
             Rivo
           </a>
           <div className="row">

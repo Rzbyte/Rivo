@@ -380,6 +380,7 @@ function Shell({ children, right }: { children: React.ReactNode; right?: React.R
       <header className="top">
         <div className="wrap">
           <a className="brand" href="/">
+            <span className="brand-dot" aria-hidden="true" />
             Rivo
           </a>
           <div className="row">
