@@ -41,7 +41,8 @@
     "dev:web": "npm --workspace @rivo/web run dev",
     "seed:demo": "tsx scripts/seed-demo.ts",
     "privy:check": "tsx scripts/privy-check.ts",
-    "alpha": "tsx src/cli/alpha.ts"
+    "alpha": "tsx src/cli/alpha.ts",
+    "testcount": "tsx scripts/testcount.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

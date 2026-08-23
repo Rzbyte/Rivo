@@ -17,6 +17,7 @@ import { limitsOf, type PolicyLimits } from "../portfolio/policy.js";
 import { riskOf, type Position } from "../portfolio/risk.js";
 import { permissionFor, type Portfolio } from "./portfolios.js";
 import type { ExecutionMode } from "../runtime/permission.js";
+import { PRODUCTION_STRATEGY } from "../research/gating.js";
 import { modeIntendsExecution } from "../runtime/permission.js";
 import { PostgresExecutionLedger } from "../ledger/postgres.js";
 import type { ExecutionRecord } from "../ledger/types.js";
@@ -75,12 +76,41 @@ export interface AutopilotView {
   stoppedReason: string | null;
 }
 
+/**
+ * What the dashboard needs to tell the truth about permission.
+ *
+ * Derived server-side rather than assembled in the browser: the sentence "this
+ * strategy failed economic validation" has to come from the same place the
+ * execution gate reads, or the two can disagree and the UI becomes the more
+ * persuasive of the two.
+ */
+export interface StrategyView {
+  id: string;
+  label: string;
+  /** UNVALIDATED | SHADOW_ONLY | VALIDATED | REJECTED. */
+  state: string;
+  /** Forecast quality. Deliberately reported next to the economics, not instead of it. */
+  auc: number;
+  /** Out-of-sample return on stake. Negative for the incumbent. */
+  returnOnStake: number;
+  /** Where the verdict came from. */
+  evidence: string;
+  /** One sentence a reader can act on. */
+  note: string;
+  /** What this state plus this mode plus this network actually allows. */
+  eligibility: string;
+  /** Empty when capital may move. */
+  blockedBy: string[];
+}
+
 export interface PortfolioView {
   id: string;
   address: `0x${string}`;
   network: string;
   profile: string;
   autopilot: AutopilotView;
+  /** The forecast being run, its standing, and what that permits. */
+  strategy: StrategyView;
   limits: PolicyLimits;
   capital: number;
   cash: number;
@@ -290,6 +320,7 @@ export async function buildView(portfolio: Portfolio): Promise<PortfolioView> {
     address: portfolio.address,
     network: portfolio.network,
     profile: portfolio.policy.profile,
+    strategy: strategyView(portfolio),
     autopilot: {
       mode: portfolio.policy.mode,
       state: portfolio.policy.state,
@@ -449,3 +480,32 @@ export async function closedPositions(portfolioId: string, limit = 100): Promise
 
 /** Recent events for this portfolio — breakers, mismatches, orphans. */
 export const events = (portfolioId: string, limit = 30): Promise<RivoEvent[]> => recent(portfolioId, limit);
+
+/**
+ * The strategy panel's facts.
+ *
+ * `eligibility` is computed from the same `permissionFor` the worker calls, so
+ * a portfolio cannot be told it is Autopilot-eligible by a UI that reasoned
+ * about the mode on its own.
+ */
+export function strategyView(p: Portfolio): StrategyView {
+  const permitted = permissionFor(p, true);
+  const onTestnetOnly = permissionFor({ ...p, network: "mainnet" as typeof p.network }, true);
+  const eligibility =
+    PRODUCTION_STRATEGY.state === "VALIDATED"
+      ? "Autopilot Eligible"
+      : permitted.mayMoveCapital || (!onTestnetOnly.mayMoveCapital && p.policy.mode === "experimental_testnet")
+        ? "Experimental Testnet Only"
+        : "No live execution";
+  return {
+    id: PRODUCTION_STRATEGY.id,
+    label: PRODUCTION_STRATEGY.label,
+    state: PRODUCTION_STRATEGY.state,
+    auc: PRODUCTION_STRATEGY.auc,
+    returnOnStake: PRODUCTION_STRATEGY.returnOnStake,
+    evidence: PRODUCTION_STRATEGY.evidence,
+    note: PRODUCTION_STRATEGY.note,
+    eligibility,
+    blockedBy: permitted.reasons,
+  };
+}

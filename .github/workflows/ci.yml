@@ -87,6 +87,13 @@ jobs:
           echo "$out" | grep -q "already up to date" \
             || { echo "::error::a second migration run was not a no-op"; exit 1; }
 
+      # Four documents claimed four different test counts — 545, 545, 557 and
+      # 603 — and none was right. A hand-written count goes stale the next time
+      # anybody adds a test, and a stale count in a document about rigour is the
+      # one claim a reader can check in ten seconds.
+      - name: Every documented test count is the real one
+        run: npm run testcount -- --check
+
       # Nothing above proves the vulnerability floor stays where it was put.
       # High and critical fail the build; the remaining lows are listed in
       # docs/SECURITY.md with the reason each one is tolerated.

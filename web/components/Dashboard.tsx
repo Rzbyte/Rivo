@@ -137,6 +137,8 @@ export function Dashboard({
         </div>
       </div>
 
+      <StrategyGate view={view} />
+
       <Reconciliation view={view} />
 
       <nav className="tabs" style={{ marginTop: 22, marginBottom: 12 }}>
@@ -447,4 +449,62 @@ function formatAgo(sec: number): string {
   if (sec < 90) return `${sec}s`;
   if (sec < 5400) return `${Math.round(sec / 60)}m`;
   return `${Math.round(sec / 3600)}h`;
+}
+
+/**
+ * What the engine is running, and whether it is allowed to spend.
+ *
+ * This panel exists because the two facts about this strategy point in opposite
+ * directions and a product that shows only one of them is lying by selection.
+ * The forecast discriminates well; trading it lost money out of sample. Showing
+ * the accuracy alone would imply a profitability the evidence does not support,
+ * and showing only the refusal would hide that the model is genuinely good at
+ * the thing it was built to do.
+ *
+ * `eligibility` and `blockedBy` come from the same gate the worker calls, so
+ * this cannot claim a permission the execution path would refuse.
+ */
+function StrategyGate({ view }: { view: PortfolioView }) {
+  const s = view.strategy;
+  const validated = s.state === "VALIDATED";
+  return (
+    <div className="panel" style={{ marginTop: 14 }}>
+      <div className="sec-head">
+        <h3 style={{ margin: 0 }}>Strategy safety gate</h3>
+        <span className="hint">{s.evidence}</span>
+      </div>
+
+      <div className="grid cols-3" style={{ marginTop: 4 }}>
+        <div className="stat">
+          <span className="label">Strategy</span>
+          <span className="value" style={{ fontSize: 17 }}>{s.label}</span>
+          <span className="sub">The forecast this portfolio runs.</span>
+        </div>
+        <div className="stat">
+          <span className="label">Forecast quality</span>
+          <span className="value">AUC {s.auc.toFixed(4)}</span>
+          <span className="sub">How well it separates up from down. Measured, and good.</span>
+        </div>
+        <div className="stat">
+          <span className="label">Economic validation</span>
+          <span className="value" style={{ color: validated ? "var(--pos)" : "var(--neg)" }}>{s.state}</span>
+          <span className="sub">
+            Return on stake {(s.returnOnStake * 100).toFixed(2)}% out of sample, walk-forward.
+          </span>
+        </div>
+      </div>
+
+      <div className={`banner ${validated ? "good" : "warn"}`} style={{ marginTop: 12, marginBottom: 0 }}>
+        <strong>Execution eligibility: {s.eligibility}.</strong> {s.note}
+        {s.blockedBy.length > 0 && (
+          <>
+            {" "}
+            <span className="mono" style={{ fontSize: 11.5 }}>
+              ({s.blockedBy.join(", ")})
+            </span>
+          </>
+        )}
+      </div>
+    </div>
+  );
 }
