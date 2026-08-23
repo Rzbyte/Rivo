@@ -1,48 +1,104 @@
 /*
  * Rivo, on the web.
  *
- * The palette is the one from the existing cockpit (public/index.html), token
- * for token, because they are the same product and a user who sees both should
- * not wonder. It is also the one with a contrast test: every foreground here is
- * checked against every surface, in both themes, by web/theme.test.ts — the same
- * arithmetic that caught `--faint` sitting at 3.02:1 while setting 10.5px labels.
+ * The previous stylesheet was warm cream (#F4F1EA) with an olive accent and 3px
+ * corners — a palette that turns out to be one of the handful of looks that
+ * generated design converges on, which is a poor thing for a product whose whole
+ * argument is that it does something nobody else does.
  *
- * Dark is the default and light is honoured when the system asks for it. There
- * is no theme switch, deliberately: one fewer control on a page whose job is to
- * make a portfolio legible.
+ * This one is built in the language of safehands.fun, by the same hand: a
+ * blue-black ground, small radii, fluid type on a tight negative track, glow used
+ * as structure rather than decoration, and full-bleed bands to break the column.
+ * Where it departs is on purpose — the accent is violet rather than that site's
+ * electric blue, because these are two products and one identity should not be
+ * mistaken for the other.
+ *
+ * Two rules the palette holds to:
+ *
+ * SEMANTIC COLOUR IS NOT THE ACCENT. Up is green, down is red, attention is
+ * amber, and none of them is violet. A dashboard that tints its brand and its
+ * outcomes the same hue makes a person read colour twice.
+ *
+ * DARK IS THE COMMITTED DEFAULT, not the absence of light. The bare `:root`
+ * below is the dark palette; light is the override. Every colour is defined
+ * once, in tokens, so nothing is left holding one theme's ink against the other
+ * theme's ground.
  */
 
 :root {
-  --bg: #f4f1ea;        --panel: #fbf9f5;     --panel-2: #ebe7dd;
-  --ink: #14140f;       --muted: #605d54;     --faint: #6b675b;
-  --line: #ddd8cc;      --line-2: #c6c0b0;
-  --accent: #2f5233;    --accent-ink: #fbf9f5; --accent-soft: #e3ebe0;
-  --pos: #2c6b3c;       --neg: #9d3423;       --warn: #7d5714;
-  --pos-soft: #e4efe6;  --neg-soft: #f6e6e2;  --warn-soft: #f5ecd9;
-  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
-  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
-  --r: 3px;
-  --shadow: none;
+  /* Ground and surfaces. Blue-biased near-black — a neutral chosen rather than
+     inherited; pure #000 has no atmosphere and pure grey reads as unconsidered. */
+  --ground:   #08090F;
+  --panel:    #101220;
+  --panel-2:  #171A2B;
+  --panel-3:  #1E2233;
+
+  --ink:      #E8EAF4;
+  --ink-2:    #979CB2;
+  /* Brightened from #6E738A, which measured 3.68:1 on --panel-2 — below the
+     small-text floor, and this token sets the 10.5px uppercase mono labels that
+     say what every number on the page IS. The contrast test caught it; nobody
+     looking at the screen would have. */
+  --ink-3:    #7D839D;
+
+  /* #1A1D2C measured 1.11:1 against --panel: a border nobody could see, so
+     panels stopped being distinguishable from the page behind them. */
+  --rule:     #20243A;
+  --rule-2:   #2F344A;
+
+  /* The accent. Violet, and violet only — it marks what is structural (brand,
+     focus, the active tab, the primary action) and never what is good or bad. */
+  --brand:    #A176FF;
+  --brand-2:  #C4A6FF;
+  --on-brand: #0A0612;
+  --glow:     rgb(161 118 255 / .32);
+  --brand-soft: rgb(161 118 255 / .12);
+
+  /* Outcomes. Kept clear of the accent on purpose. */
+  --up:       #4ADE80;
+  --down:     #FF6B6B;
+  --warn:     #F0A93B;
+  --up-soft:   rgb(74 222 128 / .12);
+  --down-soft: rgb(255 107 107 / .12);
+  --warn-soft: rgb(240 169 59 / .12);
+
+  --shadow:   rgb(0 1 8 / .6);
+
+  --sans:  var(--font-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:  var(--font-mono), ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --serif: var(--font-serif), "Iowan Old Style", Georgia, serif;
+
+  --maxw:  1120px;
+  --pad-x: clamp(16px, 4vw, 28px);
+  --r:     6px;
+  --r-lg:  10px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #12120f;      --panel: #1a1a15;     --panel-2: #24241d;
-    --ink: #ece9df;     --muted: #a09c8f;     --faint: #8e8b7f;
-    --line: #2c2c24;    --line-2: #403f34;
-    --accent: #a8cf9a;  --accent-ink: #12120f; --accent-soft: #1d2419;
-    --pos: #8cc79a;     --neg: #e08b76;       --warn: #d8ad5f;
-    --pos-soft: #172519; --neg-soft: #2a1714; --warn-soft: #241d0f;
+/* Light is the override, and it is designed rather than inverted: the ground
+   picks up the same violet bias, and every accent is darkened until it holds its
+   contrast against paper instead of against night. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --ground: #F6F5FB;  --panel: #FFFFFF;  --panel-2: #EFEEF7;  --panel-3: #E5E3F2;
+    --ink: #0D0B18;     --ink-2: #4A4860;  --ink-3: #6B6883;
+    --rule: #E4E2F0;    --rule-2: #CBC7DE;
+    --brand: #6A3DD8;   --brand-2: #4E27B0; --on-brand: #FFFFFF;
+    --glow: rgb(106 61 216 / .18);  --brand-soft: rgb(106 61 216 / .09);
+    --up: #127538;      --down: #C2352B;   --warn: #96570B;
+    --up-soft: rgb(18 117 56 / .10); --down-soft: rgb(194 53 43 / .10); --warn-soft: rgb(150 87 11 / .10);
+    --shadow: rgb(24 20 60 / .12);
   }
 }
 
-:root[data-theme="dark"] {
-  --bg: #12120f;        --panel: #1a1a15;     --panel-2: #24241d;
-  --ink: #ece9df;       --muted: #a09c8f;     --faint: #8e8b7f;
-  --line: #2c2c24;      --line-2: #403f34;
-  --accent: #a8cf9a;    --accent-ink: #12120f; --accent-soft: #1d2419;
-  --pos: #8cc79a;       --neg: #e08b76;       --warn: #d8ad5f;
-  --pos-soft: #172519;  --neg-soft: #2a1714;  --warn-soft: #241d0f;
+:root[data-theme="light"] {
+  --ground: #F6F5FB;  --panel: #FFFFFF;  --panel-2: #EFEEF7;  --panel-3: #E5E3F2;
+  --ink: #0D0B18;     --ink-2: #4A4860;  --ink-3: #6B6883;
+  --rule: #E4E2F0;    --rule-2: #CBC7DE;
+  --brand: #6A3DD8;   --brand-2: #4E27B0; --on-brand: #FFFFFF;
+  --glow: rgb(106 61 216 / .18);  --brand-soft: rgb(106 61 216 / .09);
+  --up: #127538;      --down: #C2352B;   --warn: #96570B;
+  --up-soft: rgb(18 117 56 / .10); --down-soft: rgb(194 53 43 / .10); --warn-soft: rgb(150 87 11 / .10);
+  --shadow: rgb(24 20 60 / .12);
 }
 
 * { box-sizing: border-box; }
@@ -50,289 +106,358 @@
 html, body {
   margin: 0;
   padding: 0;
-  /* iOS enlarges text when a page rotates to landscape, which silently breaks
-     every size relationship on the page. Opting out is not a zoom lock — pinch
-     still works. */
-  -webkit-text-size-adjust: 100%;
-  background: var(--bg);
+  background: var(--ground);
   color: var(--ink);
   font-family: var(--sans);
   font-size: 15px;
-  line-height: 1.55;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
 }
+/* The full-bleed bands below are 100vw wide; without this the viewport gains a
+   horizontal scrollbar the width of the vertical one. */
+body { overflow-x: hidden; }
 
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; }
+a { color: var(--brand); text-decoration: none; }
+a:hover { color: var(--brand-2); }
 
-/* Focus is never removed, only restyled. A keyboard user who cannot see where
-   they are is a keyboard user who cannot use the product. */
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 2px; }
 
-.wrap { max-width: 1140px; margin: 0 auto; padding: 0 20px; }
+.wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 var(--pad-x); }
 
 /* --- type ---------------------------------------------------------------- */
-h1 { font-size: 30px; line-height: 1.15; letter-spacing: -0.015em; margin: 0 0 12px; font-weight: 640; }
-h2 { font-size: 19px; line-height: 1.25; margin: 0 0 10px; font-weight: 620; letter-spacing: -0.008em; }
-h3 { font-size: 15px; margin: 0 0 6px; font-weight: 620; }
-p  { margin: 0 0 12px; color: var(--muted); }
-.lede { font-size: 17px; color: var(--muted); max-width: 62ch; }
+/*
+ * The serif is the one real risk in this design, and it is taken deliberately.
+ * Every trading interface is sans plus mono, which is most of why they are
+ * indistinguishable from one another. Instrument Serif at display size says
+ * RECORD rather than TERMINAL — and a record is exactly what Rivo keeps: a log
+ * of what was considered, what was refused, and on what grounds. It appears at
+ * display size and nowhere below it.
+ */
+h1 {
+  font-family: var(--serif); font-weight: 400;
+  font-size: clamp(2.1rem, 5.4vw, 3.7rem);
+  line-height: 1.02; letter-spacing: -.022em;
+  margin: 0 0 14px; text-wrap: balance; max-width: 20ch;
+}
+h2 {
+  font-family: var(--serif); font-weight: 400;
+  font-size: clamp(1.5rem, 3.1vw, 2.2rem);
+  line-height: 1.12; letter-spacing: -.018em;
+  margin: 0 0 10px; text-wrap: balance; max-width: 24ch;
+}
+h3 { font-size: .95rem; margin: 0 0 6px; font-weight: 600; letter-spacing: -.006em; }
+p  { margin: 0 0 12px; color: var(--ink-2); }
+.lede { font-size: clamp(1rem, 1.6vw, 1.12rem); color: var(--ink-2); max-width: 58ch; }
 
 .label {
-  font-size: 10.5px; letter-spacing: 0.09em; text-transform: uppercase;
-  color: var(--faint); font-weight: 600;
+  font-family: var(--mono);
+  font-size: 10.5px; letter-spacing: .11em; text-transform: uppercase;
+  color: var(--ink-3); font-weight: 500;
 }
-.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
-.num  { font-family: var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
-.pos { color: var(--pos); }
-.neg { color: var(--neg); }
+.mono, .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.pos { color: var(--up); }
+.neg { color: var(--down); }
 .warn { color: var(--warn); }
-.muted { color: var(--muted); }
-.faint { color: var(--faint); }
+.muted { color: var(--ink-2); }
+.faint { color: var(--ink-3); }
 
 /* --- surfaces ------------------------------------------------------------ */
 .panel {
   background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--r);
-  padding: 18px;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-lg);
+  padding: clamp(14px, 2.4vw, 20px);
 }
-.panel + .panel { margin-top: 14px; }
-.grid { display: grid; gap: 14px; }
+.panel + .panel { margin-top: 12px; }
+.grid { display: grid; gap: 12px; }
 .cols-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
 .cols-3 { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
 .cols-4 { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
 .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .spread { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 
+/* A band that escapes the column. The page gutter comes back inside it, so the
+   content still lines up with everything above and below. */
+.fullbleed { width: 100vw; margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw); }
+.band-inner { max-width: var(--maxw); margin: 0 auto; padding: 0 var(--pad-x); }
+
 /* --- controls ------------------------------------------------------------ */
 button, .btn {
-  font: inherit; font-weight: 560;
-  padding: 9px 16px;
+  font: inherit; font-weight: 550; font-size: .93rem;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 18px;
   border-radius: var(--r);
-  border: 1px solid var(--line-2);
+  border: 1px solid var(--rule-2);
   background: var(--panel-2);
   color: var(--ink);
   cursor: pointer;
-  transition: background 120ms ease, border-color 120ms ease;
+  transition: background 140ms ease, border-color 140ms ease, transform 140ms ease, box-shadow 140ms ease;
 }
-button:hover:not(:disabled), .btn:hover { background: var(--line); }
-button:disabled { opacity: 0.5; cursor: not-allowed; }
+button:hover:not(:disabled), .btn:hover { background: var(--panel-3); border-color: var(--ink-3); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+
+/* The glow is the signature. One element on a page carries it — the thing the
+   page wants you to do — and everything else stays flat. */
 button.primary, .btn.primary {
-  background: var(--accent); color: var(--accent-ink); border-color: var(--accent);
+  background: var(--brand); color: var(--on-brand); border-color: var(--brand);
+  font-weight: 600;
+  box-shadow: 0 0 38px -8px var(--glow);
 }
-button.primary:hover:not(:disabled) { filter: brightness(1.08); }
-button.danger { color: var(--neg); border-color: var(--neg); background: transparent; }
-button.danger:hover:not(:disabled) { background: var(--neg-soft); }
-button.link { background: none; border: none; padding: 0; color: var(--accent); text-decoration: underline; }
+button.primary:hover:not(:disabled), .btn.primary:hover {
+  background: var(--brand-2); border-color: var(--brand-2);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 30px -14px var(--glow), 0 0 44px -6px var(--glow);
+}
+button.danger { color: var(--down); border-color: color-mix(in srgb, var(--down) 45%, var(--rule-2)); background: transparent; }
+button.danger:hover:not(:disabled) { background: var(--down-soft); border-color: var(--down); }
+button.link {
+  background: none; border: none; padding: 0; color: var(--brand);
+  text-decoration: none; font-weight: 500; box-shadow: none;
+}
+button.link:hover { color: var(--brand-2); background: none; transform: none; }
 
 input, select {
   font: inherit; font-family: var(--mono);
-  padding: 8px 10px;
+  padding: 10px 12px;
   border-radius: var(--r);
-  border: 1px solid var(--line-2);
-  background: var(--bg);
+  border: 1px solid var(--rule-2);
+  background: var(--ground);
   color: var(--ink);
   width: 100%;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
 }
+/* The ring is ADDED, never substituted. An earlier draft set `outline: none`
+   here and leaned on the box-shadow, which looks identical and disappears in
+   forced-colours mode — where the outline is the only thing that survives. */
+input:focus, select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-soft); }
 
 .field { margin-bottom: 14px; }
-.field .label { display: block; margin-bottom: 5px; }
-.hint { font-size: 12.5px; color: var(--faint); margin-top: 4px; }
+.field .label { display: block; margin-bottom: 6px; }
+.hint { font-size: 12.5px; color: var(--ink-3); margin-top: 5px; }
 
 /* --- pills --------------------------------------------------------------- */
 .pill {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-size: 11.5px; font-weight: 620; letter-spacing: 0.02em;
-  padding: 3px 9px; border-radius: 999px;
-  border: 1px solid var(--line-2); background: var(--panel-2); color: var(--muted);
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--mono);
+  font-size: 11px; font-weight: 500; letter-spacing: .04em;
+  padding: 4px 10px; border-radius: 999px;
+  border: 1px solid var(--rule-2); background: var(--panel-2); color: var(--ink-2);
 }
-.pill.live { background: var(--pos-soft); border-color: var(--pos); color: var(--pos); }
-.pill.shadow { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
-.pill.stopped { background: var(--neg-soft); border-color: var(--neg); color: var(--neg); }
-.pill.fault { background: var(--neg-soft); border-color: var(--neg); color: var(--neg); }
-.dot { width: 7px; height: 7px; border-radius: 999px; background: currentColor; }
+.pill.live   { background: var(--up-soft);   border-color: color-mix(in srgb, var(--up) 42%, var(--rule-2));   color: var(--up); }
+.pill.shadow { background: var(--warn-soft); border-color: color-mix(in srgb, var(--warn) 42%, var(--rule-2)); color: var(--warn); }
+.pill.stopped, .pill.fault {
+  background: var(--down-soft); border-color: color-mix(in srgb, var(--down) 42%, var(--rule-2)); color: var(--down);
+}
+
+.dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
+/* Live means live. The pulse is the only ambient motion on the page, it is tied
+   to one fact, and it stops when the system is not running. */
+.pill.live .dot {
+  box-shadow: 0 0 8px 1px color-mix(in srgb, var(--up) 55%, transparent);
+  animation: breathe 2.6s ease-in-out infinite;
+}
+@keyframes breathe { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
 
 /* --- stats --------------------------------------------------------------- */
-/* Each on its own line.
-   These were inline spans, so a value and its note rendered welded together —
-   "50.0050.00 committed", "0.0000at least 10 needed". Every stat on the page
-   read as one run-on string, which is most of why the dashboard felt crowded:
-   not too much information, just no space between any of it. */
-.stat .label { display: block; margin-bottom: 3px; }
+.stat .label { display: block; margin-bottom: 5px; }
 .stat .value {
   display: block;
-  font-family: var(--mono);
-  font-size: 22px;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  font-family: var(--serif); font-weight: 400;
+  font-size: clamp(1.7rem, 3.4vw, 2.3rem);
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: -.02em; line-height: 1.06;
+  color: var(--ink);
 }
-.stat .sub { display: block; font-size: 12px; color: var(--faint); margin-top: 3px; line-height: 1.4; }
+.stat .sub { display: block; font-size: 12px; color: var(--ink-3); margin-top: 5px; line-height: 1.45; }
 
-/* A disclosure that does not shout. The teaching text behind these is worth
-   having and not worth re-reading, so the control stays quiet until wanted. */
 details > summary::-webkit-details-marker { display: none; }
+details > summary { cursor: pointer; color: var(--ink-2); }
 details > summary:hover { color: var(--ink); }
 
 /* --- meters -------------------------------------------------------------- */
-.meter { height: 5px; background: var(--panel-2); border-radius: 999px; overflow: hidden; margin-top: 5px; }
-.meter > span { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
-.meter > span.hot { background: var(--warn); }
-.meter > span.over { background: var(--neg); }
+.meter { height: 4px; background: var(--panel-3); border-radius: 999px; overflow: hidden; margin-top: 6px; }
+.meter > span { display: block; height: 100%; background: var(--brand); border-radius: 999px; transition: width 400ms cubic-bezier(.2,.8,.2,1); }
+.meter > span.hot  { background: var(--warn); }
+.meter > span.over { background: var(--down); }
 
 /* --- tables -------------------------------------------------------------- */
 .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
 th {
-  text-align: left; padding: 7px 10px 7px 0;
-  font-size: 10.5px; letter-spacing: 0.09em; text-transform: uppercase;
-  color: var(--faint); font-weight: 600; border-bottom: 1px solid var(--line);
+  text-align: left; padding: 8px 14px 8px 0;
+  font-family: var(--mono);
+  font-size: 10.5px; letter-spacing: .11em; text-transform: uppercase;
+  color: var(--ink-3); font-weight: 500; border-bottom: 1px solid var(--rule);
   white-space: nowrap;
 }
-td { padding: 8px 10px 8px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+td { padding: 10px 14px 10px 0; border-bottom: 1px solid var(--rule); vertical-align: top; color: var(--ink-2); }
 td.n, th.n { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; padding-right: 0; }
+tbody tr:hover td { color: var(--ink); background: color-mix(in srgb, var(--panel-2) 60%, transparent); }
 tr:last-child td { border-bottom: none; }
 
 /* --- decisions ----------------------------------------------------------- */
 .decision {
-  display: grid; grid-template-columns: 1fr auto; gap: 4px 14px;
-  padding: 11px 0; border-bottom: 1px solid var(--line);
+  display: grid; grid-template-columns: 1fr auto; gap: 6px 16px;
+  padding: 13px 0; border-bottom: 1px solid var(--rule);
 }
 .decision:last-child { border-bottom: none; }
+/* The stripe is the state, readable before any word is. */
 .decision .why {
-  grid-column: 1 / -1; font-size: 12.5px; color: var(--muted);
-  padding: 6px 10px; border-radius: var(--r);
-  border-left: 2px solid var(--line-2); background: var(--panel-2);
+  grid-column: 1 / -1; font-size: 12.5px; color: var(--ink-2);
+  padding: 8px 12px; border-radius: 0 var(--r) var(--r) 0;
+  border-left: 2px solid var(--rule-2); background: var(--panel-2);
 }
-.decision.taken .why { border-left-color: var(--pos); background: var(--pos-soft); color: var(--pos); }
+.decision.taken .why   { border-left-color: var(--up);   background: var(--up-soft);   color: var(--up); }
 .decision.refused .why { border-left-color: var(--warn); }
 
 .banner {
-  padding: 12px 14px; border-radius: var(--r); font-size: 13.5px;
-  border: 1px solid var(--line-2); background: var(--panel-2); color: var(--muted);
+  padding: 13px 16px; border-radius: var(--r); font-size: 13.5px;
+  border: 1px solid var(--rule-2); background: var(--panel-2); color: var(--ink-2);
   margin-bottom: 14px;
 }
-.banner.bad { border-color: var(--neg); background: var(--neg-soft); color: var(--neg); }
-.banner.warn { border-color: var(--warn); background: var(--warn-soft); color: var(--warn); }
-.banner.good { border-color: var(--pos); background: var(--pos-soft); color: var(--pos); }
+.banner.bad  { border-color: color-mix(in srgb, var(--down) 45%, var(--rule-2)); background: var(--down-soft); color: var(--down); }
+.banner.warn { border-color: color-mix(in srgb, var(--warn) 45%, var(--rule-2)); background: var(--warn-soft); color: var(--warn); }
+.banner.good { border-color: color-mix(in srgb, var(--up) 45%, var(--rule-2));   background: var(--up-soft);   color: var(--up); }
 
-/* --- tabs ---------------------------------------------------------------- */
-/* A strip that scrolls sideways rather than wrapping.
-   Four tabs with counts wrap to two rows below about 420px, which moves every
-   panel under them down the page and makes the row read as two groups of two.
-   Scrolling keeps them one object; the scrollbar is hidden because a strip of
-   four is obviously a strip of four. */
-.tabs {
-  display: flex; gap: 4px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
+/* --- hero ---------------------------------------------------------------- */
+/*
+ * Atmosphere, not decoration.
+ *
+ * One soft violet wash behind the opening claim, masked so it fades before it
+ * reaches any text, and drawn on a ::before so it never enters the layout or
+ * catches a pointer. It is the only ambient effect on the page — the glow on the
+ * primary button is the same hue answering it, and nothing else in the design is
+ * allowed to light up.
+ */
+.hero { position: relative; padding-top: clamp(38px, 6vw, 76px); padding-bottom: clamp(40px, 6vw, 72px); }
+.hero::before {
+  content: ""; position: absolute; inset: -20% -10% auto -10%; height: 130%;
+  pointer-events: none; z-index: -1;
+  background:
+    radial-gradient(56% 52% at 72% 22%, color-mix(in srgb, var(--brand) 22%, transparent), transparent 70%),
+    radial-gradient(44% 44% at 18% 4%, color-mix(in srgb, var(--brand) 11%, transparent), transparent 72%);
+  -webkit-mask-image: radial-gradient(94% 78% at 62% 20%, #000 0%, transparent 66%);
+          mask-image: radial-gradient(94% 78% at 62% 20%, #000 0%, transparent 66%);
 }
-.tabs::-webkit-scrollbar { display: none; }
-.tabs button { flex: 0 0 auto; }
+.hero .label { display: inline-flex; align-items: center; gap: 8px; }
+
+/* A band that breaks the column, for the one section that carries the argument. */
+.band {
+  border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+  background: var(--panel);
+  padding-block: clamp(34px, 5vw, 60px);
+  margin-block: clamp(34px, 5vw, 60px);
+}
+
+/* The proof strip: measured numbers, set in the serif so they read as findings
+   rather than as marketing. */
+.proof { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: clamp(14px, 3vw, 30px); }
+.proof .n {
+  display: block; font-family: var(--serif); font-weight: 400;
+  font-size: clamp(1.6rem, 3.2vw, 2.1rem); line-height: 1.05; letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums lining-nums; color: var(--ink);
+}
+.proof .k { display: block; margin-top: 4px; font-size: 12.5px; color: var(--ink-3); line-height: 1.4; }
 
 /* --- shell --------------------------------------------------------------- */
 header.top {
-  border-bottom: 1px solid var(--line);
-  background: var(--panel);
+  border-bottom: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--ground) 82%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   position: sticky; top: 0; z-index: 10;
 }
-header.top .wrap { display: flex; align-items: center; justify-content: space-between; height: 56px; gap: 14px; }
-.brand { font-weight: 680; letter-spacing: -0.02em; font-size: 17px; color: var(--ink); }
-.brand:hover { text-decoration: none; }
+header.top .wrap { display: flex; align-items: center; justify-content: space-between; min-height: 60px; gap: 14px; }
+.brand {
+  font-family: var(--serif); font-weight: 400; font-size: 1.35rem;
+  letter-spacing: -.01em; color: var(--ink);
+}
+.brand:hover { color: var(--brand); }
 
-.steps { display: flex; gap: 0; margin: 0 0 20px; padding: 0; list-style: none; flex-wrap: wrap; }
+/* --- tabs ---------------------------------------------------------------- */
+/* A strip that scrolls sideways rather than wrapping. Four tabs with counts wrap
+   to two rows below about 420px, which moves every panel down the page and makes
+   one control read as two groups. */
+.tabs {
+  display: flex; gap: 4px;
+  overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  border-bottom: 1px solid var(--rule); padding-bottom: 0;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tabs button {
+  flex: 0 0 auto;
+  background: none; border: none; border-bottom: 2px solid transparent;
+  border-radius: 0; padding: 10px 14px; color: var(--ink-3);
+  font-size: .88rem; font-weight: 500; box-shadow: none;
+}
+.tabs button:hover { background: none; color: var(--ink); border-color: var(--rule-2); }
+.tabs button.primary {
+  background: none; color: var(--brand); border-color: var(--brand);
+  box-shadow: none; transform: none;
+}
+
+/* --- steps --------------------------------------------------------------- */
+.steps { display: flex; gap: 0; margin: 0 0 22px; padding: 0; list-style: none; flex-wrap: wrap; }
 .steps li {
-  font-size: 12px; color: var(--faint); padding: 6px 14px 6px 0; display: flex; align-items: center; gap: 7px;
+  font-family: var(--mono); font-size: 11.5px; letter-spacing: .02em;
+  color: var(--ink-3); padding: 6px 16px 6px 0; display: flex; align-items: center; gap: 8px;
 }
 .steps li .n {
-  width: 19px; height: 19px; border-radius: 999px; display: grid; place-items: center;
-  border: 1px solid var(--line-2); font-size: 10.5px; font-weight: 660;
+  width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center;
+  border: 1px solid var(--rule-2); font-size: 10px; font-weight: 500;
 }
-.steps li.done { color: var(--pos); }
-.steps li.done .n { border-color: var(--pos); background: var(--pos-soft); }
-.steps li.now { color: var(--ink); font-weight: 600; }
-.steps li.now .n { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+.steps li.done { color: var(--up); }
+.steps li.done .n { border-color: color-mix(in srgb, var(--up) 50%, var(--rule-2)); background: var(--up-soft); }
+.steps li.now { color: var(--ink); }
+.steps li.now .n {
+  border-color: var(--brand); background: var(--brand); color: var(--on-brand);
+  box-shadow: 0 0 14px -2px var(--glow);
+}
 
 .center { min-height: 72vh; display: grid; place-items: center; }
 .card { width: 100%; max-width: 440px; }
 
-@media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; animation: none !important; }
-}
-
 /* --- small screens ------------------------------------------------------- */
-/*
- * There were none of these until now, and no viewport tag either, so a phone
- * rendered the dashboard at 980px and scaled it down to about a third of legible
- * size. Adding the tag is what makes these rules fire at all; see layout.tsx.
- *
- * The breakpoint is 640px because that is where `.cols-2` — minmax(300px) plus
- * two 20px gutters and a 14px gap — stops fitting two columns honestly and
- * starts producing one column with the wrong padding.
- */
 @media (max-width: 640px) {
-  .wrap { padding: 0 14px; }
-
-  h1 { font-size: 24px; }
-  h2 { font-size: 17px; }
-  .lede { font-size: 15.5px; }
-
-  .panel { padding: 14px; }
   .panel + .panel { margin-top: 10px; }
   .grid { gap: 10px; }
 
-  /* One column. `auto-fit` would give one anyway at this width, but it would
-     keep reserving the 300px track first and overflow the parent by the
-     difference on the narrowest handsets. */
   .cols-2 { grid-template-columns: 1fr; }
   .cols-3 { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
   .cols-4 { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
 
-  /* 22px monospace digits are what push the stat cards past the screen edge. */
-  .stat .value { font-size: 19px; }
-
-  /* The market line and its prices are a two-column grid that cannot hold both
-     on a handset; the prices drop under the market rather than shrinking to
-     illegibility. */
+  /* The market line and its prices cannot both hold a column on a handset; the
+     prices drop under the market rather than shrinking to illegibility. */
   .decision { grid-template-columns: 1fr; gap: 6px; }
 
-  /* The header carried a fixed 56px height around a `.row` that wraps, so on a
-     320px screen the address and the sign-out control wrapped to a second line
-     and were clipped by the header itself — present in the DOM, invisible on the
-     device. Nothing in it is droppable: the network pill is the difference
-     between testnet and real money. So it stops wrapping, shrinks, and the
-     height becomes a floor rather than a ceiling. */
-  header.top .wrap { height: auto; min-height: 52px; padding-block: 7px; gap: 8px; }
+  /* The header pinned a fixed height around a row that wraps, so at 320px the
+     address and the sign-out control wrapped to a second line and were clipped
+     by the header itself. Nothing in it is droppable — the network pill is the
+     difference between testnet and real money. */
+  header.top .wrap { min-height: 54px; padding-block: 8px; gap: 8px; }
   header.top .row { flex-wrap: nowrap; gap: 6px; }
-  header.top .pill { font-size: 11px; padding: 3px 7px; }
-  .brand { font-size: 15.5px; }
+  header.top .pill { font-size: 10.5px; padding: 3px 8px; }
+  .brand { font-size: 1.15rem; }
 
   table { font-size: 12.5px; }
   th, td { padding-right: 12px; }
-
-  .steps li { padding-right: 10px; font-size: 11.5px; }
+  .steps li { padding-right: 12px; font-size: 11px; }
 }
 
-/*
- * Touch targets and the iOS focus zoom. Not inside the width query on purpose:
- * a coarse pointer is the condition, and a tablet in landscape is wider than
- * 640px and still a finger.
- */
+/* Touch targets and the iOS focus zoom. Keyed off the pointer rather than the
+   width: a tablet in landscape is wider than the breakpoint and still a finger. */
 @media (pointer: coarse) {
-  button, .btn { min-height: 44px; padding-block: 11px; }
-  /* Tabs and inline links are chips inside prose, not primary actions; 44px
-     each would turn the tab strip into a toolbar taller than the panel. */
-  .tabs button { min-height: 38px; }
+  button, .btn { min-height: 44px; padding-block: 12px; }
+  .tabs button { min-height: 40px; }
   button.link { min-height: 0; padding-block: 0; }
 
-  /* Safari zooms the whole page when a focused input is under 16px, and does
-     not zoom back out. Every field here inherited the 15px body size, so the
-     first tap on the budget box left the page enlarged and scrolling sideways
-     — which reads as a broken layout rather than as a zoom. */
+  /* Safari zooms the whole page when a focused input is under 16px and does not
+     zoom back out, so the first tap on the budget box left the page enlarged and
+     scrolling sideways — which reads as a broken layout, not as a zoom. */
   input, select, textarea { font-size: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
 }

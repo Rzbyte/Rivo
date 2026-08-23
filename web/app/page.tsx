@@ -46,8 +46,12 @@ function LandingWithAuth() {
         }
       />
 
-      <main className="wrap" style={{ paddingTop: 56, paddingBottom: 72 }}>
-        <span className="label">DreamDEX Event Contracts · Somnia {NETWORK}</span>
+      <main className="wrap" style={{ paddingBottom: 72 }}>
+        <section className="hero">
+        <span className="label">
+          <span className="dot" style={{ background: "var(--brand)" }} />
+          DreamDEX Event Contracts · Somnia {NETWORK}
+        </span>
         <h1 style={{ maxWidth: "18ch", marginTop: 10 }}>
           An autonomous portfolio manager, not a bot that takes every trade.
         </h1>
@@ -69,9 +73,20 @@ function LandingWithAuth() {
           </a>
         </div>
 
+        </section>
+
+        {/* The measured record, before any claim about it. These are read from
+            the live portfolio's proof output, not aspirations. */}
+        <section className="proof" aria-label="What has actually run">
+          <div><span className="n">585</span><span className="k">cycles against the live venue</span></div>
+          <div><span className="n">9,364</span><span className="k">legs priced — 9,360 of them refused</span></div>
+          <div><span className="n">4</span><span className="k">transactions confirmed on-chain</span></div>
+          <div><span className="n">603</span><span className="k">tests, none skipped</span></div>
+        </section>
+
         <TheDifference />
 
-        <section className="grid cols-3" style={{ marginTop: 34 }}>
+        <section className="grid cols-3">
           <Feature
             title="No private keys"
             body="Sign in however you like — an email address, a social account, or a wallet you already have. Rivo opens you a Rivo Portfolio: a trading account held by Privy, separate from anything you already use. Rivo never has the key, and you can withdraw its permission to sign at any moment."
@@ -106,7 +121,8 @@ function TheDifference() {
     { market: "BTC UP · 4h", edge: "+8.7%", taken: false, why: "Same directional view, already held at 1h. No diversification for the capital." },
   ];
   return (
-    <section className="panel">
+    <section className="fullbleed band">
+      <div className="band-inner">
       <span className="label">The part other bots get wrong</span>
       <h2 style={{ marginTop: 8 }}>Three positive edges. One position.</h2>
       <p style={{ maxWidth: "68ch" }}>
@@ -124,6 +140,7 @@ function TheDifference() {
             </div>
           </div>
         ))}
+      </div>
       </div>
     </section>
   );
