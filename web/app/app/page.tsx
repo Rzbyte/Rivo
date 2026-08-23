@@ -75,6 +75,10 @@ function Portfolio() {
   const router = useRouter();
 
   const [bundle, setBundle] = useState<Bundle | null>(null);
+  /** Every portfolio this owner has. Only surfaced when there is more than one. */
+  const [portfolios, setPortfolios] = useState<{ id: string; state: string; capital: number }[]>([]);
+  /** Set when the owner picks one by hand, so a refresh does not undo the choice. */
+  const [chosen, setChosen] = useState<string | null>(null);
   const [balances, setBalances] = useState<Balances | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -122,7 +126,7 @@ function Portfolio() {
             ...(embedded?.id ? { privyWalletId: embedded.id } : {}),
           },
         });
-        type Listed = { id: string; state: string };
+        type Listed = { id: string; state: string; capital: number };
         let list = await api<{ portfolios: Listed[] }>(token, "/api/portfolios");
         if (list.portfolios.length === 0 && opts.create) {
           await api(token, "/api/portfolios", { method: "POST", body: { capital: 50, profile: "balanced" } });
@@ -139,7 +143,9 @@ function Portfolio() {
         //
         // Order of preference is order of usefulness: running, then anything not
         // stopped, then whatever exists.
+        setPortfolios(list.portfolios);
         const pick =
+          list.portfolios.find((p) => p.id === chosen) ??
           list.portfolios.find((p) => p.state === "running") ??
           list.portfolios.find((p) => p.state !== "stopped") ??
           list.portfolios[0];
@@ -154,7 +160,7 @@ function Portfolio() {
         setBooted(true);
       }
     },
-    [address, embedded?.id, token],
+    [address, embedded?.id, token, chosen],
   );
 
   // Boot: register the wallet and create the portfolio if this is a first visit.
@@ -335,6 +341,31 @@ function Portfolio() {
       }
     >
       {error && <div className="banner bad">{error}</div>}
+
+      {/* Only when there is something to choose between.
+          A user with one portfolio has no decision to make and a control that
+          shows them their only option is noise. But an owner with several had no
+          way to see the others existed — the app took the first row and the rest
+          were invisible, which is how pressing Enable on a halted portfolio
+          looked like pressing a dead button. */}
+      {portfolios.length > 1 && bundle && (
+        <nav className="tabs" style={{ marginBottom: 16 }} aria-label="Your portfolios">
+          {portfolios.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => {
+                setChosen(p.id);
+                void refresh();
+              }}
+              aria-current={p.id === bundle.view.id ? "page" : undefined}
+              className={p.id === bundle.view.id ? "primary" : ""}
+              title={p.id}
+            >
+              {p.capital.toFixed(0)} · {p.state}
+            </button>
+          ))}
+        </nav>
+      )}
 
       {!on && (
         <Steps
