@@ -25,7 +25,15 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { usePrivy, useHeadlessDelegatedActions, useLogout } from "@privy-io/react-auth";
+// `useDelegatedActions`, NOT the headless variant.
+//
+// Both expose the same two functions and they differ in exactly the thing this
+// screen promises: the headless one delegates without any UI, while this one
+// "prompts the user to delegate access". Rivo's copy says the user approves it
+// once in Privy's own prompt, and with the headless hook no prompt ever
+// appeared — the button simply sat on "Waiting for your approval…" forever,
+// waiting for something that was never going to be shown.
+import { usePrivy, useDelegatedActions, useLogout } from "@privy-io/react-auth";
 import type { WalletWithMetadata } from "@privy-io/react-auth";
 import { api, ApiError } from "@/lib/api";
 import { readBalances, type Balances } from "@/lib/balances";
@@ -49,7 +57,7 @@ export default function AppPage() {
 
 function Portfolio() {
   const { ready, authenticated, getAccessToken, user } = usePrivy();
-  const { delegateWallet, revokeWallets } = useHeadlessDelegatedActions();
+  const { delegateWallet, revokeWallets } = useDelegatedActions();
   const { logout } = useLogout();
   const router = useRouter();
 
@@ -157,8 +165,19 @@ function Portfolio() {
     try {
       // The consent step. Privy shows its own prompt; Rivo is not in the middle
       // of it and does not see anything but the outcome.
+      //
+      // Bounded, because an unsettled promise here is indistinguishable from a
+      // user who has not clicked yet — and that is exactly how this button spent
+      // its first outing stuck on "Waiting for your approval…" with nothing
+      // wrong that anybody could see. Ninety seconds is far longer than reading
+      // a prompt takes and short enough to be a failure rather than a mood.
       if (!embedded?.delegated) {
-        await delegateWallet({ address, chainType: "ethereum" });
+        await withTimeout(
+          delegateWallet({ address, chainType: "ethereum" }),
+          90_000,
+          "Privy never showed the permission prompt. This usually means delegated actions are not enabled " +
+            "on the Privy app — check Dashboard → Wallets → Delegated actions.",
+        );
       }
       // Re-read the linked account: the wallet id exists only after delegation,
       // and the worker needs it.
@@ -171,10 +190,11 @@ function Portfolio() {
       });
       await refresh();
     } catch (e) {
+      // Show what actually went wrong. "Did not complete" is true of a declined
+      // prompt, a disabled dashboard setting and a network failure alike, and
+      // tells the user nothing about which one they are in.
       setError(
-        e instanceof ApiError
-          ? e.message
-          : "Autopilot was not enabled — the permission prompt was declined or did not complete.",
+        e instanceof ApiError ? e.message : e instanceof Error ? e.message : "Autopilot was not enabled.",
       );
     } finally {
       setBusy(null);
@@ -203,7 +223,7 @@ function Portfolio() {
       // that is stopped with a standing grant does nothing, which is the safe
       // half of the two.
       try {
-        await revokeWallets();
+        await withTimeout(revokeWallets(), 60_000, "Privy did not confirm the revocation.");
       } catch {
         setError(
           "Autopilot is off and Rivo will not trade this portfolio. Withdrawing the signing permission at Privy " +
@@ -307,6 +327,20 @@ function Portfolio() {
       )}
     </Shell>
   );
+}
+
+/**
+ * Fail a promise that never settles.
+ *
+ * A hung await and a user who has not clicked yet look identical from here, and
+ * the difference matters: one is a state to wait in and the other is a dead end
+ * with a spinner on it.
+ */
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) => setTimeout(() => reject(new Error(message)), ms)),
+  ]);
 }
 
 function Shell({ children, right }: { children: React.ReactNode; right?: React.ReactNode }) {
