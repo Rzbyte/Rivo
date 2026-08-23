@@ -12,6 +12,8 @@
 // skipped. A count of passing tests looked almost right.
 
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { sslFor } from "./pool.js";
 
 const LOCAL = "postgres://rivo@127.0.0.1:55432/rivo";
@@ -67,5 +69,41 @@ describe("turning TLS off entirely", () => {
     expect(sslFor("postgres://u:p@localhost.example.com:5432/db", "", false)).toEqual({
       rejectUnauthorized: true,
     });
+  });
+});
+
+describe("the pool reads .env where it reads DATABASE_URL", () => {
+  it("loads the environment on import, not only via core/config", () => {
+    // `npm run report -- --portfolio <id>` answered "--portfolio needs
+    // DATABASE_URL" against a database that was configured perfectly. The
+    // variable lives in .env; core/config loads it on import with a comment
+    // saying no entry point can forget to — and report.ts never imports config,
+    // so it forgot. That is the most confusing shape a missing-configuration
+    // error can take: correct configuration, reported as absent.
+    const src = readFileSync(resolve("src/db/pool.ts"), "utf8");
+    expect(src).toMatch(/import \{ loadEnv \} from "\.\.\/core\/env\.js"/);
+    // Called at module scope, not inside a function that something has to reach.
+    expect(src).toMatch(/\nloadEnv\(\);/);
+  });
+
+  it("does not overwrite a variable the platform already set", async () => {
+    // Behaviour, not prose. The first version of this asserted a phrase in a
+    // comment, which is the pattern that fails when somebody rewords a sentence
+    // and passes when somebody breaks the code.
+    //
+    // This matters on Vercel and in Docker, where there is no .env and the
+    // platform supplies the values: a loader that overwrote them would replace a
+    // production connection string with whatever a stray file contained.
+    const { loadEnv } = await import("../core/env.js");
+    const key = "RIVO_ENV_OVERWRITE_PROBE";
+    const before = process.env[key];
+    try {
+      process.env[key] = "set-by-the-platform";
+      loadEnv();
+      expect(process.env[key]).toBe("set-by-the-platform");
+    } finally {
+      if (before === undefined) delete process.env[key];
+      else process.env[key] = before;
+    }
   });
 });

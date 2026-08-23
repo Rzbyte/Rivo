@@ -1,0 +1,465 @@
+{
+  "generatedAt": "2026-08-23T19:25:15.416Z",
+  "source": "postgres",
+  "network": "testnet",
+  "venueId": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
+  "portfolio": {
+    "id": "5b35e672-963b-4af1-9076-539708692ec1",
+    "address": "0x1b4b0195b32053489992649813dc02fc5e282e2e",
+    "url": "https://shannon-explorer.somnia.network/address/0x1b4b0195b32053489992649813dc02fc5e282e2e",
+    "profile": "balanced",
+    "mode": "shadow",
+    "state": "running",
+    "delegated": true,
+    "signable": true
+  },
+  "wallet": {
+    "gas": 4.762127882,
+    "gasSymbol": "STT",
+    "collateral": 9878.58199,
+    "collateralSymbol": "tUSDC"
+  },
+  "runtime": {
+    "cycles": 15,
+    "startedAt": 1787512502,
+    "lastCycleAt": 1787513100,
+    "sinceLastCycleSec": 15,
+    "capital": 100,
+    "cash": 82.9713706551,
+    "contributed": 0,
+    "realizedPnl": -0.0735993753,
+    "halted": null,
+    "dryRun": true,
+    "tradedBy": null,
+    "stateVersion": 24
+  },
+  "ledger": {
+    "identity": "cash + open cost == capital + contributed + realised",
+    "cash": 82.9713706551,
+    "openCost": 16.955029969599998,
+    "capital": 100,
+    "contributed": 0,
+    "realizedPnl": -0.0735993753,
+    "imbalance": 0,
+    "balances": true
+  },
+  "counts": {
+    "decisions": 244,
+    "decisionsEntered": 9,
+    "decisionsRefused": 231,
+    "lotsOpen": 8,
+    "lotsClosed": 4,
+    "executionAttempts": 14,
+    "executionsByStatus": {
+      "confirmed": 14
+    },
+    "executionsWithTxHash": 0,
+    "confirmedOnChain": 0
+  },
+  "executions": [
+    {
+      "id": "d9db2310-40bf-4bb5-9ee1-4b732d02b182",
+      "action": "BUY",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000006ed6",
+      "status": "confirmed",
+      "mode": "dry",
+      "requestedQty": 19.9887182582,
+      "filledQty": 19.9887182582,
+      "filledPrice": 0.095,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787513020,
+      "error": null
+    },
+    {
+      "id": "0f1390c0-6217-4dfa-8b3b-1a4358d8540f",
+      "action": "REDUCE",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000006ed5",
+      "status": "confirmed",
+      "mode": "dry",
+      "requestedQty": 4.8102920052,
+      "filledQty": 4.8102920052,
+      "filledPrice": 0.144,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787513020,
+      "error": null
+    },
+    {
+      "id": "44fff3cb-0bab-4de0-a03d-8b6357bfc857",
+      "action": "BUY",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007a50",
+      "status": "confirmed",
+      "mode": "dry",
+      "requestedQty": 5.5698686658,
+      "filledQty": 5.5698686658,
+      "filledPrice": 0.218,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787512979,
+      "error": null
+    },
+    {
+      "id": "e42e68e2-a82c-4236-b94a-7d7994be2216",
+      "action": "REDUCE",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007a78",
+      "status": "confirmed",
+      "mode": "dry",
+      "requestedQty": 1.9480865635,
+      "filledQty": 1.9480865635,
+      "filledPrice": 0.225,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787512893,
+      "error": null
+    },
+    {
+      "id": "87910073-c0d5-435f-ab38-b59197f47854",
+      "action": "BUY",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007a50",
+      "status": "confirmed",
+      "mode": "dry",
+      "requestedQty": 7.3178330297,
+      "filledQty": 7.3178330297,
+      "filledPrice": 0.293,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787512773,
+      "error": null
+    },
+    {
+      "id": "8ccd8426-df06-4471-afd1-83153e0f15b0",
+      "action": "EXIT",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007a77",
+      "status": "confirmed",
+      "mode": "dry",
+      "requestedQty": 4.042057013,
+      "filledQty": 4.042057013,
+      "filledPrice": 0.769,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787512733,
+      "error": null
+    },
+    {
+      "id": "8a2be0bc-84e2-4814-85f0-532c2adccf80",
+      "action": "REDUCE",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007880",
+      "status": "confirmed",
+      "mode": "dry",
+      "requestedQty": 3.2716928755,
+      "filledQty": 3.2716928755,
+      "filledPrice": 0.159,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787512733,
+      "error": null
+    },
+    {
+      "id": "7d89a176-25a3-41ee-aef2-e759835d2a8e",
+      "action": "BUY",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007a78",
+      "status": "confirmed",
+      "mode": "dry",
+      "requestedQty": 3.896173127,
+      "filledQty": 3.896173127,
+      "filledPrice": 0.406,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787512690,
+      "error": null
+    },
+    {
+      "id": "c88a75de-c262-4677-9190-a4744d2cf361",
+      "action": "BUY",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000006ed6",
+      "status": "confirmed",
+      "mode": "dry",
+      "requestedQty": 36.8568686543,
+      "filledQty": 36.8568686543,
+      "filledPrice": 0.142,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787512606,
+      "error": null
+    },
+    {
+      "id": "20e936ee-8291-4a25-8933-1eaa39ed928b",
+      "action": "BUY",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007a50",
+      "status": "confirmed",
+      "mode": "dry",
+      "requestedQty": 12.3606650735,
+      "filledQty": 12.3606650735,
+      "filledPrice": 0.267,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787512565,
+      "error": null
+    },
+    {
+      "id": "33094231-a6c6-4ece-ac5f-f88c9fba06bf",
+      "action": "BUY",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007880",
+      "status": "confirmed",
+      "mode": "dry",
+      "requestedQty": 6.543385751,
+      "filledQty": 6.543385751,
+      "filledPrice": 0.318,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787512522,
+      "error": null
+    },
+    {
+      "id": "5c97043f-269f-48f0-942a-3920b7cdfc74",
+      "action": "BUY",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007a77",
+      "status": "confirmed",
+      "mode": "dry",
+      "requestedQty": 4.042057013,
+      "filledQty": 4.042057013,
+      "filledPrice": 0.413,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787512521,
+      "error": null
+    },
+    {
+      "id": "d7c8fc15-18b7-47fc-a006-515f103a57f5",
+      "action": "BUY",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000006ed5",
+      "status": "confirmed",
+      "mode": "dry",
+      "requestedQty": 9.6205840104,
+      "filledQty": 9.6205840104,
+      "filledPrice": 0.277,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787512520,
+      "error": null
+    },
+    {
+      "id": "39a71947-6dce-4b2b-b4e2-1da5f76b521a",
+      "action": "CLAIM",
+      "leg": null,
+      "market": "sweep",
+      "status": "confirmed",
+      "mode": "dry",
+      "requestedQty": null,
+      "filledQty": 0,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787512520,
+      "error": null
+    }
+  ],
+  "receipts": [],
+  "positions": {
+    "open": [
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007a78",
+        "leg": "ETH 15m DOWN",
+        "shares": 1.9480865635,
+        "cost": 0.7909231448,
+        "expiry": 1787513400,
+        "adopted": false
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007a50",
+        "leg": "ETH 1h UP",
+        "shares": 7.3178330297,
+        "cost": 2.1441250777,
+        "expiry": 1787515200,
+        "adopted": false
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007880",
+        "leg": "ETH 4h DOWN",
+        "shares": 3.2716928755,
+        "cost": 1.0403983344,
+        "expiry": 1787515200,
+        "adopted": false
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007a50",
+        "leg": "ETH 1h UP",
+        "shares": 12.3606650735,
+        "cost": 3.3002975746,
+        "expiry": 1787515200,
+        "adopted": false
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007a50",
+        "leg": "ETH 1h UP",
+        "shares": 5.5698686658,
+        "cost": 1.2142313692,
+        "expiry": 1787515200,
+        "adopted": false
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000006ed6",
+        "leg": "ETH 1d DOWN",
+        "shares": 19.9887182582,
+        "cost": 1.8989282345,
+        "expiry": 1787529600,
+        "adopted": false
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000006ed6",
+        "leg": "ETH 1d DOWN",
+        "shares": 36.8568686543,
+        "cost": 5.2336753489,
+        "expiry": 1787529600,
+        "adopted": false
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000006ed5",
+        "leg": "BTC 1d DOWN",
+        "shares": 4.8102920052,
+        "cost": 1.3324508855,
+        "expiry": 1787529600,
+        "adopted": false
+      }
+    ],
+    "closed": [
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000006ed5",
+        "leg": "BTC 1d DOWN",
+        "shares": 4.8102920052,
+        "cost": 1.3324508855,
+        "proceeds": 0.6926820487,
+        "exit": "sold",
+        "closedAt": 1787513017,
+        "txHashes": []
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007a78",
+        "leg": "ETH 15m DOWN",
+        "shares": 1.9480865635,
+        "cost": 0.7909231448,
+        "proceeds": 0.4383194768,
+        "exit": "sold",
+        "closedAt": 1787512890,
+        "txHashes": []
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007880",
+        "leg": "ETH 4h DOWN",
+        "shares": 3.2716928755,
+        "cost": 1.0403983344,
+        "proceeds": 0.5201991672,
+        "exit": "sold",
+        "closedAt": 1787512728,
+        "txHashes": []
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007a77",
+        "leg": "BTC 15m UP",
+        "shares": 4.042057013,
+        "cost": 1.6693695464,
+        "proceeds": 3.108341843,
+        "exit": "sold",
+        "closedAt": 1787512728,
+        "txHashes": []
+      }
+    ]
+  },
+  "settlement": {
+    "settled": 0,
+    "sold": 4,
+    "merged": 0,
+    "voided": 0,
+    "dropped": 0,
+    "claimSweeps": 1
+  },
+  "reconciliation": {
+    "adoptedOpen": 0,
+    "events": 0,
+    "lastAt": null
+  },
+  "risk": {
+    "breakerEvents": 0,
+    "halted": null,
+    "events": []
+  },
+  "fleet": {
+    "liveWorkers": 1
+  },
+  "stages": [
+    {
+      "name": "DISCOVER",
+      "proven": true,
+      "evidence": "15 cycles against the live venue"
+    },
+    {
+      "name": "ANALYZE",
+      "proven": true,
+      "evidence": "244 decisions recorded, 231 of them refusals"
+    },
+    {
+      "name": "ALLOCATE",
+      "proven": true,
+      "evidence": "8 open lots, 4 closed"
+    },
+    {
+      "name": "RISK CHECK",
+      "proven": true,
+      "evidence": "within limits, breaker armed"
+    },
+    {
+      "name": "EXECUTE",
+      "proven": true,
+      "evidence": "14 execution attempts recorded before anything was signed"
+    },
+    {
+      "name": "BROADCAST",
+      "proven": false,
+      "evidence": "no transaction hashes — this portfolio is in Shadow Mode"
+    },
+    {
+      "name": "CONFIRM",
+      "proven": false,
+      "evidence": "0/0 receipts read back from the chain report success"
+    },
+    {
+      "name": "RECONCILE",
+      "proven": false,
+      "evidence": "0 reconciliation events, 0 positions adopted from chain"
+    },
+    {
+      "name": "PERSIST",
+      "proven": true,
+      "evidence": "PostgreSQL, state version 24"
+    },
+    {
+      "name": "LEDGER",
+      "proven": true,
+      "evidence": "imbalance 0.00e+0"
+    },
+    {
+      "name": "SETTLE",
+      "proven": false,
+      "evidence": "0 positions resolved against the venue's oracle"
+    },
+    {
+      "name": "CLAIM",
+      "proven": true,
+      "evidence": "1 claim sweeps recorded"
+    }
+  ]
+}

@@ -9,6 +9,21 @@
 // so the error paths below name the host and nothing else.
 
 import { Pool, type PoolClient, type QueryResultRow } from "pg";
+import { loadEnv } from "../core/env.js";
+
+// Read `.env` here, where DATABASE_URL is read.
+//
+// `src/core/config.ts` already does this on import, with a comment saying no
+// entry point can forget it — and then `npm run report -- --portfolio <id>`
+// forgot, because it never imports config. It answered "--portfolio needs
+// DATABASE_URL" against a database that was configured perfectly, which is the
+// most confusing shape a missing-configuration error can take.
+//
+// Loading it in the module that actually needs the variable means any entry
+// point reaching the pool has it, whether or not it went past config first.
+// `loadEnv` is idempotent and never overwrites a variable already set, so this
+// is inert on Vercel, in Docker, and anywhere the platform supplies them.
+loadEnv();
 
 let pool: Pool | null = null;
 

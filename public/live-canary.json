@@ -1,661 +1,2423 @@
 {
-  "generatedAt": "2026-08-21T20:03:44.487Z",
+  "generatedAt": "2026-08-23T19:14:22.908Z",
+  "source": "postgres",
   "network": "testnet",
   "venueId": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
+  "portfolio": {
+    "id": "4c7db0b5-1578-479b-9d72-c242c0b65ff8",
+    "address": "0x1b4b0195b32053489992649813dc02fc5e282e2e",
+    "url": "https://shannon-explorer.somnia.network/address/0x1b4b0195b32053489992649813dc02fc5e282e2e",
+    "profile": "active",
+    "mode": "shadow",
+    "state": "halted",
+    "delegated": true,
+    "signable": true
+  },
   "wallet": {
-    "address": "0x6730d3a2A217108AB53CCFe60ffdAd05D3C124e5",
-    "url": "https://shannon-explorer.somnia.network/address/0x6730d3a2A217108AB53CCFe60ffdAd05D3C124e5",
-    "gas": 47.4018598,
+    "gas": 4.762127882,
     "gasSymbol": "STT",
-    "collateral": 9858.31643,
+    "collateral": 9878.58199,
     "collateralSymbol": "tUSDC"
   },
-  "authority": {
-    "kind": "agent-wallet",
-    "boundedOnChain": false,
-    "bounds": "A dedicated wallet holding only its funded float. Maximum loss is that balance — it holds no other assets and no allowance to the owner's wallet. Sweep it back with `npm run agent -- sweep`.",
-    "addressSource": "flag",
-    "isCurrentSigner": false
-  },
   "runtime": {
-    "cycles": 1005,
-    "startedAt": 1787249190,
-    "lastCycleAt": 1787295860,
-    "capital": 20,
-    "contributed": 37.30066579346405,
-    "cash": 31.00568000000006,
-    "realizedPnl": -25.195355793464028,
-    "halted": "drawdown 35.3% exceeded 35% — no new positions; open ones will settle",
-    "dryRun": false
+    "cycles": 824,
+    "startedAt": 1787448022,
+    "lastCycleAt": 1787500008,
+    "sinceLastCycleSec": 12454,
+    "capital": 500,
+    "cash": 4.13339,
+    "contributed": -457.78928,
+    "realizedPnl": 17.85048,
+    "halted": "drawdown 37.0% exceeded 35% — no new positions; open ones will settle",
+    "dryRun": false,
+    "tradedBy": "0x1b4b0195b32053489992649813dc02fc5e282e2e",
+    "stateVersion": 1092
   },
   "ledger": {
     "identity": "cash + open cost == capital + contributed + realised",
-    "cash": 31.00568000000006,
-    "openCost": 1.09963,
-    "capital": 20,
-    "contributed": 37.30066579346405,
-    "realizedPnl": -25.195355793464028,
-    "imbalance": 4.263256414560601e-14,
+    "cash": 4.13339,
+    "openCost": 55.927809999999994,
+    "capital": 500,
+    "contributed": -457.78928,
+    "realizedPnl": 17.85048,
+    "imbalance": 7.105427357601002e-15,
     "balances": true
   },
-  "execution": {
-    "positionsOpenedByRivo": 208,
-    "withTransactionHash": 10,
-    "receipts": [
-      {
-        "hash": "0xdc89f5d2efad349b72e1c8dba7a714c34628ff9311cfde22e4bd289aab8b5263",
-        "url": "https://shannon-explorer.somnia.network/tx/0xdc89f5d2efad349b72e1c8dba7a714c34628ff9311cfde22e4bd289aab8b5263",
-        "found": true,
-        "succeeded": true,
-        "block": 467068226,
-        "gasUsed": 426781,
-        "events": 8,
-        "to": "0xc3e2b06a7a9e35170785a01595a09e4aed8a78df"
-      },
-      {
-        "hash": "0x8f35112dcacd1563dd5a3d6a7f81fbaa5e0f2cacca15ec49f4e2aadba0a886e9",
-        "url": "https://shannon-explorer.somnia.network/tx/0x8f35112dcacd1563dd5a3d6a7f81fbaa5e0f2cacca15ec49f4e2aadba0a886e9",
-        "found": true,
-        "succeeded": true,
-        "block": 467082509,
-        "gasUsed": 426781,
-        "events": 8,
-        "to": "0xc3e2b06a7a9e35170785a01595a09e4aed8a78df"
-      },
-      {
-        "hash": "0x6ff21f94efc83b235c5016056bba14988d34ed744498f2837b3c4d9719c4308e",
-        "url": "https://shannon-explorer.somnia.network/tx/0x6ff21f94efc83b235c5016056bba14988d34ed744498f2837b3c4d9719c4308e",
-        "found": true,
-        "succeeded": true,
-        "block": 467092270,
-        "gasUsed": 426781,
-        "events": 8,
-        "to": "0xc3e2b06a7a9e35170785a01595a09e4aed8a78df"
-      },
-      {
-        "hash": "0xc3857af36f532f5adef2814d5374e2e5661c7b1a626febb6ce436d05b75a6b38",
-        "url": "https://shannon-explorer.somnia.network/tx/0xc3857af36f532f5adef2814d5374e2e5661c7b1a626febb6ce436d05b75a6b38",
-        "found": true,
-        "succeeded": true,
-        "block": 467092840,
-        "gasUsed": 626781,
-        "events": 8,
-        "to": "0xc09e4a5bdee2899962727125fb5eaeb896798e46"
-      },
-      {
-        "hash": "0x2665144da27ed347dc9748b5f8813fd8e9ca6b1a98d49be4afc3d6b5678e7ae6",
-        "url": "https://shannon-explorer.somnia.network/tx/0x2665144da27ed347dc9748b5f8813fd8e9ca6b1a98d49be4afc3d6b5678e7ae6",
-        "found": true,
-        "succeeded": true,
-        "block": 467102933,
-        "gasUsed": 426781,
-        "events": 8,
-        "to": "0xc3e2b06a7a9e35170785a01595a09e4aed8a78df"
-      },
-      {
-        "hash": "0x77142df4795942358640319acc08101816cbfaae8f179bd8cb67460a88ae15e6",
-        "url": "https://shannon-explorer.somnia.network/tx/0x77142df4795942358640319acc08101816cbfaae8f179bd8cb67460a88ae15e6",
-        "found": true,
-        "succeeded": true,
-        "block": 467107600,
-        "gasUsed": 426781,
-        "events": 8,
-        "to": "0xc09e4a5bdee2899962727125fb5eaeb896798e46"
-      },
-      {
-        "hash": "0x74a31c7f026f4264c69fff821b76296b218b5183e34c6d95fa52a0da080b8577",
-        "url": "https://shannon-explorer.somnia.network/tx/0x74a31c7f026f4264c69fff821b76296b218b5183e34c6d95fa52a0da080b8577",
-        "found": true,
-        "succeeded": true,
-        "block": 467123587,
-        "gasUsed": 626781,
-        "events": 8,
-        "to": "0xc3f0bb8cd90d3ffa6a3e4982bcd6698f27af5cc8"
-      },
-      {
-        "hash": "0x5bb78e2945d1d8cfb44a061362898410657c30377f62edcb9edd2faa484a1723",
-        "url": "https://shannon-explorer.somnia.network/tx/0x5bb78e2945d1d8cfb44a061362898410657c30377f62edcb9edd2faa484a1723",
-        "found": true,
-        "succeeded": true,
-        "block": 467131666,
-        "gasUsed": 626781,
-        "events": 8,
-        "to": "0x22b860e577dbadedb659985d8ec3706559702ab5"
-      },
-      {
-        "hash": "0xb4aa342d51dc3058dcd954e361eb813cb65ffa5a6235ea05295b6988f922f285",
-        "url": "https://shannon-explorer.somnia.network/tx/0xb4aa342d51dc3058dcd954e361eb813cb65ffa5a6235ea05295b6988f922f285",
-        "found": true,
-        "succeeded": true,
-        "block": 467148279,
-        "gasUsed": 426781,
-        "events": 8,
-        "to": "0xc09e4a5bdee2899962727125fb5eaeb896798e46"
-      },
-      {
-        "hash": "0x74f2215d8a02fe3ff63c6851cfdec18dcf8b476404aaa8dd7df30e59e664a0d9",
-        "url": "https://shannon-explorer.somnia.network/tx/0x74f2215d8a02fe3ff63c6851cfdec18dcf8b476404aaa8dd7df30e59e664a0d9",
-        "found": true,
-        "succeeded": true,
-        "block": 467148332,
-        "gasUsed": 426781,
-        "events": 8,
-        "to": "0xc3f0bb8cd90d3ffa6a3e4982bcd6698f27af5cc8"
-      }
-    ]
+  "counts": {
+    "decisions": 13165,
+    "decisionsEntered": 33,
+    "decisionsRefused": 13115,
+    "lotsOpen": 6,
+    "lotsClosed": 43,
+    "executionAttempts": 1380,
+    "executionsByStatus": {
+      "confirmed": 132,
+      "failed": 1248
+    },
+    "executionsWithTxHash": 53,
+    "confirmedOnChain": 25
   },
+  "executions": [
+    {
+      "id": "c6285c7e-cb2d-4916-bd78-e0684a17dab9",
+      "action": "REDUCE",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007616",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 38.475,
+      "filledQty": 38.47,
+      "filledPrice": 0.04,
+      "txHash": "0x4283a55f458d09f2ba84302b17b003abc38b46b27e8b71bcd6ce5134d235ad04",
+      "url": "https://shannon-explorer.somnia.network/tx/0x4283a55f458d09f2ba84302b17b003abc38b46b27e8b71bcd6ce5134d235ad04",
+      "createdAt": 1787500021,
+      "error": null
+    },
+    {
+      "id": "a15cc6db-d052-4eae-89a4-aea56e2fb43b",
+      "action": "CLAIM",
+      "leg": null,
+      "market": "sweep",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": null,
+      "filledQty": 0,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787499913,
+      "error": null
+    },
+    {
+      "id": "f469b426-df74-407c-858a-db2d5155fe97",
+      "action": "REDUCE",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007616",
+      "status": "failed",
+      "mode": "live",
+      "requestedQty": 38.475,
+      "filledQty": null,
+      "filledPrice": null,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787499714,
+      "error": "@somnia-chain/markets-sdk: placeBinaryOrder reverted: for an unknown reason. — while placing sell NO 38.47 @ 0.09699999999999998 on pool 0xC3E2b06a… (market 0000007616)"
+    },
+    {
+      "id": "138e0f2e-a7cc-49b1-bc26-f53d7e80bf19",
+      "action": "REDUCE",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007616",
+      "status": "failed",
+      "mode": "live",
+      "requestedQty": 38.475,
+      "filledQty": null,
+      "filledPrice": null,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787499562,
+      "error": "@somnia-chain/markets-sdk: placeBinaryOrder reverted: for an unknown reason. — while placing sell NO 38.47 @ 0.19999999999999996 on pool 0xC3E2b06a… (market 0000007616)"
+    },
+    {
+      "id": "a1a47d37-c48b-4067-aad9-ec1acd59350d",
+      "action": "CLAIM",
+      "leg": null,
+      "market": "sweep",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": null,
+      "filledQty": 0,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787499262,
+      "error": null
+    },
+    {
+      "id": "eb48032c-04c9-4114-aa14-3fe869b95cca",
+      "action": "REDUCE",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007615",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 22.56,
+      "filledQty": 22.56,
+      "filledPrice": 0.199,
+      "txHash": "0x2cdf390dfa08c2fa56ffa99262ac0d0d9021a1baad7e37f94cc080780eac46c5",
+      "url": "https://shannon-explorer.somnia.network/tx/0x2cdf390dfa08c2fa56ffa99262ac0d0d9021a1baad7e37f94cc080780eac46c5",
+      "createdAt": 1787499203,
+      "error": null
+    },
+    {
+      "id": "5f645fc3-297f-467f-9102-f038ed7d2bac",
+      "action": "REDUCE",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007616",
+      "status": "failed",
+      "mode": "live",
+      "requestedQty": 38.475,
+      "filledQty": null,
+      "filledPrice": null,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787499096,
+      "error": "@somnia-chain/markets-sdk: placeBinaryOrder reverted: for an unknown reason. — while placing sell NO 38.47 @ 0.238 on pool 0xC3E2b06a… (market 0000007616)"
+    },
+    {
+      "id": "d6245e54-a4fc-4ff1-b016-5879f7594f7f",
+      "action": "BUY",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007615",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 45.1205757576,
+      "filledQty": 45.12,
+      "filledPrice": 0.372,
+      "txHash": "0xac9491aabeaf306facdbb2779ecc5978c25f9b8eb3c8531e167ed6487de49321",
+      "url": "https://shannon-explorer.somnia.network/tx/0xac9491aabeaf306facdbb2779ecc5978c25f9b8eb3c8531e167ed6487de49321",
+      "createdAt": 1787498887,
+      "error": null
+    },
+    {
+      "id": "adba3f89-7f9d-4d34-8eee-96f407f7422e",
+      "action": "BUY",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007616",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 76.9514695268,
+      "filledQty": 76.95,
+      "filledPrice": 0.429,
+      "txHash": "0xc59224f63ef5c00e530cbe2602911c97af765d6829103efcd147dba5a57bcff1",
+      "url": "https://shannon-explorer.somnia.network/tx/0xc59224f63ef5c00e530cbe2602911c97af765d6829103efcd147dba5a57bcff1",
+      "createdAt": 1787498831,
+      "error": null
+    },
+    {
+      "id": "effad5ef-42f0-416b-b53d-11c0e1836f90",
+      "action": "BUY",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000006ed6",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 13.6363232453,
+      "filledQty": 13.63,
+      "filledPrice": 0.439,
+      "txHash": "0xc22fac40f3f091b9cc8e9b3c1acd5397e78bf6d5c5dfa4a02ff6c8838e42d2b7",
+      "url": "https://shannon-explorer.somnia.network/tx/0xc22fac40f3f091b9cc8e9b3c1acd5397e78bf6d5c5dfa4a02ff6c8838e42d2b7",
+      "createdAt": 1787498825,
+      "error": null
+    },
+    {
+      "id": "07dd45c9-82c6-46c2-a76e-a9efb65c4b77",
+      "action": "EXIT",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007616",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 89.55,
+      "filledQty": 89.55,
+      "filledPrice": 0.608,
+      "txHash": "0xb1bf6462d7b25d7cb1517852344630bafad4d6cbf0f33da3d7fe3d9531616bad",
+      "url": "https://shannon-explorer.somnia.network/tx/0xb1bf6462d7b25d7cb1517852344630bafad4d6cbf0f33da3d7fe3d9531616bad",
+      "createdAt": 1787498813,
+      "error": null
+    },
+    {
+      "id": "5be003ab-a239-4601-9e68-d13ff7be7b84",
+      "action": "CLAIM",
+      "leg": null,
+      "market": "sweep",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": null,
+      "filledQty": 0,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787498660,
+      "error": null
+    },
+    {
+      "id": "b3a521ab-f7f3-4c50-a505-82625a6515a0",
+      "action": "BUY",
+      "leg": "DOWN",
+      "market": "0x000000000000000000000000000000000000000000000000000000000000780d",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 15.3295878136,
+      "filledQty": 15.32,
+      "filledPrice": 0.595,
+      "txHash": "0xe7de5f845e252d62b3fa26def65fceafb03453534b7b7d9c8c550165fd48c664",
+      "url": "https://shannon-explorer.somnia.network/tx/0xe7de5f845e252d62b3fa26def65fceafb03453534b7b7d9c8c550165fd48c664",
+      "createdAt": 1787498547,
+      "error": null
+    },
+    {
+      "id": "62cde210-0661-4043-b6bd-52803eab79a7",
+      "action": "REDUCE",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007615",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 5.795,
+      "filledQty": 5.79,
+      "filledPrice": 0.141,
+      "txHash": "0x839360681ed764470dc801f597f44d50d45dfd939549db28520b064537483f22",
+      "url": "https://shannon-explorer.somnia.network/tx/0x839360681ed764470dc801f597f44d50d45dfd939549db28520b064537483f22",
+      "createdAt": 1787498436,
+      "error": null
+    },
+    {
+      "id": "bc27cbf4-25ac-41a9-b196-ec015997a7de",
+      "action": "BUY",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007616",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 89.5535867684,
+      "filledQty": 89.55,
+      "filledPrice": 0.349,
+      "txHash": "0xc82c36149aedba84e2d4bf97c4de1dcdb68f2a9b4a4e158f5b185515fad90fc7",
+      "url": "https://shannon-explorer.somnia.network/tx/0xc82c36149aedba84e2d4bf97c4de1dcdb68f2a9b4a4e158f5b185515fad90fc7",
+      "createdAt": 1787498381,
+      "error": null
+    },
+    {
+      "id": "eece91b8-09f9-44f9-8504-725588bfa49b",
+      "action": "REDUCE",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007615",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 11.585,
+      "filledQty": 11.58,
+      "filledPrice": 0.24,
+      "txHash": "0x4e952c8859bbd02be30e918c39cb8236de1b0baa1002e4cddc8fc9f0b20b9610",
+      "url": "https://shannon-explorer.somnia.network/tx/0x4e952c8859bbd02be30e918c39cb8236de1b0baa1002e4cddc8fc9f0b20b9610",
+      "createdAt": 1787498219,
+      "error": null
+    },
+    {
+      "id": "778e27f8-f266-4966-a645-a725432b66b2",
+      "action": "BUY",
+      "leg": "DOWN",
+      "market": "0x000000000000000000000000000000000000000000000000000000000000780d",
+      "status": "failed",
+      "mode": "live",
+      "requestedQty": 43.5267143608,
+      "filledQty": null,
+      "filledPrice": null,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787498165,
+      "error": "@somnia-chain/markets-sdk: placeBinaryOrder reverted: for an unknown reason. — while placing buy NO 43.52 @ 0.56559482174241 on pool 0x54D90260… (market 000000780d)"
+    },
+    {
+      "id": "fb898e4d-8672-4626-a00b-8c451f1591a7",
+      "action": "REDUCE",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007615",
+      "status": "failed",
+      "mode": "live",
+      "requestedQty": 11.585,
+      "filledQty": null,
+      "filledPrice": null,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787498153,
+      "error": "@somnia-chain/markets-sdk: placeBinaryOrder reverted: for an unknown reason. — while placing sell YES 11.58 @ 0.309 on pool 0x3ae79C8A… (market 0000007615)"
+    },
+    {
+      "id": "4f1b7c27-4fd0-486e-b7b0-85114d61f807",
+      "action": "CLAIM",
+      "leg": null,
+      "market": "sweep",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": null,
+      "filledQty": 0,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787498041,
+      "error": null
+    },
+    {
+      "id": "b60108c3-38b3-4a6d-9f3a-6b5f35e7a862",
+      "action": "BUY",
+      "leg": "DOWN",
+      "market": "0x00000000000000000000000000000000000000000000000000000000000077e7",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 34.6009879321,
+      "filledQty": 34.6,
+      "filledPrice": 0.317,
+      "txHash": "0x6b49fb17c39c646519bafd19173892f708bee1b94795db65953e59a7e82af996",
+      "url": "https://shannon-explorer.somnia.network/tx/0x6b49fb17c39c646519bafd19173892f708bee1b94795db65953e59a7e82af996",
+      "createdAt": 1787497782,
+      "error": null
+    },
+    {
+      "id": "02dd496a-e783-4d3a-b2bf-7ccdfdc24726",
+      "action": "REDUCE",
+      "leg": "DOWN",
+      "market": "0x00000000000000000000000000000000000000000000000000000000000077e8",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 34.36,
+      "filledQty": 34.36,
+      "filledPrice": 0.451,
+      "txHash": "0x429426829bd0c5e86ed089bff939af525b0550cbdbe7db7981ff0a5aff8e45de",
+      "url": "https://shannon-explorer.somnia.network/tx/0x429426829bd0c5e86ed089bff939af525b0550cbdbe7db7981ff0a5aff8e45de",
+      "createdAt": 1787497575,
+      "error": null
+    },
+    {
+      "id": "ab434c9e-fecf-43e9-9d4a-4b7c8f2a0570",
+      "action": "REDUCE",
+      "leg": "DOWN",
+      "market": "0x00000000000000000000000000000000000000000000000000000000000077e8",
+      "status": "failed",
+      "mode": "live",
+      "requestedQty": 34.36,
+      "filledQty": null,
+      "filledPrice": null,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787497517,
+      "error": "@somnia-chain/markets-sdk: placeBinaryOrder reverted: for an unknown reason. — while placing sell NO 34.36 @ 0.538 on pool 0xFF52C100… (market 00000077e8)"
+    },
+    {
+      "id": "bf347ce3-17ba-408b-86be-9ea83b93d2b6",
+      "action": "CLAIM",
+      "leg": null,
+      "market": "sweep",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": null,
+      "filledQty": 0,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787497414,
+      "error": null
+    },
+    {
+      "id": "ef31b750-6fb7-447d-87d9-e9de906a6333",
+      "action": "BUY",
+      "leg": "DOWN",
+      "market": "0x00000000000000000000000000000000000000000000000000000000000077e8",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 68.7250877193,
+      "filledQty": 68.72,
+      "filledPrice": 0.666,
+      "txHash": "0xdcfd60e525aa04e33e978439273061db30dcd9c0697c771555f739db3fcf062a",
+      "url": "https://shannon-explorer.somnia.network/tx/0xdcfd60e525aa04e33e978439273061db30dcd9c0697c771555f739db3fcf062a",
+      "createdAt": 1787497261,
+      "error": null
+    },
+    {
+      "id": "5d720401-260d-4b59-8633-c07ac810ca6e",
+      "action": "REDUCE",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007615",
+      "status": "failed",
+      "mode": "live",
+      "requestedQty": 11.585,
+      "filledQty": null,
+      "filledPrice": null,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787497247,
+      "error": "@somnia-chain/markets-sdk: placeBinaryOrder reverted: for an unknown reason. — while placing sell YES 11.58 @ 0.327 on pool 0x3ae79C8A… (market 0000007615)"
+    },
+    {
+      "id": "2d6dfe48-de03-44ad-9a84-1312b3bb75cc",
+      "action": "CLAIM",
+      "leg": null,
+      "market": "sweep",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": null,
+      "filledQty": 0,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787496784,
+      "error": null
+    },
+    {
+      "id": "d75dafd3-47a8-428f-a309-4ff49dfd9e66",
+      "action": "BUY",
+      "leg": "UP",
+      "market": "0x00000000000000000000000000000000000000000000000000000000000077bf",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 12.9158115942,
+      "filledQty": 12.91,
+      "filledPrice": 0.808,
+      "txHash": "0x59c651c08fb0313873df0a08c1ceade4a4ecdab38d671c2709c55a327a285af9",
+      "url": "https://shannon-explorer.somnia.network/tx/0x59c651c08fb0313873df0a08c1ceade4a4ecdab38d671c2709c55a327a285af9",
+      "createdAt": 1787496585,
+      "error": null
+    },
+    {
+      "id": "0ed03d3b-11f5-4b70-af68-22406250db27",
+      "action": "REDUCE",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007615",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 23.17,
+      "filledQty": 23.17,
+      "filledPrice": 0.403,
+      "txHash": "0x12c3846cd11cb1cfc452608b21f0fd1ef637e57f45bddb9ccaa6695a5ab2fb0d",
+      "url": "https://shannon-explorer.somnia.network/tx/0x12c3846cd11cb1cfc452608b21f0fd1ef637e57f45bddb9ccaa6695a5ab2fb0d",
+      "createdAt": 1787496573,
+      "error": null
+    },
+    {
+      "id": "3286e87d-194a-41c6-aa4c-5c47d353c626",
+      "action": "BUY",
+      "leg": "DOWN",
+      "market": "0x000000000000000000000000000000000000000000000000000000000000774b",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 8.795530303,
+      "filledQty": 8.79,
+      "filledPrice": 0.973,
+      "txHash": "0xc903d06a1c55f305d31ab8a27a085af4dae3651ac5d7036221758c2b30a31ed9",
+      "url": "https://shannon-explorer.somnia.network/tx/0xc903d06a1c55f305d31ab8a27a085af4dae3651ac5d7036221758c2b30a31ed9",
+      "createdAt": 1787496519,
+      "error": null
+    },
+    {
+      "id": "8992cb09-424a-4f7f-b358-df51eacd3b16",
+      "action": "EXIT",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007615",
+      "status": "failed",
+      "mode": "live",
+      "requestedQty": 46.34,
+      "filledQty": null,
+      "filledPrice": null,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787496411,
+      "error": "@somnia-chain/markets-sdk: placeBinaryOrder reverted: for an unknown reason. — while placing sell YES 46.34 @ 0.352 on pool 0x3ae79C8A… (market 0000007615)"
+    },
+    {
+      "id": "3bf87370-8acb-4117-a425-c493470ceb80",
+      "action": "REDUCE",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007615",
+      "status": "failed",
+      "mode": "live",
+      "requestedQty": 23.17,
+      "filledQty": null,
+      "filledPrice": null,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787496355,
+      "error": "@somnia-chain/markets-sdk: placeBinaryOrder reverted: for an unknown reason. — while placing sell YES 23.17 @ 0.409 on pool 0x3ae79C8A… (market 0000007615)"
+    },
+    {
+      "id": "525d7aca-bd3a-415c-9e51-53f48409b00d",
+      "action": "MERGE_SET",
+      "leg": null,
+      "market": "0x000000000000000000000000000000000000000000000000000000000000774b",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 21.88,
+      "filledQty": 21.88,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787496347,
+      "error": null
+    },
+    {
+      "id": "6c47d8d1-238c-4e30-b694-49abb2916153",
+      "action": "BUY",
+      "leg": "DOWN",
+      "market": "0x000000000000000000000000000000000000000000000000000000000000774b",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 44.7997787611,
+      "filledQty": 44.79,
+      "filledPrice": 0.967,
+      "txHash": "0x56a22cdabe62b72a1d3f11be52ab7677b6922366c0315f34abd1f00989f9f298",
+      "url": "https://shannon-explorer.somnia.network/tx/0x56a22cdabe62b72a1d3f11be52ab7677b6922366c0315f34abd1f00989f9f298",
+      "createdAt": 1787496296,
+      "error": null
+    },
+    {
+      "id": "29e66791-dee3-4afb-acc1-2c4795d3ba5a",
+      "action": "EXIT",
+      "leg": "UP",
+      "market": "0x000000000000000000000000000000000000000000000000000000000000774b",
+      "status": "failed",
+      "mode": "live",
+      "requestedQty": 21.88,
+      "filledQty": null,
+      "filledPrice": null,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787496287,
+      "error": "@somnia-chain/markets-sdk: placeBinaryOrder reverted: for an unknown reason. — while placing sell YES 21.88 @ 0.096 on pool 0x3693799C… (market 000000774b)"
+    },
+    {
+      "id": "a93b36c2-dbd4-4df4-aef6-e586d2d7bf84",
+      "action": "BUY",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007616",
+      "status": "failed",
+      "mode": "live",
+      "requestedQty": 64.7482251279,
+      "filledQty": null,
+      "filledPrice": null,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787496240,
+      "error": "@somnia-chain/markets-sdk: placeBinaryOrder reverted: for an unknown reason. — while placing buy YES 64.74 @ 0.7394408099820278 on pool 0xC3E2b06a… (market 0000007616)"
+    },
+    {
+      "id": "25e69d2f-9cee-46ab-a56b-f64b018661ad",
+      "action": "BUY",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007615",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 46.3433846181,
+      "filledQty": 46.34,
+      "filledPrice": 0.543,
+      "txHash": "0xd42d26345bf995a973f4bb2f333effcf7c74a8798102d978e452ac4e86458473",
+      "url": "https://shannon-explorer.somnia.network/tx/0xd42d26345bf995a973f4bb2f333effcf7c74a8798102d978e452ac4e86458473",
+      "createdAt": 1787496234,
+      "error": null
+    },
+    {
+      "id": "c992776a-8ff8-47bc-85d3-894a2eee118d",
+      "action": "EXIT",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007616",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 108.42,
+      "filledQty": 108.42,
+      "filledPrice": 0.318,
+      "txHash": "0x9e67ff3f20652d3b27524233c9c86af6ce1dd7049205c963d80eb97e795685bc",
+      "url": "https://shannon-explorer.somnia.network/tx/0x9e67ff3f20652d3b27524233c9c86af6ce1dd7049205c963d80eb97e795685bc",
+      "createdAt": 1787496226,
+      "error": null
+    },
+    {
+      "id": "353c3af7-02e4-42f1-8e31-a1defd5381a7",
+      "action": "EXIT",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007615",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 66.29,
+      "filledQty": 66.29,
+      "filledPrice": 0.536,
+      "txHash": "0x34776b1a074573aa60757a3dee71930973444d4ba37e2c2c32c1b610aba1de11",
+      "url": "https://shannon-explorer.somnia.network/tx/0x34776b1a074573aa60757a3dee71930973444d4ba37e2c2c32c1b610aba1de11",
+      "createdAt": 1787496219,
+      "error": null
+    },
+    {
+      "id": "77d424b2-dd2a-4d45-84d7-d4a395a067fd",
+      "action": "REDUCE",
+      "leg": "UP",
+      "market": "0x000000000000000000000000000000000000000000000000000000000000774b",
+      "status": "failed",
+      "mode": "live",
+      "requestedQty": 10.94,
+      "filledQty": null,
+      "filledPrice": null,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787496212,
+      "error": "@somnia-chain/markets-sdk: placeBinaryOrder reverted: for an unknown reason. — while placing sell YES 10.94 @ 0.052 on pool 0x3693799C… (market 000000774b)"
+    },
+    {
+      "id": "83825b9f-1d1b-454e-a59b-08a1bdd52852",
+      "action": "CLAIM",
+      "leg": null,
+      "market": "sweep",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": null,
+      "filledQty": 0,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787496162,
+      "error": null
+    },
+    {
+      "id": "adecfd40-abe5-43d7-920c-f71e089d1517",
+      "action": "CLAIM",
+      "leg": null,
+      "market": "sweep",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": null,
+      "filledQty": 0,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787495556,
+      "error": null
+    },
+    {
+      "id": "5ffa80c6-9274-4204-888e-c3287d635715",
+      "action": "BUY",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007774",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 39.7115070811,
+      "filledQty": 39.71,
+      "filledPrice": 0.177,
+      "txHash": "0x2961d7cb6c4121ec51e4f833b2b6b9a296d0c4bea2ffc3383c8b66f92e3235cc",
+      "url": "https://shannon-explorer.somnia.network/tx/0x2961d7cb6c4121ec51e4f833b2b6b9a296d0c4bea2ffc3383c8b66f92e3235cc",
+      "createdAt": 1787495094,
+      "error": null
+    },
+    {
+      "id": "de02d99e-09d0-45cd-80db-2cb79023a711",
+      "action": "BUY",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007616",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 108.4258492291,
+      "filledQty": 108.42,
+      "filledPrice": 0.146,
+      "txHash": "0x914324dcd805153f75874639914ceea4764f4479e0f80e6d2d436f0393824b23",
+      "url": "https://shannon-explorer.somnia.network/tx/0x914324dcd805153f75874639914ceea4764f4479e0f80e6d2d436f0393824b23",
+      "createdAt": 1787495084,
+      "error": null
+    },
+    {
+      "id": "6b2984cd-88e9-4eca-a5e7-03fad171aa67",
+      "action": "BUY",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000006ed6",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 26.9861601218,
+      "filledQty": 26.98,
+      "filledPrice": 0.266,
+      "txHash": "0xb917bc8424dce23a32866659331c20397cc2b91c8059cb15b7fd005c64e70440",
+      "url": "https://shannon-explorer.somnia.network/tx/0xb917bc8424dce23a32866659331c20397cc2b91c8059cb15b7fd005c64e70440",
+      "createdAt": 1787495073,
+      "error": null
+    },
+    {
+      "id": "b99532d9-a8eb-4de8-9dd5-610d76d838c5",
+      "action": "REDUCE",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007773",
+      "status": "failed",
+      "mode": "live",
+      "requestedQty": 17.36,
+      "filledQty": null,
+      "filledPrice": null,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787495059,
+      "error": "@somnia-chain/markets-sdk: placeBinaryOrder reverted: for an unknown reason. — while placing sell YES 17.36 @ 0.101 on pool 0x54D90260… (market 0000007773)"
+    },
+    {
+      "id": "730ce10f-0131-4378-aafa-1970e92053eb",
+      "action": "REDUCE",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007773",
+      "status": "failed",
+      "mode": "live",
+      "requestedQty": 17.36,
+      "filledQty": null,
+      "filledPrice": null,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787494999,
+      "error": "@somnia-chain/markets-sdk: placeBinaryOrder reverted: for an unknown reason. — while placing sell YES 17.36 @ 0.252 on pool 0x54D90260… (market 0000007773)"
+    },
+    {
+      "id": "bf186890-66b4-4ead-bd04-ea9ecb692c0b",
+      "action": "CLAIM",
+      "leg": null,
+      "market": "sweep",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": null,
+      "filledQty": 0,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787494946,
+      "error": null
+    },
+    {
+      "id": "9cdc6f7a-5dc8-42b5-a346-d111a600eb32",
+      "action": "BUY",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000006ed6",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 61.8434398752,
+      "filledQty": 61.84,
+      "filledPrice": 0.238,
+      "txHash": "0x1e3a009319272747d90e6fe6f563c4cf53a837cbfea6b270fd46abbe7f68eb87",
+      "url": "https://shannon-explorer.somnia.network/tx/0x1e3a009319272747d90e6fe6f563c4cf53a837cbfea6b270fd46abbe7f68eb87",
+      "createdAt": 1787494845,
+      "error": null
+    },
+    {
+      "id": "581cff8c-4a8b-44be-9556-f6f62dbcfdb9",
+      "action": "BUY",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007773",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 34.7296294653,
+      "filledQty": 34.72,
+      "filledPrice": 0.459,
+      "txHash": "0x560cb8faf64c9ba296096fca046872efa9bf3ca4358ea0863b27c933cf766096",
+      "url": "https://shannon-explorer.somnia.network/tx/0x560cb8faf64c9ba296096fca046872efa9bf3ca4358ea0863b27c933cf766096",
+      "createdAt": 1787494744,
+      "error": null
+    },
+    {
+      "id": "6e3070c0-994d-4e23-95a4-a3c851f64a52",
+      "action": "MERGE_SET",
+      "leg": null,
+      "market": "0x000000000000000000000000000000000000000000000000000000000000774b",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 58.16,
+      "filledQty": 58.16,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787494686,
+      "error": null
+    },
+    {
+      "id": "5ee3ef6b-a53c-45c9-b5fe-c2b09d2c33d6",
+      "action": "BUY",
+      "leg": "DOWN",
+      "market": "0x000000000000000000000000000000000000000000000000000000000000774b",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 58.1694418885,
+      "filledQty": 58.16,
+      "filledPrice": 0.321,
+      "txHash": "0x1dc0a5ecfbe74542bccd723542150633706313506d9520cb4a6d0fa0e7fd800f",
+      "url": "https://shannon-explorer.somnia.network/tx/0x1dc0a5ecfbe74542bccd723542150633706313506d9520cb4a6d0fa0e7fd800f",
+      "createdAt": 1787494638,
+      "error": null
+    },
+    {
+      "id": "5d3ab337-893d-487e-bc9a-87ea1e5d0491",
+      "action": "BUY",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007615",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 66.2979164855,
+      "filledQty": 66.29,
+      "filledPrice": 0.232,
+      "txHash": "0x1da61dfd8ff545e2e52a5d372b753d5a711fbeed670beede4a7855647ca226c9",
+      "url": "https://shannon-explorer.somnia.network/tx/0x1da61dfd8ff545e2e52a5d372b753d5a711fbeed670beede4a7855647ca226c9",
+      "createdAt": 1787494629,
+      "error": null
+    },
+    {
+      "id": "833aebcf-85a5-44b5-98f3-4b184e141578",
+      "action": "CLAIM",
+      "leg": null,
+      "market": "sweep",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": null,
+      "filledQty": 0,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787494299,
+      "error": null
+    },
+    {
+      "id": "17c28918-2814-4bcc-83c6-ab7a9427f137",
+      "action": "REDUCE",
+      "leg": "UP",
+      "market": "0x000000000000000000000000000000000000000000000000000000000000774e",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 1.69,
+      "filledQty": 1.69,
+      "filledPrice": 0.446,
+      "txHash": "0x9bbd35ced811c754757f5ae3d5da11a337f1f0fc6b55edcc2ddd7778b1706dc2",
+      "url": "https://shannon-explorer.somnia.network/tx/0x9bbd35ced811c754757f5ae3d5da11a337f1f0fc6b55edcc2ddd7778b1706dc2",
+      "createdAt": 1787494205,
+      "error": null
+    },
+    {
+      "id": "7e8bd07f-4dc9-44b6-8ee4-aebed6c222fa",
+      "action": "MERGE_SET",
+      "leg": null,
+      "market": "0x000000000000000000000000000000000000000000000000000000000000774e",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 30.55,
+      "filledQty": 30.55,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787494151,
+      "error": null
+    },
+    {
+      "id": "820c12f9-2317-4628-ac87-23981d20cd86",
+      "action": "BUY",
+      "leg": "DOWN",
+      "market": "0x000000000000000000000000000000000000000000000000000000000000774e",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 30.5504427083,
+      "filledQty": 30.55,
+      "filledPrice": 0.793,
+      "txHash": "0x01d79bf5c4f30439029043fce225326d38ac5502f66df5e7a237f0c3a0ade21f",
+      "url": "https://shannon-explorer.somnia.network/tx/0x01d79bf5c4f30439029043fce225326d38ac5502f66df5e7a237f0c3a0ade21f",
+      "createdAt": 1787494100,
+      "error": null
+    },
+    {
+      "id": "171c0b38-c52d-467d-a89e-34efd6abda8e",
+      "action": "MERGE_SET",
+      "leg": null,
+      "market": "0x000000000000000000000000000000000000000000000000000000000000774e",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 24.66,
+      "filledQty": 24.66,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787494092,
+      "error": null
+    },
+    {
+      "id": "fcb4aea9-7818-4613-82e7-2105e7c592ae",
+      "action": "BUY",
+      "leg": "UP",
+      "market": "0x000000000000000000000000000000000000000000000000000000000000774b",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 80.0400739897,
+      "filledQty": 80.04,
+      "filledPrice": 0.356,
+      "txHash": "0x7db99ae9a548fdc0cf225a37550575e9c3f502dcd2abd0668fd3b2d78e0f88e5",
+      "url": "https://shannon-explorer.somnia.network/tx/0x7db99ae9a548fdc0cf225a37550575e9c3f502dcd2abd0668fd3b2d78e0f88e5",
+      "createdAt": 1787494039,
+      "error": null
+    },
+    {
+      "id": "bd7dead3-8a0f-4525-86d1-75b9016f5289",
+      "action": "BUY",
+      "leg": "UP",
+      "market": "0x000000000000000000000000000000000000000000000000000000000000774e",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 58.5923691665,
+      "filledQty": 58.59,
+      "filledPrice": 0.513,
+      "txHash": "0xa6afe33db177593bc1679ff4fcbe749fa0e34810153d12a0aedd3b48e7a5aa48",
+      "url": "https://shannon-explorer.somnia.network/tx/0xa6afe33db177593bc1679ff4fcbe749fa0e34810153d12a0aedd3b48e7a5aa48",
+      "createdAt": 1787494030,
+      "error": null
+    },
+    {
+      "id": "149db17b-0d37-40a4-a2c7-e9aa4c5fae4c",
+      "action": "EXIT",
+      "leg": "DOWN",
+      "market": "0x000000000000000000000000000000000000000000000000000000000000774e",
+      "status": "failed",
+      "mode": "live",
+      "requestedQty": 24.66,
+      "filledQty": null,
+      "filledPrice": null,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787494022,
+      "error": "@somnia-chain/markets-sdk: placeBinaryOrder reverted: for an unknown reason. — while placing sell NO 24.66 @ 0.744 on pool 0xC3F0Bb8c… (market 000000774e)"
+    },
+    {
+      "id": "f62fbf59-a008-4d6a-820b-4634e0ac93b4",
+      "action": "EXIT",
+      "leg": "DOWN",
+      "market": "0x000000000000000000000000000000000000000000000000000000000000774d",
+      "status": "failed",
+      "mode": "live",
+      "requestedQty": 36.61,
+      "filledQty": null,
+      "filledPrice": null,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787494012,
+      "error": "@somnia-chain/markets-sdk: placeBinaryOrder reverted: for an unknown reason. — while placing sell NO 36.61 @ 0.87 on pool 0xF501C195… (market 000000774d)"
+    },
+    {
+      "id": "8be5b9fe-6e56-467a-858f-f1c4fdac9b69",
+      "action": "BUY",
+      "leg": "DOWN",
+      "market": "0x000000000000000000000000000000000000000000000000000000000000774e",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 24.6696232943,
+      "filledQty": 24.66,
+      "filledPrice": 0.287,
+      "txHash": "0xce0641c420f8db6610a255042b12e06efde893e1274aa6aed0e0f04f3da9e9ca",
+      "url": "https://shannon-explorer.somnia.network/tx/0xce0641c420f8db6610a255042b12e06efde893e1274aa6aed0e0f04f3da9e9ca",
+      "createdAt": 1787493780,
+      "error": null
+    },
+    {
+      "id": "77c3e336-4bc6-4515-aaf8-576c3a4d6d66",
+      "action": "BUY",
+      "leg": "DOWN",
+      "market": "0x000000000000000000000000000000000000000000000000000000000000774d",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 36.6117911324,
+      "filledQty": 36.61,
+      "filledPrice": 0.229,
+      "txHash": "0xf35d5b0d2dcd79593f22b9552064e49dabdd3baa4bb8c980c81cafb74cf337ee",
+      "url": "https://shannon-explorer.somnia.network/tx/0xf35d5b0d2dcd79593f22b9552064e49dabdd3baa4bb8c980c81cafb74cf337ee",
+      "createdAt": 1787493770,
+      "error": null
+    },
+    {
+      "id": "f55f7e0f-983c-49a4-8c79-99571bcad282",
+      "action": "CLAIM",
+      "leg": null,
+      "market": "sweep",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": null,
+      "filledQty": 0,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787493676,
+      "error": null
+    },
+    {
+      "id": "10fbee42-9271-4882-bdc8-bb149a0ba70e",
+      "action": "CLAIM",
+      "leg": null,
+      "market": "sweep",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": null,
+      "filledQty": 0,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787493054,
+      "error": null
+    },
+    {
+      "id": "e1a9189d-92d3-4cd0-b5a6-873e4c20c511",
+      "action": "CLAIM",
+      "leg": null,
+      "market": "sweep",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": null,
+      "filledQty": 0,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787492414,
+      "error": null
+    },
+    {
+      "id": "0668db58-3295-41e5-b9ec-731751929bb5",
+      "action": "BUY",
+      "leg": "UP",
+      "market": "0x00000000000000000000000000000000000000000000000000000000000076b2",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 20.6675451924,
+      "filledQty": 20.66,
+      "filledPrice": 0.977,
+      "txHash": "0x8bc5dd6916f02e786a3869aa2801d07a60d50b13029bd32dc49fe79a84787cc4",
+      "url": "https://shannon-explorer.somnia.network/tx/0x8bc5dd6916f02e786a3869aa2801d07a60d50b13029bd32dc49fe79a84787cc4",
+      "createdAt": 1787491872,
+      "error": null
+    },
+    {
+      "id": "1446ea73-fead-4600-b95c-f60896de90c2",
+      "action": "BUY",
+      "leg": "UP",
+      "market": "0x00000000000000000000000000000000000000000000000000000000000076b1",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 59.705909774,
+      "filledQty": 59.7,
+      "filledPrice": 0.811,
+      "txHash": "0x1836e471025e4c7bb9a721151a7a825bb909d37ec24271e57a6261606676172f",
+      "url": "https://shannon-explorer.somnia.network/tx/0x1836e471025e4c7bb9a721151a7a825bb909d37ec24271e57a6261606676172f",
+      "createdAt": 1787491856,
+      "error": null
+    },
+    {
+      "id": "43616830-f9fd-4f18-9e40-14752ad1bcaf",
+      "action": "CLAIM",
+      "leg": null,
+      "market": "sweep",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": null,
+      "filledQty": 0,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787491764,
+      "error": null
+    },
+    {
+      "id": "b2cbf510-5195-4411-8ec8-67836a25d417",
+      "action": "EXIT",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000006ed6",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 0.01,
+      "filledQty": 0.01,
+      "filledPrice": 0.358,
+      "txHash": "0xd55695efa076b4cdcd194d9a556bae42c93250964c832a0cdb776129ce4cfb68",
+      "url": "https://shannon-explorer.somnia.network/tx/0xd55695efa076b4cdcd194d9a556bae42c93250964c832a0cdb776129ce4cfb68",
+      "createdAt": 1787491550,
+      "error": null
+    },
+    {
+      "id": "d8df4fd6-83fa-4487-96b1-79320c1305ce",
+      "action": "EXIT",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000006ed6",
+      "status": "failed",
+      "mode": "live",
+      "requestedQty": 0.01,
+      "filledQty": null,
+      "filledPrice": null,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787491452,
+      "error": "@somnia-chain/markets-sdk: placeBinaryOrder reverted: for an unknown reason. — while placing sell NO 0.01 @ 0.352 on pool 0x31246c0D… (market 0000006ed6)"
+    },
+    {
+      "id": "3675eb55-4d12-4c95-b1be-7c8c22b74811",
+      "action": "BUY",
+      "leg": "UP",
+      "market": "0x00000000000000000000000000000000000000000000000000000000000076d9",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 63.8626849894,
+      "filledQty": 63.86,
+      "filledPrice": 0.99,
+      "txHash": "0x512c3b2afdd087d4f0367f71e0b6ad21ea59336550309630ba1a220c9a979fcb",
+      "url": "https://shannon-explorer.somnia.network/tx/0x512c3b2afdd087d4f0367f71e0b6ad21ea59336550309630ba1a220c9a979fcb",
+      "createdAt": 1787491255,
+      "error": null
+    },
+    {
+      "id": "8f95b830-d697-4bb8-89f3-7124e5339cef",
+      "action": "EXIT",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000006ed6",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 70.1,
+      "filledQty": 70.09,
+      "filledPrice": 0.336,
+      "txHash": "0x46435381918538b0bfcb178b933c570cab6a53f536942989b7f34a4fce78a0c9",
+      "url": "https://shannon-explorer.somnia.network/tx/0x46435381918538b0bfcb178b933c570cab6a53f536942989b7f34a4fce78a0c9",
+      "createdAt": 1787491242,
+      "error": null
+    },
+    {
+      "id": "ea858a8c-a6c3-4816-a6df-ab58f9fc5d6a",
+      "action": "EXIT",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000006ed5",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 172.57,
+      "filledQty": 172.57,
+      "filledPrice": 0.322,
+      "txHash": "0xff6c2aa1150962d11404d8a170ce16a44b26e497400f92e6dc9e69e4fe72fcca",
+      "url": "https://shannon-explorer.somnia.network/tx/0xff6c2aa1150962d11404d8a170ce16a44b26e497400f92e6dc9e69e4fe72fcca",
+      "createdAt": 1787491232,
+      "error": null
+    },
+    {
+      "id": "db9afedc-4bb3-47fb-ab05-60db94a74cce",
+      "action": "CLAIM",
+      "leg": null,
+      "market": "sweep",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": null,
+      "filledQty": 0,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787491132,
+      "error": null
+    },
+    {
+      "id": "e89cc33d-c87f-4d1a-9dcb-c03d6ecf0f76",
+      "action": "BUY",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000006ed6",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 70.1083657405,
+      "filledQty": 70.1,
+      "filledPrice": 0.331,
+      "txHash": "0x39942fecf5acf2dfb33eee0a4bd6a96a52f21cde8c3a6d530533b20d54296480",
+      "url": "https://shannon-explorer.somnia.network/tx/0x39942fecf5acf2dfb33eee0a4bd6a96a52f21cde8c3a6d530533b20d54296480",
+      "createdAt": 1787491078,
+      "error": null
+    },
+    {
+      "id": "d4de1930-6f19-4c32-9cab-162be51d9f42",
+      "action": "BUY",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000006ed5",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 172.5783870387,
+      "filledQty": 172.57,
+      "filledPrice": 0.372,
+      "txHash": "0x31c6c292ab0b7c1362743c8cd7695a1686cf808dd9645aa10b7ed30f23093bd9",
+      "url": "https://shannon-explorer.somnia.network/tx/0x31c6c292ab0b7c1362743c8cd7695a1686cf808dd9645aa10b7ed30f23093bd9",
+      "createdAt": 1787491066,
+      "error": null
+    },
+    {
+      "id": "e5599c3b-0669-4263-9ea6-ce1a0d89cdd8",
+      "action": "EXIT",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007616",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 29.63,
+      "filledQty": 29.63,
+      "filledPrice": 0.621,
+      "txHash": "0x9b1bc14fde23e32a67d1803c9c3523fdb24f9b55e444c6e1107a46f87805d1ed",
+      "url": "https://shannon-explorer.somnia.network/tx/0x9b1bc14fde23e32a67d1803c9c3523fdb24f9b55e444c6e1107a46f87805d1ed",
+      "createdAt": 1787491054,
+      "error": null
+    },
+    {
+      "id": "df0e9439-fcc4-401f-9350-dec4af1ef1ff",
+      "action": "EXIT",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007615",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 105.37,
+      "filledQty": 105.37,
+      "filledPrice": 0.597,
+      "txHash": "0x0e2a00e1ee95e8e10c21defc3997f049b8eb99d53bf8575e503e595e2f5eb5b9",
+      "url": "https://shannon-explorer.somnia.network/tx/0x0e2a00e1ee95e8e10c21defc3997f049b8eb99d53bf8575e503e595e2f5eb5b9",
+      "createdAt": 1787491043,
+      "error": null
+    },
+    {
+      "id": "fc427b5d-d1e0-4887-a599-4b2e2531b369",
+      "action": "CLAIM",
+      "leg": null,
+      "market": "sweep",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": null,
+      "filledQty": 0,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787490507,
+      "error": null
+    },
+    {
+      "id": "78835143-6401-46e3-bc05-328a39391f2d",
+      "action": "CLAIM",
+      "leg": null,
+      "market": "sweep",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": null,
+      "filledQty": 0,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787489868,
+      "error": null
+    },
+    {
+      "id": "d2f37215-f415-41a9-9373-e66271c8cb97",
+      "action": "CLAIM",
+      "leg": null,
+      "market": "sweep",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": null,
+      "filledQty": 0,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787489261,
+      "error": null
+    },
+    {
+      "id": "884c7218-6a27-4f21-be30-4c6c205f6035",
+      "action": "REDUCE",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007665",
+      "status": "failed",
+      "mode": "live",
+      "requestedQty": 25.355,
+      "filledQty": null,
+      "filledPrice": null,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787488780,
+      "error": "@somnia-chain/markets-sdk: placeBinaryOrder reverted: for an unknown reason. — while placing sell NO 25.35 @ 0.06299999999999994 on pool 0x4143f9C6… (market 0000007665)"
+    },
+    {
+      "id": "ce62715d-38ba-4d9e-b320-ba09938e7f46",
+      "action": "CLAIM",
+      "leg": null,
+      "market": "sweep",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": null,
+      "filledQty": 0,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787488648,
+      "error": null
+    },
+    {
+      "id": "dd6a61d2-06e4-4786-8147-1ca5a9e80991",
+      "action": "BUY",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007616",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 29.6376679991,
+      "filledQty": 29.63,
+      "filledPrice": 0.318,
+      "txHash": "0x1ef60234e1d00942eb7b238047e9c2eb667010201d4cd7975f49ca21dccd7675",
+      "url": "https://shannon-explorer.somnia.network/tx/0x1ef60234e1d00942eb7b238047e9c2eb667010201d4cd7975f49ca21dccd7675",
+      "createdAt": 1787488458,
+      "error": null
+    },
+    {
+      "id": "58ad74fd-5444-47af-ac72-d3c05c303d0b",
+      "action": "BUY",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007665",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 50.7169660557,
+      "filledQty": 50.71,
+      "filledPrice": 0.329,
+      "txHash": "0xd83ed1436847c0af6d8aa66d1d990d4b14cc5cef2b4404e5f59b14cfe5ba98ed",
+      "url": "https://shannon-explorer.somnia.network/tx/0xd83ed1436847c0af6d8aa66d1d990d4b14cc5cef2b4404e5f59b14cfe5ba98ed",
+      "createdAt": 1787488445,
+      "error": null
+    },
+    {
+      "id": "fc3d3aad-cd8b-4709-8bb5-693085311d57",
+      "action": "BUY",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007615",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 105.3730313011,
+      "filledQty": 105.37,
+      "filledPrice": 0.34,
+      "txHash": "0x9a32c342e3bbcb31c01c64875a5edff3e0e3323b92ff00fdf9094fce914ad32d",
+      "url": "https://shannon-explorer.somnia.network/tx/0x9a32c342e3bbcb31c01c64875a5edff3e0e3323b92ff00fdf9094fce914ad32d",
+      "createdAt": 1787488431,
+      "error": null
+    },
+    {
+      "id": "9b6fe7ab-70a1-41be-965c-050eaa929a4f",
+      "action": "EXIT",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007618",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 54.18,
+      "filledQty": 54.18,
+      "filledPrice": 0.936,
+      "txHash": "0xdae6c27745e3d5ace3cf2a8f6f3e8c763bc58515a0517431d817c0c086268e90",
+      "url": "https://shannon-explorer.somnia.network/tx/0xdae6c27745e3d5ace3cf2a8f6f3e8c763bc58515a0517431d817c0c086268e90",
+      "createdAt": 1787488419,
+      "error": null
+    },
+    {
+      "id": "ac9e5947-0da5-4bbc-a3c1-c7578939a441",
+      "action": "REDUCE",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007617",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 0.365,
+      "filledQty": 0.36,
+      "filledPrice": 0.031,
+      "txHash": "0xba48906900fc4b9d46e4cdc2ec3b6f6076da9d008e091975ec8d4bcee5b66047",
+      "url": "https://shannon-explorer.somnia.network/tx/0xba48906900fc4b9d46e4cdc2ec3b6f6076da9d008e091975ec8d4bcee5b66047",
+      "createdAt": 1787488104,
+      "error": null
+    },
+    {
+      "id": "1d7fee81-22d7-4c65-9eac-b7cc518bf5ba",
+      "action": "CLAIM",
+      "leg": null,
+      "market": "sweep",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": null,
+      "filledQty": 0,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787488013,
+      "error": null
+    },
+    {
+      "id": "f60984bf-2fa5-4a31-a4cb-ba3b098d182a",
+      "action": "CLAIM",
+      "leg": null,
+      "market": "sweep",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": null,
+      "filledQty": 0,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787487403,
+      "error": null
+    },
+    {
+      "id": "15aaccf1-216d-4bf3-a2fe-17aeb3129bbe",
+      "action": "BUY",
+      "leg": "DOWN",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007618",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 54.1868574635,
+      "filledQty": 54.18,
+      "filledPrice": 0.917,
+      "txHash": "0x95d35f10ec2fd877124b1d4e05b7a50bad3ba58011438c3ca783ff2732e677ce",
+      "url": "https://shannon-explorer.somnia.network/tx/0x95d35f10ec2fd877124b1d4e05b7a50bad3ba58011438c3ca783ff2732e677ce",
+      "createdAt": 1787487225,
+      "error": null
+    },
+    {
+      "id": "fcc3faee-9dea-45f6-893f-93a5038ab292",
+      "action": "REDUCE",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007617",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 0.725,
+      "filledQty": 0.72,
+      "filledPrice": 0.124,
+      "txHash": "0x92b554a93c942c976c838b2212e6a4e8515cc96cba1b34b10e19615339513c39",
+      "url": "https://shannon-explorer.somnia.network/tx/0x92b554a93c942c976c838b2212e6a4e8515cc96cba1b34b10e19615339513c39",
+      "createdAt": 1787487087,
+      "error": null
+    },
+    {
+      "id": "bc0cb503-3d97-4973-bd09-b43ab7640c17",
+      "action": "BUY",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007615",
+      "status": "failed",
+      "mode": "live",
+      "requestedQty": 2.847176144,
+      "filledQty": null,
+      "filledPrice": null,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787487034,
+      "error": "approving pool 0x3ae79C8A… failed: An unknown error occurred while executing the contract function \"approve\".\n\nRequest Arguments:\n  from:  0x1b4b0195b32053489992649813dc02fc5e282e2e\n  to:    0x70a86D8842FB63C4Ad2b7cdddF530eBf1BB25d8E\n  data:  0x095ea7b30000000000000000000000003ae79c8a2c3197b57af3715b74ba1e96bce82607ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\n \nContract Call:\n  address:   0x70a86D8842FB63C4Ad2b7cdddF530eBf1BB25d8E\n  function:  approve(address spender, uint256 value)\n  args:             (0x3ae79C8A2C3197B57Af3715B74BA1E96BCE82607, 115792089237316195423570985008687907853269984665640564039457584007913129639935)\n  sender:    0x1b4b0195b32053489992649813dc02fc5e282e2e\n\nDocs: https://viem.sh/docs/contract/writeContract\nDetails: No valid authorization signatures were provided. Your payload may be malformed or your signing keys may be incorrect or expired. Docs: https://docs.privy.io/api-reference/authorization-signatures\nVersion: viem@2.55.19"
+    },
+    {
+      "id": "2e22aa2a-fac1-4639-a2ba-1c0fff099615",
+      "action": "REDUCE",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007617",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 1.45,
+      "filledQty": 1.45,
+      "filledPrice": 0.211,
+      "txHash": "0xc9becd695a30412acb0349c3241786dd83f22e95cd09c035895d8270d27d5739",
+      "url": "https://shannon-explorer.somnia.network/tx/0xc9becd695a30412acb0349c3241786dd83f22e95cd09c035895d8270d27d5739",
+      "createdAt": 1787486890,
+      "error": null
+    },
+    {
+      "id": "9ed63c03-7fa9-4fc6-a3f8-578451256f58",
+      "action": "REDUCE",
+      "leg": "UP",
+      "market": "0x000000000000000000000000000000000000000000000000000000000000761a",
+      "status": "failed",
+      "mode": "live",
+      "requestedQty": 1.86,
+      "filledQty": null,
+      "filledPrice": null,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787486880,
+      "error": "@somnia-chain/markets-sdk: placeBinaryOrder reverted: for an unknown reason. — while placing sell YES 1.86 @ 0.01 on pool 0x3693799C… (market 000000761a)"
+    },
+    {
+      "id": "e29bb4ab-9881-40d3-a03f-89a8af11169b",
+      "action": "CLAIM",
+      "leg": null,
+      "market": "sweep",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": null,
+      "filledQty": 0,
+      "filledPrice": 1,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787486785,
+      "error": null
+    },
+    {
+      "id": "d781025c-741d-46e5-b47a-796f099e531e",
+      "action": "REDUCE",
+      "leg": "UP",
+      "market": "0x000000000000000000000000000000000000000000000000000000000000761a",
+      "status": "failed",
+      "mode": "live",
+      "requestedQty": 1.86,
+      "filledQty": null,
+      "filledPrice": null,
+      "txHash": null,
+      "url": null,
+      "createdAt": 1787486732,
+      "error": "@somnia-chain/markets-sdk: placeBinaryOrder reverted: for an unknown reason. — while placing sell YES 1.86 @ 0.043 on pool 0x3693799C… (market 000000761a)"
+    },
+    {
+      "id": "6b0ce1f2-754b-458d-a081-01026c879b5b",
+      "action": "BUY",
+      "leg": "UP",
+      "market": "0x0000000000000000000000000000000000000000000000000000000000007617",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 2.9003361327,
+      "filledQty": 2.9,
+      "filledPrice": 0.329,
+      "txHash": "0x72cf9a13589f725f9dbf2366388e24554e4fe43500b57b63b8fd8abf9db1c858",
+      "url": "https://shannon-explorer.somnia.network/tx/0x72cf9a13589f725f9dbf2366388e24554e4fe43500b57b63b8fd8abf9db1c858",
+      "createdAt": 1787486677,
+      "error": null
+    },
+    {
+      "id": "7b18e46f-0ab9-42ed-9bc0-0221118de1ca",
+      "action": "BUY",
+      "leg": "UP",
+      "market": "0x000000000000000000000000000000000000000000000000000000000000761a",
+      "status": "confirmed",
+      "mode": "live",
+      "requestedQty": 3.7293261165,
+      "filledQty": 3.72,
+      "filledPrice": 0.312,
+      "txHash": "0x69a4ed8e0bed907f57ab49408098ef25fca0ed1b4fc794233c7cfe03f8747782",
+      "url": "https://shannon-explorer.somnia.network/tx/0x69a4ed8e0bed907f57ab49408098ef25fca0ed1b4fc794233c7cfe03f8747782",
+      "createdAt": 1787486498,
+      "error": null
+    }
+  ],
+  "receipts": [
+    {
+      "hash": "0x4283a55f458d09f2ba84302b17b003abc38b46b27e8b71bcd6ce5134d235ad04",
+      "url": "https://shannon-explorer.somnia.network/tx/0x4283a55f458d09f2ba84302b17b003abc38b46b27e8b71bcd6ce5134d235ad04",
+      "found": true,
+      "succeeded": true,
+      "block": 469271817
+    },
+    {
+      "hash": "0x2cdf390dfa08c2fa56ffa99262ac0d0d9021a1baad7e37f94cc080780eac46c5",
+      "url": "https://shannon-explorer.somnia.network/tx/0x2cdf390dfa08c2fa56ffa99262ac0d0d9021a1baad7e37f94cc080780eac46c5",
+      "found": true,
+      "succeeded": true,
+      "block": 469263645
+    },
+    {
+      "hash": "0xac9491aabeaf306facdbb2779ecc5978c25f9b8eb3c8531e167ed6487de49321",
+      "url": "https://shannon-explorer.somnia.network/tx/0xac9491aabeaf306facdbb2779ecc5978c25f9b8eb3c8531e167ed6487de49321",
+      "found": true,
+      "succeeded": true,
+      "block": 469260437
+    },
+    {
+      "hash": "0xc59224f63ef5c00e530cbe2602911c97af765d6829103efcd147dba5a57bcff1",
+      "url": "https://shannon-explorer.somnia.network/tx/0xc59224f63ef5c00e530cbe2602911c97af765d6829103efcd147dba5a57bcff1",
+      "found": true,
+      "succeeded": true,
+      "block": 469259875
+    },
+    {
+      "hash": "0xc22fac40f3f091b9cc8e9b3c1acd5397e78bf6d5c5dfa4a02ff6c8838e42d2b7",
+      "url": "https://shannon-explorer.somnia.network/tx/0xc22fac40f3f091b9cc8e9b3c1acd5397e78bf6d5c5dfa4a02ff6c8838e42d2b7",
+      "found": true,
+      "succeeded": true,
+      "block": 469259818
+    },
+    {
+      "hash": "0xb1bf6462d7b25d7cb1517852344630bafad4d6cbf0f33da3d7fe3d9531616bad",
+      "url": "https://shannon-explorer.somnia.network/tx/0xb1bf6462d7b25d7cb1517852344630bafad4d6cbf0f33da3d7fe3d9531616bad",
+      "found": true,
+      "succeeded": true,
+      "block": 469259728
+    },
+    {
+      "hash": "0xe7de5f845e252d62b3fa26def65fceafb03453534b7b7d9c8c550165fd48c664",
+      "url": "https://shannon-explorer.somnia.network/tx/0xe7de5f845e252d62b3fa26def65fceafb03453534b7b7d9c8c550165fd48c664",
+      "found": true,
+      "succeeded": true,
+      "block": 469257044
+    },
+    {
+      "hash": "0x839360681ed764470dc801f597f44d50d45dfd939549db28520b064537483f22",
+      "url": "https://shannon-explorer.somnia.network/tx/0x839360681ed764470dc801f597f44d50d45dfd939549db28520b064537483f22",
+      "found": true,
+      "succeeded": true,
+      "block": 469255967
+    },
+    {
+      "hash": "0xc82c36149aedba84e2d4bf97c4de1dcdb68f2a9b4a4e158f5b185515fad90fc7",
+      "url": "https://shannon-explorer.somnia.network/tx/0xc82c36149aedba84e2d4bf97c4de1dcdb68f2a9b4a4e158f5b185515fad90fc7",
+      "found": true,
+      "succeeded": true,
+      "block": 469255386
+    },
+    {
+      "hash": "0x4e952c8859bbd02be30e918c39cb8236de1b0baa1002e4cddc8fc9f0b20b9610",
+      "url": "https://shannon-explorer.somnia.network/tx/0x4e952c8859bbd02be30e918c39cb8236de1b0baa1002e4cddc8fc9f0b20b9610",
+      "found": true,
+      "succeeded": true,
+      "block": 469253787
+    },
+    {
+      "hash": "0x6b49fb17c39c646519bafd19173892f708bee1b94795db65953e59a7e82af996",
+      "url": "https://shannon-explorer.somnia.network/tx/0x6b49fb17c39c646519bafd19173892f708bee1b94795db65953e59a7e82af996",
+      "found": true,
+      "succeeded": true,
+      "block": 469249400
+    },
+    {
+      "hash": "0x429426829bd0c5e86ed089bff939af525b0550cbdbe7db7981ff0a5aff8e45de",
+      "url": "https://shannon-explorer.somnia.network/tx/0x429426829bd0c5e86ed089bff939af525b0550cbdbe7db7981ff0a5aff8e45de",
+      "found": true,
+      "succeeded": true,
+      "block": 469247374
+    },
+    {
+      "hash": "0xdcfd60e525aa04e33e978439273061db30dcd9c0697c771555f739db3fcf062a",
+      "url": "https://shannon-explorer.somnia.network/tx/0xdcfd60e525aa04e33e978439273061db30dcd9c0697c771555f739db3fcf062a",
+      "found": true,
+      "succeeded": true,
+      "block": 469244191
+    },
+    {
+      "hash": "0x59c651c08fb0313873df0a08c1ceade4a4ecdab38d671c2709c55a327a285af9",
+      "url": "https://shannon-explorer.somnia.network/tx/0x59c651c08fb0313873df0a08c1ceade4a4ecdab38d671c2709c55a327a285af9",
+      "found": true,
+      "succeeded": true,
+      "block": 469237446
+    },
+    {
+      "hash": "0x12c3846cd11cb1cfc452608b21f0fd1ef637e57f45bddb9ccaa6695a5ab2fb0d",
+      "url": "https://shannon-explorer.somnia.network/tx/0x12c3846cd11cb1cfc452608b21f0fd1ef637e57f45bddb9ccaa6695a5ab2fb0d",
+      "found": true,
+      "succeeded": true,
+      "block": 469237355
+    },
+    {
+      "hash": "0xc903d06a1c55f305d31ab8a27a085af4dae3651ac5d7036221758c2b30a31ed9",
+      "url": "https://shannon-explorer.somnia.network/tx/0xc903d06a1c55f305d31ab8a27a085af4dae3651ac5d7036221758c2b30a31ed9",
+      "found": true,
+      "succeeded": true,
+      "block": 469236765
+    },
+    {
+      "hash": "0x56a22cdabe62b72a1d3f11be52ab7677b6922366c0315f34abd1f00989f9f298",
+      "url": "https://shannon-explorer.somnia.network/tx/0x56a22cdabe62b72a1d3f11be52ab7677b6922366c0315f34abd1f00989f9f298",
+      "found": true,
+      "succeeded": true,
+      "block": 469234534
+    },
+    {
+      "hash": "0xd42d26345bf995a973f4bb2f333effcf7c74a8798102d978e452ac4e86458473",
+      "url": "https://shannon-explorer.somnia.network/tx/0xd42d26345bf995a973f4bb2f333effcf7c74a8798102d978e452ac4e86458473",
+      "found": true,
+      "succeeded": true,
+      "block": 469233918
+    },
+    {
+      "hash": "0x9e67ff3f20652d3b27524233c9c86af6ce1dd7049205c963d80eb97e795685bc",
+      "url": "https://shannon-explorer.somnia.network/tx/0x9e67ff3f20652d3b27524233c9c86af6ce1dd7049205c963d80eb97e795685bc",
+      "found": true,
+      "succeeded": true,
+      "block": 469233872
+    },
+    {
+      "hash": "0x34776b1a074573aa60757a3dee71930973444d4ba37e2c2c32c1b610aba1de11",
+      "url": "https://shannon-explorer.somnia.network/tx/0x34776b1a074573aa60757a3dee71930973444d4ba37e2c2c32c1b610aba1de11",
+      "found": true,
+      "succeeded": true,
+      "block": 469233796
+    },
+    {
+      "hash": "0x2961d7cb6c4121ec51e4f833b2b6b9a296d0c4bea2ffc3383c8b66f92e3235cc",
+      "url": "https://shannon-explorer.somnia.network/tx/0x2961d7cb6c4121ec51e4f833b2b6b9a296d0c4bea2ffc3383c8b66f92e3235cc",
+      "found": true,
+      "succeeded": true,
+      "block": 469222591
+    },
+    {
+      "hash": "0x914324dcd805153f75874639914ceea4764f4479e0f80e6d2d436f0393824b23",
+      "url": "https://shannon-explorer.somnia.network/tx/0x914324dcd805153f75874639914ceea4764f4479e0f80e6d2d436f0393824b23",
+      "found": true,
+      "succeeded": true,
+      "block": 469222457
+    },
+    {
+      "hash": "0xb917bc8424dce23a32866659331c20397cc2b91c8059cb15b7fd005c64e70440",
+      "url": "https://shannon-explorer.somnia.network/tx/0xb917bc8424dce23a32866659331c20397cc2b91c8059cb15b7fd005c64e70440",
+      "found": true,
+      "succeeded": true,
+      "block": 469222355
+    },
+    {
+      "hash": "0x1e3a009319272747d90e6fe6f563c4cf53a837cbfea6b270fd46abbe7f68eb87",
+      "url": "https://shannon-explorer.somnia.network/tx/0x1e3a009319272747d90e6fe6f563c4cf53a837cbfea6b270fd46abbe7f68eb87",
+      "found": true,
+      "succeeded": true,
+      "block": 469220062
+    },
+    {
+      "hash": "0x560cb8faf64c9ba296096fca046872efa9bf3ca4358ea0863b27c933cf766096",
+      "url": "https://shannon-explorer.somnia.network/tx/0x560cb8faf64c9ba296096fca046872efa9bf3ca4358ea0863b27c933cf766096",
+      "found": true,
+      "succeeded": true,
+      "block": 469219055
+    }
+  ],
   "positions": {
     "open": [
       {
-        "market": "0x00000000000000000000000000000000000000000000000000000000000051d3",
-        "leg": "BTC 1d DOWN",
-        "shares": 0.6000000000000002,
-        "cost": 0.15000000000000005,
-        "expiry": 1787356800,
-        "adopted": false,
-        "txHash": "0xdc89f5d2efad349b72e1c8dba7a714c34628ff9311cfde22e4bd289aab8b5263"
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007615",
+        "leg": "BTC 4h UP",
+        "shares": 5.8,
+        "cost": 3.1494,
+        "expiry": 1787500800,
+        "adopted": false
       },
       {
-        "market": "0x00000000000000000000000000000000000000000000000000000000000051d3",
-        "leg": "BTC 1d DOWN",
-        "shares": 0.17,
-        "cost": 0.05491,
-        "expiry": 1787356800,
-        "adopted": false,
-        "txHash": "0x8f35112dcacd1563dd5a3d6a7f81fbaa5e0f2cacca15ec49f4e2aadba0a886e9"
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007615",
+        "leg": "BTC 4h UP",
+        "shares": 22.56,
+        "cost": 8.39232,
+        "expiry": 1787500800,
+        "adopted": false
       },
       {
-        "market": "0x00000000000000000000000000000000000000000000000000000000000051d3",
-        "leg": "BTC 1d DOWN",
-        "shares": 0.17,
-        "cost": 0.05372000000000002,
-        "expiry": 1787356800,
-        "adopted": false,
-        "txHash": "0x6ff21f94efc83b235c5016056bba14988d34ed744498f2837b3c4d9719c4308e"
-      },
-      {
-        "market": "0x00000000000000000000000000000000000000000000000000000000000051d4",
-        "leg": "ETH 1d DOWN",
-        "shares": 0.4,
-        "cost": 0.166,
-        "expiry": 1787356800,
-        "adopted": false,
-        "txHash": "0xc3857af36f532f5adef2814d5374e2e5661c7b1a626febb6ce436d05b75a6b38"
-      },
-      {
-        "market": "0x00000000000000000000000000000000000000000000000000000000000051d3",
-        "leg": "BTC 1d DOWN",
-        "shares": 0.28,
-        "cost": 0.08204,
-        "expiry": 1787356800,
-        "adopted": false,
-        "txHash": "0x2665144da27ed347dc9748b5f8813fd8e9ca6b1a98d49be4afc3d6b5678e7ae6"
-      },
-      {
-        "market": "0x00000000000000000000000000000000000000000000000000000000000051d4",
-        "leg": "ETH 1d DOWN",
-        "shares": 0.35000000000000003,
-        "cost": 0.14525,
-        "expiry": 1787356800,
-        "adopted": false,
-        "txHash": "0x77142df4795942358640319acc08101816cbfaae8f179bd8cb67460a88ae15e6"
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000005440",
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007616",
         "leg": "ETH 4h DOWN",
-        "shares": 0.060000000000000026,
-        "cost": 0.02478000000000001,
-        "expiry": 1787299200,
-        "adopted": false,
-        "txHash": "0x74a31c7f026f4264c69fff821b76296b218b5183e34c6d95fa52a0da080b8577"
+        "shares": 38.48,
+        "cost": 16.50792,
+        "expiry": 1787500800,
+        "adopted": false
       },
       {
-        "market": "0x000000000000000000000000000000000000000000000000000000000000543f",
-        "leg": "BTC 4h DOWN",
-        "shares": 0.18999999999999978,
-        "cost": 0.07314999999999991,
-        "expiry": 1787299200,
-        "adopted": false,
-        "txHash": "0x5bb78e2945d1d8cfb44a061362898410657c30377f62edcb9edd2faa484a1723"
-      },
-      {
-        "market": "0x00000000000000000000000000000000000000000000000000000000000051d4",
+        "market": "0x0000000000000000000000000000000000000000000000000000000000006ed6",
         "leg": "ETH 1d DOWN",
-        "shares": 0.59,
-        "cost": 0.23128000000000004,
-        "expiry": 1787356800,
-        "adopted": false,
-        "txHash": "0xb4aa342d51dc3058dcd954e361eb813cb65ffa5a6235ea05295b6988f922f285"
+        "shares": 61.84,
+        "cost": 14.71792,
+        "expiry": 1787529600,
+        "adopted": false
       },
       {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000005440",
-        "leg": "ETH 4h DOWN",
-        "shares": 0.29999999999999993,
-        "cost": 0.1185,
-        "expiry": 1787299200,
-        "adopted": false,
-        "txHash": "0x74f2215d8a02fe3ff63c6851cfdec18dcf8b476404aaa8dd7df30e59e664a0d9"
+        "market": "0x0000000000000000000000000000000000000000000000000000000000006ed6",
+        "leg": "ETH 1d DOWN",
+        "shares": 26.98,
+        "cost": 7.17668,
+        "expiry": 1787529600,
+        "adopted": false
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000006ed6",
+        "leg": "ETH 1d DOWN",
+        "shares": 13.63,
+        "cost": 5.98357,
+        "expiry": 1787529600,
+        "adopted": false
       }
     ],
-    "settled": [
+    "closed": [
       {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004e5e",
-        "leg": "ETH 15m DOWN",
-        "shares": 1.17,
-        "cost": 0.46449,
-        "proceeds": 1.17,
-        "won": true,
-        "closedAt": 1787250619
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004e35",
-        "leg": "BTC 1h UP",
-        "shares": 0.42,
-        "cost": 0.14279999999999998,
-        "proceeds": 0,
-        "won": false,
-        "closedAt": 1787252431
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004e36",
-        "leg": "ETH 1h UP",
-        "shares": 0.66,
-        "cost": 0.17556000000000002,
-        "proceeds": 0,
-        "won": false,
-        "closedAt": 1787252431
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004e36",
-        "leg": "ETH 1h UP",
-        "shares": 0.61,
-        "cost": 0.16714,
-        "proceeds": 0,
-        "won": false,
-        "closedAt": 1787252431
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004e36",
-        "leg": "ETH 1h UP",
-        "shares": 0.95,
-        "cost": 0.25175000000000003,
-        "proceeds": 0,
-        "won": false,
-        "closedAt": 1787252431
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004e35",
-        "leg": "BTC 1h UP",
-        "shares": 0.3,
-        "cost": 0.1188,
-        "proceeds": 0,
-        "won": false,
-        "closedAt": 1787252431
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004eaa",
-        "leg": "ETH 15m DOWN",
-        "shares": 0.64,
-        "cost": 0.27263999999999994,
-        "proceeds": 0,
-        "won": false,
-        "closedAt": 1787252431
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004ea9",
-        "leg": "BTC 15m UP",
-        "shares": 0.54,
-        "cost": 0.27162000000000003,
-        "proceeds": 0,
-        "won": false,
-        "closedAt": 1787252431
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004ed2",
-        "leg": "ETH 15m DOWN",
-        "shares": 0.71,
-        "cost": 0.33441,
-        "proceeds": 0,
-        "won": false,
-        "closedAt": 1787253307
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004ed1",
-        "leg": "BTC 15m DOWN",
-        "shares": 0.9,
-        "cost": 0.34650000000000003,
-        "proceeds": 0,
-        "won": false,
-        "closedAt": 1787253307
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004ef8",
-        "leg": "ETH 15m DOWN",
-        "shares": 0.86,
-        "cost": 0.37238,
-        "proceeds": 0,
-        "won": false,
-        "closedAt": 1787254248
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004ed0",
-        "leg": "ETH 1h DOWN",
-        "shares": 0.22,
-        "cost": 0.09195999999999999,
-        "proceeds": 0,
-        "won": false,
-        "closedAt": 1787256060
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004ed0",
-        "leg": "ETH 1h DOWN",
-        "shares": 0.12000000000000001,
-        "cost": 0.047400000000000005,
-        "proceeds": 0,
-        "won": false,
-        "closedAt": 1787256060
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004cff",
-        "leg": "BTC 4h DOWN",
-        "shares": 0.14,
-        "cost": 0.05362000000000001,
-        "proceeds": 0,
-        "won": false,
-        "closedAt": 1787256060
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004ed0",
-        "leg": "ETH 1h DOWN",
-        "shares": 3.55,
-        "cost": 0.82715,
-        "proceeds": 0,
-        "won": false,
-        "closedAt": 1787256060
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004f44",
-        "leg": "ETH 15m UP",
-        "shares": 3.05,
-        "cost": 1.06445,
-        "proceeds": 0,
-        "won": false,
-        "closedAt": 1787256060
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004d00",
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007616",
         "leg": "ETH 4h DOWN",
+        "shares": 38.47,
+        "cost": 16.50363,
+        "proceeds": 1.5388,
+        "exit": "sold",
+        "closedAt": 1787500008,
+        "txHashes": [
+          "0x4283a55f458d09f2ba84302b17b003abc38b46b27e8b71bcd6ce5134d235ad04"
+        ]
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007615",
+        "leg": "BTC 4h UP",
+        "shares": 22.56,
+        "cost": 8.39232,
+        "proceeds": 4.48944,
+        "exit": "sold",
+        "closedAt": 1787499191,
+        "txHashes": [
+          "0x2cdf390dfa08c2fa56ffa99262ac0d0d9021a1baad7e37f94cc080780eac46c5"
+        ]
+      },
+      {
+        "market": "0x000000000000000000000000000000000000000000000000000000000000780d",
+        "leg": "BTC 15m DOWN",
+        "shares": 15.32,
+        "cost": 9.1154,
+        "proceeds": 0,
+        "exit": "settled",
+        "closedAt": 1787499029,
+        "txHashes": [
+          "0xe7de5f845e252d62b3fa26def65fceafb03453534b7b7d9c8c550165fd48c664"
+        ]
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007616",
+        "leg": "ETH 4h UP",
+        "shares": 89.55,
+        "cost": 31.25295,
+        "proceeds": 54.4464,
+        "exit": "sold",
+        "closedAt": 1787498803,
+        "txHashes": [
+          "0xb1bf6462d7b25d7cb1517852344630bafad4d6cbf0f33da3d7fe3d9531616bad",
+          "0xc82c36149aedba84e2d4bf97c4de1dcdb68f2a9b4a4e158f5b185515fad90fc7"
+        ]
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007615",
+        "leg": "BTC 4h UP",
+        "shares": 5.79,
+        "cost": 3.14397,
+        "proceeds": 0.81639,
+        "exit": "sold",
+        "closedAt": 1787498422,
+        "txHashes": [
+          "0x839360681ed764470dc801f597f44d50d45dfd939549db28520b064537483f22"
+        ]
+      },
+      {
+        "market": "0x00000000000000000000000000000000000000000000000000000000000077e7",
+        "leg": "BTC 15m DOWN",
+        "shares": 34.6,
+        "cost": 10.9682,
+        "proceeds": 0,
+        "exit": "settled",
+        "closedAt": 1787498205,
+        "txHashes": [
+          "0x6b49fb17c39c646519bafd19173892f708bee1b94795db65953e59a7e82af996"
+        ]
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007615",
+        "leg": "BTC 4h UP",
+        "shares": 11.58,
+        "cost": 6.28794,
+        "proceeds": 2.7792,
+        "exit": "sold",
+        "closedAt": 1787498205,
+        "txHashes": [
+          "0x4e952c8859bbd02be30e918c39cb8236de1b0baa1002e4cddc8fc9f0b20b9610"
+        ]
+      },
+      {
+        "market": "0x00000000000000000000000000000000000000000000000000000000000077e8",
+        "leg": "ETH 15m DOWN",
+        "shares": 34.36,
+        "cost": 22.88376,
+        "proceeds": 34.36,
+        "exit": "settled",
+        "closedAt": 1787498205,
+        "txHashes": [
+          "0xdcfd60e525aa04e33e978439273061db30dcd9c0697c771555f739db3fcf062a"
+        ]
+      },
+      {
+        "market": "0x00000000000000000000000000000000000000000000000000000000000077e8",
+        "leg": "ETH 15m DOWN",
+        "shares": 34.36,
+        "cost": 22.88376,
+        "proceeds": 15.49636,
+        "exit": "sold",
+        "closedAt": 1787497563,
+        "txHashes": [
+          "0x429426829bd0c5e86ed089bff939af525b0550cbdbe7db7981ff0a5aff8e45de"
+        ]
+      },
+      {
+        "market": "0x00000000000000000000000000000000000000000000000000000000000077bf",
+        "leg": "BTC 15m UP",
+        "shares": 12.91,
+        "cost": 10.43128,
+        "proceeds": 12.91,
+        "exit": "settled",
+        "closedAt": 1787497232,
+        "txHashes": [
+          "0x59c651c08fb0313873df0a08c1ceade4a4ecdab38d671c2709c55a327a285af9"
+        ]
+      },
+      {
+        "market": "0x000000000000000000000000000000000000000000000000000000000000774b",
+        "leg": "BTC 1h DOWN",
+        "shares": 22.91,
+        "cost": 22.15397,
+        "proceeds": 22.91,
+        "exit": "settled",
+        "closedAt": 1787497232,
+        "txHashes": [
+          "0x56a22cdabe62b72a1d3f11be52ab7677b6922366c0315f34abd1f00989f9f298"
+        ]
+      },
+      {
+        "market": "0x000000000000000000000000000000000000000000000000000000000000774b",
+        "leg": "BTC 1h DOWN",
+        "shares": 8.79,
+        "cost": 8.55267,
+        "proceeds": 8.79,
+        "exit": "settled",
+        "closedAt": 1787497232,
+        "txHashes": [
+          "0xc903d06a1c55f305d31ab8a27a085af4dae3651ac5d7036221758c2b30a31ed9"
+        ]
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007615",
+        "leg": "BTC 4h UP",
+        "shares": 23.17,
+        "cost": 12.58131,
+        "proceeds": 9.33751,
+        "exit": "sold",
+        "closedAt": 1787496561,
+        "txHashes": [
+          "0x12c3846cd11cb1cfc452608b21f0fd1ef637e57f45bddb9ccaa6695a5ab2fb0d"
+        ]
+      },
+      {
+        "market": "0x000000000000000000000000000000000000000000000000000000000000774b",
+        "leg": "BTC 1h UP",
+        "shares": 21.88,
+        "cost": 7.78928,
+        "proceeds": 0,
+        "exit": "dropped",
+        "closedAt": 1787496396,
+        "txHashes": [
+          "0x7db99ae9a548fdc0cf225a37550575e9c3f502dcd2abd0668fd3b2d78e0f88e5"
+        ]
+      },
+      {
+        "market": "0x000000000000000000000000000000000000000000000000000000000000774b",
+        "leg": "BTC 1h DOWN",
+        "shares": 21.88,
+        "cost": 21.15796,
+        "proceeds": 10.94,
+        "exit": "merged",
+        "closedAt": 1787496334,
+        "txHashes": []
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007616",
+        "leg": "ETH 4h DOWN",
+        "shares": 108.42,
+        "cost": 15.82932,
+        "proceeds": 34.47756,
+        "exit": "sold",
+        "closedAt": 1787496148,
+        "txHashes": [
+          "0x914324dcd805153f75874639914ceea4764f4479e0f80e6d2d436f0393824b23",
+          "0x9e67ff3f20652d3b27524233c9c86af6ce1dd7049205c963d80eb97e795685bc"
+        ]
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007615",
+        "leg": "BTC 4h DOWN",
+        "shares": 66.29,
+        "cost": 15.37928,
+        "proceeds": 35.53144,
+        "exit": "sold",
+        "closedAt": 1787496148,
+        "txHashes": [
+          "0x1da61dfd8ff545e2e52a5d372b753d5a711fbeed670beede4a7855647ca226c9",
+          "0x34776b1a074573aa60757a3dee71930973444d4ba37e2c2c32c1b610aba1de11"
+        ]
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007774",
+        "leg": "ETH 15m UP",
+        "shares": 39.71,
+        "cost": 7.02867,
+        "proceeds": 0,
+        "exit": "settled",
+        "closedAt": 1787495438,
+        "txHashes": [
+          "0x2961d7cb6c4121ec51e4f833b2b6b9a296d0c4bea2ffc3383c8b66f92e3235cc"
+        ]
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007773",
+        "leg": "BTC 15m UP",
+        "shares": 34.72,
+        "cost": 15.93648,
+        "proceeds": 0,
+        "exit": "settled",
+        "closedAt": 1787495438,
+        "txHashes": [
+          "0x560cb8faf64c9ba296096fca046872efa9bf3ca4358ea0863b27c933cf766096"
+        ]
+      },
+      {
+        "market": "0x000000000000000000000000000000000000000000000000000000000000774b",
+        "leg": "BTC 1h DOWN",
+        "shares": 58.16,
+        "cost": 18.66936,
+        "proceeds": 29.08,
+        "exit": "merged",
+        "closedAt": 1787494677,
+        "txHashes": [
+          "0x1dc0a5ecfbe74542bccd723542150633706313506d9520cb4a6d0fa0e7fd800f"
+        ]
+      },
+      {
+        "market": "0x000000000000000000000000000000000000000000000000000000000000774b",
+        "leg": "BTC 1h UP",
+        "shares": 58.16,
+        "cost": 20.70496,
+        "proceeds": 29.08,
+        "exit": "merged",
+        "closedAt": 1787494677,
+        "txHashes": []
+      },
+      {
+        "market": "0x000000000000000000000000000000000000000000000000000000000000774e",
+        "leg": "ETH 15m UP",
+        "shares": 1.69,
+        "cost": 0.86697,
+        "proceeds": 1.69,
+        "exit": "settled",
+        "closedAt": 1787494520,
+        "txHashes": [
+          "0xa6afe33db177593bc1679ff4fcbe749fa0e34810153d12a0aedd3b48e7a5aa48"
+        ]
+      },
+      {
+        "market": "0x000000000000000000000000000000000000000000000000000000000000774d",
+        "leg": "BTC 15m DOWN",
+        "shares": 36.61,
+        "cost": 8.38369,
+        "proceeds": 0,
+        "exit": "settled",
+        "closedAt": 1787494520,
+        "txHashes": [
+          "0xf35d5b0d2dcd79593f22b9552064e49dabdd3baa4bb8c980c81cafb74cf337ee"
+        ]
+      },
+      {
+        "market": "0x000000000000000000000000000000000000000000000000000000000000774e",
+        "leg": "ETH 15m UP",
+        "shares": 1.69,
+        "cost": 0.86697,
+        "proceeds": 0.75374,
+        "exit": "sold",
+        "closedAt": 1787494195,
+        "txHashes": [
+          "0x9bbd35ced811c754757f5ae3d5da11a337f1f0fc6b55edcc2ddd7778b1706dc2"
+        ]
+      },
+      {
+        "market": "0x000000000000000000000000000000000000000000000000000000000000774e",
+        "leg": "ETH 15m DOWN",
+        "shares": 30.55,
+        "cost": 24.22615,
+        "proceeds": 15.275,
+        "exit": "merged",
+        "closedAt": 1787494141,
+        "txHashes": [
+          "0x01d79bf5c4f30439029043fce225326d38ac5502f66df5e7a237f0c3a0ade21f"
+        ]
+      },
+      {
+        "market": "0x000000000000000000000000000000000000000000000000000000000000774e",
+        "leg": "ETH 15m UP",
+        "shares": 30.55,
+        "cost": 15.67215,
+        "proceeds": 15.275,
+        "exit": "merged",
+        "closedAt": 1787494141,
+        "txHashes": []
+      },
+      {
+        "market": "0x000000000000000000000000000000000000000000000000000000000000774e",
+        "leg": "ETH 15m DOWN",
+        "shares": 24.66,
+        "cost": 7.07742,
+        "proceeds": 12.33,
+        "exit": "merged",
+        "closedAt": 1787494081,
+        "txHashes": [
+          "0xce0641c420f8db6610a255042b12e06efde893e1274aa6aed0e0f04f3da9e9ca"
+        ]
+      },
+      {
+        "market": "0x000000000000000000000000000000000000000000000000000000000000774e",
+        "leg": "ETH 15m UP",
+        "shares": 24.66,
+        "cost": 12.65058,
+        "proceeds": 12.33,
+        "exit": "merged",
+        "closedAt": 1787494081,
+        "txHashes": []
+      },
+      {
+        "market": "0x00000000000000000000000000000000000000000000000000000000000076b2",
+        "leg": "ETH 1h UP",
+        "shares": 20.66,
+        "cost": 20.18482,
+        "proceeds": 20.66,
+        "exit": "settled",
+        "closedAt": 1787493626,
+        "txHashes": [
+          "0x8bc5dd6916f02e786a3869aa2801d07a60d50b13029bd32dc49fe79a84787cc4"
+        ]
+      },
+      {
+        "market": "0x00000000000000000000000000000000000000000000000000000000000076b1",
+        "leg": "BTC 1h UP",
+        "shares": 59.7,
+        "cost": 48.4167,
+        "proceeds": 59.7,
+        "exit": "settled",
+        "closedAt": 1787493626,
+        "txHashes": [
+          "0x1836e471025e4c7bb9a721151a7a825bb909d37ec24271e57a6261606676172f"
+        ]
+      },
+      {
+        "market": "0x00000000000000000000000000000000000000000000000000000000000076d9",
+        "leg": "BTC 15m UP",
+        "shares": 63.86,
+        "cost": 63.2214,
+        "proceeds": 63.86,
+        "exit": "settled",
+        "closedAt": 1787491846,
+        "txHashes": [
+          "0x512c3b2afdd087d4f0367f71e0b6ad21ea59336550309630ba1a220c9a979fcb"
+        ]
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000006ed6",
+        "leg": "ETH 1d DOWN",
+        "shares": 0.01,
+        "cost": 0.00331,
+        "proceeds": 0.00358,
+        "exit": "sold",
+        "closedAt": 1787491540,
+        "txHashes": [
+          "0x39942fecf5acf2dfb33eee0a4bd6a96a52f21cde8c3a6d530533b20d54296480",
+          "0xd55695efa076b4cdcd194d9a556bae42c93250964c832a0cdb776129ce4cfb68"
+        ]
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000006ed6",
+        "leg": "ETH 1d DOWN",
+        "shares": 70.09,
+        "cost": 23.19979,
+        "proceeds": 23.55024,
+        "exit": "sold",
+        "closedAt": 1787491219,
+        "txHashes": [
+          "0x46435381918538b0bfcb178b933c570cab6a53f536942989b7f34a4fce78a0c9"
+        ]
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000006ed5",
+        "leg": "BTC 1d DOWN",
+        "shares": 172.57,
+        "cost": 64.19604,
+        "proceeds": 55.56754,
+        "exit": "sold",
+        "closedAt": 1787491219,
+        "txHashes": [
+          "0x31c6c292ab0b7c1362743c8cd7695a1686cf808dd9645aa10b7ed30f23093bd9",
+          "0xff6c2aa1150962d11404d8a170ce16a44b26e497400f92e6dc9e69e4fe72fcca"
+        ]
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007616",
+        "leg": "ETH 4h UP",
+        "shares": 29.63,
+        "cost": 9.42234,
+        "proceeds": 18.40023,
+        "exit": "sold",
+        "closedAt": 1787491035,
+        "txHashes": [
+          "0x1ef60234e1d00942eb7b238047e9c2eb667010201d4cd7975f49ca21dccd7675",
+          "0x9b1bc14fde23e32a67d1803c9c3523fdb24f9b55e444c6e1107a46f87805d1ed"
+        ]
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007615",
+        "leg": "BTC 4h UP",
+        "shares": 105.37,
+        "cost": 35.8258,
+        "proceeds": 62.90589,
+        "exit": "sold",
+        "closedAt": 1787491035,
+        "txHashes": [
+          "0x0e2a00e1ee95e8e10c21defc3997f049b8eb99d53bf8575e503e595e2f5eb5b9",
+          "0x9a32c342e3bbcb31c01c64875a5edff3e0e3323b92ff00fdf9094fce914ad32d"
+        ]
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007617",
+        "leg": "BTC 1h UP",
+        "shares": 0.37,
+        "cost": 0.12173,
+        "proceeds": 0,
+        "exit": "settled",
+        "closedAt": 1787490042,
+        "txHashes": [
+          "0x72cf9a13589f725f9dbf2366388e24554e4fe43500b57b63b8fd8abf9db1c858"
+        ]
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007665",
+        "leg": "BTC 15m DOWN",
+        "shares": 50.71,
+        "cost": 16.68359,
+        "proceeds": 0,
+        "exit": "settled",
+        "closedAt": 1787489107,
+        "txHashes": [
+          "0xd83ed1436847c0af6d8aa66d1d990d4b14cc5cef2b4404e5f59b14cfe5ba98ed"
+        ]
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007618",
+        "leg": "ETH 1h DOWN",
+        "shares": 54.18,
+        "cost": 49.68306,
+        "proceeds": 50.71248,
+        "exit": "sold",
+        "closedAt": 1787488410,
+        "txHashes": [
+          "0x95d35f10ec2fd877124b1d4e05b7a50bad3ba58011438c3ca783ff2732e677ce",
+          "0xdae6c27745e3d5ace3cf2a8f6f3e8c763bc58515a0517431d817c0c086268e90"
+        ]
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007617",
+        "leg": "BTC 1h UP",
+        "shares": 0.36,
+        "cost": 0.11844,
+        "proceeds": 0.01116,
+        "exit": "sold",
+        "closedAt": 1787488097,
+        "txHashes": [
+          "0xba48906900fc4b9d46e4cdc2ec3b6f6076da9d008e091975ec8d4bcee5b66047"
+        ]
+      },
+      {
+        "market": "0x000000000000000000000000000000000000000000000000000000000000761a",
+        "leg": "ETH 15m UP",
+        "shares": 3.72,
+        "cost": 1.16064,
+        "proceeds": 0,
+        "exit": "settled",
+        "closedAt": 1787487313,
+        "txHashes": [
+          "0x69a4ed8e0bed907f57ab49408098ef25fca0ed1b4fc794233c7cfe03f8747782"
+        ]
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007617",
+        "leg": "BTC 1h UP",
+        "shares": 0.72,
+        "cost": 0.23688,
+        "proceeds": 0.08928,
+        "exit": "sold",
+        "closedAt": 1787487081,
+        "txHashes": [
+          "0x92b554a93c942c976c838b2212e6a4e8515cc96cba1b34b10e19615339513c39"
+        ]
+      },
+      {
+        "market": "0x0000000000000000000000000000000000000000000000000000000000007617",
+        "leg": "BTC 1h UP",
         "shares": 1.45,
-        "cost": 0.57275,
-        "proceeds": 1.45,
-        "won": true,
-        "closedAt": 1787256060
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004f44",
-        "leg": "ETH 15m UP",
-        "shares": 1.35,
-        "cost": 0.45630000000000004,
-        "proceeds": 0,
-        "won": false,
-        "closedAt": 1787256060
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004f6e",
-        "leg": "ETH 15m DOWN",
-        "shares": 1.02,
-        "cost": 0.39372,
-        "proceeds": 1.02,
-        "won": true,
-        "closedAt": 1787256934
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004f94",
-        "leg": "ETH 15m DOWN",
-        "shares": 0.78,
-        "cost": 0.34164000000000005,
-        "proceeds": 0,
-        "won": false,
-        "closedAt": 1787257811
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004fb9",
-        "leg": "BTC 15m UP",
-        "shares": 0.49,
-        "cost": 0.30184,
-        "proceeds": 0,
-        "won": false,
-        "closedAt": 1787258728
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004f6b",
-        "leg": "BTC 1h DOWN",
-        "shares": 0.25,
-        "cost": 0.08949999999999998,
-        "proceeds": 0.25,
-        "won": true,
-        "closedAt": 1787259606
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004f6b",
-        "leg": "BTC 1h DOWN",
-        "shares": 0.74,
-        "cost": 0.25604,
-        "proceeds": 0.74,
-        "won": true,
-        "closedAt": 1787259606
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004f6c",
-        "leg": "ETH 1h UP",
-        "shares": 0.2899999999999998,
-        "cost": 0.1293399999999999,
-        "proceeds": 0,
-        "won": false,
-        "closedAt": 1787259606
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000005008",
-        "leg": "ETH 15m UP",
-        "shares": 0.21,
-        "cost": 0.09387,
-        "proceeds": 0.21,
-        "won": true,
-        "closedAt": 1787260501
-      },
-      {
-        "market": "0x000000000000000000000000000000000000000000000000000000000000502e",
-        "leg": "ETH 15m UP",
-        "shares": 0.56,
-        "cost": 0.25424,
-        "proceeds": 0,
-        "won": false,
-        "closedAt": 1787261426
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000005005",
-        "leg": "BTC 1h DOWN",
-        "shares": 0.24000000000000002,
-        "cost": 0.09168,
-        "proceeds": 0,
-        "won": false,
-        "closedAt": 1787263239
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000005006",
-        "leg": "ETH 1h DOWN",
-        "shares": 0.93,
-        "cost": 0.38688,
-        "proceeds": 0.93,
-        "won": true,
-        "closedAt": 1787263239
-      },
-      {
-        "market": "0x00000000000000000000000000000000000000000000000000000000000050a2",
-        "leg": "ETH 15m UP",
-        "shares": 0.04000000000000001,
-        "cost": 0.020560000000000002,
-        "proceeds": 0,
-        "won": false,
-        "closedAt": 1787264100
-      },
-      {
-        "market": "0x00000000000000000000000000000000000000000000000000000000000050c8",
-        "leg": "ETH 15m DOWN",
-        "shares": 0.9,
-        "cost": 0.423,
-        "proceeds": 0,
-        "won": false,
-        "closedAt": 1787265029
-      },
-      {
-        "market": "0x00000000000000000000000000000000000000000000000000000000000050a0",
-        "leg": "ETH 1h UP",
-        "shares": 0.65,
-        "cost": 0.15795,
-        "proceeds": 0,
-        "won": false,
-        "closedAt": 1787266842
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000005113",
-        "leg": "BTC 15m DOWN",
-        "shares": 0.33,
-        "cost": 0.15279000000000004,
-        "proceeds": 0.33,
-        "won": true,
-        "closedAt": 1787266842
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000005114",
-        "leg": "ETH 15m DOWN",
-        "shares": 0.37,
-        "cost": 0.19314000000000003,
-        "proceeds": 0,
-        "won": false,
-        "closedAt": 1787266842
-      },
-      {
-        "market": "0x000000000000000000000000000000000000000000000000000000000000509f",
-        "leg": "BTC 1h UP",
-        "shares": 0.97,
-        "cost": 0.38606,
-        "proceeds": 0,
-        "won": false,
-        "closedAt": 1787266842
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000005113",
-        "leg": "BTC 15m DOWN",
-        "shares": 0.71,
-        "cost": 0.37346,
-        "proceeds": 0.71,
-        "won": true,
-        "closedAt": 1787266842
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000005187",
-        "leg": "BTC 15m DOWN",
-        "shares": 0.23,
-        "cost": 0.17917000000000002,
-        "proceeds": 0.23,
-        "won": true,
-        "closedAt": 1787269502
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000004746",
-        "leg": "BTC 1d UP",
-        "shares": 8.96,
-        "cost": 8.931111539501524,
-        "proceeds": 8.96,
-        "won": true,
-        "closedAt": 1787270440
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000005200",
-        "leg": "ETH 15m DOWN",
-        "shares": 0.37,
-        "cost": 0.26788,
-        "proceeds": 0.37,
-        "won": true,
-        "closedAt": 1787272231
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000005225",
-        "leg": "BTC 15m DOWN",
-        "shares": 1.15,
-        "cost": 0.5888,
-        "proceeds": 1.15,
-        "won": true,
-        "closedAt": 1787273106
-      },
-      {
-        "market": "0x0000000000000000000000000000000000000000000000000000000000005225",
-        "leg": "BTC 15m DOWN",
-        "shares": 0.33,
-        "cost": 0.29271,
-        "proceeds": 0.33,
-        "won": true,
-        "closedAt": 1787273106
+        "cost": 0.47705,
+        "proceeds": 0.30595,
+        "exit": "sold",
+        "closedAt": 1787486874,
+        "txHashes": [
+          "0xc9becd695a30412acb0349c3241786dd83f22e95cd09c035895d8270d27d5739"
+        ]
       }
-    ],
-    "onChainOutcomeBalances": 89
+    ]
+  },
+  "settlement": {
+    "settled": 16,
+    "sold": 19,
+    "merged": 7,
+    "voided": 0,
+    "dropped": 1,
+    "claimSweeps": 75
+  },
+  "reconciliation": {
+    "adoptedOpen": 0,
+    "events": 1,
+    "lastAt": 1787496422
+  },
+  "risk": {
+    "breakerEvents": 1,
+    "halted": "drawdown 37.0% exceeded 35% — no new positions; open ones will settle",
+    "events": [
+      {
+        "at": 1787509448,
+        "kind": "autopilot.demoted",
+        "severity": "warn",
+        "message": "Autopilot was switched off by an upgrade. Rivo now checks whether a strategy has passed economic validation before it may spend, and the strategy running here has not. Re-enable it as Experimental Testnet to keep trading test funds, or leave it in Shadow Mode."
+      },
+      {
+        "at": 1787500032,
+        "kind": "breaker.halted",
+        "severity": "error",
+        "message": "Autopilot halted: drawdown 37.0% exceeded 35% — no new positions; open ones will settle"
+      },
+      {
+        "at": 1787498171,
+        "kind": "cycle.failed",
+        "severity": "warn",
+        "message": "Cycle failed: @somnia-chain/markets-sdk: placeBinaryOrder reverted: for an unknown reason. — while placing buy NO 43.52 @ 0.56559482174241 on pool 0x54D90260… (market 000000780d)"
+      },
+      {
+        "at": 1787496422,
+        "kind": "reconcile.dropped",
+        "severity": "warn",
+        "message": "dropped UP on 0x00000000… — chain holds none — state claimed 21.8800"
+      },
+      {
+        "at": 1787496244,
+        "kind": "cycle.failed",
+        "severity": "warn",
+        "message": "Cycle failed: @somnia-chain/markets-sdk: placeBinaryOrder reverted: for an unknown reason. — while placing buy YES 64.74 @ 0.7394408099820278 on pool 0xC3E2b06a… (market 0000007616)"
+      }
+    ]
+  },
+  "fleet": {
+    "liveWorkers": 1
   },
   "stages": [
     {
       "name": "DISCOVER",
       "proven": true,
-      "evidence": "1005 cycles against the live venue"
+      "evidence": "824 cycles against the live venue"
     },
     {
       "name": "ANALYZE",
       "proven": true,
-      "evidence": "decision log at ./data-canary/decisions.jsonl"
+      "evidence": "13,165 decisions recorded, 13,115 of them refusals"
     },
     {
       "name": "ALLOCATE",
       "proven": true,
-      "evidence": "208 positions opened by the allocator"
+      "evidence": "6 open lots, 43 closed"
     },
     {
       "name": "RISK CHECK",
       "proven": true,
-      "evidence": "circuit breaker fired: drawdown 35.3% exceeded 35% — no new positions; open ones will settle"
+      "evidence": "circuit breaker fired: drawdown 37.0% exceeded 35% — no new positions; open ones will settle"
     },
     {
       "name": "EXECUTE",
       "proven": true,
-      "evidence": "10 positions carry an on-chain transaction hash"
+      "evidence": "1380 execution attempts recorded before anything was signed"
+    },
+    {
+      "name": "BROADCAST",
+      "proven": true,
+      "evidence": "53 attempts carry a transaction hash"
     },
     {
       "name": "CONFIRM",
       "proven": true,
-      "evidence": "10/10 receipts confirm status 0x1"
+      "evidence": "25/25 receipts read back from the chain report success"
     },
     {
       "name": "RECONCILE",
       "proven": true,
-      "evidence": "0 positions adopted from chain, 89 outcome balances read"
+      "evidence": "1 reconciliation events, 0 positions adopted from chain"
     },
     {
       "name": "PERSIST",
       "proven": true,
-      "evidence": "state at ./data-canary/state.json, 1005 cycles"
+      "evidence": "PostgreSQL, state version 1092"
     },
     {
       "name": "LEDGER",
       "proven": true,
-      "evidence": "imbalance 4.26e-14"
+      "evidence": "imbalance 7.11e-15"
     },
     {
       "name": "SETTLE",
       "proven": true,
-      "evidence": "68 positions resolved against the venue's oracle"
+      "evidence": "16 positions resolved against the venue's oracle"
     },
     {
       "name": "CLAIM",
       "proven": true,
-      "evidence": "last sweep 2026-08-21T06:57:35.000Z"
+      "evidence": "75 claim sweeps recorded"
     }
   ]
 }
