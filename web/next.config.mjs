@@ -46,6 +46,23 @@ const config = {
   // the entire reason this is a workspace and not two repositories.
   outputFileTracingRoot: new URL("..", import.meta.url).pathname,
 
+  // The migrations are DATA the health check reads at runtime, and nothing
+  // imports them.
+  //
+  // `pending()` compares the .sql files on disk against the rows in
+  // schema_migrations, so it calls readdirSync on src/db/migrations. Next traces
+  // what a route imports, not what it opens, so those files were left out of the
+  // serverless bundle and /api/health answered 503 with "the database did not
+  // answer" — while the database was answering perfectly. The real error was
+  // ENOENT on a directory, three layers away from the message.
+  //
+  // Listing them here is the narrow fix. The alternative, compiling the SQL into
+  // the bundle, would give the web tier its own copy of the schema and a second
+  // place for it to drift from the worker's.
+  outputFileTracingIncludes: {
+    "/api/health": ["../src/db/migrations/**"],
+  },
+
   webpack: (cfg) => {
     // The engine is NodeNext ESM: its relative imports carry `.js` extensions
     // that resolve to `.ts` on disk. Webpack needs telling, or every shared
