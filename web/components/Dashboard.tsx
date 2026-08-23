@@ -138,7 +138,7 @@ export function Dashboard({
 
       <Reconciliation view={view} />
 
-      <nav className="row" style={{ marginTop: 22, marginBottom: 12, gap: 4 }}>
+      <nav className="tabs" style={{ marginTop: 22, marginBottom: 12 }}>
         {(
           [
             ["decisions", `Decisions`],

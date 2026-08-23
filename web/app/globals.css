@@ -50,6 +50,10 @@
 html, body {
   margin: 0;
   padding: 0;
+  /* iOS enlarges text when a page rotates to landscape, which silently breaks
+     every size relationship on the page. Opting out is not a zoom lock — pinch
+     still works. */
+  -webkit-text-size-adjust: 100%;
   background: var(--bg);
   color: var(--ink);
   font-family: var(--sans);
@@ -181,7 +185,7 @@ details > summary:hover { color: var(--ink); }
 .meter > span.over { background: var(--neg); }
 
 /* --- tables -------------------------------------------------------------- */
-.scroll { overflow-x: auto; }
+.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
 th {
   text-align: left; padding: 7px 10px 7px 0;
@@ -216,6 +220,21 @@ tr:last-child td { border-bottom: none; }
 .banner.warn { border-color: var(--warn); background: var(--warn-soft); color: var(--warn); }
 .banner.good { border-color: var(--pos); background: var(--pos-soft); color: var(--pos); }
 
+/* --- tabs ---------------------------------------------------------------- */
+/* A strip that scrolls sideways rather than wrapping.
+   Four tabs with counts wrap to two rows below about 420px, which moves every
+   panel under them down the page and makes the row read as two groups of two.
+   Scrolling keeps them one object; the scrollbar is hidden because a strip of
+   four is obviously a strip of four. */
+.tabs {
+  display: flex; gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tabs button { flex: 0 0 auto; }
+
 /* --- shell --------------------------------------------------------------- */
 header.top {
   border-bottom: 1px solid var(--line);
@@ -244,4 +263,76 @@ header.top .wrap { display: flex; align-items: center; justify-content: space-be
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
+}
+
+/* --- small screens ------------------------------------------------------- */
+/*
+ * There were none of these until now, and no viewport tag either, so a phone
+ * rendered the dashboard at 980px and scaled it down to about a third of legible
+ * size. Adding the tag is what makes these rules fire at all; see layout.tsx.
+ *
+ * The breakpoint is 640px because that is where `.cols-2` — minmax(300px) plus
+ * two 20px gutters and a 14px gap — stops fitting two columns honestly and
+ * starts producing one column with the wrong padding.
+ */
+@media (max-width: 640px) {
+  .wrap { padding: 0 14px; }
+
+  h1 { font-size: 24px; }
+  h2 { font-size: 17px; }
+  .lede { font-size: 15.5px; }
+
+  .panel { padding: 14px; }
+  .panel + .panel { margin-top: 10px; }
+  .grid { gap: 10px; }
+
+  /* One column. `auto-fit` would give one anyway at this width, but it would
+     keep reserving the 300px track first and overflow the parent by the
+     difference on the narrowest handsets. */
+  .cols-2 { grid-template-columns: 1fr; }
+  .cols-3 { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+  .cols-4 { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+
+  /* 22px monospace digits are what push the stat cards past the screen edge. */
+  .stat .value { font-size: 19px; }
+
+  /* The market line and its prices are a two-column grid that cannot hold both
+     on a handset; the prices drop under the market rather than shrinking to
+     illegibility. */
+  .decision { grid-template-columns: 1fr; gap: 6px; }
+
+  /* The header carried a fixed 56px height around a `.row` that wraps, so on a
+     320px screen the address and the sign-out control wrapped to a second line
+     and were clipped by the header itself — present in the DOM, invisible on the
+     device. Nothing in it is droppable: the network pill is the difference
+     between testnet and real money. So it stops wrapping, shrinks, and the
+     height becomes a floor rather than a ceiling. */
+  header.top .wrap { height: auto; min-height: 52px; padding-block: 7px; gap: 8px; }
+  header.top .row { flex-wrap: nowrap; gap: 6px; }
+  header.top .pill { font-size: 11px; padding: 3px 7px; }
+  .brand { font-size: 15.5px; }
+
+  table { font-size: 12.5px; }
+  th, td { padding-right: 12px; }
+
+  .steps li { padding-right: 10px; font-size: 11.5px; }
+}
+
+/*
+ * Touch targets and the iOS focus zoom. Not inside the width query on purpose:
+ * a coarse pointer is the condition, and a tablet in landscape is wider than
+ * 640px and still a finger.
+ */
+@media (pointer: coarse) {
+  button, .btn { min-height: 44px; padding-block: 11px; }
+  /* Tabs and inline links are chips inside prose, not primary actions; 44px
+     each would turn the tab strip into a toolbar taller than the panel. */
+  .tabs button { min-height: 38px; }
+  button.link { min-height: 0; padding-block: 0; }
+
+  /* Safari zooms the whole page when a focused input is under 16px, and does
+     not zoom back out. Every field here inherited the 15px body size, so the
+     first tap on the budget box left the page enlarged and scrolling sideways
+     — which reads as a broken layout rather than as a zoom. */
+  input, select, textarea { font-size: 16px; }
 }
