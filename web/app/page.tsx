@@ -211,7 +211,7 @@ function Tally() {
     ["824", "cycles run against the live venue"],
     ["13,165", "legs priced and recorded"],
     ["13,115", "of them refused, each with its reason"],
-    ["643", "tests, none skipped"],
+    ["646", "tests, none skipped"],
   ] as const;
   return (
     <section className="tally" aria-label="Measured to date" style={{ marginBottom: 8 }}>

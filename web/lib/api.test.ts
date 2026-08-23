@@ -186,6 +186,69 @@ describe.skipIf(!haveDatabase())("the API's ownership boundary", () => {
     expect((await res.json()).error).toMatch(/permission to sign/i);
   });
 
+  /** POST to the autopilot route as the owner, with whatever body. */
+  const enable = async (body: Record<string, unknown>) => {
+    const { POST } = await import("../app/api/portfolios/[id]/autopilot/route");
+    const req = new Request(`http://rivo.test/api/portfolios/${owner.portfolioId}/autopilot`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${ownerToken}`, "content-type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return POST(req, { params: Promise.resolve({ id: owner.portfolioId }) });
+  };
+
+  it("will not clear a drawdown halt as a side effect of enabling execution", async () => {
+    // `setState(..., "running")` leaves `halted` unconditionally, so enabling
+    // execution used to reset the breaker silently — while the banner beside it
+    // said Rivo would not restart on its own. Both cannot be true.
+    await query(`UPDATE portfolios SET state = 'halted', stopped_reason = $2 WHERE id = $1`, [
+      owner.portfolioId,
+      "drawdown 37.0% exceeded 35%",
+    ]);
+    const res = await enable({ enabled: true, delegated: true, privyWalletId: "w1" });
+    expect(res.status).toBe(400);
+    // And it says what tripped, rather than refusing in the abstract.
+    expect((await res.json()).error).toMatch(/drawdown 37\.0% exceeded 35%/);
+
+    const [row] = await query<{ state: string }>("SELECT state FROM portfolios WHERE id = $1", [owner.portfolioId]);
+    expect(row!.state, "the halt must survive a refused enable").toBe("halted");
+  });
+
+  it("clears a halt only when the request says so, and records that it did", async () => {
+    await query(`UPDATE portfolios SET state = 'halted', stopped_reason = $2 WHERE id = $1`, [
+      owner.portfolioId,
+      "drawdown 37.0% exceeded 35%",
+    ]);
+    const res = await enable({ enabled: true, delegated: true, privyWalletId: "w1", acknowledgeHalt: true });
+    expect(res.status).toBe(200);
+
+    const [row] = await query<{ state: string; mode: string }>(
+      "SELECT state, mode FROM portfolios WHERE id = $1",
+      [owner.portfolioId],
+    );
+    expect(row!.state).toBe("running");
+    // Enabling execution grants the CONSERVATIVE mode, not the one that may
+    // spend on any network — the strategy here is REJECTED.
+    expect(row!.mode).toBe("experimental_testnet");
+
+    const events = await query<{ kind: string; message: string }>(
+      "SELECT kind, message FROM events WHERE portfolio_id = $1 AND kind = 'breaker.cleared'",
+      [owner.portfolioId],
+    );
+    expect(events).toHaveLength(1);
+    expect(events[0]!.message).toMatch(/drawdown 37\.0% exceeded 35%/);
+  });
+
+  it("refuses validated_autopilot for a strategy that failed economic validation", async () => {
+    // The gate, at the API boundary: a mode the worker would refuse is refused
+    // here rather than accepted and quietly ignored later.
+    const res = await enable({
+      enabled: true, delegated: true, privyWalletId: "w1", mode: "validated_autopilot",
+    });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toMatch(/failed out-of-sample economic validation/i);
+  });
+
   it("switches Autopilot off without needing anything from the browser", async () => {
     // The asymmetry that matters: turning it ON requires a consent step that can
     // fail, and turning it OFF must not depend on anything succeeding.
