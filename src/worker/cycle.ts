@@ -23,11 +23,13 @@ import { cycle, type CycleReport } from "../runtime/loop.js";
 import { executorFor } from "../runtime/executor.js";
 import { RpcReceiptReader, defaultRpcUrl } from "../runtime/receipt.js";
 import { PrivyDelegatedAuthority, looksRevoked } from "../signing/privy.js";
+import { PRODUCTION_STRATEGY } from "../research/gating.js";
 import { PostgresExecutionLedger } from "../ledger/postgres.js";
 import { RecordingExecutor, recover } from "../ledger/recording.js";
 import { PostgresDecisionLog, PostgresStateStore } from "../store/postgres.js";
 import { StaleStateError } from "../store/types.js";
-import { mayTradeLive, scheduleNext, setState, type Portfolio } from "../db/portfolios.js";
+import { permissionFor, scheduleNext, setState, type Portfolio } from "../db/portfolios.js";
+import { modeIntendsExecution, type Permission } from "../runtime/permission.js";
 import { setDelegated } from "../db/accounts.js";
 import { record, recordOnce } from "../db/events.js";
 import { held, renew, type Lease } from "../db/leases.js";
@@ -80,14 +82,31 @@ export async function runPortfolioCycle(
     };
     const state = await store.load();
 
-    // The user's authority, or the honest absence of it. `mayTradeLive` reads
-    // BOTH halves — the user asked for Autopilot, and the wallet is still
-    // delegated — so revoking in Privy stops trading even if nothing told Rivo.
+    // The five things that must agree before capital moves.
+    //
+    // `permissionFor` asks all of them: strategy state, execution mode,
+    // network, delegation and signer. It replaced a check that asked only the
+    // last two, which is how a strategy this repository's own evidence calls
+    // economically REJECTED could reach `executor.buy()` with a real balance
+    // behind it. Portfolio risk is unchanged and still runs after this.
     const authority = new PrivyDelegatedAuthority(
       { walletId: portfolio.privyWalletId ?? "", address: portfolio.address },
       portfolio.delegated,
     );
-    let live = mayTradeLive(portfolio) && authority.available();
+    let permission: Permission = permissionFor(portfolio, authority.available());
+    let live = permission.mayMoveCapital;
+
+    // Say why, once, rather than leaving a portfolio silently not trading.
+    if (!live && modeIntendsExecution(portfolio.policy.mode)) {
+      await recordOnce(id, "execution.blocked", "warn", permission.summary, {
+        mode: portfolio.policy.mode,
+        reasons: permission.reasons,
+        strategy: PRODUCTION_STRATEGY.id,
+        strategyState: PRODUCTION_STRATEGY.state,
+        network: portfolio.network,
+      });
+      out(`  no capital will move — ${permission.reasons.join(", ")}`);
+    }
 
     // Ask for the signer once, before the cycle, rather than discovering it is
     // gone one order at a time.
@@ -107,6 +126,7 @@ export async function runPortfolioCycle(
       } catch (e) {
         if (looksRevoked(e)) {
           live = false;
+          permission = permissionFor(portfolio, false);
           await setDelegated(portfolio.userId, portfolio.walletId, false);
           await setState(null, id, "paused", "Rivo's permission to sign for this wallet was withdrawn");
           await record(id, "autopilot.revoked", "warn",
@@ -118,6 +138,7 @@ export async function runPortfolioCycle(
           // Not a revocation. Run dry this pass rather than trading blind, and
           // say so, but leave the grant and the portfolio's state alone.
           live = false;
+          permission = permissionFor(portfolio, false);
           await recordOnce(id, "signer.unavailable", "warn",
             `Could not obtain a signer this cycle: ${e instanceof Error ? e.message : String(e)}`);
           out(`  signer unavailable this cycle — running dry, grant left intact`);

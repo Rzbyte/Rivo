@@ -13,7 +13,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { haveDatabase, seedPortfolio, truncateAll, withSchema } from "./testing.js";
 import { query } from "./pool.js";
 import { claim, claimDue, held, heartbeat, liveWorkers, registerWorker, release, releaseAll, renew } from "./leases.js";
-import { createPortfolio, mayTradeLive, portfolioById, portfolioOf, portfoliosOf, scheduleNext, setState, updatePolicy } from "./portfolios.js";
+import { createPortfolio, permissionFor, portfolioById, portfolioOf, portfoliosOf, scheduleNext, setState, updatePolicy } from "./portfolios.js";
 import { eraseUser, setDelegated, upsertUser, upsertWallet, walletsOf } from "./accounts.js";
 import { PostgresDecisionLog, PostgresStateStore } from "../store/postgres.js";
 import { PostgresExecutionLedger } from "../ledger/postgres.js";
@@ -120,12 +120,34 @@ describe.skipIf(!haveDatabase())("the durable layer", () => {
     });
 
     it("only permits live trading when the user asked AND the wallet is still delegated", async () => {
-      const { userId, walletId, portfolioId } = await seedPortfolio({ mode: "autopilot" });
-      expect(mayTradeLive((await portfolioById(portfolioId))!)).toBe(true);
+      const { userId, walletId, portfolioId } = await seedPortfolio({ mode: "experimental_testnet" });
+      expect(permissionFor((await portfolioById(portfolioId))!, true).mayMoveCapital).toBe(true);
       // Revoking in Privy has to stop trading even if nothing told Rivo, so the
       // check reads current state rather than a flag Rivo set once.
       await setDelegated(userId, walletId, false);
-      expect(mayTradeLive((await portfolioById(portfolioId))!)).toBe(false);
+      const p = permissionFor((await portfolioById(portfolioId))!, true);
+      expect(p.mayMoveCapital).toBe(false);
+      expect(p.reasons).toContain("DELEGATION_MISSING");
+    });
+
+    it("refuses the rejected strategy real capital, whatever the row says", async () => {
+      // The contradiction this whole gate exists for: a portfolio row can ask
+      // for Autopilot, be fully delegated, and hold a working signer, and the
+      // strategy it would run is one this repository's own evidence calls
+      // economically REJECTED.
+      const { portfolioId } = await seedPortfolio({ mode: "validated_autopilot" });
+      const p = permissionFor((await portfolioById(portfolioId))!, true);
+      expect(p.mayMoveCapital).toBe(false);
+      expect(p.reasons).toContain("STRATEGY_REJECTED");
+    });
+
+    it("does not let a pre-upgrade autopilot row read as live execution", async () => {
+      // 003_execution_mode demoted these to shadow. A row that somehow still
+      // carries the old word must fail closed rather than be honoured.
+      const { portfolioId } = await seedPortfolio({ mode: "shadow" });
+      await query(`UPDATE portfolios SET mode = 'shadow' WHERE id = $1`, [portfolioId]);
+      const loaded = (await portfolioById(portfolioId))!;
+      expect(permissionFor(loaded, true).mayMoveCapital).toBe(false);
     });
 
     it("tightens overrides through parsePolicy rather than trusting the column", async () => {

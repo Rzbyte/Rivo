@@ -9,6 +9,7 @@
 // that makes it a portfolio manager is the trades it declined.
 
 import { useState } from "react";
+import { modeIntendsExecution } from "@rivo/runtime/permission.js";
 import type { Balances } from "@/lib/balances";
 import type { PortfolioView, DecisionGroup, ClosedPositionView } from "@rivo/db/view.js";
 import type { ExecutionRecord } from "@rivo/ledger/types.js";
@@ -275,7 +276,7 @@ function StatusBanner({ view }: { view: PortfolioView }) {
       </div>
     );
   }
-  if (view.runtime.dryRun && view.autopilot.mode === "autopilot") {
+  if (view.runtime.dryRun && modeIntendsExecution(view.autopilot.mode)) {
     return (
       <div className="banner warn">
         <strong>Shadow Mode.</strong> {view.autopilot.blocker ?? "Rivo is deciding but not sending orders."}

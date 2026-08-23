@@ -9,6 +9,7 @@
 import { explain } from "../explain.js";
 import type { DecisionView, PortfolioView } from "../engine.js";
 import type { PortfolioPolicy, RunMode } from "../../portfolio/policy.js";
+import { modeIntendsExecution } from "../../runtime/permission.js";
 import { PROFILES, type ProfileName } from "../../portfolio/profiles.js";
 import type { WalletState } from "../wallet.js";
 import type { BackendStatus } from "../backend.js";
@@ -236,9 +237,9 @@ export function configure(s: AppState): string {
                 <span class="t">Shadow</span>
                 <span class="d">Real prices, real settlement, paper fills. Runs here in your browser.</span>
               </button>
-              <button data-act="mode" data-v="autopilot" aria-pressed="${d.mode === "autopilot"}" ${blocked ? "disabled" : ""}>
-                <span class="t">Autopilot${blocked ? " · unavailable" : ""}</span>
-                <span class="d">Real orders on Somnia. Needs a Rivo backend that stays awake to sign.</span>
+              <button data-act="mode" data-v="experimental_testnet" aria-pressed="${modeIntendsExecution(d.mode)}" ${blocked ? "disabled" : ""}>
+                <span class="t">Experimental Testnet${blocked ? " · unavailable" : ""}</span>
+                <span class="d">Real orders on Somnia testnet. The strategy failed economic validation, so this is research execution only — it needs a Rivo backend that stays awake to sign.</span>
               </button>
             </div>
             ${authorityNote(s.backend)}
@@ -318,8 +319,8 @@ export function dashboard(s: AppState): string {
 
   const live = policy.state === "running";
   const modeTag =
-    policy.mode === "autopilot"
-      ? `<span class="tag bad live"><i class="dot"></i>autopilot · live orders</span>`
+    modeIntendsExecution(policy.mode)
+      ? `<span class="tag bad live"><i class="dot"></i>experimental testnet · real orders</span>`
       : `<span class="tag ok ${live ? "live" : ""}"><i class="dot"></i>shadow${live ? " · running" : ""}</span>`;
 
   const totalPnl = v.realizedPnl + v.unrealizedPnl;

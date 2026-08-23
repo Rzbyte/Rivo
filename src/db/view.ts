@@ -15,7 +15,9 @@
 import { num, one, query, secs } from "./pool.js";
 import { limitsOf, type PolicyLimits } from "../portfolio/policy.js";
 import { riskOf, type Position } from "../portfolio/risk.js";
-import { mayTradeLive, type Portfolio } from "./portfolios.js";
+import { permissionFor, type Portfolio } from "./portfolios.js";
+import type { ExecutionMode } from "../runtime/permission.js";
+import { modeIntendsExecution } from "../runtime/permission.js";
 import { PostgresExecutionLedger } from "../ledger/postgres.js";
 import type { ExecutionRecord } from "../ledger/types.js";
 import { liveWorkers } from "./leases.js";
@@ -62,7 +64,7 @@ export interface ExposureView {
 }
 
 export interface AutopilotView {
-  mode: "shadow" | "autopilot";
+  mode: ExecutionMode;
   state: string;
   /** Whether the user's grant to sign currently stands. */
   delegated: boolean;
@@ -158,7 +160,7 @@ export function autopilotBlocker(p: Portfolio, halted: string | null): string | 
   if (halted) return `Trading is halted: ${halted}. Review and restart it yourself — Rivo will not restart on its own.`;
   if (p.policy.state === "stopped") return "Autopilot is switched off.";
   if (p.policy.state === "paused") return "Autopilot is paused.";
-  if (p.policy.mode !== "autopilot") return "This portfolio is in Shadow Mode — it decides but does not trade.";
+  if (!modeIntendsExecution(p.policy.mode)) return "This portfolio is in Shadow Mode — it decides but does not trade.";
   if (!p.privyWalletId) return "This portfolio has no Rivo wallet yet.";
   if (!p.delegated) return "Rivo does not have permission to sign for this wallet. Enable Autopilot to grant it.";
   if (p.policy.state !== "running") return "Autopilot has not been started.";
@@ -292,7 +294,7 @@ export async function buildView(portfolio: Portfolio): Promise<PortfolioView> {
       mode: portfolio.policy.mode,
       state: portfolio.policy.state,
       delegated: portfolio.delegated,
-      live: mayTradeLive(portfolio) && portfolio.policy.state === "running" && !halted,
+      live: permissionFor(portfolio, true).mayMoveCapital && portfolio.policy.state === "running" && !halted,
       blocker: autopilotBlocker(portfolio, halted),
       stoppedReason: portfolio.policy.stoppedReason ?? null,
     },

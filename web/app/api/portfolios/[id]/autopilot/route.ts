@@ -15,6 +15,8 @@
 // browser succeeding at anything.
 
 import { NextResponse } from "next/server";
+import { executionPermission, isExecutionMode } from "@rivo/runtime/permission.js";
+import { PRODUCTION_STRATEGY } from "@rivo/research/gating.js";
 import { badRequest, notFound, withUser, withUserWrite } from "@/lib/auth";
 import { jsonBody } from "@/lib/validate";
 import { portfolioOf, setState, updatePolicy } from "@rivo/db/portfolios.js";
@@ -73,13 +75,37 @@ export const POST = withUserWrite(async (user, req, ctx: Ctx) => {
     badRequest("Autopilot needs your permission to sign. Complete the prompt from Privy and try again.");
   }
 
+  // Which mode is being asked for, and would it actually be allowed?
+  //
+  // Enabling execution used to write `mode: "autopilot"` unconditionally. That
+  // is now a decision with consequences — `validated_autopilot` is the mode
+  // that may spend on any network, and the strategy running here failed
+  // economic validation — so the request names a mode, the default is the
+  // conservative one, and anything the gate would refuse is refused HERE rather
+  // than accepted and quietly ignored by the worker later.
+  const requested = isExecutionMode(body.mode) ? body.mode : "experimental_testnet";
+  const wouldRun = executionPermission({
+    mode: requested,
+    strategy: PRODUCTION_STRATEGY,
+    network: portfolio!.network,
+    // The two things this request has just established. The worker re-checks
+    // both against Privy before it signs anything.
+    signerAvailable: true,
+    delegated: true,
+    privyWalletId: portfolio!.privyWalletId ?? privyWalletId,
+    allowUnvalidatedExperimental: process.env.RIVO_ALLOW_UNVALIDATED_EXPERIMENTAL === "true",
+  });
+  if (!wouldRun.mayMoveCapital) badRequest(wouldRun.summary);
+
   await setDelegated(user.id, portfolio!.walletId, true);
-  await updatePolicy(user.id, id, { mode: "autopilot" });
+  await updatePolicy(user.id, id, { mode: requested });
   const started = await setState(user.id, id, "running", null);
   if (!started) notFound();
-  await record(id, "autopilot.enabled", "info", "Autopilot enabled — Rivo may now trade this portfolio.", {
-    address: portfolio!.address,
-  });
+  await record(id, "autopilot.enabled", "info",
+    requested === "experimental_testnet"
+      ? "Experimental Testnet enabled — Rivo may now place real orders on the testnet with this portfolio."
+      : "Autopilot enabled — Rivo may now trade this portfolio.",
+    { address: portfolio!.address, mode: requested, strategy: PRODUCTION_STRATEGY.id, strategyState: PRODUCTION_STRATEGY.state });
 
   return NextResponse.json({ view: await buildView(started!) });
 });

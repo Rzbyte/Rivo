@@ -100,7 +100,15 @@ describe("parsePolicy", () => {
 
   it("defaults an unknown mode to shadow — never to trading with real money", () => {
     expect(parsePolicy({ owner: OWNER, capital: 10, mode: "yolo" }).mode).toBe("shadow");
-    expect(parsePolicy({ owner: OWNER, capital: 10, mode: "autopilot" }).mode).toBe("autopilot");
+    // `autopilot` is PRE-UPGRADE data and no longer names a mode. It demotes to
+    // shadow rather than being honoured as live execution: it was written by a
+    // build that never checked whether the strategy had passed economic
+    // validation, so reading it as `validated_autopilot` would reissue a
+    // permission under a stronger meaning than the one it was granted with.
+    // Migration 003_execution_mode makes the same choice for stored rows.
+    expect(parsePolicy({ owner: OWNER, capital: 10, mode: "autopilot" }).mode).toBe("shadow");
+    expect(parsePolicy({ owner: OWNER, capital: 10, mode: "experimental_testnet" }).mode).toBe("experimental_testnet");
+    expect(parsePolicy({ owner: OWNER, capital: 10, mode: "validated_autopilot" }).mode).toBe("validated_autopilot");
   });
 });
 

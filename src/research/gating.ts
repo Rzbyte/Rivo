@@ -140,3 +140,39 @@ export function judge(
 
   return { state: failures.length === 0 ? "VALIDATED" : "REJECTED", failures, withoutBestFold };
 }
+
+// ---------------------------------------------------------------------------
+// The strategy actually running in production, and where its verdict came from
+// ---------------------------------------------------------------------------
+
+/**
+ * The forecast the engine ships, with its standing.
+ *
+ * Both numbers below are read out of this repository's own artefacts rather
+ * than quoted from memory, and they disagree with each other on purpose —
+ * which is the entire point of having this record:
+ *
+ *   AUC 0.8158  (docs/evidence/calibration.json) — the forecast discriminates.
+ *   ROS -6.49%  (docs/evidence/alpha-research.json) — trading it loses money.
+ *
+ * A model can be right about direction and still be a losing trade, because
+ * being right is not the same as being right by more than the spread you cross
+ * to act on it. That gap is why `state` below is REJECTED while the accuracy is
+ * genuinely good, and why the execution gate reads THIS field rather than the
+ * accuracy.
+ */
+export const PRODUCTION_STRATEGY = {
+  id: "diffusion-taker-v1",
+  label: "Diffusion Taker V1",
+  state: "REJECTED" as StrategyState,
+  /** Area under the ROC curve, measured. Forecast quality, not economics. */
+  auc: 0.8158,
+  /** Out-of-sample return on stake, walk-forward, window-clustered. */
+  returnOnStake: -0.0649,
+  tStat: -0.5,
+  evidence: "docs/ALPHA-RESEARCH.md",
+  /** One sentence, for anywhere this has to be explained without room to argue. */
+  note:
+    "Predictive accuracy is not sufficient for live-capital deployment. " +
+    "This strategy failed out-of-sample economic validation.",
+} as const;

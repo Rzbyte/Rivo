@@ -88,7 +88,7 @@ export async function seedPortfolio(over: { capital?: number; mode?: string; sta
   const [p] = await query<{ id: string }>(
     `INSERT INTO portfolios (user_id, wallet_id, network, capital, profile, mode, state)
      VALUES ($1, $2, 'testnet', $3, 'balanced', $4, $5) RETURNING id`,
-    [u!.id, w!.id, over.capital ?? 50, over.mode ?? "autopilot", over.state ?? "running"],
+    [u!.id, w!.id, over.capital ?? 50, over.mode ?? "experimental_testnet", over.state ?? "running"],
   );
   await query("INSERT INTO portfolio_runtime (portfolio_id, cash, peak_equity) VALUES ($1, $2, $2)", [
     p!.id,

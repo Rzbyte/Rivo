@@ -67,21 +67,21 @@ describe("autopilot is restricted to the backend's own signer", () => {
 
   it("downgrades a foreign wallet to shadow, with the reason attached", async () => {
     withSigner(registry, B.toLowerCase());
-    const rec = await registry.put({ owner: A, capital: 10, profile: "balanced", mode: "autopilot" });
+    const rec = await registry.put({ owner: A, capital: 10, profile: "balanced", mode: "experimental_testnet" });
     expect(rec.policy.mode).toBe("shadow");
     expect(rec.policy.stoppedReason).toMatch(/restricted to the wallet this backend signs as/);
   });
 
   it("permits autopilot for the signer's own wallet", async () => {
     withSigner(registry, A.toLowerCase());
-    const rec = await registry.put({ owner: A, capital: 10, profile: "balanced", mode: "autopilot" });
-    expect(rec.policy.mode).toBe("autopilot");
+    const rec = await registry.put({ owner: A, capital: 10, profile: "balanced", mode: "experimental_testnet" });
+    expect(rec.policy.mode).toBe("experimental_testnet");
     expect(rec.policy.stoppedReason).toBeUndefined();
   });
 
   it("refuses autopilot outright when the backend holds no key", async () => {
     withSigner(registry, null);
-    const rec = await registry.put({ owner: A, capital: 10, profile: "balanced", mode: "autopilot" });
+    const rec = await registry.put({ owner: A, capital: 10, profile: "balanced", mode: "experimental_testnet" });
     expect(rec.policy.mode).toBe("shadow");
     expect(rec.policy.stoppedReason).toMatch(/no signing key/);
   });
@@ -101,7 +101,7 @@ describe("autopilot is restricted to the backend's own signer", () => {
     // Write an autopilot policy directly, bypassing put()'s downgrade, to model a
     // policy that became stale when the backend's key changed.
     const rec = registry.get(A)!;
-    (rec.policy as { mode: string }).mode = "autopilot";
+    (rec.policy as { mode: string }).mode = "experimental_testnet";
     await registry.put({ ...rec.policy, mode: "shadow" });
     const refusal = await registry.autopilotRefusal(A);
     expect(refusal).toMatch(/restricted/);

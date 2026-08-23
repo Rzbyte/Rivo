@@ -23,8 +23,19 @@
 import { PROFILES, profile as baseProfile, type ProfileName, type RiskProfile } from "./profiles.js";
 import { TRADEABLE_CADENCES, tenorLabel } from "../core/venue.js";
 
-/** How autonomously Rivo is allowed to act for this user. */
-export type RunMode = "shadow" | "autopilot";
+/**
+ * How autonomously Rivo is allowed to act for this user.
+ *
+ * Three modes rather than the `shadow | autopilot` pair this used to be. The
+ * pair could not express the case this deployment actually has — run a strategy
+ * that FAILED economic validation, against a testnet, deliberately — without
+ * that being one flag away from doing it to real money. The semantics live in
+ * `runtime/permission.ts`; this is the same union under the name the policy has
+ * always used.
+ */
+export type { ExecutionMode as RunMode } from "../runtime/permission.js";
+import type { ExecutionMode } from "../runtime/permission.js";
+import { isExecutionMode } from "../runtime/permission.js";
 
 /** Where a portfolio is in its lifecycle. Pause and stop differ, see `RunState`. */
 export type RunState = "idle" | "running" | "paused" | "stopped" | "halted";
@@ -68,7 +79,7 @@ export interface PortfolioPolicy {
   /** Collateral the user has committed to Rivo. */
   capital: number;
   profile: ProfileName;
-  mode: RunMode;
+  mode: ExecutionMode;
   state: RunState;
   overrides: PolicyOverrides;
   /** Unix seconds. */
@@ -80,7 +91,7 @@ export interface PortfolioPolicy {
 
 export const POLICY_VERSION = 1;
 
-export function newPolicy(owner: string, capital: number, profile: ProfileName, mode: RunMode = "shadow"): PortfolioPolicy {
+export function newPolicy(owner: string, capital: number, profile: ProfileName, mode: ExecutionMode = "shadow"): PortfolioPolicy {
   const now = Math.floor(Date.now() / 1000);
   return {
     owner: owner.toLowerCase() as `0x${string}`,
@@ -201,7 +212,12 @@ export function parsePolicy(input: unknown): PortfolioPolicy {
   if (!Number.isFinite(capital) || capital <= 0) throw new Error("policy.capital must be a positive number");
   const profileName = String(o?.profile ?? "balanced") as ProfileName;
   if (!(profileName in PROFILES)) throw new Error(`policy.profile must be one of ${Object.keys(PROFILES).join(", ")}`);
-  const mode: RunMode = o?.mode === "autopilot" ? "autopilot" : "shadow";
+  // A stored `autopilot` is pre-upgrade data, and it becomes SHADOW rather
+  // than `validated_autopilot`. It was written by a build that never checked
+  // whether the strategy had passed economic validation, so honouring it as
+  // live execution would reissue a permission under a stronger meaning than
+  // the one it was granted with. The database migration makes the same choice.
+  const mode: ExecutionMode = isExecutionMode(o?.mode) ? o.mode : "shadow";
   const state: RunState = (["idle", "running", "paused", "stopped", "halted"] as const).includes(o?.state as RunState)
     ? (o!.state as RunState)
     : "idle";

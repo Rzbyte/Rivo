@@ -15,6 +15,8 @@ import { maybe, one, query, secs, tx } from "./pool.js";
 import { parsePolicy, type PortfolioPolicy, type RunMode, type RunState } from "../portfolio/policy.js";
 import type { ProfileName } from "../portfolio/profiles.js";
 import type { Network } from "../core/config.js";
+import { executionPermission, type Permission, type StrategyIdentity } from "../runtime/permission.js";
+import { PRODUCTION_STRATEGY } from "../research/gating.js";
 
 export interface Portfolio {
   id: string;
@@ -226,12 +228,36 @@ export async function scheduleNext(id: string, seconds: number): Promise<void> {
 }
 
 /**
- * Autopilot's precondition, in one place.
+ * May this portfolio move capital right now?
  *
- * A portfolio may trade for real only when the user asked for it AND the wallet
- * is still delegated. The second half is the one that matters: revoking
- * delegation in Privy has to stop trading even if nothing told Rivo, so the
- * check is a read of current state rather than a flag Rivo set once.
+ * This replaced `mayTradeLive`, which asked two of the five questions that
+ * matter — did the user switch Autopilot on, and is the wallet still delegated —
+ * and was the only gate on the execution path. The other three were the ones
+ * this repository already had answers to and never consulted: whether the
+ * strategy has passed economic validation, what network this is, and whether
+ * the mode the owner chose actually authorises spending on a strategy in that
+ * state.
+ *
+ * The old function is gone rather than deprecated. Leaving it would leave the
+ * shorter question available to the next person who needs a boolean.
+ *
+ * `strategy` is a parameter so a future validated model can be gated on its own
+ * verdict rather than on the incumbent's, and so tests can supply one.
  */
-export const mayTradeLive = (p: Portfolio): boolean =>
-  p.policy.mode === "autopilot" && p.delegated && Boolean(p.privyWalletId);
+export function permissionFor(
+  p: Portfolio,
+  signerAvailable: boolean,
+  strategy: StrategyIdentity = PRODUCTION_STRATEGY,
+): Permission {
+  return executionPermission({
+    mode: p.policy.mode,
+    strategy,
+    network: p.network,
+    signerAvailable,
+    delegated: p.delegated,
+    privyWalletId: p.privyWalletId,
+    // Opt-in for an UNVALIDATED strategy under Experimental Testnet. Absent
+    // means absent: only the exact string enables it.
+    allowUnvalidatedExperimental: process.env.RIVO_ALLOW_UNVALIDATED_EXPERIMENTAL === "true",
+  });
+}

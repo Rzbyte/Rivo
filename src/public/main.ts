@@ -15,6 +15,7 @@ import { Indexer } from "../core/indexer.js";
 import { runCycle, emptyPortfolio, type Activity, type PortfolioView, type ShadowPortfolio } from "./engine.js";
 import { snapshot, type Snapshot } from "../engine/scan.js";
 import { newPolicy, type PortfolioPolicy, type RunMode } from "../portfolio/policy.js";
+import { modeIntendsExecution } from "../runtime/permission.js";
 import type { ProfileName } from "../portfolio/profiles.js";
 import {
   connect, detectProvider, readWallet, silentAccounts, switchNetwork, WalletError,
@@ -332,7 +333,7 @@ onAction((act, el) => {
       return render();
     case "mode": {
       const mode = el.dataset.v as RunMode;
-      const blocker = mode === "autopilot" ? autopilotBlocker(state.backend) : null;
+      const blocker = modeIntendsExecution(mode) ? autopilotBlocker(state.backend) : null;
       if (blocker) {
         state.error = blocker;
         return render();

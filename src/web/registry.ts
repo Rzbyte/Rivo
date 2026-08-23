@@ -21,6 +21,7 @@
 //   runtime/signer.ts) this restriction is what lifts, and it lifts here.
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { modeIntendsExecution } from "../runtime/permission.js";
 import { join } from "node:path";
 import { spawn, type ChildProcess } from "node:child_process";
 import { newPolicy, parsePolicy, type PortfolioPolicy, type RunState } from "../portfolio/policy.js";
@@ -119,7 +120,7 @@ export class PortfolioRegistry {
   /** Create or replace an owner's policy. Autopilot is downgraded when refused. */
   async put(input: unknown): Promise<PortfolioRecord> {
     const policy = parsePolicy(input);
-    if (policy.mode === "autopilot") {
+    if (modeIntendsExecution(policy.mode)) {
       const refusal = await this.autopilotRefusal(policy.owner);
       if (refusal) {
         policy.mode = "shadow";
@@ -139,7 +140,7 @@ export class PortfolioRegistry {
     const next: RunState = action === "start" ? "running" : action === "pause" ? "paused" : "stopped";
 
     if (action === "start") {
-      const refusal = policy.mode === "autopilot" ? await this.autopilotRefusal(owner) : null;
+      const refusal = modeIntendsExecution(policy.mode) ? await this.autopilotRefusal(owner) : null;
       if (refusal) {
         // Refuse loudly rather than quietly downgrading a running portfolio: the
         // user asked for live orders and must be told they are not getting them.
@@ -192,7 +193,7 @@ export class PortfolioRegistry {
       "--interval-ms", String(this.opts.intervalMs),
       "--data-dir", dir,
     ];
-    if (policy.mode === "autopilot") args.push("--live");
+    if (modeIntendsExecution(policy.mode)) args.push("--live");
 
     // Its own process group, so stopping reaches the grandchild that actually
     // holds the positions rather than the npx wrapper in front of it.
