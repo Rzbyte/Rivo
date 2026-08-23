@@ -122,17 +122,32 @@ function Portfolio() {
             ...(embedded?.id ? { privyWalletId: embedded.id } : {}),
           },
         });
-        let list = await api<{ portfolios: { id: string }[] }>(token, "/api/portfolios");
+        type Listed = { id: string; state: string };
+        let list = await api<{ portfolios: Listed[] }>(token, "/api/portfolios");
         if (list.portfolios.length === 0 && opts.create) {
           await api(token, "/api/portfolios", { method: "POST", body: { capital: 50, profile: "balanced" } });
-          list = await api<{ portfolios: { id: string }[] }>(token, "/api/portfolios");
+          list = await api<{ portfolios: Listed[] }>(token, "/api/portfolios");
         }
-        const first = list.portfolios[0];
-        if (!first) {
+        // Show the portfolio that is actually alive, not the oldest one.
+        //
+        // This took the first row, and `portfoliosOf` orders by creation — so an
+        // owner whose first portfolio had halted on a drawdown landed on it
+        // forever, with a newer running portfolio invisible behind it. Pressing
+        // Enable there appeared to do nothing: it genuinely enabled, and the
+        // breaker re-fired within a cycle, because a 37% loss does not stop
+        // being a 37% loss when somebody clears the halt.
+        //
+        // Order of preference is order of usefulness: running, then anything not
+        // stopped, then whatever exists.
+        const pick =
+          list.portfolios.find((p) => p.state === "running") ??
+          list.portfolios.find((p) => p.state !== "stopped") ??
+          list.portfolios[0];
+        if (!pick) {
           setBundle(null);
           return;
         }
-        setBundle(await api<Bundle>(token, `/api/portfolios/${first.id}`));
+        setBundle(await api<Bundle>(token, `/api/portfolios/${pick.id}`));
       } catch (e) {
         setError(e instanceof ApiError ? e.message : "could not reach Rivo");
       } finally {
