@@ -143,7 +143,7 @@ export function Dashboard({
           [
             ["decisions", `Decisions`],
             ["positions", `Positions (${view.counts.openPositions})`],
-            ["transactions", `Transactions (${view.counts.executions})`],
+            ["transactions", `Transactions (${view.counts.onChain})`],
             ["events", `Events (${bundle.events.length})`],
           ] as [Tab, string][]
         ).map(([id, label]) => (
@@ -161,7 +161,7 @@ export function Dashboard({
 
       {tab === "decisions" && <Decisions groups={bundle.decisions} />}
       {tab === "positions" && <Positions view={view} closed={bundle.closed} />}
-      {tab === "transactions" && <Executions rows={bundle.executions} />}
+      {tab === "transactions" && <Executions rows={bundle.executions} counts={view.counts} />}
       {tab === "events" && <Events rows={bundle.events} />}
 
       {!readOnly && (

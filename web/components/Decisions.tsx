@@ -18,6 +18,7 @@
 import type { DecisionGroup } from "@rivo/db/view.js";
 import type { DecisionRecord } from "@rivo/runtime/state.js";
 import { tenorLabel } from "@rivo/core/venue.js";
+import { humanise, isFault } from "@/lib/reason.js";
 
 export function Decisions({ groups }: { groups: DecisionGroup[] }) {
   if (groups.length === 0) {
@@ -48,8 +49,12 @@ export function Decisions({ groups }: { groups: DecisionGroup[] }) {
           {g.bindings.length > 0 && (
             <div className="row" style={{ marginBottom: 8 }}>
               {g.bindings.slice(0, 4).map((b) => (
-                <span key={b.binding} className="pill" title={`${b.count} leg(s) refused for this reason`}>
-                  {b.binding} ×{b.count}
+                <span
+                  key={b.binding}
+                  className={isFault(b.binding) ? "pill fault" : "pill"}
+                  title={`${b.binding}\n\n(${b.count} leg${b.count === 1 ? "" : "s"})`}
+                >
+                  {humanise(b.binding, 64)} ×{b.count}
                 </span>
               ))}
             </div>
@@ -142,26 +147,12 @@ function Card({ d }: { d: DecisionRecord }) {
             {d.shares.toFixed(2)} shares · {d.cost.toFixed(2)}
           </span>
         )}{" "}
-        — {shorten(d.binding)}
+        — {humanise(d.binding)}
       </div>
 
       {e && <ExposureLine asset={d.asset} e={e} taken={taken} />}
     </div>
   );
-}
-
-/**
- * A reason, cut to something readable.
- *
- * Most bindings are a phrase. A few are whatever the chain library threw, and
- * one of those ran to six lines of encoded calldata and a documentation link —
- * inside a card, in a list of sixteen. The full text stays in the title
- * attribute and in the database; what is rendered is the part a person reads.
- */
-function shorten(binding: string, max = 150): string {
-  const firstSentence = binding.split(/(?<=\.)\s/)[0] ?? binding;
-  const text = firstSentence.length < binding.length && firstSentence.length > 40 ? firstSentence : binding;
-  return text.length <= max ? text : `${text.slice(0, max).trimEnd()}…`;
 }
 
 /**

@@ -31,7 +31,33 @@ const EXPLAIN: Record<string, string> = {
   orphaned: "Sent, and no receipt could be found. NOT the same as failed — the outcome is unknown, and position truth comes from on-chain reconciliation.",
 };
 
-export function Executions({ rows }: { rows: ExecutionRecord[] }) {
+/**
+ * The gap between an attempt and a transaction, said out loud.
+ *
+ * Every order is written to the ledger before it is signed — that ordering is
+ * what makes a crash recoverable, and it means the attempt count includes every
+ * order that was recorded and then never sent. On a live portfolio that ran
+ * overnight the two numbers were 1288 and 4.
+ *
+ * Rendering the first under the word "Transactions" was the single most
+ * misleading thing on the page, and it was misleading in the direction that
+ * flatters the product. So both numbers are shown, with the smaller one leading.
+ */
+function Ledgered({ counts }: { counts: Counts }) {
+  const attempts = counts.executions - counts.onChain;
+  if (attempts <= 0) return null;
+  return (
+    <p className="faint" style={{ marginBottom: 12, fontSize: 13 }}>
+      <strong>{counts.onChain.toLocaleString()}</strong> reached the chain.{" "}
+      {attempts.toLocaleString()} more {attempts === 1 ? "order was" : "orders were"} recorded and stopped before
+      signing — each row carries its reason.
+    </p>
+  );
+}
+
+type Counts = { executions: number; onChain: number };
+
+export function Executions({ rows, counts }: { rows: ExecutionRecord[]; counts: Counts }) {
   if (rows.length === 0) {
     return (
       <div className="panel">
@@ -43,6 +69,7 @@ export function Executions({ rows }: { rows: ExecutionRecord[] }) {
   }
   return (
     <div className="panel">
+      <Ledgered counts={counts} />
       <div className="scroll">
         <table>
           <thead>

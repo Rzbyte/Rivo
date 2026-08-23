@@ -149,6 +149,7 @@ input, select {
 .pill.live { background: var(--pos-soft); border-color: var(--pos); color: var(--pos); }
 .pill.shadow { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
 .pill.stopped { background: var(--neg-soft); border-color: var(--neg); color: var(--neg); }
+.pill.fault { background: var(--neg-soft); border-color: var(--neg); color: var(--neg); }
 .dot { width: 7px; height: 7px; border-radius: 999px; background: currentColor; }
 
 /* --- stats --------------------------------------------------------------- */

@@ -130,7 +130,7 @@ export interface PortfolioView {
     /** Submitted, and no receipt could be found. Not the same as failed. */
     orphanedExecutions: number;
   };
-  counts: { decisions: number; executions: number; openPositions: number; closedPositions: number };
+  counts: { decisions: number; executions: number; onChain: number; openPositions: number; closedPositions: number };
   /**
    * When the portfolio was created, and when its policy was last changed.
    *
@@ -241,7 +241,7 @@ export async function buildView(portfolio: Portfolio): Promise<PortfolioView> {
 
   const counts = await one<{
     decisions: string; executions: string; closed: string; adopted: string;
-    pending: string; failed: string; orphaned: string;
+    pending: string; failed: string; orphaned: string; onchain: string;
   }>(
     `SELECT (SELECT count(*) FROM decisions WHERE portfolio_id = $1)::text AS decisions,
             (SELECT count(*) FROM executions WHERE portfolio_id = $1)::text AS executions,
@@ -257,7 +257,15 @@ export async function buildView(portfolio: Portfolio): Promise<PortfolioView> {
             -- about nothing the user could act on.
             (SELECT count(*) FROM executions
               WHERE portfolio_id = $1 AND status = 'failed' AND created_at > now() - interval '1 hour')::text AS failed,
-            (SELECT count(*) FROM executions WHERE portfolio_id = $1 AND status = 'orphaned')::text AS orphaned`,
+            (SELECT count(*) FROM executions WHERE portfolio_id = $1 AND status = 'orphaned')::text AS orphaned,
+            -- Attempts that actually reached the chain.
+            --
+            -- Kept apart from the attempt count because the difference is the
+            -- honesty of the tab. Every considered order is recorded before
+            -- anything is signed, so the attempt count runs into the thousands
+            -- while the number of transactions is small. A tab reading
+            -- "Transactions (1288)" over four real ones is a claim, not a label.
+            (SELECT count(*) FROM executions WHERE portfolio_id = $1 AND tx_hash IS NOT NULL)::text AS onchain`,
     [portfolio.id],
   );
 
@@ -329,6 +337,7 @@ export async function buildView(portfolio: Portfolio): Promise<PortfolioView> {
     counts: {
       decisions: Number(counts.decisions),
       executions: Number(counts.executions),
+      onChain: Number(counts.onchain),
       openPositions: positions.length,
       closedPositions: Number(counts.closed),
     },
