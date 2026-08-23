@@ -17,12 +17,23 @@ import { Meter } from "./Dashboard";
 export function Exposure({ view }: { view: PortfolioView }) {
   return (
     <div className="panel">
-      <span className="label">One view, one budget</span>
-      <h3 style={{ marginTop: 6 }}>Correlated exposure</h3>
-      <p style={{ fontSize: 13, marginBottom: 12 }}>
-        What a 1% move in each underlying is worth to this portfolio, across every tenor at once. This is the
-        budget that makes Rivo refuse a second good-looking BTC window.
-      </p>
+      <div className="spread" style={{ marginBottom: 12 }}>
+        <h3 style={{ margin: 0 }}>Correlated exposure</h3>
+        {/* The explanation is what makes this panel mean anything, and it is also
+            the thing a returning user has read ten times. Behind a disclosure it
+            is available without being in the way. */}
+        <details style={{ fontSize: 12 }}>
+          <summary className="faint" style={{ cursor: "pointer", listStyle: "none" }}>
+            what is this?
+          </summary>
+          <p className="hint" style={{ marginTop: 6, marginBottom: 0, maxWidth: "42ch" }}>
+            What a 1% move in each underlying is worth to this portfolio, across every tenor at once. This is
+            the budget that makes Rivo refuse a second good-looking BTC window. Positive means the portfolio
+            gains when the underlying rises, so UP at one tenor and DOWN at another net off — exactly as they
+            do in reality.
+          </p>
+        </details>
+      </div>
       {view.exposure.map((e) => (
         <div key={e.asset} style={{ marginBottom: 12 }}>
           <div className="spread">
@@ -43,10 +54,6 @@ export function Exposure({ view }: { view: PortfolioView }) {
           </div>
         </div>
       ))}
-      <p className="hint" style={{ marginTop: 4, marginBottom: 0 }}>
-        Positive means the portfolio gains when the underlying rises. A portfolio holding UP at one tenor and
-        DOWN at another nets off here, exactly as it does in reality.
-      </p>
     </div>
   );
 }

@@ -109,12 +109,12 @@ export function Dashboard({
       <div className="grid cols-2" style={{ marginTop: 14 }}>
         <Exposure view={view} />
         <div className="panel">
-          <span className="label">Settling together</span>
-          <h3 style={{ marginTop: 6 }}>Expiry concentration</h3>
-          <p style={{ fontSize: 13, marginBottom: 10 }}>
-            Positions that settle in the same fifteen minutes fail together, so they share a budget of{" "}
-            {money(view.limits.expiryBucketCap)}.
-          </p>
+          <div className="spread" style={{ marginBottom: 10 }}>
+            <h3 style={{ margin: 0 }}>Expiry concentration</h3>
+            <span className="faint" style={{ fontSize: 12 }}>
+              share {money(view.limits.expiryBucketCap)}
+            </span>
+          </div>
           {view.expiryBuckets.length === 0 ? (
             <p className="faint" style={{ marginBottom: 0, fontSize: 13 }}>
               Nothing open.
@@ -273,8 +273,7 @@ function Reconciliation({ view }: { view: PortfolioView }) {
   if (quiet) return null;
   return (
     <div className="panel" style={{ marginTop: 14 }}>
-      <span className="label">Chain vs. Rivo</span>
-      <h3 style={{ marginTop: 6 }}>Reconciliation</h3>
+      <h3 style={{ marginTop: 0 }}>Reconciliation</h3>
       <div className="grid cols-4" style={{ marginTop: 10 }}>
         {r.adopted > 0 && (
           <Note

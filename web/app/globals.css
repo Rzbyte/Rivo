@@ -152,9 +152,26 @@ input, select {
 .dot { width: 7px; height: 7px; border-radius: 999px; background: currentColor; }
 
 /* --- stats --------------------------------------------------------------- */
+/* Each on its own line.
+   These were inline spans, so a value and its note rendered welded together —
+   "50.0050.00 committed", "0.0000at least 10 needed". Every stat on the page
+   read as one run-on string, which is most of why the dashboard felt crowded:
+   not too much information, just no space between any of it. */
 .stat .label { display: block; margin-bottom: 3px; }
-.stat .value { font-family: var(--mono); font-size: 22px; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
-.stat .sub { font-size: 12px; color: var(--faint); }
+.stat .value {
+  display: block;
+  font-family: var(--mono);
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+.stat .sub { display: block; font-size: 12px; color: var(--faint); margin-top: 3px; line-height: 1.4; }
+
+/* A disclosure that does not shout. The teaching text behind these is worth
+   having and not worth re-reading, so the control stays quiet until wanted. */
+details > summary::-webkit-details-marker { display: none; }
+details > summary:hover { color: var(--ink); }
 
 /* --- meters -------------------------------------------------------------- */
 .meter { height: 5px; background: var(--panel-2); border-radius: 999px; overflow: hidden; margin-top: 5px; }
