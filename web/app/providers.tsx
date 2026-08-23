@@ -63,7 +63,23 @@ export function Providers({ children }: { children: React.ReactNode }) {
         // separate from their main wallet.
         embeddedWallets: {
           ethereum: { createOnLogin: "all-users" },
-          showWalletUIs: false,
+          // `showWalletUIs` is deliberately ABSENT.
+          //
+          // It was set to false, which the docs are unambiguous about: "wallet
+          // UIs will always be hidden". That was reasoned from "Rivo must not
+          // pop a wallet dialog for every trade" — which is true, and which this
+          // setting has nothing to do with. Rivo never sends a trade from the
+          // browser; trades go through the worker under delegated authority.
+          //
+          // What it actually hid was the two prompts the product depends on
+          // being seen. The delegation consent never appeared, so Autopilot
+          // could not be granted at all. And the testnet mint sent a transaction
+          // from the user's wallet with nothing shown — while the copy beside
+          // the button promised they would approve it in Privy's own prompt.
+          //
+          // Rivo's entire safety story is that the user gives explicit, visible
+          // consent. Suppressing the interface that collects it contradicts the
+          // thing it exists to protect.
         },
         supportedChains: [SOMNIA_TESTNET, SOMNIA_MAINNET],
         defaultChain: CHAIN,
