@@ -60,3 +60,5 @@ web/out/
 .rivo/pg/
 .rivo/pgdata/
 .rivo/pg.log
+.vercel
+.env*
