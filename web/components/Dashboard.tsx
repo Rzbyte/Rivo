@@ -36,11 +36,21 @@ export function Dashboard({
   busy,
   readOnly = false,
   onDisable,
+  onEnable,
   onSave,
 }: {
   bundle: Bundle;
   balances: Balances | null;
   busy: string | null;
+  /**
+   * Present when execution is OFF, so the dashboard can offer to turn it on.
+   *
+   * Without it the dashboard was only ever rendered for a portfolio that was
+   * already live, which meant a portfolio in Shadow Mode had no dashboard at
+   * all — no decisions, no exposure, no strategy gate. The one screen that
+   * explains what Rivo is doing was hidden precisely when a user most needed it.
+   */
+  onEnable?: () => void | Promise<void>;
   /**
    * Hide every control rather than disabling it.
    *
@@ -84,11 +94,22 @@ export function Dashboard({
             </span>
           </span>
         </div>
-        {!readOnly && (
-          <button className="danger" disabled={busy !== null} onClick={() => void onDisable()}>
-            {busy === "autopilot" ? "Stopping…" : "Stop Autopilot"}
-          </button>
-        )}
+        {/* One control, and it says which way it goes.
+            The dashboard used to render only for a live portfolio, so the only
+            button it needed was Stop. Now that a Shadow Mode portfolio has a
+            dashboard too, the same slot has to offer the other direction —
+            otherwise the screen that explains what Rivo is doing is also the
+            screen with no way to let it do anything. */}
+        {!readOnly &&
+          (view.autopilot.live ? (
+            <button className="danger" disabled={busy !== null} onClick={() => void onDisable()}>
+              {busy === "autopilot" ? "Stopping…" : "Stop trading"}
+            </button>
+          ) : onEnable ? (
+            <button className="primary" disabled={busy !== null} onClick={() => void onEnable()}>
+              {busy === "autopilot" ? "Enabling…" : "Enable Experimental Testnet"}
+            </button>
+          ) : null)}
       </div>
 
       <section className="grid cols-4">
@@ -275,6 +296,19 @@ function StatusBanner({ view }: { view: PortfolioView }) {
       <div className="banner warn">
         <strong>No worker is running.</strong> Your settings are saved and your positions are safe, but nothing
         is executing cycles right now. Positions will be managed as soon as a worker comes back.
+      </div>
+    );
+  }
+  if (!view.autopilot.live && !modeIntendsExecution(view.autopilot.mode)) {
+    // Shadow is not "off". It prices every window, records every decision and
+    // manages a simulated book — which is most of what this page shows. Saying
+    // so is the difference between a user thinking Rivo is broken and knowing
+    // it is deciding without spending.
+    return (
+      <div className="banner">
+        <strong>Shadow Mode.</strong> Rivo is pricing every live window and recording what it would do —
+        everything below is real except the money. Nothing will be sent until you enable Experimental
+        Testnet.
       </div>
     );
   }

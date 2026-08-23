@@ -317,7 +317,14 @@ function Portfolio() {
   if (!authenticated) return <Shell><p className="muted">Redirecting…</p></Shell>;
 
   const view = bundle?.view ?? null;
-  const funded = (balances?.collateral ?? 0) > 0;
+  // A failed balance read is not an empty wallet.
+  //
+  // This was `balances?.collateral > 0` alone, so a portfolio that had been
+  // trading for a week fell back to the Fund screen the moment an RPC call
+  // timed out — hiding the dashboard behind a step the user completed days ago.
+  // Anything the portfolio already holds settles the question without the chain.
+  const funded =
+    (balances?.collateral ?? 0) > 0 || (view?.equity ?? 0) > 0 || (view?.counts.executions ?? 0) > 0;
   // "Has a capital figure" is not "the user chose one". A portfolio is created
   // with a sensible default, so capital is non-zero from the first instant —
   // and ticking this step before the user has touched anything makes the whole
@@ -373,7 +380,9 @@ function Portfolio() {
             { label: "Rivo Portfolio", done: Boolean(address) },
             { label: "Funded", done: funded },
             { label: "Configured", done: configured },
-            { label: "Autopilot", done: on },
+            // Named for what it grants. "Autopilot" was the old word and it is
+            // now a different, stricter mode this strategy cannot have.
+            { label: "Experimental Testnet", done: on },
           ]}
         />
       )}
@@ -388,9 +397,19 @@ function Portfolio() {
         </div>
       )}
 
+      {/* Onboarding, then the product. The line between them is `configured`,
+          not `on`.
+
+          This used to hang the dashboard off `on` — autopilot.live — so a
+          portfolio in Shadow Mode had no dashboard at all. No decisions, no
+          exposure, no positions, no strategy gate: the one screen that explains
+          what Rivo is doing was hidden exactly when somebody most needed to see
+          it, and the user was left on a settings form wondering which button to
+          press. Shadow is a working state, not an absence, and it produces
+          almost everything this page shows. */}
       {address && !funded && <Fund address={address} balances={balances} />}
 
-      {address && funded && view && !on && (
+      {address && funded && view && !configured && (
         <Configure
           view={view}
           balances={balances}
@@ -400,12 +419,13 @@ function Portfolio() {
         />
       )}
 
-      {address && view && on && (
+      {address && funded && view && configured && bundle && (
         <Dashboard
-          bundle={bundle!}
+          bundle={bundle}
           balances={balances}
           busy={busy}
           onDisable={disableAutopilot}
+          onEnable={enableAutopilot}
           onSave={save}
         />
       )}
