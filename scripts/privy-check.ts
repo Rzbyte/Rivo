@@ -8,7 +8,7 @@
 // It never signs anything and never touches a user's wallet.
 
 import { loadEnv } from "../src/core/env.js";
-import { preflight, POLICY_INTENT } from "../src/signing/privy.js";
+import { preflight, serverSigningReady, POLICY_INTENT } from "../src/signing/privy.js";
 import { VENUE } from "../src/core/venue.js";
 import { network } from "../src/core/config.js";
 
@@ -72,15 +72,17 @@ async function main(): Promise<void> {
   for (const d of POLICY_INTENT.deny) console.log(`    deny   ${d}`);
 
   console.log("");
-  if (p.problems.length === 0) {
+  if (serverSigningReady(p)) {
     console.log("Nothing outstanding. Autopilot can be granted signing authority on this deployment.");
   } else {
-    console.log(`${p.problems.length} thing(s) to fix:`);
+    console.log(`${p.problems.length} thing(s) to fix — ALL of them block autonomous signing:`);
     for (const problem of p.problems) console.log(`  · ${problem}`);
-    // A missing authorization key is a recommendation, not a failure. Anything
-    // else means a user cannot actually complete the flow.
-    const blocking = p.problems.filter((x) => !x.startsWith("PRIVY_AUTHORIZATION_KEY"));
-    if (blocking.length > 0) process.exitCode = 1;
+    console.log("");
+    console.log("Exiting non-zero. This check used to treat a missing PRIVY_AUTHORIZATION_KEY as");
+    console.log("advice rather than a failure, so a deployment that could not sign at all reported");
+    console.log("itself healthy. It then accepted a user's Autopilot grant and rejected 586");
+    console.log("signatures before anyone looked. There is no partial readiness here.");
+    process.exitCode = 1;
   }
 }
 

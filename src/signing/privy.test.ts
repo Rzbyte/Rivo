@@ -6,7 +6,7 @@
 // what a user reads before deciding to fund a wallet.
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { LOGIN_METHODS, POLICY_INTENT, PrivyDelegatedAuthority, enabledMethods, looksRevoked, preflight, privyConfigured, resetPrivyClient, verifyAccessToken } from "./privy.js";
+import { LOGIN_METHODS, POLICY_INTENT, PrivyDelegatedAuthority, enabledMethods, looksRevoked, preflight, privyConfigured, resetPrivyClient, serverSigningReady, verifyAccessToken } from "./privy.js";
 import { canSign, type SigningAuthority } from "../runtime/signer.js";
 import { DryExecutor, executorFor } from "../runtime/executor.js";
 
@@ -230,6 +230,40 @@ describe("the preflight", () => {
     set("NEXT_PUBLIC_PRIVY_SIGNER_ID", undefined);
     const p = await preflight();
     expect(p.problems.some((x) => x.startsWith("NEXT_PUBLIC_PRIVY_SIGNER_ID"))).toBe(true);
+  });
+
+  it("does not call a deployment ready when it cannot sign", async () => {
+    // The regression. `preflight` has called the authorization key REQUIRED for
+    // a while, but the readiness check downgraded exactly that problem to advice
+    // and exited zero without it. A deployment therefore passed its own check,
+    // started a worker, accepted a user's grant of Autopilot, and rejected 586
+    // signatures before anybody looked at why the trades were failing.
+    set("PRIVY_APP_ID", "app");
+    set("PRIVY_APP_SECRET", "secret");
+    set("NEXT_PUBLIC_PRIVY_APP_ID", "app");
+    set("NEXT_PUBLIC_PRIVY_SIGNER_ID", "quorum");
+    set("PRIVY_AUTHORIZATION_KEY", undefined);
+
+    const p = await preflight();
+    expect(p.problems.some((x) => x.startsWith("PRIVY_AUTHORIZATION_KEY"))).toBe(true);
+    expect(serverSigningReady(p)).toBe(false);
+  });
+
+  it("has no severity tier a future edit could hide a blocker behind", async () => {
+    // Readiness is the conjunction of everything preflight found, with no
+    // exemptions. Written as a property rather than a list so that a new problem
+    // added to preflight is blocking by default instead of by remembering.
+    for (const missing of ["PRIVY_APP_ID", "PRIVY_APP_SECRET", "NEXT_PUBLIC_PRIVY_APP_ID", "NEXT_PUBLIC_PRIVY_SIGNER_ID", "PRIVY_AUTHORIZATION_KEY"]) {
+      set("PRIVY_APP_ID", "app");
+      set("PRIVY_APP_SECRET", "secret");
+      set("NEXT_PUBLIC_PRIVY_APP_ID", "app");
+      set("NEXT_PUBLIC_PRIVY_SIGNER_ID", "quorum");
+      set("PRIVY_AUTHORIZATION_KEY", "authkey");
+      set(missing, undefined);
+      const p = await preflight();
+      expect(p.problems.length, `${missing} missing should be a problem`).toBeGreaterThan(0);
+      expect(serverSigningReady(p), `${missing} missing must block readiness`).toBe(false);
+    }
   });
 
   it("carries no secret in what it reports", async () => {

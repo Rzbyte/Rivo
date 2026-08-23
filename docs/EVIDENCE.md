@@ -606,6 +606,28 @@ prevent. Fixed with a per-leg cooldown and by re-baselining `fairAtEntry` after 
 
 ---
 
+## 8. Market-relative alpha: researched, and rejected
+
+§3 established that taking liquidity on the diffusion signal loses money. The
+obvious follow-up is whether the signal was wrong or merely mis-framed: instead
+of computing a fair value independently and reading the whole gap to the market
+as edge, treat the DreamDEX price as the prior and predict only the residual.
+
+Fourteen candidates, walk-forward, scored in money with standard errors clustered
+on the settled window. **None passed.** The favourite–longshot bias is real and
+statistically strong in aggregate, and flips sign when measured against the base
+rate of its own period. Of twenty-three conditions scanned, one survived both
+regimes and then failed robustness: 78% of its profit came from one block of 126
+windows out of 731.
+
+The binding constraint is not the model. The indexer holds 32 days and 985
+traded windows, 95% of the activity arrived on two days, and resolving a +0.02
+per-share edge at three sigma needs roughly 5,600 windows.
+
+Full report: [ALPHA-RESEARCH.md](ALPHA-RESEARCH.md).
+Artefact: [`evidence/alpha-research.json`](evidence/alpha-research.json).
+Reproduce: `npm run alpha -- --days 90 --folds 5`.
+
 ## Reproducing all of it
 
 ```bash

@@ -156,6 +156,25 @@ export interface PrivyPreflight {
   problems: string[];
 }
 
+/**
+ * Can this deployment actually sign for a user, autonomously, right now?
+ *
+ * Every entry in `problems` blocks. There is deliberately no severity ladder,
+ * because the one time this file had a "recommended but not required" tier it
+ * was applied to PRIVY_AUTHORIZATION_KEY — and a deployment missing that key
+ * passes its own readiness check, boots a worker, accepts a user's grant of
+ * Autopilot, and then fails every approval it attempts. That combination ran in
+ * production here for an hour and forty minutes and produced 586 rejected
+ * signatures, all of them reported as ordinary trade failures.
+ *
+ * A readiness check that returns success when signing cannot work is worse than
+ * no readiness check, so this one returns success only when nothing is
+ * outstanding.
+ */
+export function serverSigningReady(p: PrivyPreflight): boolean {
+  return p.problems.length === 0;
+}
+
 /** Which sign-in methods this Privy app actually offers, from its own settings. */
 export function enabledMethods(settings: Record<string, unknown>): { enabled: string[]; disabled: string[] } {
   const enabled: string[] = [];

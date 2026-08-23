@@ -1,0 +1,4646 @@
+{
+  "generatedAt": "2026-08-23T12:56:07.106Z",
+  "dataset": {
+    "rows": 54731,
+    "windows": 737,
+    "span": [
+      1784718915,
+      1787486505
+    ],
+    "executableOnly": true,
+    "days": 90
+  },
+  "folds": 5,
+  "blocks": "windows",
+  "acceptance": {
+    "minReturnOnStake": 0.02,
+    "minWindows": 200,
+    "minPositiveFolds": 3,
+    "minTStat": 2,
+    "maxDrawdownOfStake": 0.25,
+    "survivesBestFoldRemoval": true,
+    "mustBeatBaseRate": true
+  },
+  "verdict": "no candidate eligible for live execution",
+  "results": [
+    {
+      "strategy": "market-only (trust the price)",
+      "gate": null,
+      "all": {
+        "trades": 0,
+        "windows": 0,
+        "stake": 0,
+        "pnl": 0,
+        "returnOnStake": 0,
+        "meanPerTrade": 0,
+        "medianPerTrade": 0,
+        "winRate": 0,
+        "maxDrawdown": 0,
+        "profitFactor": null,
+        "seReturnOnStake": 0,
+        "tStat": 0
+      },
+      "once": {
+        "trades": 0,
+        "windows": 0,
+        "stake": 0,
+        "pnl": 0,
+        "returnOnStake": 0,
+        "meanPerTrade": 0,
+        "medianPerTrade": 0,
+        "winRate": 0,
+        "maxDrawdown": 0,
+        "profitFactor": null,
+        "seReturnOnStake": 0,
+        "tStat": 0
+      },
+      "byFold": [
+        {
+          "fold": 1,
+          "testStart": 1784822426,
+          "trainWindows": 130,
+          "all": {
+            "trades": 0,
+            "windows": 0,
+            "stake": 0,
+            "pnl": 0,
+            "returnOnStake": 0,
+            "meanPerTrade": 0,
+            "medianPerTrade": 0,
+            "winRate": 0,
+            "maxDrawdown": 0,
+            "profitFactor": null,
+            "seReturnOnStake": 0,
+            "tStat": 0
+          },
+          "once": {
+            "trades": 0,
+            "windows": 0,
+            "stake": 0,
+            "pnl": 0,
+            "returnOnStake": 0,
+            "meanPerTrade": 0,
+            "medianPerTrade": 0,
+            "winRate": 0,
+            "maxDrawdown": 0,
+            "profitFactor": null,
+            "seReturnOnStake": 0,
+            "tStat": 0
+          }
+        },
+        {
+          "fold": 2,
+          "testStart": 1786003801,
+          "trainWindows": 283,
+          "all": {
+            "trades": 0,
+            "windows": 0,
+            "stake": 0,
+            "pnl": 0,
+            "returnOnStake": 0,
+            "meanPerTrade": 0,
+            "medianPerTrade": 0,
+            "winRate": 0,
+            "maxDrawdown": 0,
+            "profitFactor": null,
+            "seReturnOnStake": 0,
+            "tStat": 0
+          },
+          "once": {
+            "trades": 0,
+            "windows": 0,
+            "stake": 0,
+            "pnl": 0,
+            "returnOnStake": 0,
+            "meanPerTrade": 0,
+            "medianPerTrade": 0,
+            "winRate": 0,
+            "maxDrawdown": 0,
+            "profitFactor": null,
+            "seReturnOnStake": 0,
+            "tStat": 0
+          }
+        },
+        {
+          "fold": 3,
+          "testStart": 1787142270,
+          "trainWindows": 439,
+          "all": {
+            "trades": 0,
+            "windows": 0,
+            "stake": 0,
+            "pnl": 0,
+            "returnOnStake": 0,
+            "meanPerTrade": 0,
+            "medianPerTrade": 0,
+            "winRate": 0,
+            "maxDrawdown": 0,
+            "profitFactor": null,
+            "seReturnOnStake": 0,
+            "tStat": 0
+          },
+          "once": {
+            "trades": 0,
+            "windows": 0,
+            "stake": 0,
+            "pnl": 0,
+            "returnOnStake": 0,
+            "meanPerTrade": 0,
+            "medianPerTrade": 0,
+            "winRate": 0,
+            "maxDrawdown": 0,
+            "profitFactor": null,
+            "seReturnOnStake": 0,
+            "tStat": 0
+          }
+        },
+        {
+          "fold": 4,
+          "testStart": 1787275894,
+          "trainWindows": 564,
+          "all": {
+            "trades": 0,
+            "windows": 0,
+            "stake": 0,
+            "pnl": 0,
+            "returnOnStake": 0,
+            "meanPerTrade": 0,
+            "medianPerTrade": 0,
+            "winRate": 0,
+            "maxDrawdown": 0,
+            "profitFactor": null,
+            "seReturnOnStake": 0,
+            "tStat": 0
+          },
+          "once": {
+            "trades": 0,
+            "windows": 0,
+            "stake": 0,
+            "pnl": 0,
+            "returnOnStake": 0,
+            "meanPerTrade": 0,
+            "medianPerTrade": 0,
+            "winRate": 0,
+            "maxDrawdown": 0,
+            "profitFactor": null,
+            "seReturnOnStake": 0,
+            "tStat": 0
+          }
+        }
+      ],
+      "edgeBuckets": [],
+      "byAsset": {},
+      "byTenor": {},
+      "byLeg": {}
+    },
+    {
+      "strategy": "take every executable fill (base rate)",
+      "gate": {
+        "state": "REJECTED",
+        "failures": [
+          "return on stake -0.89% is below the 2.00% floor",
+          "t = -1.24 on a window-clustered bootstrap, below 2",
+          "removing the best fold takes it from -0.89% to -1.22% — the result is one period, not a strategy",
+          "-0.89% does not beat taking every available fill (-0.89%), so the selection adds nothing"
+        ],
+        "withoutBestFold": {
+          "stake": 8636.3740000001,
+          "pnl": -105.37400000000271,
+          "returnOnStake": -0.012201185358577742
+        }
+      },
+      "all": {
+        "trades": 18177,
+        "windows": 590,
+        "stake": 8841.378000000132,
+        "pnl": -78.37800000000193,
+        "returnOnStake": -0.008864907710087813,
+        "meanPerTrade": -0.004311932662155578,
+        "medianPerTrade": -0.020000000000000018,
+        "winRate": 0.4820927545799637,
+        "maxDrawdown": 155.8890000000024,
+        "profitFactor": 0.9714243943023925,
+        "seReturnOnStake": 0.007137634839026996,
+        "tStat": -1.2419951300417436
+      },
+      "once": {
+        "trades": 590,
+        "windows": 590,
+        "stake": 285.3940000000001,
+        "pnl": 7.606000000000001,
+        "returnOnStake": 0.026650875631582995,
+        "meanPerTrade": 0.012891525423728815,
+        "medianPerTrade": -0.02,
+        "winRate": 0.4966101694915254,
+        "maxDrawdown": 9.296000000000001,
+        "profitFactor": 1.076093481131697,
+        "seReturnOnStake": 0.036302212876326574,
+        "tStat": 0.7341391480011562
+      },
+      "byFold": [
+        {
+          "fold": 1,
+          "testStart": 1784822426,
+          "trainWindows": 130,
+          "all": {
+            "trades": 16105,
+            "windows": 147,
+            "stake": 7915.812000000101,
+            "pnl": -117.81200000000275,
+            "returnOnStake": -0.014883122540050376,
+            "meanPerTrade": -0.0073152437131327385,
+            "medianPerTrade": -0.020000000000000018,
+            "winRate": 0.4841974542067681,
+            "maxDrawdown": 155.8890000000024,
+            "profitFactor": 0.9520732512993546,
+            "seReturnOnStake": 0.007096628455366273,
+            "tStat": -2.0972103349719786
+          },
+          "once": {
+            "trades": 147,
+            "windows": 147,
+            "stake": 69.14399999999998,
+            "pnl": -0.1439999999999988,
+            "returnOnStake": -0.0020826102047899865,
+            "meanPerTrade": -0.0009795918367346856,
+            "medianPerTrade": -0.020000000000000018,
+            "winRate": 0.46938775510204084,
+            "maxDrawdown": 4.311999999999999,
+            "profitFactor": 0.9943168363722473,
+            "seReturnOnStake": 0.07665346860217073,
+            "tStat": -0.027169158066397137
+          }
+        },
+        {
+          "fold": 2,
+          "testStart": 1786003801,
+          "trainWindows": 283,
+          "all": {
+            "trades": 1036,
+            "windows": 147,
+            "stake": 495.6629999999991,
+            "pnl": 9.33700000000004,
+            "returnOnStake": 0.01883739556916707,
+            "meanPerTrade": 0.009012548262548301,
+            "medianPerTrade": -0.02,
+            "winRate": 0.4874517374517375,
+            "maxDrawdown": 7.189999999999994,
+            "profitFactor": 1.06755954965124,
+            "seReturnOnStake": 0.023337159703822764,
+            "tStat": 0.8071845849382174
+          },
+          "once": {
+            "trades": 147,
+            "windows": 147,
+            "stake": 67.53300000000003,
+            "pnl": -0.5330000000000007,
+            "returnOnStake": -0.007892437771163734,
+            "meanPerTrade": -0.003625850340136059,
+            "medianPerTrade": -0.02,
+            "winRate": 0.4557823129251701,
+            "maxDrawdown": 4.297,
+            "profitFactor": 0.9745426756459856,
+            "seReturnOnStake": 0.06878631009136303,
+            "tStat": -0.11473849608564374
+          }
+        },
+        {
+          "fold": 3,
+          "testStart": 1787142270,
+          "trainWindows": 439,
+          "all": {
+            "trades": 450,
+            "windows": 147,
+            "stake": 224.89900000000003,
+            "pnl": 3.1010000000000013,
+            "returnOnStake": 0.013788411687023957,
+            "meanPerTrade": 0.006891111111111114,
+            "medianPerTrade": 0.02100000000000002,
+            "winRate": 0.5066666666666667,
+            "maxDrawdown": 4.7970000000000015,
+            "profitFactor": 1.035136023204958,
+            "seReturnOnStake": 0.028058819418154,
+            "tStat": 0.491410970701885
+          },
+          "once": {
+            "trades": 147,
+            "windows": 147,
+            "stake": 73.519,
+            "pnl": -4.519,
+            "returnOnStake": -0.06146710374188985,
+            "meanPerTrade": -0.030741496598639458,
+            "medianPerTrade": -0.11699999999999999,
+            "winRate": 0.46938775510204084,
+            "maxDrawdown": 7.593,
+            "profitFactor": 0.8614865900383143,
+            "seReturnOnStake": 0.07394325733083558,
+            "tStat": -0.83127395195582
+          }
+        },
+        {
+          "fold": 4,
+          "testStart": 1787275894,
+          "trainWindows": 564,
+          "all": {
+            "trades": 586,
+            "windows": 149,
+            "stake": 205.00400000000053,
+            "pnl": 26.996000000000052,
+            "returnOnStake": 0.13168523541004068,
+            "meanPerTrade": 0.04606825938566562,
+            "medianPerTrade": -0.020000000000000018,
+            "winRate": 0.39590443686006827,
+            "maxDrawdown": 6.8709999999999525,
+            "profitFactor": 1.4638487972508512,
+            "seReturnOnStake": 0.0578411411026496,
+            "tStat": 2.276670772734952
+          },
+          "once": {
+            "trades": 149,
+            "windows": 149,
+            "stake": 75.19800000000001,
+            "pnl": 12.802000000000008,
+            "returnOnStake": 0.17024388946514546,
+            "meanPerTrade": 0.08591946308724838,
+            "medianPerTrade": 0.11599999999999999,
+            "winRate": 0.5906040268456376,
+            "maxDrawdown": 3.261,
+            "profitFactor": 1.607997720364742,
+            "seReturnOnStake": 0.06441792059364176,
+            "tStat": 2.64280324320107
+          }
+        }
+      ],
+      "edgeBuckets": [
+        {
+          "lo": 0,
+          "hi": 0.01,
+          "trades": 4,
+          "windows": 4,
+          "stake": 1.9869999999999999,
+          "pnl": 0.013000000000000012,
+          "returnOnStake": 0.006542526421741325,
+          "meanEdge": 0.003250000000000003
+        },
+        {
+          "lo": 0.01,
+          "hi": 0.02,
+          "trades": 9,
+          "windows": 9,
+          "stake": 4.374,
+          "pnl": -1.3739999999999999,
+          "returnOnStake": -0.31412894375857336,
+          "meanEdge": 0.014000000000000012
+        },
+        {
+          "lo": 0.02,
+          "hi": 0.03,
+          "trades": 7,
+          "windows": 7,
+          "stake": 3.337,
+          "pnl": 0.6630000000000001,
+          "returnOnStake": 0.198681450404555,
+          "meanEdge": 0.023285714285714305
+        },
+        {
+          "lo": 0.03,
+          "hi": 0.05,
+          "trades": 18,
+          "windows": 18,
+          "stake": 8.338000000000001,
+          "pnl": 1.6619999999999997,
+          "returnOnStake": 0.1993283761093787,
+          "meanEdge": 0.036777777777777784
+        },
+        {
+          "lo": 0.05,
+          "hi": 0.08,
+          "trades": 23,
+          "windows": 23,
+          "stake": 9.940999999999999,
+          "pnl": 1.0589999999999997,
+          "returnOnStake": 0.10652851825772053,
+          "meanEdge": 0.06778260869565216
+        },
+        {
+          "lo": 0.08,
+          "hi": 1,
+          "trades": 258,
+          "windows": 258,
+          "stake": 59.264,
+          "pnl": 7.736000000000003,
+          "returnOnStake": 0.1305345572354212,
+          "meanEdge": 0.2702945736434109
+        }
+      ],
+      "byAsset": {
+        "BTC": {
+          "trades": 337,
+          "windows": 337,
+          "stake": 158.79799999999986,
+          "pnl": 4.201999999999995,
+          "returnOnStake": 0.026461290444464027,
+          "meanPerTrade": 0.01246884272997031,
+          "medianPerTrade": -0.02,
+          "winRate": 0.4836795252225519,
+          "maxDrawdown": 9.736000000000002,
+          "profitFactor": 1.0729551886382969,
+          "seReturnOnStake": 0.04790583920163105,
+          "tStat": 0.552360440511041
+        },
+        "ETH": {
+          "trades": 253,
+          "windows": 253,
+          "stake": 126.59600000000005,
+          "pnl": 3.4039999999999995,
+          "returnOnStake": 0.026888685266517096,
+          "meanPerTrade": 0.013454545454545452,
+          "medianPerTrade": 0.02100000000000002,
+          "winRate": 0.5138339920948617,
+          "maxDrawdown": 6.409000000000001,
+          "profitFactor": 1.0803607261738946,
+          "seReturnOnStake": 0.05127388233508387,
+          "tStat": 0.5244128987696853
+        }
+      },
+      "byTenor": {
+        "15m": {
+          "trades": 416,
+          "windows": 416,
+          "stake": 199.0029999999998,
+          "pnl": 8.996999999999998,
+          "returnOnStake": 0.04521037371295914,
+          "meanPerTrade": 0.02162740384615384,
+          "medianPerTrade": -0.007999999999999998,
+          "winRate": 0.5,
+          "maxDrawdown": 11.063000000000002,
+          "profitFactor": 1.1242507940892148,
+          "seReturnOnStake": 0.04562340165662825,
+          "tStat": 0.9909470155956881
+        },
+        "1d": {
+          "trades": 16,
+          "windows": 16,
+          "stake": 6.1,
+          "pnl": -1.1,
+          "returnOnStake": -0.18032786885245905,
+          "meanPerTrade": -0.06875,
+          "medianPerTrade": -0.11699999999999998,
+          "winRate": 0.3125,
+          "maxDrawdown": 2.528,
+          "profitFactor": 0.6663633606308765,
+          "seReturnOnStake": 0.3047508923168549,
+          "tStat": -0.5917222013085001
+        },
+        "1h": {
+          "trades": 110,
+          "windows": 110,
+          "stake": 56.794999999999995,
+          "pnl": -1.7949999999999982,
+          "returnOnStake": -0.031604894797077177,
+          "meanPerTrade": -0.0163181818181818,
+          "medianPerTrade": -0.0004999999999999918,
+          "winRate": 0.5,
+          "maxDrawdown": 3.311999999999999,
+          "profitFactor": 0.8969752625839408,
+          "seReturnOnStake": 0.06571238387080824,
+          "tStat": -0.480957970710863
+        },
+        "4h": {
+          "trades": 48,
+          "windows": 48,
+          "stake": 23.495999999999995,
+          "pnl": 1.5040000000000007,
+          "returnOnStake": 0.06401089547156967,
+          "meanPerTrade": 0.031333333333333345,
+          "medianPerTrade": 0.02400000000000002,
+          "winRate": 0.5208333333333334,
+          "maxDrawdown": 2.789,
+          "profitFactor": 1.2203340169938475,
+          "seReturnOnStake": 0.11483591109452956,
+          "tStat": 0.557411831033219
+        }
+      },
+      "byLeg": {
+        "DOWN": {
+          "trades": 299,
+          "windows": 299,
+          "stake": 143.83999999999997,
+          "pnl": 2.160000000000002,
+          "returnOnStake": 0.015016685205784221,
+          "meanPerTrade": 0.007224080267558535,
+          "medianPerTrade": -0.020000000000000018,
+          "winRate": 0.4882943143812709,
+          "maxDrawdown": 7.373999999999998,
+          "profitFactor": 1.0410849469319432,
+          "seReturnOnStake": 0.04923542427604612,
+          "tStat": 0.30499757901121805
+        },
+        "UP": {
+          "trades": 291,
+          "windows": 291,
+          "stake": 141.55399999999995,
+          "pnl": 5.446000000000001,
+          "returnOnStake": 0.03847295025220059,
+          "meanPerTrade": 0.018714776632302407,
+          "medianPerTrade": 0.016000000000000014,
+          "winRate": 0.5051546391752577,
+          "maxDrawdown": 6.4,
+          "profitFactor": 1.1149381621712886,
+          "seReturnOnStake": 0.047733041641147396,
+          "tStat": 0.8060024865257212
+        }
+      }
+    },
+    {
+      "strategy": "diffusion fair − price > 0",
+      "gate": {
+        "state": "REJECTED",
+        "failures": [
+          "return on stake -5.98% is below the 2.00% floor",
+          "t = -0.58 on a window-clustered bootstrap, below 2",
+          "removing the best fold takes it from -5.98% to -6.63% — the result is one period, not a strategy",
+          "-5.98% does not beat taking every available fill (-0.89%), so the selection adds nothing"
+        ],
+        "withoutBestFold": {
+          "stake": 3832.199999999988,
+          "pnl": -254.20000000000266,
+          "returnOnStake": -0.06633265487187606
+        }
+      },
+      "all": {
+        "trades": 8302,
+        "windows": 479,
+        "stake": 3914.0199999999822,
+        "pnl": -234.02000000000248,
+        "returnOnStake": -0.05979019013699561,
+        "meanPerTrade": -0.0281883883401593,
+        "medianPerTrade": -0.06499999999999995,
+        "winRate": 0.4432666827270537,
+        "maxDrawdown": 613.5750000000024,
+        "profitFactor": 0.8372168406349996,
+        "seReturnOnStake": 0.10297258943854812,
+        "tStat": -0.5806418044160883
+      },
+      "once": {
+        "trades": 479,
+        "windows": 479,
+        "stake": 190.07099999999986,
+        "pnl": 16.92900000000001,
+        "returnOnStake": 0.08906671717410874,
+        "meanPerTrade": 0.035342379958246364,
+        "medianPerTrade": -0.071,
+        "winRate": 0.4321503131524008,
+        "maxDrawdown": 5.582,
+        "profitFactor": 1.217077424153052,
+        "seReturnOnStake": 0.04930162594846849,
+        "tStat": 1.8065675413464841
+      },
+      "byFold": [
+        {
+          "fold": 1,
+          "testStart": 1784822426,
+          "trainWindows": 130,
+          "all": {
+            "trades": 7311,
+            "windows": 130,
+            "stake": 3531.613999999988,
+            "pnl": -286.6140000000027,
+            "returnOnStake": -0.08115666094879102,
+            "meanPerTrade": -0.039203118588428766,
+            "medianPerTrade": -0.06499999999999995,
+            "winRate": 0.44385173026945696,
+            "maxDrawdown": 613.5750000000024,
+            "profitFactor": 0.7796382122197199,
+            "seReturnOnStake": 0.11443592978651086,
+            "tStat": -0.7091886359484744
+          },
+          "once": {
+            "trades": 130,
+            "windows": 130,
+            "stake": 58.754999999999995,
+            "pnl": -0.7549999999999994,
+            "returnOnStake": -0.012849970215300818,
+            "meanPerTrade": -0.005807692307692304,
+            "medianPerTrade": -0.04000000000000002,
+            "winRate": 0.4461538461538462,
+            "maxDrawdown": 5.582,
+            "profitFactor": 0.9659633937426745,
+            "seReturnOnStake": 0.0801278366081019,
+            "tStat": -0.16036836584205905
+          }
+        },
+        {
+          "fold": 2,
+          "testStart": 1786003801,
+          "trainWindows": 283,
+          "all": {
+            "trades": 444,
+            "windows": 100,
+            "stake": 184.90800000000002,
+            "pnl": 17.09200000000002,
+            "returnOnStake": 0.09243515694291225,
+            "meanPerTrade": 0.03849549549549554,
+            "medianPerTrade": -0.035,
+            "winRate": 0.45495495495495497,
+            "maxDrawdown": 13.239999999999993,
+            "profitFactor": 1.2979932702198507,
+            "seReturnOnStake": 0.10451973934875608,
+            "tStat": 0.8843799029624384
+          },
+          "once": {
+            "trades": 100,
+            "windows": 100,
+            "stake": 34.906,
+            "pnl": 1.0939999999999985,
+            "returnOnStake": 0.03134131667908092,
+            "meanPerTrade": 0.010939999999999984,
+            "medianPerTrade": -0.07999999999999999,
+            "winRate": 0.36,
+            "maxDrawdown": 4.589000000000001,
+            "profitFactor": 1.076734235813986,
+            "seReturnOnStake": 0.10871298393688546,
+            "tStat": 0.28829414430641026
+          }
+        },
+        {
+          "fold": 3,
+          "testStart": 1787142270,
+          "trainWindows": 439,
+          "all": {
+            "trades": 286,
+            "windows": 136,
+            "stake": 115.67800000000001,
+            "pnl": 15.321999999999996,
+            "returnOnStake": 0.13245388059959537,
+            "meanPerTrade": 0.05357342657342656,
+            "medianPerTrade": -0.06849999999999998,
+            "winRate": 0.458041958041958,
+            "maxDrawdown": 3.4169999999999994,
+            "profitFactor": 1.3184917269477012,
+            "seReturnOnStake": 0.06543758314715016,
+            "tStat": 2.0241254983660535
+          },
+          "once": {
+            "trades": 136,
+            "windows": 136,
+            "stake": 54.65100000000002,
+            "pnl": 6.349000000000002,
+            "returnOnStake": 0.11617353753819692,
+            "meanPerTrade": 0.04668382352941178,
+            "medianPerTrade": -0.14800000000000002,
+            "winRate": 0.4485294117647059,
+            "maxDrawdown": 4.1690000000000005,
+            "profitFactor": 1.2548877915612837,
+            "seReturnOnStake": 0.09471734092341674,
+            "tStat": 1.2265287053627116
+          }
+        },
+        {
+          "fold": 4,
+          "testStart": 1787275894,
+          "trainWindows": 564,
+          "all": {
+            "trades": 261,
+            "windows": 113,
+            "stake": 81.82000000000001,
+            "pnl": 20.180000000000014,
+            "returnOnStake": 0.24663896357858728,
+            "meanPerTrade": 0.07731800766283531,
+            "medianPerTrade": -0.03700000000000003,
+            "winRate": 0.39080459770114945,
+            "maxDrawdown": 4.837000000000007,
+            "profitFactor": 1.640614583664012,
+            "seReturnOnStake": 0.0968117980926773,
+            "tStat": 2.5476126715721303
+          },
+          "once": {
+            "trades": 113,
+            "windows": 113,
+            "stake": 41.759000000000015,
+            "pnl": 10.241000000000003,
+            "returnOnStake": 0.2452405469479633,
+            "meanPerTrade": 0.09062831858407082,
+            "medianPerTrade": -0.052000000000000046,
+            "winRate": 0.46017699115044247,
+            "maxDrawdown": 3.0609999999999973,
+            "profitFactor": 1.6155186921504998,
+            "seReturnOnStake": 0.10363608819717256,
+            "tStat": 2.366362443952743
+          }
+        }
+      ],
+      "edgeBuckets": [
+        {
+          "lo": 0,
+          "hi": 0.01,
+          "trades": 34,
+          "windows": 34,
+          "stake": 17.566,
+          "pnl": 6.434,
+          "returnOnStake": 0.3662757599908915,
+          "meanEdge": 0.0047710773623140116
+        },
+        {
+          "lo": 0.01,
+          "hi": 0.02,
+          "trades": 25,
+          "windows": 25,
+          "stake": 13.775,
+          "pnl": 0.22499999999999953,
+          "returnOnStake": 0.016333938294010857,
+          "meanEdge": 0.015788511963037606
+        },
+        {
+          "lo": 0.02,
+          "hi": 0.03,
+          "trades": 29,
+          "windows": 29,
+          "stake": 13.861999999999995,
+          "pnl": -3.8620000000000005,
+          "returnOnStake": -0.27860337613619984,
+          "meanEdge": 0.024642472207834117
+        },
+        {
+          "lo": 0.03,
+          "hi": 0.05,
+          "trades": 62,
+          "windows": 62,
+          "stake": 25.880999999999993,
+          "pnl": -0.8809999999999999,
+          "returnOnStake": -0.034040415749005064,
+          "meanEdge": 0.039897732964920316
+        },
+        {
+          "lo": 0.05,
+          "hi": 0.08,
+          "trades": 90,
+          "windows": 90,
+          "stake": 38.37900000000001,
+          "pnl": 5.620999999999999,
+          "returnOnStake": 0.14646030381198044,
+          "meanEdge": 0.06462133747790111
+        },
+        {
+          "lo": 0.08,
+          "hi": 1,
+          "trades": 239,
+          "windows": 239,
+          "stake": 80.60800000000003,
+          "pnl": 9.392000000000007,
+          "returnOnStake": 0.11651448987693533,
+          "meanEdge": 0.18884852079843828
+        }
+      ],
+      "byAsset": {
+        "BTC": {
+          "trades": 268,
+          "windows": 268,
+          "stake": 108.24299999999997,
+          "pnl": 12.757000000000007,
+          "returnOnStake": 0.1178551961789678,
+          "meanPerTrade": 0.04760074626865674,
+          "medianPerTrade": -0.042500000000000024,
+          "winRate": 0.45149253731343286,
+          "maxDrawdown": 3.8569999999999998,
+          "profitFactor": 1.3016837724069432,
+          "seReturnOnStake": 0.06342327984382518,
+          "tStat": 1.8582324419231695
+        },
+        "ETH": {
+          "trades": 211,
+          "windows": 211,
+          "stake": 81.82800000000005,
+          "pnl": 4.171999999999998,
+          "returnOnStake": 0.050984992911961624,
+          "meanPerTrade": 0.019772511848341223,
+          "medianPerTrade": -0.084,
+          "winRate": 0.4075829383886256,
+          "maxDrawdown": 6.361000000000001,
+          "profitFactor": 1.116862745098039,
+          "seReturnOnStake": 0.07261924403957942,
+          "tStat": 0.7020865279756072
+        }
+      },
+      "byTenor": {
+        "15m": {
+          "trades": 327,
+          "windows": 327,
+          "stake": 127.68700000000004,
+          "pnl": 14.313000000000008,
+          "returnOnStake": 0.11209441838245086,
+          "meanPerTrade": 0.04377064220183489,
+          "medianPerTrade": -0.07199999999999995,
+          "winRate": 0.43425076452599387,
+          "maxDrawdown": 4.963,
+          "profitFactor": 1.2599716652136013,
+          "seReturnOnStake": 0.06067725102357413,
+          "tStat": 1.8473878841165745
+        },
+        "1d": {
+          "trades": 12,
+          "windows": 12,
+          "stake": 2.371,
+          "pnl": 0.6289999999999998,
+          "returnOnStake": 0.26528890763390967,
+          "meanPerTrade": 0.052416666666666646,
+          "medianPerTrade": -0.081,
+          "winRate": 0.25,
+          "maxDrawdown": 0.873,
+          "profitFactor": 1.4999999999999998,
+          "seReturnOnStake": 0.6350597374169128,
+          "tStat": 0.4177385086841825
+        },
+        "1h": {
+          "trades": 97,
+          "windows": 97,
+          "stake": 41.818,
+          "pnl": -1.8180000000000005,
+          "returnOnStake": -0.04347410206131332,
+          "meanPerTrade": -0.018742268041237117,
+          "medianPerTrade": -0.102,
+          "winRate": 0.41237113402061853,
+          "maxDrawdown": 3.21,
+          "profitFactor": 0.8899648952911278,
+          "seReturnOnStake": 0.09110073859463971,
+          "tStat": -0.4772091064459416
+        },
+        "4h": {
+          "trades": 43,
+          "windows": 43,
+          "stake": 18.194999999999997,
+          "pnl": 3.8049999999999997,
+          "returnOnStake": 0.20912338554547955,
+          "meanPerTrade": 0.08848837209302325,
+          "medianPerTrade": 0.07599999999999996,
+          "winRate": 0.5116279069767442,
+          "maxDrawdown": 1.6920000000000002,
+          "profitFactor": 1.7388349514563106,
+          "seReturnOnStake": 0.13216973275413202,
+          "tStat": 1.5822335506609528
+        }
+      },
+      "byLeg": {
+        "DOWN": {
+          "trades": 294,
+          "windows": 294,
+          "stake": 119.56700000000005,
+          "pnl": 8.433000000000005,
+          "returnOnStake": 0.07052949392390878,
+          "meanPerTrade": 0.02868367346938777,
+          "medianPerTrade": -0.07499999999999996,
+          "winRate": 0.43537414965986393,
+          "maxDrawdown": 5.382,
+          "profitFactor": 1.1745240066225164,
+          "seReturnOnStake": 0.0610852282943744,
+          "tStat": 1.1546080106964935
+        },
+        "UP": {
+          "trades": 185,
+          "windows": 185,
+          "stake": 70.50399999999998,
+          "pnl": 8.496,
+          "returnOnStake": 0.12050380120276868,
+          "meanPerTrade": 0.04592432432432433,
+          "medianPerTrade": -0.046,
+          "winRate": 0.42702702702702705,
+          "maxDrawdown": 4.705,
+          "profitFactor": 1.286388458167599,
+          "seReturnOnStake": 0.08455604727712689,
+          "tStat": 1.4251352219413167
+        }
+      }
+    },
+    {
+      "strategy": "diffusion fair − price ≥ 0.02",
+      "gate": {
+        "state": "REJECTED",
+        "failures": [
+          "return on stake -6.29% is below the 2.00% floor",
+          "t = -0.50 on a window-clustered bootstrap, below 2",
+          "removing the best fold takes it from -6.29% to -6.92% — the result is one period, not a strategy",
+          "-6.29% does not beat taking every available fill (-0.89%), so the selection adds nothing"
+        ],
+        "withoutBestFold": {
+          "stake": 2877.235999999994,
+          "pnl": -199.2360000000008,
+          "returnOnStake": -0.0692456232300726
+        }
+      },
+      "all": {
+        "trades": 6606,
+        "windows": 458,
+        "stake": 2945.2509999999907,
+        "pnl": -185.25100000000066,
+        "returnOnStake": -0.06289820460123814,
+        "meanPerTrade": -0.028042839842567464,
+        "medianPerTrade": -0.09499999999999997,
+        "winRate": 0.4178019981834696,
+        "maxDrawdown": 545.2180000000006,
+        "profitFactor": 0.8514661276446315,
+        "seReturnOnStake": 0.12464014977210817,
+        "tStat": -0.50463839072916
+      },
+      "once": {
+        "trades": 458,
+        "windows": 458,
+        "stake": 175.62599999999986,
+        "pnl": 15.37400000000002,
+        "returnOnStake": 0.08753829159691635,
+        "meanPerTrade": 0.0335676855895197,
+        "medianPerTrade": -0.091,
+        "winRate": 0.4170305676855895,
+        "maxDrawdown": 5.286999999999999,
+        "profitFactor": 1.1979298092025634,
+        "seReturnOnStake": 0.05195954522171369,
+        "tStat": 1.6847393722055604
+      },
+      "byFold": [
+        {
+          "fold": 1,
+          "testStart": 1784822426,
+          "trainWindows": 130,
+          "all": {
+            "trades": 5810,
+            "windows": 125,
+            "stake": 2658.303999999994,
+            "pnl": -216.3040000000008,
+            "returnOnStake": -0.08136917372881404,
+            "meanPerTrade": -0.037229604130809085,
+            "medianPerTrade": -0.09499999999999997,
+            "winRate": 0.42030981067125645,
+            "maxDrawdown": 545.2180000000006,
+            "profitFactor": 0.807850362350384,
+            "seReturnOnStake": 0.13076041601688232,
+            "tStat": -0.6222768036950002
+          },
+          "once": {
+            "trades": 125,
+            "windows": 125,
+            "stake": 54.27299999999999,
+            "pnl": 1.727000000000002,
+            "returnOnStake": 0.031820610616697116,
+            "meanPerTrade": 0.013816000000000018,
+            "medianPerTrade": -0.04500000000000004,
+            "winRate": 0.448,
+            "maxDrawdown": 5.286999999999999,
+            "profitFactor": 1.077912117657674,
+            "seReturnOnStake": 0.09082351984943486,
+            "tStat": 0.35035650093113097
+          }
+        },
+        {
+          "fold": 2,
+          "testStart": 1786003801,
+          "trainWindows": 283,
+          "all": {
+            "trades": 325,
+            "windows": 93,
+            "stake": 116.55300000000007,
+            "pnl": 6.446999999999989,
+            "returnOnStake": 0.05531389153432332,
+            "meanPerTrade": 0.019836923076923044,
+            "medianPerTrade": -0.118,
+            "winRate": 0.37846153846153846,
+            "maxDrawdown": 9.803000000000004,
+            "profitFactor": 1.1386809499225596,
+            "seReturnOnStake": 0.12195584207681778,
+            "tStat": 0.45355671850047247
+          },
+          "once": {
+            "trades": 93,
+            "windows": 93,
+            "stake": 30.698999999999998,
+            "pnl": 1.3009999999999993,
+            "returnOnStake": 0.0423792305938304,
+            "meanPerTrade": 0.013989247311827949,
+            "medianPerTrade": -0.109,
+            "winRate": 0.34408602150537637,
+            "maxDrawdown": 2.601,
+            "profitFactor": 1.0940300664932063,
+            "seReturnOnStake": 0.11641657008394209,
+            "tStat": 0.36403091555843714
+          }
+        },
+        {
+          "fold": 3,
+          "testStart": 1787142270,
+          "trainWindows": 439,
+          "all": {
+            "trades": 261,
+            "windows": 134,
+            "stake": 102.379,
+            "pnl": 10.620999999999995,
+            "returnOnStake": 0.10374197833540076,
+            "meanPerTrade": 0.0406934865900383,
+            "medianPerTrade": -0.133,
+            "winRate": 0.4329501915708812,
+            "maxDrawdown": 3.468,
+            "profitFactor": 1.2315961622328833,
+            "seReturnOnStake": 0.06626377357224968,
+            "tStat": 1.5655911630551391
+          },
+          "once": {
+            "trades": 134,
+            "windows": 134,
+            "stake": 52.482000000000006,
+            "pnl": 4.518000000000002,
+            "returnOnStake": 0.08608665828283985,
+            "meanPerTrade": 0.03371641791044777,
+            "medianPerTrade": -0.18949999999999997,
+            "winRate": 0.4253731343283582,
+            "maxDrawdown": 3.676,
+            "profitFactor": 1.1784148797535843,
+            "seReturnOnStake": 0.10248279093530713,
+            "tStat": 0.8400108691144308
+          }
+        },
+        {
+          "fold": 4,
+          "testStart": 1787275894,
+          "trainWindows": 564,
+          "all": {
+            "trades": 210,
+            "windows": 106,
+            "stake": 68.01499999999999,
+            "pnl": 13.985000000000003,
+            "returnOnStake": 0.20561640814526216,
+            "meanPerTrade": 0.06659523809523811,
+            "medianPerTrade": -0.07699999999999996,
+            "winRate": 0.3904761904761905,
+            "maxDrawdown": 5.068000000000003,
+            "profitFactor": 1.479875098651478,
+            "seReturnOnStake": 0.10764898494048926,
+            "tStat": 1.9100636040268422
+          },
+          "once": {
+            "trades": 106,
+            "windows": 106,
+            "stake": 38.17200000000001,
+            "pnl": 7.827999999999999,
+            "returnOnStake": 0.20507178036256934,
+            "meanPerTrade": 0.07384905660377358,
+            "medianPerTrade": -0.10250000000000001,
+            "winRate": 0.4339622641509434,
+            "maxDrawdown": 3.061,
+            "profitFactor": 1.47880604318307,
+            "seReturnOnStake": 0.11574670546894895,
+            "tStat": 1.771728875839005
+          }
+        }
+      ],
+      "edgeBuckets": [
+        {
+          "lo": 0.02,
+          "hi": 0.03,
+          "trades": 39,
+          "windows": 39,
+          "stake": 19.305999999999997,
+          "pnl": -3.3060000000000005,
+          "returnOnStake": -0.17124210090127426,
+          "meanEdge": 0.024538606747242675
+        },
+        {
+          "lo": 0.03,
+          "hi": 0.05,
+          "trades": 71,
+          "windows": 71,
+          "stake": 30.900999999999996,
+          "pnl": 1.0990000000000002,
+          "returnOnStake": 0.035565192064981724,
+          "meanEdge": 0.03941501479838889
+        },
+        {
+          "lo": 0.05,
+          "hi": 0.08,
+          "trades": 101,
+          "windows": 101,
+          "stake": 41.540000000000006,
+          "pnl": 6.459999999999999,
+          "returnOnStake": 0.15551275878671156,
+          "meanEdge": 0.0653603921343693
+        },
+        {
+          "lo": 0.08,
+          "hi": 1,
+          "trades": 247,
+          "windows": 247,
+          "stake": 83.87900000000003,
+          "pnl": 11.121000000000006,
+          "returnOnStake": 0.1325838410090726,
+          "meanEdge": 0.1868689088243939
+        }
+      ],
+      "byAsset": {
+        "BTC": {
+          "trades": 257,
+          "windows": 257,
+          "stake": 99.03299999999999,
+          "pnl": 13.967000000000006,
+          "returnOnStake": 0.1410337968152031,
+          "meanPerTrade": 0.054346303501945546,
+          "medianPerTrade": -0.05700000000000005,
+          "winRate": 0.4396887159533074,
+          "maxDrawdown": 4.3149999999999995,
+          "profitFactor": 1.3300330812854446,
+          "seReturnOnStake": 0.07144418739395857,
+          "tStat": 1.9740415835022729
+        },
+        "ETH": {
+          "trades": 201,
+          "windows": 201,
+          "stake": 76.59300000000006,
+          "pnl": 1.4069999999999983,
+          "returnOnStake": 0.018369824918726217,
+          "meanPerTrade": 0.0069999999999999915,
+          "medianPerTrade": -0.133,
+          "winRate": 0.3880597014925373,
+          "maxDrawdown": 6.971,
+          "profitFactor": 1.0397974769474456,
+          "seReturnOnStake": 0.07400495338228706,
+          "tStat": 0.24822426174411993
+        }
+      },
+      "byTenor": {
+        "15m": {
+          "trades": 316,
+          "windows": 316,
+          "stake": 119.495,
+          "pnl": 12.505000000000004,
+          "returnOnStake": 0.104648730072388,
+          "meanPerTrade": 0.0395727848101266,
+          "medianPerTrade": -0.08549999999999996,
+          "winRate": 0.4177215189873418,
+          "maxDrawdown": 4.748,
+          "profitFactor": 1.2255388222562904,
+          "seReturnOnStake": 0.0610777004325157,
+          "tStat": 1.7133704990745944
+        },
+        "1d": {
+          "trades": 12,
+          "windows": 12,
+          "stake": 2.3650000000000007,
+          "pnl": 0.635,
+          "returnOnStake": 0.2684989429175475,
+          "meanPerTrade": 0.05291666666666667,
+          "medianPerTrade": -0.081,
+          "winRate": 0.25,
+          "maxDrawdown": 0.873,
+          "profitFactor": 1.5047694753577106,
+          "seReturnOnStake": 0.6402904007490146,
+          "tStat": 0.4193393226002705
+        },
+        "1h": {
+          "trades": 92,
+          "windows": 92,
+          "stake": 37.391999999999996,
+          "pnl": -0.3919999999999998,
+          "returnOnStake": -0.010483525887890453,
+          "meanPerTrade": -0.004260869565217389,
+          "medianPerTrade": -0.1275,
+          "winRate": 0.40217391304347827,
+          "maxDrawdown": 2.8739999999999997,
+          "profitFactor": 0.975235327563334,
+          "seReturnOnStake": 0.11445655568260596,
+          "tStat": -0.09159393121143555
+        },
+        "4h": {
+          "trades": 38,
+          "windows": 38,
+          "stake": 16.373999999999995,
+          "pnl": 2.6260000000000003,
+          "returnOnStake": 0.16037620618053017,
+          "meanPerTrade": 0.06910526315789474,
+          "medianPerTrade": 0.042,
+          "winRate": 0.5,
+          "maxDrawdown": 1.828,
+          "profitFactor": 1.5106962271489697,
+          "seReturnOnStake": 0.14364802016231487,
+          "tStat": 1.1164526040756657
+        }
+      },
+      "byLeg": {
+        "DOWN": {
+          "trades": 295,
+          "windows": 295,
+          "stake": 116.31400000000004,
+          "pnl": 8.686000000000014,
+          "returnOnStake": 0.07467716697903959,
+          "meanPerTrade": 0.029444067796610216,
+          "medianPerTrade": -0.08599999999999997,
+          "winRate": 0.423728813559322,
+          "maxDrawdown": 5.286999999999999,
+          "profitFactor": 1.1707187641266534,
+          "seReturnOnStake": 0.06499151675715356,
+          "tStat": 1.149029453460477
+        },
+        "UP": {
+          "trades": 163,
+          "windows": 163,
+          "stake": 59.31199999999999,
+          "pnl": 6.687999999999998,
+          "returnOnStake": 0.11275964391691393,
+          "meanPerTrade": 0.04103067484662575,
+          "medianPerTrade": -0.094,
+          "winRate": 0.4049079754601227,
+          "maxDrawdown": 4.578,
+          "profitFactor": 1.249598805747341,
+          "seReturnOnStake": 0.08622792021515929,
+          "tStat": 1.3076929564757174
+        }
+      }
+    },
+    {
+      "strategy": "diffusion fair − price ≥ 0.03",
+      "gate": {
+        "state": "REJECTED",
+        "failures": [
+          "return on stake -6.49% is below the 2.00% floor",
+          "t = -0.50 on a window-clustered bootstrap, below 2",
+          "removing the best fold takes it from -6.49% to -7.16% — the result is one period, not a strategy",
+          "-6.49% does not beat taking every available fill (-0.89%), so the selection adds nothing"
+        ],
+        "withoutBestFold": {
+          "stake": 2549.475999999992,
+          "pnl": -182.47600000000088,
+          "returnOnStake": -0.07157392342583396
+        }
+      },
+      "all": {
+        "trades": 6001,
+        "windows": 437,
+        "stake": 2611.532999999989,
+        "pnl": -169.53300000000075,
+        "returnOnStake": -0.06491704297820532,
+        "meanPerTrade": -0.028250791534744336,
+        "medianPerTrade": -0.10499999999999998,
+        "winRate": 0.40693217797033826,
+        "maxDrawdown": 515.8530000000012,
+        "profitFactor": 0.8545681170708953,
+        "seReturnOnStake": 0.13042264941067117,
+        "tStat": -0.4977436302018092
+      },
+      "once": {
+        "trades": 437,
+        "windows": 437,
+        "stake": 163.8419999999998,
+        "pnl": 19.157999999999983,
+        "returnOnStake": 0.11692972497894316,
+        "meanPerTrade": 0.043839816933638406,
+        "medianPerTrade": -0.08599999999999997,
+        "winRate": 0.41876430205949655,
+        "maxDrawdown": 7.606999999999999,
+        "profitFactor": 1.2668765497450745,
+        "seReturnOnStake": 0.0554975048310155,
+        "tStat": 2.106936615168246
+      },
+      "byFold": [
+        {
+          "fold": 1,
+          "testStart": 1784822426,
+          "trainWindows": 130,
+          "all": {
+            "trades": 5287,
+            "windows": 124,
+            "stake": 2366.125999999992,
+            "pnl": -198.12600000000086,
+            "returnOnStake": -0.08373434043664688,
+            "meanPerTrade": -0.037474181955740656,
+            "medianPerTrade": -0.10499999999999998,
+            "winRate": 0.41006241724985815,
+            "maxDrawdown": 515.8530000000012,
+            "profitFactor": 0.8128570457018511,
+            "seReturnOnStake": 0.1377389154228177,
+            "tStat": -0.6079207185537017
+          },
+          "once": {
+            "trades": 124,
+            "windows": 124,
+            "stake": 52.72799999999999,
+            "pnl": 1.2720000000000016,
+            "returnOnStake": 0.024123805188893982,
+            "meanPerTrade": 0.010258064516129045,
+            "medianPerTrade": -0.04500000000000004,
+            "winRate": 0.43548387096774194,
+            "maxDrawdown": 7.606999999999999,
+            "profitFactor": 1.0580821917808216,
+            "seReturnOnStake": 0.09479209459360348,
+            "tStat": 0.25449174102881195
+          }
+        },
+        {
+          "fold": 2,
+          "testStart": 1786003801,
+          "trainWindows": 283,
+          "all": {
+            "trades": 278,
+            "windows": 89,
+            "stake": 91.75800000000001,
+            "pnl": 4.242,
+            "returnOnStake": 0.0462303014451056,
+            "meanPerTrade": 0.015258992805755395,
+            "medianPerTrade": -0.124,
+            "winRate": 0.34532374100719426,
+            "maxDrawdown": 9.003000000000004,
+            "profitFactor": 1.107818218788124,
+            "seReturnOnStake": 0.12894037996859162,
+            "tStat": 0.35854013658379763
+          },
+          "once": {
+            "trades": 89,
+            "windows": 89,
+            "stake": 28.948999999999998,
+            "pnl": 2.0509999999999993,
+            "returnOnStake": 0.07084873398044836,
+            "meanPerTrade": 0.02304494382022471,
+            "medianPerTrade": -0.109,
+            "winRate": 0.34831460674157305,
+            "maxDrawdown": 3.107,
+            "profitFactor": 1.1593380981976382,
+            "seReturnOnStake": 0.1241891904792663,
+            "tStat": 0.5704903438619059
+          }
+        },
+        {
+          "fold": 3,
+          "testStart": 1787142270,
+          "trainWindows": 439,
+          "all": {
+            "trades": 239,
+            "windows": 125,
+            "stake": 91.59200000000001,
+            "pnl": 11.407999999999998,
+            "returnOnStake": 0.12455236265175994,
+            "meanPerTrade": 0.04773221757322175,
+            "medianPerTrade": -0.127,
+            "winRate": 0.4309623430962343,
+            "maxDrawdown": 3.468,
+            "profitFactor": 1.2821736872047296,
+            "seReturnOnStake": 0.06712910903292282,
+            "tStat": 1.8554151015273335
+          },
+          "once": {
+            "trades": 125,
+            "windows": 125,
+            "stake": 47.041999999999994,
+            "pnl": 7.958000000000001,
+            "returnOnStake": 0.16916797755197488,
+            "meanPerTrade": 0.06366400000000001,
+            "medianPerTrade": -0.14900000000000002,
+            "winRate": 0.44,
+            "maxDrawdown": 2.862,
+            "profitFactor": 1.363644671906416,
+            "seReturnOnStake": 0.10635974899940975,
+            "tStat": 1.5905262953649286
+          }
+        },
+        {
+          "fold": 4,
+          "testStart": 1787275894,
+          "trainWindows": 564,
+          "all": {
+            "trades": 197,
+            "windows": 99,
+            "stake": 62.05699999999998,
+            "pnl": 12.94300000000001,
+            "returnOnStake": 0.2085663180624267,
+            "meanPerTrade": 0.06570050761421325,
+            "medianPerTrade": -0.08199999999999996,
+            "winRate": 0.38071065989847713,
+            "maxDrawdown": 4.444999999999995,
+            "profitFactor": 1.4747982391782837,
+            "seReturnOnStake": 0.11549607424361143,
+            "tStat": 1.8058303663421995
+          },
+          "once": {
+            "trades": 99,
+            "windows": 99,
+            "stake": 35.123000000000005,
+            "pnl": 7.877000000000001,
+            "returnOnStake": 0.22426899752299062,
+            "meanPerTrade": 0.07956565656565658,
+            "medianPerTrade": -0.111,
+            "winRate": 0.43434343434343436,
+            "maxDrawdown": 2.6369999999999996,
+            "profitFactor": 1.520621282220754,
+            "seReturnOnStake": 0.11998909936619595,
+            "tStat": 1.8690780971573242
+          }
+        }
+      ],
+      "edgeBuckets": [
+        {
+          "lo": 0.03,
+          "hi": 0.05,
+          "trades": 80,
+          "windows": 80,
+          "stake": 34.51499999999999,
+          "pnl": -2.514999999999998,
+          "returnOnStake": -0.07286686947703892,
+          "meanEdge": 0.03913590683729115
+        },
+        {
+          "lo": 0.05,
+          "hi": 0.08,
+          "trades": 102,
+          "windows": 102,
+          "stake": 44.236000000000004,
+          "pnl": 5.763999999999999,
+          "returnOnStake": 0.1303011122162944,
+          "meanEdge": 0.06494875404371638
+        },
+        {
+          "lo": 0.08,
+          "hi": 1,
+          "trades": 255,
+          "windows": 255,
+          "stake": 85.09100000000004,
+          "pnl": 15.908999999999992,
+          "returnOnStake": 0.18696454384129912,
+          "meanEdge": 0.1819081579995104
+        }
+      ],
+      "byAsset": {
+        "BTC": {
+          "trades": 245,
+          "windows": 245,
+          "stake": 92.36400000000003,
+          "pnl": 16.636,
+          "returnOnStake": 0.18011346412021992,
+          "meanPerTrade": 0.06790204081632653,
+          "medianPerTrade": -0.045,
+          "winRate": 0.4448979591836735,
+          "maxDrawdown": 4.01,
+          "profitFactor": 1.4299930212721967,
+          "seReturnOnStake": 0.07450211296366197,
+          "tStat": 2.4175618241602
+        },
+        "ETH": {
+          "trades": 192,
+          "windows": 192,
+          "stake": 71.47800000000002,
+          "pnl": 2.521999999999999,
+          "returnOnStake": 0.035283583760038026,
+          "meanPerTrade": 0.013135416666666662,
+          "medianPerTrade": -0.1275,
+          "winRate": 0.3854166666666667,
+          "maxDrawdown": 6.09,
+          "profitFactor": 1.0762002598422817,
+          "seReturnOnStake": 0.07720801019043992,
+          "tStat": 0.45699382321870696
+        }
+      },
+      "byTenor": {
+        "15m": {
+          "trades": 300,
+          "windows": 300,
+          "stake": 111.17300000000002,
+          "pnl": 18.826999999999995,
+          "returnOnStake": 0.1693486727892563,
+          "meanPerTrade": 0.06275666666666666,
+          "medianPerTrade": -0.07149999999999998,
+          "winRate": 0.43333333333333335,
+          "maxDrawdown": 4.074999999999999,
+          "profitFactor": 1.3851047291768945,
+          "seReturnOnStake": 0.06674832045458629,
+          "tStat": 2.5371226067699557
+        },
+        "1d": {
+          "trades": 11,
+          "windows": 11,
+          "stake": 2.193,
+          "pnl": -0.19300000000000003,
+          "returnOnStake": -0.08800729594163248,
+          "meanPerTrade": -0.017545454545454548,
+          "medianPerTrade": -0.123,
+          "winRate": 0.18181818181818182,
+          "maxDrawdown": 0.875,
+          "profitFactor": 0.8468253968253969,
+          "seReturnOnStake": 0.5078524900043837,
+          "tStat": -0.17329302833756474
+        },
+        "1h": {
+          "trades": 88,
+          "windows": 88,
+          "stake": 35.13500000000002,
+          "pnl": -1.1349999999999996,
+          "returnOnStake": -0.032303970399886126,
+          "meanPerTrade": -0.012897727272727267,
+          "medianPerTrade": -0.149,
+          "winRate": 0.38636363636363635,
+          "maxDrawdown": 3.093,
+          "profitFactor": 0.9290403251015947,
+          "seReturnOnStake": 0.11377620469530848,
+          "tStat": -0.28392554037459616
+        },
+        "4h": {
+          "trades": 38,
+          "windows": 38,
+          "stake": 15.341,
+          "pnl": 1.6590000000000003,
+          "returnOnStake": 0.10814158138322146,
+          "meanPerTrade": 0.04365789473684211,
+          "medianPerTrade": -0.125,
+          "winRate": 0.4473684210526316,
+          "maxDrawdown": 1.778,
+          "profitFactor": 1.2939925571504518,
+          "seReturnOnStake": 0.1597910077631529,
+          "tStat": 0.676768880158214
+        }
+      },
+      "byLeg": {
+        "DOWN": {
+          "trades": 279,
+          "windows": 279,
+          "stake": 108.44800000000006,
+          "pnl": 8.55200000000001,
+          "returnOnStake": 0.07885807022720571,
+          "meanPerTrade": 0.03065232974910398,
+          "medianPerTrade": -0.08599999999999997,
+          "winRate": 0.41935483870967744,
+          "maxDrawdown": 7.35,
+          "profitFactor": 1.1782595101615425,
+          "seReturnOnStake": 0.07023510373840725,
+          "tStat": 1.1227728874853657
+        },
+        "UP": {
+          "trades": 158,
+          "windows": 158,
+          "stake": 55.39399999999999,
+          "pnl": 10.606000000000003,
+          "returnOnStake": 0.19146477957901586,
+          "meanPerTrade": 0.06712658227848103,
+          "medianPerTrade": -0.086,
+          "winRate": 0.4177215189873418,
+          "maxDrawdown": 4.104,
+          "profitFactor": 1.4454243836882108,
+          "seReturnOnStake": 0.10116867790772438,
+          "tStat": 1.8925302132904243
+        }
+      }
+    },
+    {
+      "strategy": "price ≥ 0.90 (cutoff fixed in-sample)",
+      "gate": {
+        "state": "REJECTED",
+        "failures": [
+          "return on stake 1.92% is below the 2.00% floor",
+          "178 settled windows is below the 200 required for the result to mean anything",
+          "t = 0.92 on a window-clustered bootstrap, below 2"
+        ],
+        "withoutBestFold": {
+          "stake": 177.75599999999994,
+          "pnl": 4.2440000000000015,
+          "returnOnStake": 0.02387542473953061
+        }
+      },
+      "all": {
+        "trades": 1914,
+        "windows": 178,
+        "stake": 1831.9009999999766,
+        "pnl": 35.09899999999999,
+        "returnOnStake": 0.019159878181190162,
+        "meanPerTrade": 0.018338035527690696,
+        "medianPerTrade": 0.039500000000000035,
+        "winRate": 0.9754440961337513,
+        "maxDrawdown": 30.238000000000007,
+        "profitFactor": 1.8034197816284188,
+        "seReturnOnStake": 0.020772016508522916,
+        "tStat": 0.9223889348118282
+      },
+      "once": {
+        "trades": 178,
+        "windows": 178,
+        "stake": 169.1459999999999,
+        "pnl": -1.1459999999999997,
+        "returnOnStake": -0.006775211947075309,
+        "meanPerTrade": -0.0064382022471910095,
+        "medianPerTrade": 0.04500000000000004,
+        "winRate": 0.9438202247191011,
+        "maxDrawdown": 2.8,
+        "profitFactor": 0.8759337447223123,
+        "seReturnOnStake": 0.017768810242203472,
+        "tStat": -0.38129800784203377
+      },
+      "byFold": [
+        {
+          "fold": 1,
+          "testStart": 1784822426,
+          "trainWindows": 130,
+          "all": {
+            "trades": 1726,
+            "windows": 88,
+            "stake": 1654.144999999976,
+            "pnl": 30.85500000000011,
+            "returnOnStake": 0.01865314104869921,
+            "meanPerTrade": 0.017876593279258467,
+            "medianPerTrade": 0.03500000000000003,
+            "winRate": 0.9762456546929317,
+            "maxDrawdown": 30.238000000000007,
+            "profitFactor": 1.8081456259822026,
+            "seReturnOnStake": 0.02013312468519159,
+            "tStat": 0.9264901171758527
+          },
+          "once": {
+            "trades": 88,
+            "windows": 88,
+            "stake": 84.22699999999999,
+            "pnl": -1.2269999999999996,
+            "returnOnStake": -0.01456777517898061,
+            "meanPerTrade": -0.013943181818181815,
+            "medianPerTrade": 0.03500000000000003,
+            "winRate": 0.9431818181818182,
+            "maxDrawdown": 1.482,
+            "profitFactor": 0.7354463130659769,
+            "seReturnOnStake": 0.023448152941143465,
+            "tStat": -0.6212760218490029
+          }
+        },
+        {
+          "fold": 2,
+          "testStart": 1786003801,
+          "trainWindows": 283,
+          "all": {
+            "trades": 111,
+            "windows": 37,
+            "stake": 105.44199999999995,
+            "pnl": 3.5580000000000016,
+            "returnOnStake": 0.03374366950551017,
+            "meanPerTrade": 0.032054054054054065,
+            "medianPerTrade": 0.050000000000000044,
+            "winRate": 0.9819819819819819,
+            "maxDrawdown": 0.9020000000000001,
+            "profitFactor": 2.974472807991121,
+            "seReturnOnStake": 0.016249153899759748,
+            "tStat": 2.0766416339997305
+          },
+          "once": {
+            "trades": 37,
+            "windows": 37,
+            "stake": 35.142,
+            "pnl": -0.1419999999999999,
+            "returnOnStake": -0.004040748961356778,
+            "meanPerTrade": -0.0038378378378378353,
+            "medianPerTrade": 0.040000000000000036,
+            "winRate": 0.9459459459459459,
+            "maxDrawdown": 1.122,
+            "profitFactor": 0.9211986681465039,
+            "seReturnOnStake": 0.040133748339161855,
+            "tStat": -0.10068207253429856
+          }
+        },
+        {
+          "fold": 3,
+          "testStart": 1787142270,
+          "trainWindows": 439,
+          "all": {
+            "trades": 46,
+            "windows": 33,
+            "stake": 43.251,
+            "pnl": -1.2510000000000001,
+            "returnOnStake": -0.028924186724006387,
+            "meanPerTrade": -0.027195652173913044,
+            "medianPerTrade": 0.051500000000000046,
+            "winRate": 0.9130434782608695,
+            "maxDrawdown": 2.243,
+            "profitFactor": 0.6623481781376518,
+            "seReturnOnStake": 0.05374854336779997,
+            "tStat": -0.5381389878062162
+          },
+          "once": {
+            "trades": 33,
+            "windows": 33,
+            "stake": 31.02999999999999,
+            "pnl": -1.03,
+            "returnOnStake": -0.033193683532065754,
+            "meanPerTrade": -0.031212121212121212,
+            "medianPerTrade": 0.05400000000000005,
+            "winRate": 0.9090909090909091,
+            "maxDrawdown": 1.51,
+            "profitFactor": 0.6317483017518769,
+            "seReturnOnStake": 0.051829202482084995,
+            "tStat": -0.6404436484149897
+          }
+        },
+        {
+          "fold": 4,
+          "testStart": 1787275894,
+          "trainWindows": 564,
+          "all": {
+            "trades": 31,
+            "windows": 20,
+            "stake": 29.06299999999999,
+            "pnl": 1.937,
+            "returnOnStake": 0.06664831572790147,
+            "meanPerTrade": 0.06248387096774194,
+            "medianPerTrade": 0.06699999999999995,
+            "winRate": 1,
+            "maxDrawdown": 0,
+            "profitFactor": null,
+            "seReturnOnStake": 0.005732324335608618,
+            "tStat": 11.626752400224268
+          },
+          "once": {
+            "trades": 20,
+            "windows": 20,
+            "stake": 18.746999999999996,
+            "pnl": 1.2529999999999994,
+            "returnOnStake": 0.06683736064436975,
+            "meanPerTrade": 0.06264999999999997,
+            "medianPerTrade": 0.06849999999999995,
+            "winRate": 1,
+            "maxDrawdown": 0,
+            "profitFactor": null,
+            "seReturnOnStake": 0.005304015703300751,
+            "tStat": 12.601275030685917
+          }
+        }
+      ],
+      "edgeBuckets": [
+        {
+          "lo": 0,
+          "hi": 0.01,
+          "trades": 22,
+          "windows": 22,
+          "stake": 19.893,
+          "pnl": -2.8930000000000002,
+          "returnOnStake": -0.1454280400140753,
+          "meanEdge": 0.004227272727272731
+        },
+        {
+          "lo": 0.01,
+          "hi": 0.02,
+          "trades": 18,
+          "windows": 18,
+          "stake": 16.458,
+          "pnl": 1.5419999999999994,
+          "returnOnStake": 0.09369303682099887,
+          "meanEdge": 0.014333333333333345
+        },
+        {
+          "lo": 0.02,
+          "hi": 0.03,
+          "trades": 16,
+          "windows": 16,
+          "stake": 14.791000000000002,
+          "pnl": -1.7910000000000006,
+          "returnOnStake": -0.12108714758975055,
+          "meanEdge": 0.024437500000000015
+        },
+        {
+          "lo": 0.03,
+          "hi": 0.05,
+          "trades": 34,
+          "windows": 34,
+          "stake": 31.988,
+          "pnl": 2.0120000000000005,
+          "returnOnStake": 0.0628985869701138,
+          "meanEdge": 0.040823529411764675
+        },
+        {
+          "lo": 0.05,
+          "hi": 0.08,
+          "trades": 50,
+          "windows": 50,
+          "stake": 48.35600000000001,
+          "pnl": -0.35599999999999854,
+          "returnOnStake": -0.0073620646869054195,
+          "meanEdge": 0.06711999999999997
+        },
+        {
+          "lo": 0.08,
+          "hi": 1,
+          "trades": 38,
+          "windows": 38,
+          "stake": 37.660000000000004,
+          "pnl": 0.3400000000000003,
+          "returnOnStake": 0.009028146574614983,
+          "meanEdge": 0.0910526315789473
+        }
+      ],
+      "byAsset": {
+        "BTC": {
+          "trades": 105,
+          "windows": 105,
+          "stake": 99.768,
+          "pnl": -0.7679999999999993,
+          "returnOnStake": -0.007697859032956452,
+          "meanPerTrade": -0.007314285714285708,
+          "medianPerTrade": 0.04500000000000004,
+          "winRate": 0.9428571428571428,
+          "maxDrawdown": 3.1119999999999997,
+          "profitFactor": 0.8620689655172415,
+          "seReturnOnStake": 0.02304243875760466,
+          "tStat": -0.33407310371676435
+        },
+        "ETH": {
+          "trades": 73,
+          "windows": 73,
+          "stake": 69.37800000000004,
+          "pnl": -0.3780000000000001,
+          "returnOnStake": -0.0054484130415982,
+          "meanPerTrade": -0.0051780821917808235,
+          "medianPerTrade": 0.04500000000000004,
+          "winRate": 0.9452054794520548,
+          "maxDrawdown": 1.46,
+          "profitFactor": 0.8969746524938675,
+          "seReturnOnStake": 0.03013629876563321,
+          "tStat": -0.18079237546620866
+        }
+      },
+      "byTenor": {
+        "15m": {
+          "trades": 116,
+          "windows": 116,
+          "stake": 110.58699999999997,
+          "pnl": 1.4129999999999994,
+          "returnOnStake": 0.012777270384403227,
+          "meanPerTrade": 0.012181034482758615,
+          "medianPerTrade": 0.04350000000000004,
+          "winRate": 0.9655172413793104,
+          "maxDrawdown": 2.068,
+          "profitFactor": 1.3814794816414686,
+          "seReturnOnStake": 0.017437435763781806,
+          "tStat": 0.7327493880116299
+        },
+        "1d": {
+          "trades": 4,
+          "windows": 4,
+          "stake": 3.7510000000000003,
+          "pnl": 0.249,
+          "returnOnStake": 0.0663822980538523,
+          "meanPerTrade": 0.06225,
+          "medianPerTrade": 0.057499999999999996,
+          "winRate": 1,
+          "maxDrawdown": 0,
+          "profitFactor": null,
+          "seReturnOnStake": 0.011175265787091633,
+          "tStat": 5.940109105103291
+        },
+        "1h": {
+          "trades": 44,
+          "windows": 44,
+          "stake": 41.65200000000001,
+          "pnl": -2.6519999999999984,
+          "returnOnStake": -0.06367041198501867,
+          "meanPerTrade": -0.060272727272727235,
+          "medianPerTrade": 0.04800000000000004,
+          "winRate": 0.8863636363636364,
+          "maxDrawdown": 3.4699999999999998,
+          "profitFactor": 0.42659459459459464,
+          "seReturnOnStake": 0.05011541662582587,
+          "tStat": -1.270475559654582
+        },
+        "4h": {
+          "trades": 14,
+          "windows": 14,
+          "stake": 13.156,
+          "pnl": -0.15600000000000025,
+          "returnOnStake": -0.011857707509881441,
+          "meanPerTrade": -0.011142857142857161,
+          "medianPerTrade": 0.06599999999999995,
+          "winRate": 0.9285714285714286,
+          "maxDrawdown": 0.908,
+          "profitFactor": 0.8281938325991187,
+          "seReturnOnStake": 0.07389733605452262,
+          "tStat": -0.16046190760019602
+        }
+      },
+      "byLeg": {
+        "DOWN": {
+          "trades": 82,
+          "windows": 82,
+          "stake": 78.181,
+          "pnl": -4.180999999999999,
+          "returnOnStake": -0.05347846663511594,
+          "meanPerTrade": -0.05098780487804877,
+          "medianPerTrade": 0.03500000000000003,
+          "winRate": 0.9024390243902439,
+          "maxDrawdown": 5.189,
+          "profitFactor": 0.4355339543674902,
+          "seReturnOnStake": 0.034121075752721636,
+          "tStat": -1.5673147887446157
+        },
+        "UP": {
+          "trades": 96,
+          "windows": 96,
+          "stake": 90.96500000000003,
+          "pnl": 3.0349999999999997,
+          "returnOnStake": 0.03336448084428075,
+          "meanPerTrade": 0.03161458333333333,
+          "medianPerTrade": 0.05450000000000005,
+          "winRate": 0.9791666666666666,
+          "maxDrawdown": 0.925,
+          "profitFactor": 2.658469945355191,
+          "seReturnOnStake": 0.01484442210917059,
+          "tStat": 2.247610624307755
+        }
+      }
+    },
+    {
+      "strategy": "price ≥ cutoff learned per fold",
+      "gate": {
+        "state": "REJECTED",
+        "failures": [
+          "t = 0.64 on a window-clustered bootstrap, below 2"
+        ],
+        "withoutBestFold": {
+          "stake": 443.82600000000014,
+          "pnl": 28.174,
+          "returnOnStake": 0.06347983218648748
+        }
+      },
+      "all": {
+        "trades": 4472,
+        "windows": 308,
+        "stake": 3928.863999999966,
+        "pnl": 108.13600000000017,
+        "returnOnStake": 0.02752347752429229,
+        "meanPerTrade": 0.024180679785330984,
+        "medianPerTrade": 0.09499999999999997,
+        "winRate": 0.9027280858676208,
+        "maxDrawdown": 68.52399999999997,
+        "profitFactor": 1.3028688742686358,
+        "seReturnOnStake": 0.04302863326713087,
+        "tStat": 0.6396549328773868
+      },
+      "once": {
+        "trades": 308,
+        "windows": 308,
+        "stake": 265.96599999999995,
+        "pnl": 1.0340000000000016,
+        "returnOnStake": 0.0038877149710865367,
+        "meanPerTrade": 0.0033571428571428624,
+        "medianPerTrade": 0.09449999999999997,
+        "winRate": 0.8668831168831169,
+        "maxDrawdown": 8.093,
+        "profitFactor": 1.030997062173992,
+        "seReturnOnStake": 0.021895011674901002,
+        "tStat": 0.17756167609369933
+      },
+      "byFold": [
+        {
+          "fold": 1,
+          "testStart": 1784822426,
+          "trainWindows": 130,
+          "all": {
+            "trades": 3953,
+            "windows": 103,
+            "stake": 3485.0379999999705,
+            "pnl": 79.96199999999978,
+            "returnOnStake": 0.022944369616629847,
+            "meanPerTrade": 0.020228181128256962,
+            "medianPerTrade": 0.09399999999999997,
+            "winRate": 0.9018466987098406,
+            "maxDrawdown": 68.52399999999997,
+            "profitFactor": 1.2509989798320642,
+            "seReturnOnStake": 0.05211655940202178,
+            "tStat": 0.44025104266072784
+          },
+          "once": {
+            "trades": 103,
+            "windows": 103,
+            "stake": 91.07699999999998,
+            "pnl": -2.0769999999999995,
+            "returnOnStake": -0.022804879387770784,
+            "meanPerTrade": -0.020165048543689317,
+            "medianPerTrade": 0.07499999999999996,
+            "winRate": 0.8640776699029126,
+            "maxDrawdown": 4.509,
+            "profitFactor": 0.8174226441631507,
+            "seReturnOnStake": 0.035709134172531,
+            "tStat": -0.638628740691038
+          }
+        },
+        {
+          "fold": 2,
+          "testStart": 1786003801,
+          "trainWindows": 283,
+          "all": {
+            "trades": 309,
+            "windows": 82,
+            "stake": 265.0480000000001,
+            "pnl": 24.951999999999998,
+            "returnOnStake": 0.09414143853188851,
+            "meanPerTrade": 0.08075080906148867,
+            "medianPerTrade": 0.132,
+            "winRate": 0.9385113268608414,
+            "maxDrawdown": 7.928000000000001,
+            "profitFactor": 2.6029808557111633,
+            "seReturnOnStake": 0.02490095167551506,
+            "tStat": 3.7806361683942047
+          },
+          "once": {
+            "trades": 82,
+            "windows": 82,
+            "stake": 70.562,
+            "pnl": 1.4380000000000013,
+            "returnOnStake": 0.020379240951220224,
+            "meanPerTrade": 0.017536585365853674,
+            "medianPerTrade": 0.10949999999999999,
+            "winRate": 0.8780487804878049,
+            "maxDrawdown": 5.276000000000001,
+            "profitFactor": 1.1747690811861937,
+            "seReturnOnStake": 0.04069526384484056,
+            "tStat": 0.5007767249997558
+          }
+        },
+        {
+          "fold": 3,
+          "testStart": 1787142270,
+          "trainWindows": 439,
+          "all": {
+            "trades": 107,
+            "windows": 65,
+            "stake": 92.18199999999999,
+            "pnl": -9.182000000000002,
+            "returnOnStake": -0.09960729860493375,
+            "meanPerTrade": -0.08581308411214955,
+            "medianPerTrade": 0.07799999999999996,
+            "winRate": 0.7757009345794392,
+            "maxDrawdown": 10.624000000000002,
+            "profitFactor": 0.5318888605658934,
+            "seReturnOnStake": 0.07102734319325837,
+            "tStat": -1.402379620675268
+          },
+          "once": {
+            "trades": 65,
+            "windows": 65,
+            "stake": 55.50400000000002,
+            "pnl": -3.503999999999999,
+            "returnOnStake": -0.06313058518304983,
+            "meanPerTrade": -0.053907692307692295,
+            "medianPerTrade": 0.08899999999999997,
+            "winRate": 0.8,
+            "maxDrawdown": 5.303,
+            "profitFactor": 0.6653614745487538,
+            "seReturnOnStake": 0.058925162297586486,
+            "tStat": -1.0713688808225073
+          }
+        },
+        {
+          "fold": 4,
+          "testStart": 1787275894,
+          "trainWindows": 564,
+          "all": {
+            "trades": 103,
+            "windows": 58,
+            "stake": 86.59599999999999,
+            "pnl": 12.404000000000002,
+            "returnOnStake": 0.14323987251143244,
+            "meanPerTrade": 0.12042718446601944,
+            "medianPerTrade": 0.15700000000000003,
+            "winRate": 0.9611650485436893,
+            "maxDrawdown": 2.192000000000001,
+            "profitFactor": 4.778251599147121,
+            "seReturnOnStake": 0.027896672964423254,
+            "tStat": 5.1346579104292065
+          },
+          "once": {
+            "trades": 58,
+            "windows": 58,
+            "stake": 48.823,
+            "pnl": 5.177,
+            "returnOnStake": 0.10603608954795894,
+            "meanPerTrade": 0.08925862068965516,
+            "medianPerTrade": 0.14750000000000002,
+            "winRate": 0.9310344827586207,
+            "maxDrawdown": 2.5700000000000003,
+            "profitFactor": 2.5769113615595503,
+            "seReturnOnStake": 0.04226687253012566,
+            "tStat": 2.508728070012321
+          }
+        }
+      ],
+      "edgeBuckets": [
+        {
+          "lo": 0,
+          "hi": 0.01,
+          "trades": 20,
+          "windows": 20,
+          "stake": 14.700999999999999,
+          "pnl": -1.701,
+          "returnOnStake": -0.11570641452962385,
+          "meanEdge": 0.00505000000000001
+        },
+        {
+          "lo": 0.01,
+          "hi": 0.02,
+          "trades": 10,
+          "windows": 10,
+          "stake": 7.2490000000000006,
+          "pnl": 1.7510000000000001,
+          "returnOnStake": 0.2415505586977514,
+          "meanEdge": 0.014900000000000047
+        },
+        {
+          "lo": 0.02,
+          "hi": 0.03,
+          "trades": 6,
+          "windows": 6,
+          "stake": 4.542000000000001,
+          "pnl": 1.458,
+          "returnOnStake": 0.321003963011889,
+          "meanEdge": 0.023666666666666687
+        },
+        {
+          "lo": 0.03,
+          "hi": 0.05,
+          "trades": 20,
+          "windows": 20,
+          "stake": 15.104000000000001,
+          "pnl": -0.10399999999999998,
+          "returnOnStake": -0.006885593220338981,
+          "meanEdge": 0.040200000000000034
+        },
+        {
+          "lo": 0.05,
+          "hi": 0.08,
+          "trades": 22,
+          "windows": 22,
+          "stake": 17.072000000000003,
+          "pnl": 0.928,
+          "returnOnStake": 0.05435801312089971,
+          "meanEdge": 0.06690909090909095
+        },
+        {
+          "lo": 0.08,
+          "hi": 1,
+          "trades": 230,
+          "windows": 230,
+          "stake": 207.29799999999992,
+          "pnl": -1.2979999999999992,
+          "returnOnStake": -0.006261517236056304,
+          "meanEdge": 0.18499130434782615
+        }
+      ],
+      "byAsset": {
+        "BTC": {
+          "trades": 167,
+          "windows": 167,
+          "stake": 144.91399999999987,
+          "pnl": 0.08600000000000163,
+          "returnOnStake": 0.0005934554287370558,
+          "meanPerTrade": 0.0005149700598802493,
+          "medianPerTrade": 0.08899999999999997,
+          "winRate": 0.8682634730538922,
+          "maxDrawdown": 4.358,
+          "profitFactor": 1.0047642789873137,
+          "seReturnOnStake": 0.028028142131103346,
+          "tStat": 0.021173555705588043
+        },
+        "ETH": {
+          "trades": 141,
+          "windows": 141,
+          "stake": 121.05199999999996,
+          "pnl": 0.948,
+          "returnOnStake": 0.007831345207018474,
+          "meanPerTrade": 0.006723404255319148,
+          "medianPerTrade": 0.10199999999999998,
+          "winRate": 0.8652482269503546,
+          "maxDrawdown": 4.4719999999999995,
+          "profitFactor": 1.0619324492062456,
+          "seReturnOnStake": 0.03282058564829835,
+          "tStat": 0.23861076980582474
+        }
+      },
+      "byTenor": {
+        "15m": {
+          "trades": 192,
+          "windows": 192,
+          "stake": 166.03299999999987,
+          "pnl": 1.9670000000000005,
+          "returnOnStake": 0.011847042455415503,
+          "meanPerTrade": 0.01024479166666667,
+          "medianPerTrade": 0.09249999999999997,
+          "winRate": 0.875,
+          "maxDrawdown": 3.36,
+          "profitFactor": 1.1023466361413186,
+          "seReturnOnStake": 0.02645952228867489,
+          "tStat": 0.4477421143950974
+        },
+        "1d": {
+          "trades": 9,
+          "windows": 9,
+          "stake": 7.811,
+          "pnl": 0.18900000000000006,
+          "returnOnStake": 0.024196645755985156,
+          "meanPerTrade": 0.021000000000000005,
+          "medianPerTrade": 0.09099999999999997,
+          "winRate": 0.8888888888888888,
+          "maxDrawdown": 0.895,
+          "profitFactor": 1.211173184357542,
+          "seReturnOnStake": 0.1326501710324731,
+          "tStat": 0.1824094576558198
+        },
+        "1h": {
+          "trades": 79,
+          "windows": 79,
+          "stake": 68.44200000000002,
+          "pnl": -3.4419999999999957,
+          "returnOnStake": -0.050290757137430156,
+          "meanPerTrade": -0.0435696202531645,
+          "medianPerTrade": 0.08499999999999996,
+          "winRate": 0.8227848101265823,
+          "maxDrawdown": 5.117999999999998,
+          "profitFactor": 0.7018880997748139,
+          "seReturnOnStake": 0.046713405621258405,
+          "tStat": -1.0765808330305886
+        },
+        "4h": {
+          "trades": 28,
+          "windows": 28,
+          "stake": 23.679999999999996,
+          "pnl": 2.3199999999999994,
+          "returnOnStake": 0.09797297297297296,
+          "meanPerTrade": 0.08285714285714284,
+          "medianPerTrade": 0.15200000000000002,
+          "winRate": 0.9285714285714286,
+          "maxDrawdown": 0.9080000000000001,
+          "profitFactor": 2.3663133097762072,
+          "seReturnOnStake": 0.05922597326197085,
+          "tStat": 1.6542230980251642
+        }
+      },
+      "byLeg": {
+        "DOWN": {
+          "trades": 147,
+          "windows": 147,
+          "stake": 127.02899999999997,
+          "pnl": -3.028999999999999,
+          "returnOnStake": -0.0238449487912209,
+          "meanPerTrade": -0.020605442176870742,
+          "medianPerTrade": 0.08899999999999997,
+          "winRate": 0.8435374149659864,
+          "maxDrawdown": 5.644000000000001,
+          "profitFactor": 0.8398794734894542,
+          "seReturnOnStake": 0.03169480376955996,
+          "tStat": -0.7523299075958266
+        },
+        "UP": {
+          "trades": 161,
+          "windows": 161,
+          "stake": 138.93699999999993,
+          "pnl": 4.063,
+          "returnOnStake": 0.029243470061970547,
+          "meanPerTrade": 0.025236024844720494,
+          "medianPerTrade": 0.09799999999999998,
+          "winRate": 0.8881987577639752,
+          "maxDrawdown": 3.192,
+          "profitFactor": 1.2813517069455023,
+          "seReturnOnStake": 0.028386135591355725,
+          "tStat": 1.0302025778695956
+        }
+      }
+    },
+    {
+      "strategy": "first trade in the window",
+      "gate": {
+        "state": "REJECTED",
+        "failures": [
+          "only 2 of 4 folds were non-negative, needs 3",
+          "t = 1.91 on a window-clustered bootstrap, below 2",
+          "removing the best fold takes it from 7.36% to -0.03% — the result is one period, not a strategy"
+        ],
+        "withoutBestFold": {
+          "stake": 215.062,
+          "pnl": -0.06200000000000094,
+          "returnOnStake": -0.0002882889585328926
+        }
+      },
+      "all": {
+        "trades": 584,
+        "windows": 584,
+        "stake": 279.43600000000015,
+        "pnl": 20.563999999999997,
+        "returnOnStake": 0.07359109062540255,
+        "meanPerTrade": 0.03521232876712328,
+        "medianPerTrade": 0.026500000000000024,
+        "winRate": 0.5136986301369864,
+        "maxDrawdown": 7.241999999999999,
+        "profitFactor": 1.1917121148557301,
+        "seReturnOnStake": 0.03846266606228067,
+        "tStat": 1.913312262499957
+      },
+      "once": {
+        "trades": 584,
+        "windows": 584,
+        "stake": 279.43600000000015,
+        "pnl": 20.563999999999997,
+        "returnOnStake": 0.07359109062540255,
+        "meanPerTrade": 0.03521232876712328,
+        "medianPerTrade": 0.026500000000000024,
+        "winRate": 0.5136986301369864,
+        "maxDrawdown": 7.241999999999999,
+        "profitFactor": 1.1917121148557301,
+        "seReturnOnStake": 0.03846266606228067,
+        "tStat": 1.913312262499957
+      },
+      "byFold": [
+        {
+          "fold": 1,
+          "testStart": 1784822426,
+          "trainWindows": 130,
+          "all": {
+            "trades": 147,
+            "windows": 147,
+            "stake": 74.52700000000003,
+            "pnl": -0.527,
+            "returnOnStake": -0.007071262763830555,
+            "meanPerTrade": -0.0035850340136054423,
+            "medianPerTrade": 0.0050000000000000044,
+            "winRate": 0.5034013605442177,
+            "maxDrawdown": 4.7250000000000005,
+            "profitFactor": 0.9829300683445086,
+            "seReturnOnStake": 0.07514159979248691,
+            "tStat": -0.09410583196736225
+          },
+          "once": {
+            "trades": 147,
+            "windows": 147,
+            "stake": 74.52700000000003,
+            "pnl": -0.527,
+            "returnOnStake": -0.007071262763830555,
+            "meanPerTrade": -0.0035850340136054423,
+            "medianPerTrade": 0.0050000000000000044,
+            "winRate": 0.5034013605442177,
+            "maxDrawdown": 4.7250000000000005,
+            "profitFactor": 0.9829300683445086,
+            "seReturnOnStake": 0.07514159979248691,
+            "tStat": -0.09410583196736225
+          }
+        },
+        {
+          "fold": 2,
+          "testStart": 1786003801,
+          "trainWindows": 283,
+          "all": {
+            "trades": 147,
+            "windows": 147,
+            "stake": 73.09600000000003,
+            "pnl": 1.9039999999999992,
+            "returnOnStake": 0.026047936959614732,
+            "meanPerTrade": 0.012952380952380948,
+            "medianPerTrade": 0.010000000000000009,
+            "winRate": 0.5102040816326531,
+            "maxDrawdown": 3.251,
+            "profitFactor": 1.0838249537730038,
+            "seReturnOnStake": 0.06501764503821819,
+            "tStat": 0.4006287361577527
+          },
+          "once": {
+            "trades": 147,
+            "windows": 147,
+            "stake": 73.09600000000003,
+            "pnl": 1.9039999999999992,
+            "returnOnStake": 0.026047936959614732,
+            "meanPerTrade": 0.012952380952380948,
+            "medianPerTrade": 0.010000000000000009,
+            "winRate": 0.5102040816326531,
+            "maxDrawdown": 3.251,
+            "profitFactor": 1.0838249537730038,
+            "seReturnOnStake": 0.06501764503821819,
+            "tStat": 0.4006287361577527
+          }
+        },
+        {
+          "fold": 3,
+          "testStart": 1787142270,
+          "trainWindows": 439,
+          "all": {
+            "trades": 146,
+            "windows": 146,
+            "stake": 67.43899999999996,
+            "pnl": -1.4390000000000003,
+            "returnOnStake": -0.021337801568825174,
+            "meanPerTrade": -0.009856164383561647,
+            "medianPerTrade": -0.19899999999999998,
+            "winRate": 0.4520547945205479,
+            "maxDrawdown": 7.242000000000001,
+            "profitFactor": 0.9574020899322095,
+            "seReturnOnStake": 0.08859306799970214,
+            "tStat": -0.24085181889058085
+          },
+          "once": {
+            "trades": 146,
+            "windows": 146,
+            "stake": 67.43899999999996,
+            "pnl": -1.4390000000000003,
+            "returnOnStake": -0.021337801568825174,
+            "meanPerTrade": -0.009856164383561647,
+            "medianPerTrade": -0.19899999999999998,
+            "winRate": 0.4520547945205479,
+            "maxDrawdown": 7.242000000000001,
+            "profitFactor": 0.9574020899322095,
+            "seReturnOnStake": 0.08859306799970214,
+            "tStat": -0.24085181889058085
+          }
+        },
+        {
+          "fold": 4,
+          "testStart": 1787275894,
+          "trainWindows": 564,
+          "all": {
+            "trades": 144,
+            "windows": 144,
+            "stake": 64.374,
+            "pnl": 20.625999999999994,
+            "returnOnStake": 0.32040886072016644,
+            "meanPerTrade": 0.14323611111111106,
+            "medianPerTrade": 0.249,
+            "winRate": 0.5902777777777778,
+            "maxDrawdown": 2.7889999999999997,
+            "profitFactor": 2.036638689249636,
+            "seReturnOnStake": 0.08410367522297817,
+            "tStat": 3.809689170784617
+          },
+          "once": {
+            "trades": 144,
+            "windows": 144,
+            "stake": 64.374,
+            "pnl": 20.625999999999994,
+            "returnOnStake": 0.32040886072016644,
+            "meanPerTrade": 0.14323611111111106,
+            "medianPerTrade": 0.249,
+            "winRate": 0.5902777777777778,
+            "maxDrawdown": 2.7889999999999997,
+            "profitFactor": 2.036638689249636,
+            "seReturnOnStake": 0.08410367522297817,
+            "tStat": 3.809689170784617
+          }
+        }
+      ],
+      "edgeBuckets": [
+        {
+          "lo": 0,
+          "hi": 0.01,
+          "trades": 584,
+          "windows": 584,
+          "stake": 279.43600000000015,
+          "pnl": 20.563999999999997,
+          "returnOnStake": 0.07359109062540255,
+          "meanEdge": 0
+        }
+      ],
+      "byAsset": {
+        "BTC": {
+          "trades": 333,
+          "windows": 333,
+          "stake": 156.25199999999995,
+          "pnl": 7.748000000000001,
+          "returnOnStake": 0.049586565291964285,
+          "meanPerTrade": 0.023267267267267272,
+          "medianPerTrade": -0.02,
+          "winRate": 0.4924924924924925,
+          "maxDrawdown": 9.064,
+          "profitFactor": 1.1243719601264905,
+          "seReturnOnStake": 0.054794648385289815,
+          "tStat": 0.9049527052951454
+        },
+        "ETH": {
+          "trades": 251,
+          "windows": 251,
+          "stake": 123.18400000000004,
+          "pnl": 12.816000000000003,
+          "returnOnStake": 0.10403948564748668,
+          "meanPerTrade": 0.05105976095617531,
+          "medianPerTrade": 0.10599999999999998,
+          "winRate": 0.5418326693227091,
+          "maxDrawdown": 7.763000000000002,
+          "profitFactor": 1.285002668564313,
+          "seReturnOnStake": 0.0565991555367289,
+          "tStat": 1.8381808820446501
+        }
+      },
+      "byTenor": {
+        "15m": {
+          "trades": 414,
+          "windows": 414,
+          "stake": 205.27499999999992,
+          "pnl": 23.725000000000005,
+          "returnOnStake": 0.11557666544878828,
+          "meanPerTrade": 0.05730676328502417,
+          "medianPerTrade": 0.10649999999999998,
+          "winRate": 0.5531400966183575,
+          "maxDrawdown": 6.364999999999999,
+          "profitFactor": 1.327661690168078,
+          "seReturnOnStake": 0.04720924108833424,
+          "tStat": 2.4481788477075974
+        },
+        "1d": {
+          "trades": 14,
+          "windows": 14,
+          "stake": 5.626,
+          "pnl": -0.6259999999999998,
+          "returnOnStake": -0.11126910771418409,
+          "meanPerTrade": -0.0447142857142857,
+          "medianPerTrade": -0.15499999999999997,
+          "winRate": 0.35714285714285715,
+          "maxDrawdown": 1.706,
+          "profitFactor": 0.8057107386716326,
+          "seReturnOnStake": 0.34353652158586934,
+          "tStat": -0.32389309643275177
+        },
+        "1h": {
+          "trades": 110,
+          "windows": 110,
+          "stake": 49.460999999999984,
+          "pnl": -2.4609999999999985,
+          "returnOnStake": -0.04975637370857846,
+          "meanPerTrade": -0.02237272727272726,
+          "medianPerTrade": -0.15150000000000002,
+          "winRate": 0.42727272727272725,
+          "maxDrawdown": 6.216999999999999,
+          "profitFactor": 0.8884810585463114,
+          "seReturnOnStake": 0.09409276878500969,
+          "tStat": -0.5288012495653689
+        },
+        "4h": {
+          "trades": 46,
+          "windows": 46,
+          "stake": 19.073999999999995,
+          "pnl": -0.0739999999999999,
+          "returnOnStake": -0.003879626716996955,
+          "meanPerTrade": -0.0016086956521739108,
+          "medianPerTrade": -0.1215,
+          "winRate": 0.41304347826086957,
+          "maxDrawdown": 2.473,
+          "profitFactor": 0.9922658862876252,
+          "seReturnOnStake": 0.16110702122652154,
+          "tStat": -0.024081053001048774
+        }
+      },
+      "byLeg": {
+        "DOWN": {
+          "trades": 266,
+          "windows": 266,
+          "stake": 123.67999999999996,
+          "pnl": 11.32,
+          "returnOnStake": 0.09152652005174647,
+          "meanPerTrade": 0.04255639097744361,
+          "medianPerTrade": 0.012500000000000011,
+          "winRate": 0.5075187969924813,
+          "maxDrawdown": 5.844,
+          "profitFactor": 1.2434827497203826,
+          "seReturnOnStake": 0.05751331587657205,
+          "tStat": 1.591397029657781
+        },
+        "UP": {
+          "trades": 318,
+          "windows": 318,
+          "stake": 155.75599999999994,
+          "pnl": 9.243999999999998,
+          "returnOnStake": 0.05934923855260794,
+          "meanPerTrade": 0.0290691823899371,
+          "medianPerTrade": 0.040500000000000036,
+          "winRate": 0.5188679245283019,
+          "maxDrawdown": 8.726,
+          "profitFactor": 1.1521070212100766,
+          "seReturnOnStake": 0.05073622409078651,
+          "tStat": 1.1697606516087886
+        }
+      }
+    },
+    {
+      "strategy": "residual ridge · ≥ 0.005",
+      "gate": {
+        "state": "REJECTED",
+        "failures": [
+          "return on stake 0.30% is below the 2.00% floor",
+          "t = 0.03 on a window-clustered bootstrap, below 2",
+          "removing the best fold takes it from 0.30% to -0.09% — the result is one period, not a strategy"
+        ],
+        "withoutBestFold": {
+          "stake": 4219.851999999971,
+          "pnl": -3.851999999997833,
+          "returnOnStake": -0.0009128282224110845
+        }
+      },
+      "all": {
+        "trades": 8053,
+        "windows": 461,
+        "stake": 4358.014999999968,
+        "pnl": 12.985000000002174,
+        "returnOnStake": 0.0029795675324665633,
+        "meanPerTrade": 0.0016124425679873555,
+        "medianPerTrade": 0.025000000000000022,
+        "winRate": 0.5427790885384329,
+        "maxDrawdown": 606.4789999999995,
+        "profitFactor": 1.0102311926489922,
+        "seReturnOnStake": 0.10573773431069265,
+        "tStat": 0.028178847900330477
+      },
+      "once": {
+        "trades": 461,
+        "windows": 461,
+        "stake": 281.99900000000025,
+        "pnl": 7.000999999999997,
+        "returnOnStake": 0.02482632917138001,
+        "meanPerTrade": 0.01518655097613882,
+        "medianPerTrade": 0.08099999999999996,
+        "winRate": 0.6268980477223427,
+        "maxDrawdown": 7.812000000000001,
+        "profitFactor": 1.0920893402083545,
+        "seReturnOnStake": 0.03138902657673596,
+        "tStat": 0.7909238316354829
+      },
+      "byFold": [
+        {
+          "fold": 1,
+          "testStart": 1784822426,
+          "trainWindows": 130,
+          "all": {
+            "trades": 7160,
+            "windows": 122,
+            "stake": 3768.2399999999707,
+            "pnl": 12.760000000002169,
+            "returnOnStake": 0.0033861962083100512,
+            "meanPerTrade": 0.0017821229050282359,
+            "medianPerTrade": 0.0050000000000000044,
+            "winRate": 0.528072625698324,
+            "maxDrawdown": 606.4789999999995,
+            "profitFactor": 1.011385222944264,
+            "seReturnOnStake": 0.11764285006658284,
+            "tStat": 0.028783697491122927
+          },
+          "once": {
+            "trades": 122,
+            "windows": 122,
+            "stake": 64.01500000000001,
+            "pnl": 1.9849999999999999,
+            "returnOnStake": 0.03100835741623056,
+            "meanPerTrade": 0.016270491803278688,
+            "medianPerTrade": 0.020000000000000018,
+            "winRate": 0.5409836065573771,
+            "maxDrawdown": 5.359000000000001,
+            "profitFactor": 1.1033908016042504,
+            "seReturnOnStake": 0.07109175606681442,
+            "tStat": 0.43617374407080145
+          }
+        },
+        {
+          "fold": 2,
+          "testStart": 1786003801,
+          "trainWindows": 283,
+          "all": {
+            "trades": 436,
+            "windows": 111,
+            "stake": 301.9490000000001,
+            "pnl": -17.949000000000005,
+            "returnOnStake": -0.05944381335920966,
+            "meanPerTrade": -0.041167431192660565,
+            "medianPerTrade": 0.08249999999999996,
+            "winRate": 0.6513761467889908,
+            "maxDrawdown": 18.852000000000007,
+            "profitFactor": 0.7636205602307292,
+            "seReturnOnStake": 0.06291435523518912,
+            "tStat": -0.9448370429450363
+          },
+          "once": {
+            "trades": 111,
+            "windows": 111,
+            "stake": 76.807,
+            "pnl": -2.8070000000000004,
+            "returnOnStake": -0.03654614813753955,
+            "meanPerTrade": -0.02528828828828829,
+            "medianPerTrade": 0.08299999999999996,
+            "winRate": 0.6666666666666666,
+            "maxDrawdown": 5.5920000000000005,
+            "profitFactor": 0.8499812944257389,
+            "seReturnOnStake": 0.055812064595590426,
+            "tStat": -0.65480731455376
+          }
+        },
+        {
+          "fold": 3,
+          "testStart": 1787142270,
+          "trainWindows": 439,
+          "all": {
+            "trades": 241,
+            "windows": 126,
+            "stake": 149.66299999999987,
+            "pnl": 1.337000000000003,
+            "returnOnStake": 0.008933403713676756,
+            "meanPerTrade": 0.0055477178423236646,
+            "medianPerTrade": 0.08899999999999997,
+            "winRate": 0.6265560165975104,
+            "maxDrawdown": 9.66,
+            "profitFactor": 1.0276553935257005,
+            "seReturnOnStake": 0.05499609254310866,
+            "tStat": 0.16243706235446295
+          },
+          "once": {
+            "trades": 126,
+            "windows": 126,
+            "stake": 76.93199999999999,
+            "pnl": 0.06800000000000173,
+            "returnOnStake": 0.0008838974678937469,
+            "meanPerTrade": 0.0005396825396825534,
+            "medianPerTrade": 0.07699999999999996,
+            "winRate": 0.6111111111111112,
+            "maxDrawdown": 6.914999999999999,
+            "profitFactor": 1.002608762372439,
+            "seReturnOnStake": 0.06606548894538561,
+            "tStat": 0.01337911036463287
+          }
+        },
+        {
+          "fold": 4,
+          "testStart": 1787275894,
+          "trainWindows": 564,
+          "all": {
+            "trades": 216,
+            "windows": 102,
+            "stake": 138.16300000000004,
+            "pnl": 16.837,
+            "returnOnStake": 0.12186330638448785,
+            "meanPerTrade": 0.07794907407407407,
+            "medianPerTrade": 0.15750000000000003,
+            "winRate": 0.7175925925925926,
+            "maxDrawdown": 5.513999999999998,
+            "profitFactor": 1.6977910398275942,
+            "seReturnOnStake": 0.048941790376248566,
+            "tStat": 2.4899642094750187
+          },
+          "once": {
+            "trades": 102,
+            "windows": 102,
+            "stake": 64.24499999999998,
+            "pnl": 7.755,
+            "returnOnStake": 0.12070978286247962,
+            "meanPerTrade": 0.07602941176470589,
+            "medianPerTrade": 0.14750000000000002,
+            "winRate": 0.7058823529411765,
+            "maxDrawdown": 3.08,
+            "profitFactor": 1.643675298804781,
+            "seReturnOnStake": 0.05758057034946094,
+            "tStat": 2.096363098348672
+          }
+        }
+      ],
+      "edgeBuckets": [
+        {
+          "lo": 0,
+          "hi": 0.01,
+          "trades": 39,
+          "windows": 39,
+          "stake": 17.131,
+          "pnl": -1.1310000000000011,
+          "returnOnStake": -0.06602066429280258,
+          "meanEdge": 0.007292280012428096
+        },
+        {
+          "lo": 0.01,
+          "hi": 0.02,
+          "trades": 81,
+          "windows": 81,
+          "stake": 40.454000000000036,
+          "pnl": 1.546000000000001,
+          "returnOnStake": 0.03821624561230038,
+          "meanEdge": 0.014395525748548643
+        },
+        {
+          "lo": 0.02,
+          "hi": 0.03,
+          "trades": 76,
+          "windows": 76,
+          "stake": 44.833999999999996,
+          "pnl": 2.1659999999999995,
+          "returnOnStake": 0.04831154927064281,
+          "meanEdge": 0.024907519694735432
+        },
+        {
+          "lo": 0.03,
+          "hi": 0.05,
+          "trades": 123,
+          "windows": 123,
+          "stake": 86.13900000000001,
+          "pnl": 5.861000000000005,
+          "returnOnStake": 0.06804118924064598,
+          "meanEdge": 0.04029786057085292
+        },
+        {
+          "lo": 0.05,
+          "hi": 0.08,
+          "trades": 86,
+          "windows": 86,
+          "stake": 54.14599999999997,
+          "pnl": -3.145999999999999,
+          "returnOnStake": -0.05810216821187162,
+          "meanEdge": 0.06429709818130931
+        },
+        {
+          "lo": 0.08,
+          "hi": 1,
+          "trades": 56,
+          "windows": 56,
+          "stake": 39.294999999999995,
+          "pnl": 1.7050000000000003,
+          "returnOnStake": 0.043389744242270024,
+          "meanEdge": 0.11807820231412318
+        }
+      ],
+      "byAsset": {
+        "BTC": {
+          "trades": 247,
+          "windows": 247,
+          "stake": 151.67899999999992,
+          "pnl": 1.3210000000000013,
+          "returnOnStake": 0.008709181890703407,
+          "meanPerTrade": 0.005348178137651827,
+          "medianPerTrade": 0.05500000000000005,
+          "winRate": 0.6194331983805668,
+          "maxDrawdown": 8.026,
+          "profitFactor": 1.031233006265516,
+          "seReturnOnStake": 0.0446363081612998,
+          "tStat": 0.19511429707025746
+        },
+        "ETH": {
+          "trades": 214,
+          "windows": 214,
+          "stake": 130.32000000000002,
+          "pnl": 5.680000000000001,
+          "returnOnStake": 0.04358502148557397,
+          "meanPerTrade": 0.026542056074766358,
+          "medianPerTrade": 0.10149999999999998,
+          "winRate": 0.6355140186915887,
+          "maxDrawdown": 4.624999999999999,
+          "profitFactor": 1.1684010791900141,
+          "seReturnOnStake": 0.044498501257647524,
+          "tStat": 0.9794716732866017
+        }
+      },
+      "byTenor": {
+        "15m": {
+          "trades": 314,
+          "windows": 314,
+          "stake": 190.6179999999999,
+          "pnl": 3.3820000000000014,
+          "returnOnStake": 0.01774229086445143,
+          "meanPerTrade": 0.01077070063694268,
+          "medianPerTrade": 0.07899999999999996,
+          "winRate": 0.6178343949044586,
+          "maxDrawdown": 10.618000000000002,
+          "profitFactor": 1.0617401146445653,
+          "seReturnOnStake": 0.04181045661975764,
+          "tStat": 0.42435056440085056
+        },
+        "1d": {
+          "trades": 12,
+          "windows": 12,
+          "stake": 8.033,
+          "pnl": -0.033,
+          "returnOnStake": -0.004108054276111043,
+          "meanPerTrade": -0.0027500000000000003,
+          "medianPerTrade": 0.04700000000000004,
+          "winRate": 0.6666666666666666,
+          "maxDrawdown": 1.504,
+          "profitFactor": 0.9827134625458355,
+          "seReturnOnStake": 0.20075968114619383,
+          "tStat": -0.02046254632731532
+        },
+        "1h": {
+          "trades": 99,
+          "windows": 99,
+          "stake": 62.538999999999994,
+          "pnl": 3.4610000000000003,
+          "returnOnStake": 0.05534146692463904,
+          "meanPerTrade": 0.03495959595959596,
+          "medianPerTrade": 0.08299999999999996,
+          "winRate": 0.6666666666666666,
+          "maxDrawdown": 3.079,
+          "profitFactor": 1.246597791236195,
+          "seReturnOnStake": 0.06483221123601343,
+          "tStat": 0.8536106646613588
+        },
+        "4h": {
+          "trades": 36,
+          "windows": 36,
+          "stake": 20.809,
+          "pnl": 0.19099999999999928,
+          "returnOnStake": 0.009178720745831096,
+          "meanPerTrade": 0.005305555555555536,
+          "medianPerTrade": 0.08949999999999997,
+          "winRate": 0.5833333333333334,
+          "maxDrawdown": 3.3580000000000005,
+          "profitFactor": 1.0360241418332705,
+          "seReturnOnStake": 0.10761260929062967,
+          "tStat": 0.08529410081528736
+        }
+      },
+      "byLeg": {
+        "DOWN": {
+          "trades": 115,
+          "windows": 115,
+          "stake": 80.56,
+          "pnl": 5.4399999999999995,
+          "returnOnStake": 0.06752730883813306,
+          "meanPerTrade": 0.04730434782608695,
+          "medianPerTrade": 0.134,
+          "winRate": 0.7478260869565218,
+          "maxDrawdown": 1.9480000000000002,
+          "profitFactor": 1.3338857177929173,
+          "seReturnOnStake": 0.052493928452918816,
+          "tStat": 1.2863832223701357
+        },
+        "UP": {
+          "trades": 346,
+          "windows": 346,
+          "stake": 201.4389999999999,
+          "pnl": 1.5609999999999986,
+          "returnOnStake": 0.007749244188066855,
+          "meanPerTrade": 0.004511560693641614,
+          "medianPerTrade": 0.063,
+          "winRate": 0.5867052023121387,
+          "maxDrawdown": 9.931000000000001,
+          "profitFactor": 1.0261338333528658,
+          "seReturnOnStake": 0.03676704611829345,
+          "tStat": 0.21076602572680478
+        }
+      }
+    },
+    {
+      "strategy": "residual ridge · ≥ 0.010",
+      "gate": {
+        "state": "REJECTED",
+        "failures": [
+          "return on stake 1.56% is below the 2.00% floor",
+          "only 2 of 4 folds were non-negative, needs 3",
+          "t = 0.16 on a window-clustered bootstrap, below 2"
+        ],
+        "withoutBestFold": {
+          "stake": 536.124,
+          "pnl": 12.875999999999987,
+          "returnOnStake": 0.024016831926942248
+        }
+      },
+      "all": {
+        "trades": 7431,
+        "windows": 438,
+        "stake": 4172.070999999974,
+        "pnl": 64.92899999999982,
+        "returnOnStake": 0.01556277445901573,
+        "meanPerTrade": 0.008737585789261178,
+        "medianPerTrade": 0.05500000000000005,
+        "winRate": 0.5701789799488629,
+        "maxDrawdown": 552.9240000000002,
+        "profitFactor": 1.0549723990788435,
+        "seReturnOnStake": 0.0978307942555938,
+        "tStat": 0.15907848420770515
+      },
+      "once": {
+        "trades": 438,
+        "windows": 438,
+        "stake": 273.209,
+        "pnl": 3.7909999999999995,
+        "returnOnStake": 0.013875824002869595,
+        "meanPerTrade": 0.00865525114155251,
+        "medianPerTrade": 0.09199999999999997,
+        "winRate": 0.632420091324201,
+        "maxDrawdown": 11.943,
+        "profitFactor": 1.0513289193982962,
+        "seReturnOnStake": 0.031153981229628945,
+        "tStat": 0.44539488871724087
+      },
+      "byFold": [
+        {
+          "fold": 1,
+          "testStart": 1784822426,
+          "trainWindows": 130,
+          "all": {
+            "trades": 6640,
+            "windows": 121,
+            "stake": 3635.946999999973,
+            "pnl": 52.053,
+            "returnOnStake": 0.014316215280365854,
+            "meanPerTrade": 0.007839307228915663,
+            "medianPerTrade": 0.03500000000000003,
+            "winRate": 0.555421686746988,
+            "maxDrawdown": 552.9240000000002,
+            "profitFactor": 1.049191854185037,
+            "seReturnOnStake": 0.11346039856799534,
+            "tStat": 0.12617808029103947
+          },
+          "once": {
+            "trades": 121,
+            "windows": 121,
+            "stake": 62.87100000000002,
+            "pnl": 3.1290000000000004,
+            "returnOnStake": 0.049768573746242294,
+            "meanPerTrade": 0.02585950413223141,
+            "medianPerTrade": 0.04500000000000004,
+            "winRate": 0.5454545454545454,
+            "maxDrawdown": 5.157,
+            "profitFactor": 1.1621915820029032,
+            "seReturnOnStake": 0.07148666319264671,
+            "tStat": 0.6961938286603593
+          }
+        },
+        {
+          "fold": 2,
+          "testStart": 1786003801,
+          "trainWindows": 283,
+          "all": {
+            "trades": 381,
+            "windows": 104,
+            "stake": 270.9220000000001,
+            "pnl": -4.922000000000007,
+            "returnOnStake": -0.01816759067185391,
+            "meanPerTrade": -0.012918635170603692,
+            "medianPerTrade": 0.118,
+            "winRate": 0.6981627296587927,
+            "maxDrawdown": 9.402999999999999,
+            "profitFactor": 0.9186231069373713,
+            "seReturnOnStake": 0.06577889796932353,
+            "tStat": -0.27619177627947644
+          },
+          "once": {
+            "trades": 104,
+            "windows": 104,
+            "stake": 74.126,
+            "pnl": -1.1260000000000006,
+            "returnOnStake": -0.015190351563553955,
+            "meanPerTrade": -0.010826923076923083,
+            "medianPerTrade": 0.09549999999999997,
+            "winRate": 0.7019230769230769,
+            "maxDrawdown": 3.489,
+            "profitFactor": 0.931118859729614,
+            "seReturnOnStake": 0.05636450315545426,
+            "tStat": -0.2695020928625718
+          }
+        },
+        {
+          "fold": 3,
+          "testStart": 1787142270,
+          "trainWindows": 439,
+          "all": {
+            "trades": 212,
+            "windows": 119,
+            "stake": 135.46899999999994,
+            "pnl": -2.4689999999999985,
+            "returnOnStake": -0.01822557190205877,
+            "meanPerTrade": -0.011646226415094333,
+            "medianPerTrade": 0.08899999999999997,
+            "winRate": 0.6273584905660378,
+            "maxDrawdown": 11.778999999999998,
+            "profitFactor": 0.9437828730162342,
+            "seReturnOnStake": 0.06274854098895283,
+            "tStat": -0.29045411438757546
+          },
+          "once": {
+            "trades": 119,
+            "windows": 119,
+            "stake": 73.872,
+            "pnl": -5.871999999999999,
+            "returnOnStake": -0.0794888455707169,
+            "meanPerTrade": -0.049344537815126044,
+            "medianPerTrade": 0.062000000000000055,
+            "winRate": 0.5714285714285714,
+            "maxDrawdown": 9.235999999999999,
+            "profitFactor": 0.7906520731576879,
+            "seReturnOnStake": 0.06929287722196559,
+            "tStat": -1.1471430940310159
+          }
+        },
+        {
+          "fold": 4,
+          "testStart": 1787275894,
+          "trainWindows": 564,
+          "all": {
+            "trades": 198,
+            "windows": 94,
+            "stake": 129.73300000000006,
+            "pnl": 20.266999999999992,
+            "returnOnStake": 0.1562208535993154,
+            "meanPerTrade": 0.10235858585858582,
+            "medianPerTrade": 0.16450000000000004,
+            "winRate": 0.7575757575757576,
+            "maxDrawdown": 5.164,
+            "profitFactor": 2.092325105098631,
+            "seReturnOnStake": 0.05025508322543222,
+            "tStat": 3.1085582506857308
+          },
+          "once": {
+            "trades": 94,
+            "windows": 94,
+            "stake": 62.339999999999996,
+            "pnl": 7.659999999999999,
+            "returnOnStake": 0.12287455887070901,
+            "meanPerTrade": 0.08148936170212766,
+            "medianPerTrade": 0.15000000000000002,
+            "winRate": 0.7446808510638298,
+            "maxDrawdown": 2.694,
+            "profitFactor": 1.7532697413708322,
+            "seReturnOnStake": 0.054890155997596696,
+            "tStat": 2.238553646597196
+          }
+        }
+      ],
+      "edgeBuckets": [
+        {
+          "lo": 0.01,
+          "hi": 0.02,
+          "trades": 86,
+          "windows": 86,
+          "stake": 43.35000000000003,
+          "pnl": -1.350000000000001,
+          "returnOnStake": -0.03114186851211073,
+          "meanEdge": 0.014404826156605193
+        },
+        {
+          "lo": 0.02,
+          "hi": 0.03,
+          "trades": 77,
+          "windows": 77,
+          "stake": 47.54500000000001,
+          "pnl": 1.4550000000000003,
+          "returnOnStake": 0.030602587022820486,
+          "meanEdge": 0.024954375804644026
+        },
+        {
+          "lo": 0.03,
+          "hi": 0.05,
+          "trades": 135,
+          "windows": 135,
+          "stake": 90.824,
+          "pnl": 5.176000000000003,
+          "returnOnStake": 0.05698934202413462,
+          "meanEdge": 0.03977745233991986
+        },
+        {
+          "lo": 0.05,
+          "hi": 0.08,
+          "trades": 89,
+          "windows": 89,
+          "stake": 56.059999999999974,
+          "pnl": -4.0600000000000005,
+          "returnOnStake": -0.0724224045665359,
+          "meanEdge": 0.06434008100002309
+        },
+        {
+          "lo": 0.08,
+          "hi": 1,
+          "trades": 51,
+          "windows": 51,
+          "stake": 35.42999999999999,
+          "pnl": 2.5700000000000003,
+          "returnOnStake": 0.07253739768557722,
+          "meanEdge": 0.11831410569134307
+        }
+      ],
+      "byAsset": {
+        "BTC": {
+          "trades": 231,
+          "windows": 231,
+          "stake": 146.10499999999996,
+          "pnl": 0.8950000000000009,
+          "returnOnStake": 0.006125731494473161,
+          "meanPerTrade": 0.0038744588744588785,
+          "medianPerTrade": 0.07999999999999996,
+          "winRate": 0.6363636363636364,
+          "maxDrawdown": 8.184,
+          "profitFactor": 1.022926379425175,
+          "seReturnOnStake": 0.04432172695032426,
+          "tStat": 0.1382105778806605
+        },
+        "ETH": {
+          "trades": 207,
+          "windows": 207,
+          "stake": 127.10400000000001,
+          "pnl": 2.896000000000001,
+          "returnOnStake": 0.022784491440080566,
+          "meanPerTrade": 0.013990338164251211,
+          "medianPerTrade": 0.10599999999999998,
+          "winRate": 0.6280193236714976,
+          "maxDrawdown": 5.7909999999999995,
+          "profitFactor": 1.0831729802693926,
+          "seReturnOnStake": 0.042435057057653956,
+          "tStat": 0.5369261412592106
+        }
+      },
+      "byTenor": {
+        "15m": {
+          "trades": 296,
+          "windows": 296,
+          "stake": 180.6069999999999,
+          "pnl": 4.393000000000008,
+          "returnOnStake": 0.02432353120310957,
+          "meanPerTrade": 0.014841216216216242,
+          "medianPerTrade": 0.09699999999999998,
+          "winRate": 0.625,
+          "maxDrawdown": 10.228999999999997,
+          "profitFactor": 1.0847055647680381,
+          "seReturnOnStake": 0.04082870142240039,
+          "tStat": 0.595745893347581
+        },
+        "1d": {
+          "trades": 11,
+          "windows": 11,
+          "stake": 7.874,
+          "pnl": -0.8739999999999999,
+          "returnOnStake": -0.11099822199644398,
+          "meanPerTrade": -0.07945454545454544,
+          "medianPerTrade": 0.04600000000000004,
+          "winRate": 0.6363636363636364,
+          "maxDrawdown": 1.504,
+          "profitFactor": 0.5421686746987953,
+          "seReturnOnStake": 0.16055433151697385,
+          "tStat": -0.6913436775432572
+        },
+        "1h": {
+          "trades": 95,
+          "windows": 95,
+          "stake": 61.961999999999996,
+          "pnl": 2.038,
+          "returnOnStake": 0.03289112681966366,
+          "meanPerTrade": 0.021452631578947366,
+          "medianPerTrade": 0.09299999999999997,
+          "winRate": 0.6736842105263158,
+          "maxDrawdown": 3.415,
+          "profitFactor": 1.1459467201374962,
+          "seReturnOnStake": 0.06197187911421405,
+          "tStat": 0.530742770588663
+        },
+        "4h": {
+          "trades": 36,
+          "windows": 36,
+          "stake": 22.766,
+          "pnl": -1.7659999999999985,
+          "returnOnStake": -0.07757181762277074,
+          "meanPerTrade": -0.04905555555555551,
+          "medianPerTrade": 0.08949999999999997,
+          "winRate": 0.5833333333333334,
+          "maxDrawdown": 3.6029999999999998,
+          "profitFactor": 0.7115321790264619,
+          "seReturnOnStake": 0.09218426956299457,
+          "tStat": -0.8414864921152482
+        }
+      },
+      "byLeg": {
+        "DOWN": {
+          "trades": 115,
+          "windows": 115,
+          "stake": 82.535,
+          "pnl": 3.4650000000000016,
+          "returnOnStake": 0.041982189374204906,
+          "meanPerTrade": 0.03013043478260871,
+          "medianPerTrade": 0.137,
+          "winRate": 0.7478260869565218,
+          "maxDrawdown": 4.3790000000000004,
+          "profitFactor": 1.1955196930369034,
+          "seReturnOnStake": 0.053595137267788036,
+          "tStat": 0.783320866675664
+        },
+        "UP": {
+          "trades": 323,
+          "windows": 323,
+          "stake": 190.67399999999986,
+          "pnl": 0.32600000000000207,
+          "returnOnStake": 0.001709724451157485,
+          "meanPerTrade": 0.0010092879256966007,
+          "medianPerTrade": 0.07499999999999996,
+          "winRate": 0.5913312693498453,
+          "maxDrawdown": 10.544999999999998,
+          "profitFactor": 1.0058074285205314,
+          "seReturnOnStake": 0.03784790662910539,
+          "tStat": 0.04517355392762174
+        }
+      }
+    },
+    {
+      "strategy": "residual ridge · ≥ 0.020",
+      "gate": {
+        "state": "REJECTED",
+        "failures": [
+          "t = 0.40 on a window-clustered bootstrap, below 2"
+        ],
+        "withoutBestFold": {
+          "stake": 425.6089999999999,
+          "pnl": 17.39099999999999,
+          "returnOnStake": 0.040861447948704076
+        }
+      },
+      "all": {
+        "trades": 6024,
+        "windows": 384,
+        "stake": 3593.289999999973,
+        "pnl": 152.7099999999987,
+        "returnOnStake": 0.04249865721942839,
+        "meanPerTrade": 0.025350265604249453,
+        "medianPerTrade": 0.11449999999999999,
+        "winRate": 0.6218459495351926,
+        "maxDrawdown": 415.67000000000075,
+        "profitFactor": 1.1557988683641802,
+        "seReturnOnStake": 0.10517302390698556,
+        "tStat": 0.4040832491135176
+      },
+      "once": {
+        "trades": 384,
+        "windows": 384,
+        "stake": 248.55899999999997,
+        "pnl": 4.441000000000001,
+        "returnOnStake": 0.017866985303288157,
+        "meanPerTrade": 0.011565104166666668,
+        "medianPerTrade": 0.09899999999999998,
+        "winRate": 0.6588541666666666,
+        "maxDrawdown": 7.814,
+        "profitFactor": 1.0705861783965918,
+        "seReturnOnStake": 0.03209042143745688,
+        "tStat": 0.5567700423663894
+      },
+      "byFold": [
+        {
+          "fold": 1,
+          "testStart": 1784822426,
+          "trainWindows": 130,
+          "all": {
+            "trades": 5438,
+            "windows": 118,
+            "stake": 3167.680999999974,
+            "pnl": 135.3189999999986,
+            "returnOnStake": 0.04271863233703132,
+            "meanPerTrade": 0.024883964692901543,
+            "medianPerTrade": 0.10499999999999998,
+            "winRate": 0.6073924236851784,
+            "maxDrawdown": 415.67000000000075,
+            "profitFactor": 1.1503527738580588,
+            "seReturnOnStake": 0.11731085161346894,
+            "tStat": 0.36414902585300657
+          },
+          "once": {
+            "trades": 118,
+            "windows": 118,
+            "stake": 62.88800000000003,
+            "pnl": 3.1120000000000005,
+            "returnOnStake": 0.049484798371708424,
+            "meanPerTrade": 0.026372881355932208,
+            "medianPerTrade": 0.04500000000000004,
+            "winRate": 0.559322033898305,
+            "maxDrawdown": 3.9770000000000008,
+            "profitFactor": 1.1537321543249526,
+            "seReturnOnStake": 0.07540026449608282,
+            "tStat": 0.6562947584126744
+          }
+        },
+        {
+          "fold": 2,
+          "testStart": 1786003801,
+          "trainWindows": 283,
+          "all": {
+            "trades": 291,
+            "windows": 95,
+            "stake": 220.07000000000002,
+            "pnl": 6.92999999999999,
+            "returnOnStake": 0.031489980460762436,
+            "meanPerTrade": 0.023814432989690687,
+            "medianPerTrade": 0.137,
+            "winRate": 0.7800687285223368,
+            "maxDrawdown": 7.450999999999997,
+            "profitFactor": 1.1804781499036399,
+            "seReturnOnStake": 0.052028382081429715,
+            "tStat": 0.6052461983437696
+          },
+          "once": {
+            "trades": 95,
+            "windows": 95,
+            "stake": 70.283,
+            "pnl": -1.283000000000001,
+            "returnOnStake": -0.018254770001280552,
+            "meanPerTrade": -0.013505263157894748,
+            "medianPerTrade": 0.09899999999999998,
+            "winRate": 0.7263157894736842,
+            "maxDrawdown": 4.302,
+            "profitFactor": 0.9163297247945739,
+            "seReturnOnStake": 0.052095388376955154,
+            "tStat": -0.35041047912324824
+          }
+        },
+        {
+          "fold": 3,
+          "testStart": 1787142270,
+          "trainWindows": 439,
+          "all": {
+            "trades": 153,
+            "windows": 97,
+            "stake": 104.62899999999995,
+            "pnl": -3.629,
+            "returnOnStake": -0.034684456508233874,
+            "meanPerTrade": -0.023718954248366012,
+            "medianPerTrade": 0.08899999999999997,
+            "winRate": 0.6601307189542484,
+            "maxDrawdown": 8.216,
+            "profitFactor": 0.8817722756149211,
+            "seReturnOnStake": 0.06525473677141157,
+            "tStat": -0.5315239662943413
+          },
+          "once": {
+            "trades": 97,
+            "windows": 97,
+            "stake": 63.554000000000016,
+            "pnl": -3.553999999999999,
+            "returnOnStake": -0.055920949114139126,
+            "meanPerTrade": -0.03663917525773195,
+            "medianPerTrade": 0.08899999999999997,
+            "winRate": 0.6185567010309279,
+            "maxDrawdown": 6.414,
+            "profitFactor": 0.8283174725858653,
+            "seReturnOnStake": 0.06630185914968059,
+            "tStat": -0.8434295784661797
+          }
+        },
+        {
+          "fold": 4,
+          "testStart": 1787275894,
+          "trainWindows": 564,
+          "all": {
+            "trades": 142,
+            "windows": 74,
+            "stake": 100.91,
+            "pnl": 14.090000000000002,
+            "returnOnStake": 0.139629372708354,
+            "meanPerTrade": 0.09922535211267607,
+            "medianPerTrade": 0.15750000000000003,
+            "winRate": 0.8098591549295775,
+            "maxDrawdown": 5.358999999999998,
+            "profitFactor": 2.2726944268810416,
+            "seReturnOnStake": 0.045365371229289665,
+            "tStat": 3.077884494819339
+          },
+          "once": {
+            "trades": 74,
+            "windows": 74,
+            "stake": 51.83399999999998,
+            "pnl": 6.1659999999999995,
+            "returnOnStake": 0.11895666936759659,
+            "meanPerTrade": 0.08332432432432432,
+            "medianPerTrade": 0.14750000000000002,
+            "winRate": 0.7837837837837838,
+            "maxDrawdown": 2.4149999999999996,
+            "profitFactor": 1.928894245254594,
+            "seReturnOnStake": 0.051656107300871675,
+            "tStat": 2.3028577952018705
+          }
+        }
+      ],
+      "edgeBuckets": [
+        {
+          "lo": 0.02,
+          "hi": 0.03,
+          "trades": 98,
+          "windows": 98,
+          "stake": 59.04600000000001,
+          "pnl": 3.954,
+          "returnOnStake": 0.06696473935575653,
+          "meanEdge": 0.024710270460490368
+        },
+        {
+          "lo": 0.03,
+          "hi": 0.05,
+          "trades": 138,
+          "windows": 138,
+          "stake": 92.20000000000002,
+          "pnl": 4.800000000000003,
+          "returnOnStake": 0.05206073752711499,
+          "meanEdge": 0.04005398702615697
+        },
+        {
+          "lo": 0.05,
+          "hi": 0.08,
+          "trades": 93,
+          "windows": 93,
+          "stake": 58.56999999999998,
+          "pnl": -4.569999999999999,
+          "returnOnStake": -0.07802629332422743,
+          "meanEdge": 0.06408589048350169
+        },
+        {
+          "lo": 0.08,
+          "hi": 1,
+          "trades": 55,
+          "windows": 55,
+          "stake": 38.742999999999995,
+          "pnl": 0.257000000000001,
+          "returnOnStake": 0.006633456366311361,
+          "meanEdge": 0.11679178578086329
+        }
+      ],
+      "byAsset": {
+        "BTC": {
+          "trades": 201,
+          "windows": 201,
+          "stake": 131.77999999999992,
+          "pnl": 2.220000000000002,
+          "returnOnStake": 0.016846258916375804,
+          "meanPerTrade": 0.011044776119402995,
+          "medianPerTrade": 0.08899999999999997,
+          "winRate": 0.6666666666666666,
+          "maxDrawdown": 5.547999999999998,
+          "profitFactor": 1.0697520972758976,
+          "seReturnOnStake": 0.04392710163819598,
+          "tStat": 0.38350490444667673
+        },
+        "ETH": {
+          "trades": 183,
+          "windows": 183,
+          "stake": 116.77900000000001,
+          "pnl": 2.220999999999999,
+          "returnOnStake": 0.019018830440404515,
+          "meanPerTrade": 0.01213661202185792,
+          "medianPerTrade": 0.10599999999999998,
+          "winRate": 0.6502732240437158,
+          "maxDrawdown": 4.312,
+          "profitFactor": 1.071440059184921,
+          "seReturnOnStake": 0.04687784432399821,
+          "tStat": 0.4057104313277518
+        }
+      },
+      "byTenor": {
+        "15m": {
+          "trades": 255,
+          "windows": 255,
+          "stake": 161.08199999999997,
+          "pnl": 3.918000000000002,
+          "returnOnStake": 0.024323015606957963,
+          "meanPerTrade": 0.015364705882352949,
+          "medianPerTrade": 0.09899999999999998,
+          "winRate": 0.6470588235294118,
+          "maxDrawdown": 7.654999999999998,
+          "profitFactor": 1.0916041242898227,
+          "seReturnOnStake": 0.040020488737165065,
+          "tStat": 0.6077640822104796
+        },
+        "1d": {
+          "trades": 10,
+          "windows": 10,
+          "stake": 7.727,
+          "pnl": -0.727,
+          "returnOnStake": -0.09408567361200983,
+          "meanPerTrade": -0.0727,
+          "medianPerTrade": 0.0695,
+          "winRate": 0.7,
+          "maxDrawdown": 1.504,
+          "profitFactor": 0.6112299465240641,
+          "seReturnOnStake": 0.16062011577073634,
+          "tStat": -0.5857651960997494
+        },
+        "1h": {
+          "trades": 86,
+          "windows": 86,
+          "stake": 58.794,
+          "pnl": 0.2060000000000002,
+          "returnOnStake": 0.0035037588869612584,
+          "meanPerTrade": 0.0023953488372093048,
+          "medianPerTrade": 0.08899999999999997,
+          "winRate": 0.686046511627907,
+          "maxDrawdown": 4.574,
+          "profitFactor": 1.0149372779348849,
+          "seReturnOnStake": 0.06667073120360131,
+          "tStat": 0.0525531792393481
+        },
+        "4h": {
+          "trades": 33,
+          "windows": 33,
+          "stake": 20.956,
+          "pnl": 1.0440000000000003,
+          "returnOnStake": 0.04981866768467266,
+          "meanPerTrade": 0.03163636363636364,
+          "medianPerTrade": 0.14800000000000002,
+          "winRate": 0.6666666666666666,
+          "maxDrawdown": 3.298,
+          "profitFactor": 1.232827832292596,
+          "seReturnOnStake": 0.10218356634916685,
+          "tStat": 0.48754089786257354
+        }
+      },
+      "byLeg": {
+        "DOWN": {
+          "trades": 93,
+          "windows": 93,
+          "stake": 68.32300000000002,
+          "pnl": 5.676999999999999,
+          "returnOnStake": 0.08309061370255985,
+          "meanPerTrade": 0.06104301075268816,
+          "medianPerTrade": 0.14700000000000002,
+          "winRate": 0.7956989247311828,
+          "maxDrawdown": 3.543,
+          "profitFactor": 1.489354366002931,
+          "seReturnOnStake": 0.06075711897545639,
+          "tStat": 1.367586467293246
+        },
+        "UP": {
+          "trades": 291,
+          "windows": 291,
+          "stake": 180.23600000000002,
+          "pnl": -1.2359999999999984,
+          "returnOnStake": -0.006857675492132528,
+          "meanPerTrade": -0.004247422680412366,
+          "medianPerTrade": 0.08199999999999996,
+          "winRate": 0.6151202749140894,
+          "maxDrawdown": 10.12,
+          "profitFactor": 0.9759134755919326,
+          "seReturnOnStake": 0.03789852084567021,
+          "tStat": -0.18094836788111734
+        }
+      }
+    },
+    {
+      "strategy": "residual ridge · LCB −1σ · ≥ 0.010",
+      "gate": {
+        "state": "REJECTED",
+        "failures": [
+          "return on stake -1.10% is below the 2.00% floor",
+          "161 settled windows is below the 200 required for the result to mean anything",
+          "only 1 of 4 folds were non-negative, needs 3",
+          "t = -0.10 on a window-clustered bootstrap, below 2",
+          "removing the best fold takes it from -1.10% to -1.26% — the result is one period, not a strategy",
+          "-1.10% does not beat taking every available fill (-0.89%), so the selection adds nothing"
+        ],
+        "withoutBestFold": {
+          "stake": 1415.7959999999973,
+          "pnl": -17.79600000000012,
+          "returnOnStake": -0.012569607485824337
+        }
+      },
+      "all": {
+        "trades": 2228,
+        "windows": 161,
+        "stake": 1449.9289999999987,
+        "pnl": -15.929000000000128,
+        "returnOnStake": -0.010986055179253704,
+        "meanPerTrade": -0.007149461400359124,
+        "medianPerTrade": 0.135,
+        "winRate": 0.6436265709156194,
+        "maxDrawdown": 170.84099999999998,
+        "profitFactor": 0.9657001231686209,
+        "seReturnOnStake": 0.10851717126440509,
+        "tStat": -0.10123794281815433
+      },
+      "once": {
+        "trades": 161,
+        "windows": 161,
+        "stake": 111.31999999999995,
+        "pnl": -10.320000000000002,
+        "returnOnStake": -0.09270571325907301,
+        "meanPerTrade": -0.06409937888198759,
+        "medianPerTrade": 0.10299999999999998,
+        "winRate": 0.6273291925465838,
+        "maxDrawdown": 12.659999999999998,
+        "profitFactor": 0.7079052390252187,
+        "seReturnOnStake": 0.05317333021032193,
+        "tStat": -1.743462613539242
+      },
+      "byFold": [
+        {
+          "fold": 1,
+          "testStart": 1784822426,
+          "trainWindows": 130,
+          "all": {
+            "trades": 2121,
+            "windows": 85,
+            "stake": 1367.4829999999974,
+            "pnl": -11.483000000000121,
+            "returnOnStake": -0.008397179343363056,
+            "meanPerTrade": -0.005413955681282471,
+            "medianPerTrade": 0.14500000000000002,
+            "winRate": 0.6393210749646393,
+            "maxDrawdown": 170.84099999999998,
+            "profitFactor": 0.9742542291178555,
+            "seReturnOnStake": 0.12300010743188648,
+            "tStat": -0.06826969113025487
+          },
+          "once": {
+            "trades": 85,
+            "windows": 85,
+            "stake": 54.98,
+            "pnl": -4.9799999999999995,
+            "returnOnStake": -0.0905783921425973,
+            "meanPerTrade": -0.05858823529411764,
+            "medianPerTrade": 0.08199999999999996,
+            "winRate": 0.5882352941176471,
+            "maxDrawdown": 6.721999999999999,
+            "profitFactor": 0.7404898384575302,
+            "seReturnOnStake": 0.07339437065600697,
+            "tStat": -1.2341326907363284
+          }
+        },
+        {
+          "fold": 2,
+          "testStart": 1786003801,
+          "trainWindows": 283,
+          "all": {
+            "trades": 32,
+            "windows": 22,
+            "stake": 26.368000000000002,
+            "pnl": -2.3679999999999994,
+            "returnOnStake": -0.08980582524271842,
+            "meanPerTrade": -0.07399999999999998,
+            "medianPerTrade": 0.10799999999999998,
+            "winRate": 0.75,
+            "maxDrawdown": 3.473,
+            "profitFactor": 0.5908776779543885,
+            "seReturnOnStake": 0.0952851087997771,
+            "tStat": -0.9424959091081869
+          },
+          "once": {
+            "trades": 22,
+            "windows": 22,
+            "stake": 17.602,
+            "pnl": -3.6019999999999994,
+            "returnOnStake": -0.20463583683672307,
+            "meanPerTrade": -0.1637272727272727,
+            "medianPerTrade": 0.10599999999999998,
+            "winRate": 0.6363636363636364,
+            "maxDrawdown": 4.010999999999999,
+            "profitFactor": 0.37767795438838975,
+            "seReturnOnStake": 0.11895022045170871,
+            "tStat": -1.720348529490964
+          }
+        },
+        {
+          "fold": 3,
+          "testStart": 1787142270,
+          "trainWindows": 439,
+          "all": {
+            "trades": 31,
+            "windows": 28,
+            "stake": 21.945,
+            "pnl": -3.945,
+            "returnOnStake": -0.17976760082023238,
+            "meanPerTrade": -0.12725806451612903,
+            "medianPerTrade": 0.04600000000000004,
+            "winRate": 0.5806451612903226,
+            "maxDrawdown": 6.425,
+            "profitFactor": 0.541172365666434,
+            "seReturnOnStake": 0.11625335146112911,
+            "tStat": -1.5463433833160511
+          },
+          "once": {
+            "trades": 28,
+            "windows": 28,
+            "stake": 19.616,
+            "pnl": -3.615999999999999,
+            "returnOnStake": -0.18433931484502444,
+            "meanPerTrade": -0.12914285714285711,
+            "medianPerTrade": 0.10000000000000003,
+            "winRate": 0.5714285714285714,
+            "maxDrawdown": 6.095999999999999,
+            "profitFactor": 0.5576217274284316,
+            "seReturnOnStake": 0.12232522911956231,
+            "tStat": -1.5069607158867344
+          }
+        },
+        {
+          "fold": 4,
+          "testStart": 1787275894,
+          "trainWindows": 564,
+          "all": {
+            "trades": 44,
+            "windows": 26,
+            "stake": 34.13299999999998,
+            "pnl": 1.867,
+            "returnOnStake": 0.05469779978320104,
+            "meanPerTrade": 0.04243181818181818,
+            "medianPerTrade": 0.08899999999999997,
+            "winRate": 0.8181818181818182,
+            "maxDrawdown": 3.13,
+            "profitFactor": 1.4664001998501124,
+            "seReturnOnStake": 0.08263500724156413,
+            "tStat": 0.6619204331077845
+          },
+          "once": {
+            "trades": 26,
+            "windows": 26,
+            "stake": 19.122000000000003,
+            "pnl": 1.8780000000000001,
+            "returnOnStake": 0.09821148415437715,
+            "meanPerTrade": 0.07223076923076924,
+            "medianPerTrade": 0.127,
+            "winRate": 0.8076923076923077,
+            "maxDrawdown": 1.306,
+            "profitFactor": 1.8618632400183566,
+            "seReturnOnStake": 0.08095308586835767,
+            "tStat": 1.2131901224134225
+          }
+        }
+      ],
+      "edgeBuckets": [
+        {
+          "lo": 0.01,
+          "hi": 0.02,
+          "trades": 51,
+          "windows": 51,
+          "stake": 33.04599999999999,
+          "pnl": -3.0460000000000007,
+          "returnOnStake": -0.09217454457422991,
+          "meanEdge": 0.014251417765204992
+        },
+        {
+          "lo": 0.02,
+          "hi": 0.03,
+          "trades": 30,
+          "windows": 30,
+          "stake": 21.435,
+          "pnl": -0.43499999999999994,
+          "returnOnStake": -0.020293911826452064,
+          "meanEdge": 0.025030340878862866
+        },
+        {
+          "lo": 0.03,
+          "hi": 0.05,
+          "trades": 45,
+          "windows": 45,
+          "stake": 31.494999999999997,
+          "pnl": -1.4949999999999992,
+          "returnOnStake": -0.04746785204000633,
+          "meanEdge": 0.03895536213812813
+        },
+        {
+          "lo": 0.05,
+          "hi": 0.08,
+          "trades": 24,
+          "windows": 24,
+          "stake": 16.703,
+          "pnl": -3.7029999999999994,
+          "returnOnStake": -0.22169670119140272,
+          "meanEdge": 0.05926611941165392
+        },
+        {
+          "lo": 0.08,
+          "hi": 1,
+          "trades": 11,
+          "windows": 11,
+          "stake": 8.641,
+          "pnl": -1.641,
+          "returnOnStake": -0.18990857539636616,
+          "meanEdge": 0.09551303805468887
+        }
+      ],
+      "byAsset": {
+        "BTC": {
+          "trades": 77,
+          "windows": 77,
+          "stake": 52.76699999999999,
+          "pnl": -3.766999999999999,
+          "returnOnStake": -0.07138931529175431,
+          "meanPerTrade": -0.04892207792207791,
+          "medianPerTrade": 0.10899999999999999,
+          "winRate": 0.6363636363636364,
+          "maxDrawdown": 4.459999999999999,
+          "profitFactor": 0.7683699194490559,
+          "seReturnOnStake": 0.07638618302221921,
+          "tStat": -0.9345841416239975
+        },
+        "ETH": {
+          "trades": 84,
+          "windows": 84,
+          "stake": 58.55299999999998,
+          "pnl": -6.553000000000002,
+          "returnOnStake": -0.11191570030570601,
+          "meanPerTrade": -0.07801190476190478,
+          "medianPerTrade": 0.09599999999999997,
+          "winRate": 0.6190476190476191,
+          "maxDrawdown": 9.268000000000002,
+          "profitFactor": 0.6563352213131948,
+          "seReturnOnStake": 0.06816078200674265,
+          "tStat": -1.6419368588616692
+        }
+      },
+      "byTenor": {
+        "15m": {
+          "trades": 119,
+          "windows": 119,
+          "stake": 80.32,
+          "pnl": -7.320000000000002,
+          "returnOnStake": -0.09113545816733071,
+          "meanPerTrade": -0.061512605042016825,
+          "medianPerTrade": 0.10899999999999999,
+          "winRate": 0.6134453781512605,
+          "maxDrawdown": 9.192000000000002,
+          "profitFactor": 0.7112995464405442,
+          "seReturnOnStake": 0.058183412339874604,
+          "tStat": -1.5663477699618042
+        },
+        "1d": {
+          "trades": 5,
+          "windows": 5,
+          "stake": 4.183,
+          "pnl": -1.1830000000000003,
+          "returnOnStake": -0.2828113793927804,
+          "meanPerTrade": -0.23660000000000006,
+          "medianPerTrade": 0.04600000000000004,
+          "winRate": 0.6,
+          "maxDrawdown": 1.58,
+          "profitFactor": 0.25126582278481013,
+          "seReturnOnStake": 0.25810146660252503,
+          "tStat": -1.0957372041140259
+        },
+        "1h": {
+          "trades": 26,
+          "windows": 26,
+          "stake": 18.926,
+          "pnl": -1.9260000000000004,
+          "returnOnStake": -0.10176476804396072,
+          "meanPerTrade": -0.0740769230769231,
+          "medianPerTrade": 0.1205,
+          "winRate": 0.6538461538461539,
+          "maxDrawdown": 3.3610000000000007,
+          "profitFactor": 0.7210312862108923,
+          "seReturnOnStake": 0.14650852645892992,
+          "tStat": -0.694599628455672
+        },
+        "4h": {
+          "trades": 11,
+          "windows": 11,
+          "stake": 7.891,
+          "pnl": 0.10899999999999976,
+          "returnOnStake": 0.013813204916994015,
+          "meanPerTrade": 0.009909090909090888,
+          "medianPerTrade": 0.07799999999999996,
+          "winRate": 0.7272727272727273,
+          "maxDrawdown": 1.077,
+          "profitFactor": 1.0730563002680964,
+          "seReturnOnStake": 0.14164968553431523,
+          "tStat": 0.09751666489685011
+        }
+      },
+      "byLeg": {
+        "DOWN": {
+          "trades": 6,
+          "windows": 6,
+          "stake": 5.14,
+          "pnl": 0.86,
+          "returnOnStake": 0.16731517509727628,
+          "meanPerTrade": 0.14333333333333334,
+          "medianPerTrade": 0.11149999999999999,
+          "winRate": 1,
+          "maxDrawdown": 0,
+          "profitFactor": null,
+          "seReturnOnStake": 0.05154745606366903,
+          "tStat": 3.2458473778146555
+        },
+        "UP": {
+          "trades": 155,
+          "windows": 155,
+          "stake": 106.17999999999995,
+          "pnl": -11.180000000000001,
+          "returnOnStake": -0.10529289885100779,
+          "meanPerTrade": -0.07212903225806452,
+          "medianPerTrade": 0.10299999999999998,
+          "winRate": 0.6129032258064516,
+          "maxDrawdown": 12.875999999999998,
+          "profitFactor": 0.6835640089439871,
+          "seReturnOnStake": 0.0516974215875334,
+          "tStat": -2.036714706800749
+        }
+      }
+    },
+    {
+      "strategy": "residual ridge · LCB −2σ · ≥ 0.010",
+      "gate": {
+        "state": "REJECTED",
+        "failures": [
+          "return on stake 1.23% is below the 2.00% floor",
+          "33 settled windows is below the 200 required for the result to mean anything",
+          "only 2 of 4 folds were non-negative, needs 3",
+          "t = 0.16 on a window-clustered bootstrap, below 2",
+          "removing the best fold takes it from 1.23% to -26.34% — the result is one period, not a strategy"
+        ],
+        "withoutBestFold": {
+          "stake": 4.073,
+          "pnl": -1.073,
+          "returnOnStake": -0.2634421802111465
+        }
+      },
+      "all": {
+        "trades": 159,
+        "windows": 33,
+        "stake": 134.35100000000006,
+        "pnl": 1.6489999999999994,
+        "returnOnStake": 0.012273820068328473,
+        "meanPerTrade": 0.010371069182389933,
+        "medianPerTrade": 0.09499999999999997,
+        "winRate": 0.8553459119496856,
+        "maxDrawdown": 7.150000000000002,
+        "profitFactor": 1.0901684164479444,
+        "seReturnOnStake": 0.0763049615304777,
+        "tStat": 0.16085218866699866
+      },
+      "once": {
+        "trades": 33,
+        "windows": 33,
+        "stake": 27.044999999999998,
+        "pnl": -3.045,
+        "returnOnStake": -0.11259012756516917,
+        "meanPerTrade": -0.09227272727272727,
+        "medianPerTrade": 0.07499999999999996,
+        "winRate": 0.7272727272727273,
+        "maxDrawdown": 3.572,
+        "profitFactor": 0.5660538691748611,
+        "seReturnOnStake": 0.09280278706635582,
+        "tStat": -1.2132192483040947
+      },
+      "byFold": [
+        {
+          "fold": 1,
+          "testStart": 1784822426,
+          "trainWindows": 130,
+          "all": {
+            "trades": 154,
+            "windows": 28,
+            "stake": 130.27800000000008,
+            "pnl": 2.7219999999999995,
+            "returnOnStake": 0.020893780991418337,
+            "meanPerTrade": 0.017675324675324674,
+            "medianPerTrade": 0.09999999999999998,
+            "winRate": 0.8636363636363636,
+            "maxDrawdown": 6.828999999999999,
+            "profitFactor": 1.1629159683983723,
+            "seReturnOnStake": 0.07237182722231301,
+            "tStat": 0.2887004763225953
+          },
+          "once": {
+            "trades": 28,
+            "windows": 28,
+            "stake": 22.971999999999998,
+            "pnl": -1.9720000000000002,
+            "returnOnStake": -0.08584363573045449,
+            "meanPerTrade": -0.07042857142857144,
+            "medianPerTrade": 0.07999999999999996,
+            "winRate": 0.75,
+            "maxDrawdown": 2.654,
+            "profitFactor": 0.6372999816075042,
+            "seReturnOnStake": 0.09411320957137312,
+            "tStat": -0.9121316350958449
+          }
+        },
+        {
+          "fold": 2,
+          "testStart": 1786003801,
+          "trainWindows": 283,
+          "all": {
+            "trades": 0,
+            "windows": 0,
+            "stake": 0,
+            "pnl": 0,
+            "returnOnStake": 0,
+            "meanPerTrade": 0,
+            "medianPerTrade": 0,
+            "winRate": 0,
+            "maxDrawdown": 0,
+            "profitFactor": null,
+            "seReturnOnStake": 0,
+            "tStat": 0
+          },
+          "once": {
+            "trades": 0,
+            "windows": 0,
+            "stake": 0,
+            "pnl": 0,
+            "returnOnStake": 0,
+            "meanPerTrade": 0,
+            "medianPerTrade": 0,
+            "winRate": 0,
+            "maxDrawdown": 0,
+            "profitFactor": null,
+            "seReturnOnStake": 0,
+            "tStat": 0
+          }
+        },
+        {
+          "fold": 3,
+          "testStart": 1787142270,
+          "trainWindows": 439,
+          "all": {
+            "trades": 3,
+            "windows": 3,
+            "stake": 2.5060000000000002,
+            "pnl": -0.506,
+            "returnOnStake": -0.20191540303272146,
+            "meanPerTrade": -0.16866666666666666,
+            "medianPerTrade": 0.04600000000000004,
+            "winRate": 0.6666666666666666,
+            "maxDrawdown": 0.897,
+            "profitFactor": 0.4358974358974359,
+            "seReturnOnStake": 0.35105330741909907,
+            "tStat": -0.575170205679527
+          },
+          "once": {
+            "trades": 3,
+            "windows": 3,
+            "stake": 2.5060000000000002,
+            "pnl": -0.506,
+            "returnOnStake": -0.20191540303272146,
+            "meanPerTrade": -0.16866666666666666,
+            "medianPerTrade": 0.04600000000000004,
+            "winRate": 0.6666666666666666,
+            "maxDrawdown": 0.897,
+            "profitFactor": 0.4358974358974359,
+            "seReturnOnStake": 0.35105330741909907,
+            "tStat": -0.575170205679527
+          }
+        },
+        {
+          "fold": 4,
+          "testStart": 1787275894,
+          "trainWindows": 564,
+          "all": {
+            "trades": 2,
+            "windows": 2,
+            "stake": 1.5670000000000002,
+            "pnl": -0.5670000000000001,
+            "returnOnStake": -0.3618379068283344,
+            "meanPerTrade": -0.28350000000000003,
+            "medianPerTrade": -0.28350000000000003,
+            "winRate": 0.5,
+            "maxDrawdown": 0.683,
+            "profitFactor": 0.16983894582723277,
+            "seReturnOnStake": 0.4123954633594767,
+            "tStat": -0.8774051583417339
+          },
+          "once": {
+            "trades": 2,
+            "windows": 2,
+            "stake": 1.5670000000000002,
+            "pnl": -0.5670000000000001,
+            "returnOnStake": -0.3618379068283344,
+            "meanPerTrade": -0.28350000000000003,
+            "medianPerTrade": -0.28350000000000003,
+            "winRate": 0.5,
+            "maxDrawdown": 0.683,
+            "profitFactor": 0.16983894582723277,
+            "seReturnOnStake": 0.4123954633594767,
+            "tStat": -0.8774051583417339
+          }
+        }
+      ],
+      "edgeBuckets": [
+        {
+          "lo": 0.01,
+          "hi": 0.02,
+          "trades": 19,
+          "windows": 19,
+          "stake": 14.58,
+          "pnl": -1.58,
+          "returnOnStake": -0.10836762688614542,
+          "meanEdge": 0.013781037628434727
+        },
+        {
+          "lo": 0.02,
+          "hi": 0.03,
+          "trades": 9,
+          "windows": 9,
+          "stake": 7.770000000000001,
+          "pnl": -1.77,
+          "returnOnStake": -0.22779922779922776,
+          "meanEdge": 0.025067999874174594
+        },
+        {
+          "lo": 0.03,
+          "hi": 0.05,
+          "trades": 5,
+          "windows": 5,
+          "stake": 4.695,
+          "pnl": 0.30499999999999994,
+          "returnOnStake": 0.06496272630457932,
+          "meanEdge": 0.037252529154596765
+        }
+      ],
+      "byAsset": {
+        "BTC": {
+          "trades": 21,
+          "windows": 21,
+          "stake": 17.91,
+          "pnl": -1.9099999999999997,
+          "returnOnStake": -0.10664433277498603,
+          "meanPerTrade": -0.09095238095238094,
+          "medianPerTrade": 0.05500000000000005,
+          "winRate": 0.7619047619047619,
+          "maxDrawdown": 2.227,
+          "profitFactor": 0.5221416062046534,
+          "seReturnOnStake": 0.1033332639948339,
+          "tStat": -1.0320426225994144
+        },
+        "ETH": {
+          "trades": 12,
+          "windows": 12,
+          "stake": 9.134999999999998,
+          "pnl": -1.135,
+          "returnOnStake": -0.12424740010946911,
+          "meanPerTrade": -0.09458333333333334,
+          "medianPerTrade": 0.10799999999999998,
+          "winRate": 0.6666666666666666,
+          "maxDrawdown": 1.86,
+          "profitFactor": 0.6241721854304637,
+          "seReturnOnStake": 0.17853952383177654,
+          "tStat": -0.6959097764063573
+        }
+      },
+      "byTenor": {
+        "15m": {
+          "trades": 29,
+          "windows": 29,
+          "stake": 23.729,
+          "pnl": -1.7289999999999999,
+          "returnOnStake": -0.07286442749378397,
+          "meanPerTrade": -0.05962068965517241,
+          "medianPerTrade": 0.08499999999999996,
+          "winRate": 0.7586206896551724,
+          "maxDrawdown": 3.066,
+          "profitFactor": 0.6743879472693032,
+          "seReturnOnStake": 0.0886226219856069,
+          "tStat": -0.8221876746731528
+        },
+        "1h": {
+          "trades": 3,
+          "windows": 3,
+          "stake": 2.661,
+          "pnl": -1.661,
+          "returnOnStake": -0.6242014280345735,
+          "meanPerTrade": -0.5536666666666666,
+          "medianPerTrade": -0.81,
+          "winRate": 0.3333333333333333,
+          "maxDrawdown": 1.661,
+          "profitFactor": 0.026947861745752807,
+          "seReturnOnStake": 0.27973229497981195,
+          "tStat": -2.231424255392541
+        },
+        "4h": {
+          "trades": 1,
+          "windows": 1,
+          "stake": 0.655,
+          "pnl": 0.345,
+          "returnOnStake": 0.5267175572519084,
+          "meanPerTrade": 0.345,
+          "medianPerTrade": 0.345,
+          "winRate": 1,
+          "maxDrawdown": 0,
+          "profitFactor": null,
+          "seReturnOnStake": 3.446001573864549e-15,
+          "tStat": 152848902115043.53
+        }
+      },
+      "byLeg": {
+        "UP": {
+          "trades": 33,
+          "windows": 33,
+          "stake": 27.044999999999998,
+          "pnl": -3.045,
+          "returnOnStake": -0.11259012756516917,
+          "meanPerTrade": -0.09227272727272727,
+          "medianPerTrade": 0.07499999999999996,
+          "winRate": 0.7272727272727273,
+          "maxDrawdown": 3.572,
+          "profitFactor": 0.5660538691748611,
+          "seReturnOnStake": 0.09280278706635582,
+          "tStat": -1.2132192483040947
+        }
+      }
+    },
+    {
+      "strategy": "residual ridge · shrunk ×0.5 · ≥ 0.010",
+      "gate": {
+        "state": "REJECTED",
+        "failures": [
+          "t = 0.40 on a window-clustered bootstrap, below 2"
+        ],
+        "withoutBestFold": {
+          "stake": 425.6089999999999,
+          "pnl": 17.39099999999999,
+          "returnOnStake": 0.040861447948704076
+        }
+      },
+      "all": {
+        "trades": 6024,
+        "windows": 384,
+        "stake": 3593.289999999973,
+        "pnl": 152.7099999999987,
+        "returnOnStake": 0.04249865721942839,
+        "meanPerTrade": 0.025350265604249453,
+        "medianPerTrade": 0.11449999999999999,
+        "winRate": 0.6218459495351926,
+        "maxDrawdown": 415.67000000000075,
+        "profitFactor": 1.1557988683641802,
+        "seReturnOnStake": 0.10517302390698556,
+        "tStat": 0.4040832491135176
+      },
+      "once": {
+        "trades": 384,
+        "windows": 384,
+        "stake": 248.55899999999997,
+        "pnl": 4.441000000000001,
+        "returnOnStake": 0.017866985303288157,
+        "meanPerTrade": 0.011565104166666668,
+        "medianPerTrade": 0.09899999999999998,
+        "winRate": 0.6588541666666666,
+        "maxDrawdown": 7.814,
+        "profitFactor": 1.0705861783965918,
+        "seReturnOnStake": 0.03209042143745688,
+        "tStat": 0.5567700423663894
+      },
+      "byFold": [
+        {
+          "fold": 1,
+          "testStart": 1784822426,
+          "trainWindows": 130,
+          "all": {
+            "trades": 5438,
+            "windows": 118,
+            "stake": 3167.680999999974,
+            "pnl": 135.3189999999986,
+            "returnOnStake": 0.04271863233703132,
+            "meanPerTrade": 0.024883964692901543,
+            "medianPerTrade": 0.10499999999999998,
+            "winRate": 0.6073924236851784,
+            "maxDrawdown": 415.67000000000075,
+            "profitFactor": 1.1503527738580588,
+            "seReturnOnStake": 0.11731085161346894,
+            "tStat": 0.36414902585300657
+          },
+          "once": {
+            "trades": 118,
+            "windows": 118,
+            "stake": 62.88800000000003,
+            "pnl": 3.1120000000000005,
+            "returnOnStake": 0.049484798371708424,
+            "meanPerTrade": 0.026372881355932208,
+            "medianPerTrade": 0.04500000000000004,
+            "winRate": 0.559322033898305,
+            "maxDrawdown": 3.9770000000000008,
+            "profitFactor": 1.1537321543249526,
+            "seReturnOnStake": 0.07540026449608282,
+            "tStat": 0.6562947584126744
+          }
+        },
+        {
+          "fold": 2,
+          "testStart": 1786003801,
+          "trainWindows": 283,
+          "all": {
+            "trades": 291,
+            "windows": 95,
+            "stake": 220.07000000000002,
+            "pnl": 6.92999999999999,
+            "returnOnStake": 0.031489980460762436,
+            "meanPerTrade": 0.023814432989690687,
+            "medianPerTrade": 0.137,
+            "winRate": 0.7800687285223368,
+            "maxDrawdown": 7.450999999999997,
+            "profitFactor": 1.1804781499036399,
+            "seReturnOnStake": 0.052028382081429715,
+            "tStat": 0.6052461983437696
+          },
+          "once": {
+            "trades": 95,
+            "windows": 95,
+            "stake": 70.283,
+            "pnl": -1.283000000000001,
+            "returnOnStake": -0.018254770001280552,
+            "meanPerTrade": -0.013505263157894748,
+            "medianPerTrade": 0.09899999999999998,
+            "winRate": 0.7263157894736842,
+            "maxDrawdown": 4.302,
+            "profitFactor": 0.9163297247945739,
+            "seReturnOnStake": 0.052095388376955154,
+            "tStat": -0.35041047912324824
+          }
+        },
+        {
+          "fold": 3,
+          "testStart": 1787142270,
+          "trainWindows": 439,
+          "all": {
+            "trades": 153,
+            "windows": 97,
+            "stake": 104.62899999999995,
+            "pnl": -3.629,
+            "returnOnStake": -0.034684456508233874,
+            "meanPerTrade": -0.023718954248366012,
+            "medianPerTrade": 0.08899999999999997,
+            "winRate": 0.6601307189542484,
+            "maxDrawdown": 8.216,
+            "profitFactor": 0.8817722756149211,
+            "seReturnOnStake": 0.06525473677141157,
+            "tStat": -0.5315239662943413
+          },
+          "once": {
+            "trades": 97,
+            "windows": 97,
+            "stake": 63.554000000000016,
+            "pnl": -3.553999999999999,
+            "returnOnStake": -0.055920949114139126,
+            "meanPerTrade": -0.03663917525773195,
+            "medianPerTrade": 0.08899999999999997,
+            "winRate": 0.6185567010309279,
+            "maxDrawdown": 6.414,
+            "profitFactor": 0.8283174725858653,
+            "seReturnOnStake": 0.06630185914968059,
+            "tStat": -0.8434295784661797
+          }
+        },
+        {
+          "fold": 4,
+          "testStart": 1787275894,
+          "trainWindows": 564,
+          "all": {
+            "trades": 142,
+            "windows": 74,
+            "stake": 100.91,
+            "pnl": 14.090000000000002,
+            "returnOnStake": 0.139629372708354,
+            "meanPerTrade": 0.09922535211267607,
+            "medianPerTrade": 0.15750000000000003,
+            "winRate": 0.8098591549295775,
+            "maxDrawdown": 5.358999999999998,
+            "profitFactor": 2.2726944268810416,
+            "seReturnOnStake": 0.045365371229289665,
+            "tStat": 3.077884494819339
+          },
+          "once": {
+            "trades": 74,
+            "windows": 74,
+            "stake": 51.83399999999998,
+            "pnl": 6.1659999999999995,
+            "returnOnStake": 0.11895666936759659,
+            "meanPerTrade": 0.08332432432432432,
+            "medianPerTrade": 0.14750000000000002,
+            "winRate": 0.7837837837837838,
+            "maxDrawdown": 2.4149999999999996,
+            "profitFactor": 1.928894245254594,
+            "seReturnOnStake": 0.051656107300871675,
+            "tStat": 2.3028577952018705
+          }
+        }
+      ],
+      "edgeBuckets": [
+        {
+          "lo": 0.01,
+          "hi": 0.02,
+          "trades": 164,
+          "windows": 164,
+          "stake": 98.81700000000002,
+          "pnl": 6.183000000000001,
+          "returnOnStake": 0.0625702055314369,
+          "meanEdge": 0.014378754870091808
+        },
+        {
+          "lo": 0.02,
+          "hi": 0.03,
+          "trades": 106,
+          "windows": 106,
+          "stake": 73.60499999999999,
+          "pnl": -1.6049999999999998,
+          "returnOnStake": -0.021805583859792133,
+          "meanEdge": 0.02405974978628494
+        },
+        {
+          "lo": 0.03,
+          "hi": 0.05,
+          "trades": 81,
+          "windows": 81,
+          "stake": 52.76099999999998,
+          "pnl": -0.7610000000000011,
+          "returnOnStake": -0.01442353253350015,
+          "meanEdge": 0.03728900864467264
+        },
+        {
+          "lo": 0.05,
+          "hi": 0.08,
+          "trades": 29,
+          "windows": 29,
+          "stake": 20.081000000000003,
+          "pnl": 0.9189999999999998,
+          "returnOnStake": 0.045764653154723355,
+          "meanEdge": 0.0613602453095799
+        },
+        {
+          "lo": 0.08,
+          "hi": 1,
+          "trades": 4,
+          "windows": 4,
+          "stake": 3.295,
+          "pnl": -0.29500000000000004,
+          "returnOnStake": -0.08952959028831564,
+          "meanEdge": 0.1144975708969672
+        }
+      ],
+      "byAsset": {
+        "BTC": {
+          "trades": 201,
+          "windows": 201,
+          "stake": 131.77999999999992,
+          "pnl": 2.220000000000002,
+          "returnOnStake": 0.016846258916375804,
+          "meanPerTrade": 0.011044776119402995,
+          "medianPerTrade": 0.08899999999999997,
+          "winRate": 0.6666666666666666,
+          "maxDrawdown": 5.547999999999998,
+          "profitFactor": 1.0697520972758976,
+          "seReturnOnStake": 0.04392710163819598,
+          "tStat": 0.38350490444667673
+        },
+        "ETH": {
+          "trades": 183,
+          "windows": 183,
+          "stake": 116.77900000000001,
+          "pnl": 2.220999999999999,
+          "returnOnStake": 0.019018830440404515,
+          "meanPerTrade": 0.01213661202185792,
+          "medianPerTrade": 0.10599999999999998,
+          "winRate": 0.6502732240437158,
+          "maxDrawdown": 4.312,
+          "profitFactor": 1.071440059184921,
+          "seReturnOnStake": 0.04687784432399821,
+          "tStat": 0.4057104313277518
+        }
+      },
+      "byTenor": {
+        "15m": {
+          "trades": 255,
+          "windows": 255,
+          "stake": 161.08199999999997,
+          "pnl": 3.918000000000002,
+          "returnOnStake": 0.024323015606957963,
+          "meanPerTrade": 0.015364705882352949,
+          "medianPerTrade": 0.09899999999999998,
+          "winRate": 0.6470588235294118,
+          "maxDrawdown": 7.654999999999998,
+          "profitFactor": 1.0916041242898227,
+          "seReturnOnStake": 0.040020488737165065,
+          "tStat": 0.6077640822104796
+        },
+        "1d": {
+          "trades": 10,
+          "windows": 10,
+          "stake": 7.727,
+          "pnl": -0.727,
+          "returnOnStake": -0.09408567361200983,
+          "meanPerTrade": -0.0727,
+          "medianPerTrade": 0.0695,
+          "winRate": 0.7,
+          "maxDrawdown": 1.504,
+          "profitFactor": 0.6112299465240641,
+          "seReturnOnStake": 0.16062011577073634,
+          "tStat": -0.5857651960997494
+        },
+        "1h": {
+          "trades": 86,
+          "windows": 86,
+          "stake": 58.794,
+          "pnl": 0.2060000000000002,
+          "returnOnStake": 0.0035037588869612584,
+          "meanPerTrade": 0.0023953488372093048,
+          "medianPerTrade": 0.08899999999999997,
+          "winRate": 0.686046511627907,
+          "maxDrawdown": 4.574,
+          "profitFactor": 1.0149372779348849,
+          "seReturnOnStake": 0.06667073120360131,
+          "tStat": 0.0525531792393481
+        },
+        "4h": {
+          "trades": 33,
+          "windows": 33,
+          "stake": 20.956,
+          "pnl": 1.0440000000000003,
+          "returnOnStake": 0.04981866768467266,
+          "meanPerTrade": 0.03163636363636364,
+          "medianPerTrade": 0.14800000000000002,
+          "winRate": 0.6666666666666666,
+          "maxDrawdown": 3.298,
+          "profitFactor": 1.232827832292596,
+          "seReturnOnStake": 0.10218356634916685,
+          "tStat": 0.48754089786257354
+        }
+      },
+      "byLeg": {
+        "DOWN": {
+          "trades": 93,
+          "windows": 93,
+          "stake": 68.32300000000002,
+          "pnl": 5.676999999999999,
+          "returnOnStake": 0.08309061370255985,
+          "meanPerTrade": 0.06104301075268816,
+          "medianPerTrade": 0.14700000000000002,
+          "winRate": 0.7956989247311828,
+          "maxDrawdown": 3.543,
+          "profitFactor": 1.489354366002931,
+          "seReturnOnStake": 0.06075711897545639,
+          "tStat": 1.367586467293246
+        },
+        "UP": {
+          "trades": 291,
+          "windows": 291,
+          "stake": 180.23600000000002,
+          "pnl": -1.2359999999999984,
+          "returnOnStake": -0.006857675492132528,
+          "meanPerTrade": -0.004247422680412366,
+          "medianPerTrade": 0.08199999999999996,
+          "winRate": 0.6151202749140894,
+          "maxDrawdown": 10.12,
+          "profitFactor": 0.9759134755919326,
+          "seReturnOnStake": 0.03789852084567021,
+          "tStat": -0.18094836788111734
+        }
+      }
+    }
+  ]
+}
