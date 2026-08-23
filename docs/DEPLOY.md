@@ -139,16 +139,29 @@ outputDirectory   web/.next
 Environment variables:
 
 ```
-DATABASE_URL              postgres://…
-PGSSLMODE                 no-verify        # most managed providers
-PRIVY_APP_ID              …
-PRIVY_APP_SECRET          …                # server-side only, never NEXT_PUBLIC_
-PRIVY_AUTHORIZATION_KEY   …                # if you registered one
-NEXT_PUBLIC_PRIVY_APP_ID  …                # the id again, for the browser
-NEXT_PUBLIC_NETWORK       testnet
-NETWORK                   testnet
-RIVO_DEMO_PORTFOLIO_ID    …                # optional: publishes ONE portfolio read-only at /demo
+DATABASE_URL                 postgres://…
+PGSSLMODE                    no-verify     # most managed providers
+DATABASE_POOL_MAX            2             # NOT the default; see the arithmetic below
+PRIVY_APP_ID                 …
+PRIVY_APP_SECRET             …             # server-side only, never NEXT_PUBLIC_
+PRIVY_AUTHORIZATION_KEY      …             # REQUIRED — the private half of the key quorum
+NEXT_PUBLIC_PRIVY_APP_ID     …             # the id again, for the browser
+NEXT_PUBLIC_PRIVY_SIGNER_ID  …             # REQUIRED — the quorum id the browser grants to
+NEXT_PUBLIC_NETWORK          testnet
+NETWORK                      testnet
+RIVO_DEMO_PORTFOLIO_ID       …             # optional: publishes ONE portfolio read-only at /demo
 ```
+
+The two Privy quorum variables are the ones that get left out, and leaving either
+out fails in the worst available shape: the user grants Autopilot, the button
+turns green, and every signature is rejected. `NEXT_PUBLIC_PRIVY_SIGNER_ID` is
+the public half the browser sends when enabling Autopilot;
+`PRIVY_AUTHORIZATION_KEY` is the private half the worker signs with. Both halves
+or neither.
+
+Run `npm run privy:check` against the deployment's variables before trusting it.
+It exits non-zero if autonomous signing cannot work — including for a missing
+authorization key, which it used to report as advice while exiting zero.
 
 Without `PRIVY_APP_ID` and `PRIVY_APP_SECRET` the app still runs: users can sign in if
 `NEXT_PUBLIC_PRIVY_APP_ID` is set, and every portfolio stays in Shadow Mode because nothing can
