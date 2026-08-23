@@ -19,6 +19,20 @@ import { dirname, resolve } from "node:path";
 const ARTEFACT = "docs/evidence/testcount.json";
 const REPORT = "/tmp/rivo-testcount.json";
 
+/**
+ * Files excluded from the documented count, and why.
+ *
+ * `executor.kit.test.ts` runs only when the DreamDEX bot kit is installed —
+ * `npm run link:kit`, which CI's test job deliberately does not do. Counting it
+ * makes the number environment-dependent: 648 on a laptop with the kit linked,
+ * 643 in CI, and a documented figure that is wrong in one place or the other.
+ *
+ * So the published number is the ALWAYS-RUNNABLE set: everything that runs given
+ * a PostgreSQL and nothing else. The kit tests still run in `npm test`; they are
+ * simply not part of a figure that has to mean the same thing everywhere.
+ */
+const OPTIONAL = ["**/*.kit.test.ts"];
+
 /** Where a count appears, and the shape it appears in. */
 const SITES: { file: string; pattern: RegExp; render: (n: number, files: number) => string }[] = [
   { file: "README.md", pattern: /\b\d{3,4} tests\b/g, render: (n) => `${n} tests` },
@@ -36,7 +50,7 @@ const SITES: { file: string; pattern: RegExp; render: (n: number, files: number)
 ];
 
 function runSuite(): { tests: number; files: number; skipped: number; failed: number } {
-  execFileSync("npx", ["vitest", "run", "--reporter=json", `--outputFile=${REPORT}`], {
+  execFileSync("npx", ["vitest", "run", ...OPTIONAL.flatMap((g) => ["--exclude", g]), "--reporter=json", `--outputFile=${REPORT}`], {
     stdio: ["ignore", "ignore", "inherit"],
     env: process.env,
   });
@@ -64,18 +78,26 @@ function main(): void {
     process.exitCode = 1;
     return;
   }
-  if (result.skipped > 0) {
-    // A skipped database test is the failure mode this repository has actually
-    // had: 21 tests silently skipped, and a count that looked almost right.
+  // The guard is about the DATABASE, which is the failure mode this repository
+  // has actually had: 21 durable-layer tests silently skipping behind a count
+  // that looked almost right. It is not about skips in general — the optional
+  // integration above is excluded from the run entirely, so anything still
+  // pending here is unexplained and the count would be a lie about coverage.
+  if (!process.env.DATABASE_URL?.trim()) {
     console.error(
-      `${result.skipped} test(s) SKIPPED. The count would be a lie about coverage. ` +
-        `Set DATABASE_URL so the durable-layer tests run, then try again.`,
+      "DATABASE_URL is not set, so the durable-layer tests would skip and the count " +
+        "would understate coverage. Set it and try again.",
     );
     process.exitCode = 1;
     return;
   }
+  if (result.skipped > 0) {
+    console.error(`${result.skipped} test(s) skipped unexpectedly — the count would be a lie about coverage.`);
+    process.exitCode = 1;
+    return;
+  }
 
-  console.log(`suite    ${result.tests} passed, ${result.files} files, 0 skipped`);
+  console.log(`suite    ${result.tests} passed, ${result.files} files, 0 skipped (optional integrations excluded)`);
 
   let drifted = 0;
   for (const site of SITES) {
@@ -97,7 +119,7 @@ function main(): void {
     }
   }
 
-  const artefact = { generatedAt: new Date().toISOString(), ...result };
+  const artefact = { generatedAt: new Date().toISOString(), excluded: OPTIONAL, ...result };
   if (!check) {
     mkdirSync(dirname(resolve(ARTEFACT)), { recursive: true });
     writeFileSync(ARTEFACT, `${JSON.stringify(artefact, null, 2)}\n`);

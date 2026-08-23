@@ -212,7 +212,14 @@ function Portfolio() {
       );
       await api(token, `/api/portfolios/${bundle.view.id}/autopilot`, {
         method: "POST",
-        body: { enabled: true, delegated: true, privyWalletId: refreshed?.id ?? embedded?.id ?? undefined },
+        body: {
+          enabled: true,
+          delegated: true,
+          privyWalletId: refreshed?.id ?? embedded?.id ?? undefined,
+          // Named here rather than defaulted server-side: the button the user
+          // pressed said what it would do to the halt.
+          acknowledgeHalt: bundle.view.runtime.halted !== null,
+        },
       });
       await refresh();
     } catch (e) {

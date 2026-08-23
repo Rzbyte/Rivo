@@ -97,10 +97,29 @@ export const POST = withUserWrite(async (user, req, ctx: Ctx) => {
   });
   if (!wouldRun.mayMoveCapital) badRequest(wouldRun.summary);
 
+  // A breaker that a routine action clears is not a breaker.
+  //
+  // `setState(..., "running")` moves a portfolio out of `halted` unconditionally,
+  // so enabling execution used to reset the drawdown breaker as a side effect —
+  // while the banner beside it said Rivo would not restart on its own. Both
+  // cannot be true. Clearing a halt now takes a separate, explicit
+  // acknowledgement that names what tripped it.
+  if (portfolio!.policy.state === "halted" && body.acknowledgeHalt !== true) {
+    badRequest(
+      `Trading is halted: ${portfolio!.policy.stoppedReason ?? "a risk limit was breached"}. ` +
+        "Enabling execution will not clear that on its own — confirm you have reviewed it first.",
+    );
+  }
+
   await setDelegated(user.id, portfolio!.walletId, true);
   await updatePolicy(user.id, id, { mode: requested });
   const started = await setState(user.id, id, "running", null);
   if (!started) notFound();
+  if (portfolio!.policy.state === "halted") {
+    await record(id, "breaker.cleared", "warn",
+      `The owner cleared a halt to enable execution. It had tripped on: ${portfolio!.policy.stoppedReason ?? "an unrecorded reason"}`,
+      { address: portfolio!.address, previousReason: portfolio!.policy.stoppedReason });
+  }
   await record(id, "autopilot.enabled", "info",
     requested === "experimental_testnet"
       ? "Experimental Testnet enabled — Rivo may now place real orders on the testnet with this portfolio."
