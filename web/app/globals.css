@@ -189,6 +189,42 @@ input, select {
   background-repeat: no-repeat;
 }
 
+/* --- explainer flow ------------------------------------------------------
+   A numbered sequence, and the numbers are load-bearing: this is one pass of
+   the engine in the order it actually runs, so a reader who skips step four
+   has skipped the risk check. Numbering anything that is NOT a sequence is
+   decoration; numbering this one is information.
+
+   Ruled rather than boxed. Seven cards in a grid would read as seven products;
+   seven ruled rows read as one process. */
+.flow { list-style: none; margin: 0; padding: 0; counter-reset: step; }
+.flow li {
+  display: grid; grid-template-columns: 2.4rem 1fr; gap: 4px 14px;
+  padding: 14px 0; border-bottom: 1px solid var(--line);
+}
+.flow li:last-child { border-bottom: none; }
+.flow li::before {
+  counter-increment: step; content: counter(step, decimal-leading-zero);
+  font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: .08em;
+  color: var(--faint); padding-top: 3px;
+}
+.flow .n {
+  font-family: var(--mono); font-size: 12px; font-weight: 640;
+  text-transform: uppercase; letter-spacing: .1em; color: var(--ink);
+}
+.flow p { grid-column: 2; margin: 0; font-size: 13.5px; }
+
+/* Two columns of ruled definition pairs — a term and what it means, for a
+   reader who has never traded an event contract. */
+.defs { display: grid; gap: 0; }
+.defs > div { padding: 12px 0; border-bottom: 1px solid var(--line); }
+.defs > div:last-child { border-bottom: none; }
+.defs dt, .defs .t {
+  font-family: var(--mono); font-size: 12px; font-weight: 640;
+  text-transform: uppercase; letter-spacing: .09em; color: var(--ink); margin-bottom: 4px;
+}
+.defs dd, .defs .d { margin: 0; font-size: 13.5px; color: var(--muted); }
+
 /* --- pills --------------------------------------------------------------- */
 .pill {
   display: inline-flex; align-items: center; gap: 6px;

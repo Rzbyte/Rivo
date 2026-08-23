@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { NETWORK } from "@/lib/somnia";
+import { VENUE } from "@rivo/core/venue.js";
 
 const APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? "";
 
@@ -69,20 +70,28 @@ function LandingWithAuth() {
           </a>
         </div>
 
+        <WhatThisIs />
         <TheDifference />
+        <HowItWorks />
+        <WhatYouDo />
 
-        <section className="grid cols-3" style={{ marginTop: 34 }}>
+        <BuiltOn />
+
+        <div className="sec-head">
+          <h2>What Rivo cannot do</h2>
+        </div>
+        <section className="grid cols-3">
           <Feature
-            title="No private keys"
-            body="Sign in however you like — an email address, a social account, or a wallet you already have. Rivo opens you a Rivo Portfolio: a trading account held by Privy, separate from anything you already use. Rivo never has the key, and you can withdraw its permission to sign at any moment."
+            title="It never holds your key"
+            body="Your Rivo Portfolio is an embedded wallet held by Privy in a secure enclave. Rivo asks that enclave to sign, under a permission you grant and can withdraw in one click. There is no key on Rivo's servers to steal, and no private key you are ever asked to paste."
           />
           <Feature
-            title="No per-trade popups"
-            body="A window settles at 3am whether or not a browser is open. Once Autopilot is on, the work happens server-side and you are not asked to approve anything."
+            title="It cannot touch your other wallet"
+            body="The Rivo Portfolio is a separate account from anything you already use. Fund it with what you are prepared to trade with; the rest of your holdings are somewhere Rivo cannot reach even if it wanted to."
           />
           <Feature
-            title="Every decision recorded"
-            body="Not just fills. Every leg considered, priced, and refused, with the constraint that bound it — and every transaction, kept after the position that produced it is gone."
+            title="It cannot quietly change its mind"
+            body="Every leg it considers is written down before anything is signed — including the ones it refuses, with the constraint that stopped them. The record survives the position that produced it, so what happened stays checkable after the fact."
           />
         </section>
       </main>
@@ -128,6 +137,189 @@ function TheDifference() {
         ))}
       </div>
     </section>
+  );
+}
+
+/**
+ * For a reader who has never traded an event contract.
+ *
+ * The page used to open on "term structure" and "settlement reference" and
+ * assume both. Anyone who does not already know what DreamDEX sells cannot
+ * evaluate a single claim after that point, so the vocabulary comes first and
+ * in the reader's words, not the venue's.
+ */
+function WhatThisIs() {
+  return (
+    <>
+      <div className="sec-head">
+        <h2>First, what is being traded</h2>
+      </div>
+      <section className="panel">
+        <p style={{ maxWidth: "68ch" }}>
+          DreamDEX Event Contracts are yes-or-no bets on price. Each one asks a single question — “will
+          BTC be higher in an hour than it was when this window opened?” — and settles at 1 if the
+          answer is yes and 0 if it is no. A contract trading at 0.62 is the market saying it is 62%
+          likely. You buy the side you think is underpriced.
+        </p>
+        <div className="defs" style={{ marginTop: 6 }}>
+          <div>
+            <div className="t">A window</div>
+            <div className="d">
+              One round of that question, with a start and an end. When it ends, the contract pays out or
+              expires worthless — there is nothing left to manage afterwards.
+            </div>
+          </div>
+          <div>
+            <div className="t">Eight of them at once</div>
+            <div className="d">
+              BTC and ETH, each over 15 minutes, 1 hour, 4 hours and 1 day. Sixteen contracts, since every
+              window has an UP side and a DOWN side.
+            </div>
+          </div>
+          <div>
+            <div className="t">Why that is hard by hand</div>
+            <div className="d">
+              A 15-minute window opens and closes ninety-six times a day, and the good moment to buy one
+              lasts seconds. Doing this properly is not a thing a person does with a browser tab open.
+            </div>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
+
+/**
+ * One pass of the engine, in the order it runs.
+ *
+ * These are the real stages — the same ones `npm run proof` reports on — rather
+ * than a marketing arc. The numbering is information, not decoration: skipping
+ * step four means skipping the risk check.
+ */
+function HowItWorks() {
+  const steps = [
+    ["Discover", "Every fifteen to sixty seconds, Rivo asks the venue which windows are live, when each one settles, and what the order book looks like right now."],
+    ["Price", "For each side of each window it computes its own probability from the underlying's price and how much it has been moving, against that window's own opening reference — not a global one."],
+    ["Compare", "Its probability against what the book is asking. The gap is the claimed edge. Most of the time the gap is too small to be worth the spread, and the leg is refused here."],
+    ["Size as one exposure", "Anything that survives is sized against the whole portfolio, not on its own. BTC at 1h and BTC at 4h are the same bet twice; they draw on one budget, and this is the step other bots do not have."],
+    ["Risk check", "Capital limits, per-position caps, expiry concentration, a cash floor, and a breaker that halts everything rather than trading through a loss it does not understand."],
+    ["Execute", "The order is written to a durable ledger BEFORE it is signed, so a crash mid-flight leaves a record to reconcile against rather than a mystery. Then Privy's enclave signs it and it goes to the chain."],
+    ["Settle and redeploy", "When a window closes, Rivo redeems what paid out, records what did not, and returns the proceeds to the budget for the next pass. Nobody has to be watching."],
+  ] as const;
+  return (
+    <>
+      <div className="sec-head">
+        <h2>How one pass works</h2>
+        <span className="hint">every 15–60s, per portfolio</span>
+      </div>
+      <section className="panel">
+        <ol className="flow">
+          {steps.map(([name, body]) => (
+            <li key={name}>
+              <span className="n">{name}</span>
+              <p>{body}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+    </>
+  );
+}
+
+/** The three things a person actually does. Everything else is Rivo's job. */
+function WhatYouDo() {
+  const steps = [
+    ["Sign in", "An email address, a social account, or a wallet you already have. Rivo opens you a separate trading account — a Rivo Portfolio — held by Privy."],
+    ["Fund it and set a budget", "Put in what you are prepared to trade with, pick a risk profile, and that is the whole configuration. The profile sets how much of the budget may be deployed, how large one position may get, and how much correlated exposure is allowed."],
+    ["Switch Autopilot on", "One consent, in your wallet, granting Rivo permission to sign for this account. From then on it runs while you are offline — and you can withdraw that permission at any moment, which stops it signing immediately."],
+  ] as const;
+  return (
+    <>
+      <div className="sec-head">
+        <h2>What you do</h2>
+        <span className="hint">once</span>
+      </div>
+      <section className="panel">
+        <ol className="flow">
+          {steps.map(([name, body]) => (
+            <li key={name}>
+              <span className="n">{name}</span>
+              <p>{body}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+    </>
+  );
+}
+
+/**
+ * What this is built on, and what each piece is responsible for.
+ *
+ * Deliberately not a row of logos. A badge wall says a name and nothing else,
+ * and every project at a hackathon has the same four; what is worth a visitor's
+ * attention is which component holds which responsibility, because that is the
+ * part that would be hard to replace and the part that says whether this was
+ * assembled or designed.
+ */
+function BuiltOn() {
+  const stack = [
+    {
+      name: "Somnia",
+      role: "The chain",
+      body: `Every position, redemption and claim is a transaction on Somnia — testnet chain ${VENUE.testnet.chainId}, mainnet ${VENUE.mainnet.chainId}. Sub-second finality is what makes a 15-minute window tradable at all; on a chain with twelve-second blocks, a third of the window is confirmation latency.`,
+    },
+    {
+      name: "DreamDEX Event Contracts",
+      role: "The venue",
+      body: "The markets themselves — eight live windows across BTC and ETH, each with an UP and a DOWN side, priced by a real order book with real counterparties. Rivo only ever takes liquidity that was actually resting.",
+    },
+    {
+      name: "dreamdex-bot-kit · ec-core",
+      role: "Order placement",
+      body: "The venue team's own SDK, used unmodified for building and submitting binary orders. Rivo adds the one thing it has no equivalent for — an ERC-20 approval for the pool that escrows collateral, without which a fresh wallet's first order reverts for no stated reason.",
+    },
+    {
+      name: "Privy",
+      role: "Identity and signing",
+      body: "Sign-in, and a per-user wallet that lives in a TEE. Autopilot is a session signer on a key quorum, which means Rivo asks the enclave to sign under a permission you grant and can withdraw — it holds no key material of yours at any point.",
+    },
+    {
+      name: "PostgreSQL",
+      role: "Durable state and the ledger",
+      body: "Portfolios are claimed by workers with a fenced database lease, so more than one worker is more throughput and never two on one portfolio. Executions are append-only, enforced by a trigger rather than by convention: the record cannot be rewritten after the fact, including by Rivo.",
+    },
+    {
+      name: "Next.js on Vercel · a container for the worker",
+      role: "Deployment boundary",
+      body: "The web app is request-scoped and belongs on Vercel. The trading loop is not, and never runs there — a serverless function that is killed after a few seconds cannot hold a lease or finish a settlement. It runs as a long-lived container against the same database.",
+    },
+    {
+      name: "viem",
+      role: "Chain access",
+      body: "Reads, receipts and the approval path. A Privy wallet is presented to it as an ordinary account, which is why the same code path works whether Rivo is signing through an enclave or, in local dry runs, not signing at all.",
+    },
+  ] as const;
+  return (
+    <>
+      <div className="sec-head">
+        <h2>What it is built on</h2>
+        <span className="hint">and what each part is responsible for</span>
+      </div>
+      <section className="panel">
+        <div className="defs">
+          {stack.map((x) => (
+            <div key={x.name}>
+              <div className="spread" style={{ marginBottom: 4 }}>
+                <span className="t" style={{ marginBottom: 0 }}>{x.name}</span>
+                <span className="label" style={{ flex: "none" }}>{x.role}</span>
+              </div>
+              <div className="d">{x.body}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </>
   );
 }
 
