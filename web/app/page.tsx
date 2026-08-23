@@ -47,28 +47,36 @@ function LandingWithAuth() {
         }
       />
 
-      <main className="wrap" style={{ paddingTop: 56, paddingBottom: 72 }}>
-        <span className="label">DreamDEX Event Contracts · Somnia {NETWORK}</span>
-        <h1 style={{ maxWidth: "18ch", marginTop: 10 }}>
-          An autonomous portfolio manager, not a bot that takes every trade.
-        </h1>
-        <p className="lede">
-          Set a budget and a risk profile once. Rivo prices every live window against that window&rsquo;s own
-          settlement reference, sizes the whole term structure as a single exposure, manages what it holds,
-          redeems what settles, and redeploys the proceeds. You can close the tab.
-        </p>
+      <main className="wrap" style={{ paddingTop: 44, paddingBottom: 72 }}>
+        <div className="hero-grid" style={{ marginBottom: 40 }}>
+          <div>
+            <span className="label">DreamDEX Event Contracts · Somnia {NETWORK}</span>
+            <h1 style={{ maxWidth: "18ch", marginTop: 10 }}>
+              An autonomous portfolio manager, not a bot that takes every trade.
+            </h1>
+            <p className="lede">
+              Set a budget and a risk profile once. Rivo prices every live window against that
+              window&rsquo;s own settlement reference, sizes the whole term structure as a single exposure,
+              manages what it holds, redeems what settles, and redeploys the proceeds. You can close the tab.
+            </p>
 
-        <div className="row" style={{ marginTop: 26, marginBottom: 44 }}>
-          {/* Deliberately does not name the methods. Which ones exist is the
-              Privy dashboard's decision, and a button promising Google on a
-              deployment that has not enabled it is a button that lies. */}
-          <button className="primary" disabled={!ready} onClick={() => login()}>
-            Get started
-          </button>
-          <a className="btn" href="https://github.com/somnia-chain/dreamdex-bot-kit">
-            Built on the official kit
-          </a>
+            <div className="row" style={{ marginTop: 24 }}>
+              {/* Deliberately does not name the methods. Which ones exist is the
+                  Privy dashboard's decision, and a button promising Google on a
+                  deployment that has not enabled it is a button that lies. */}
+              <button className="primary big" disabled={!ready} onClick={() => login()}>
+                Get started
+              </button>
+              <a className="btn big" href="https://github.com/somnia-chain/dreamdex-bot-kit">
+                Built on the official kit
+              </a>
+            </div>
+          </div>
+
+          <Instrument />
         </div>
+
+        <Tally />
 
         <WhatThisIs />
         <TheDifference />
@@ -136,6 +144,83 @@ function TheDifference() {
           </div>
         ))}
       </div>
+    </section>
+  );
+}
+
+/**
+ * The product, on the page.
+ *
+ * A landing page built out of prose panels reads as documentation whatever the
+ * prose says, and this one had five of them in a row and no picture of the
+ * thing being described. So this is one real pass out of the live decision log
+ * — cycle 93, recorded 2026-08-23 — rendered in the same shapes the dashboard
+ * uses.
+ *
+ * It shows the refusal rather than an entry on purpose. Three legs with genuine
+ * positive edge, declined because they were the same directional bet already
+ * held elsewhere, is the one thing here that a per-market bot cannot do; a
+ * screenshot of a winning trade would say nothing that every other project's
+ * screenshot does not.
+ *
+ * The numbers are copied from the record and are not live. Saying so is
+ * cheaper than being caught claiming otherwise, and the tally below IS live in
+ * the sense that it is a real count of a real run.
+ */
+function Instrument() {
+  const rows = [
+    { mkt: "ETH UP", tenor: "4h", fair: "0.402", ask: "0.367", edge: "+3.5%" },
+    { mkt: "ETH UP", tenor: "15m", fair: "0.071", ask: "0.039", edge: "+3.2%" },
+    { mkt: "ETH UP", tenor: "1d", fair: "0.383", ask: "0.357", edge: "+2.6%" },
+  ] as const;
+  return (
+    <div className="inst">
+      <div className="inst-top">
+        <span>Rivo engine · cycle 93</span>
+        <span className="inst-live">
+          <span className="dot" aria-hidden="true" />
+          recorded
+        </span>
+      </div>
+      <div className="inst-body">
+        {rows.map((r) => (
+          <div key={r.tenor} className="inst-row">
+            <div className="inst-mkt">
+              <b>
+                {r.mkt} · {r.tenor}
+              </b>
+              <span className="px">
+                fair {r.fair} · ask {r.ask} · <span className="pos">{r.edge}</span>
+              </span>
+            </div>
+            <div className="inst-why">SKIP — combined delta budget (rho 0.80)</div>
+          </div>
+        ))}
+      </div>
+      <div className="inst-foot">
+        <span>16 legs considered</span>
+        <span>3 refused for one reason</span>
+      </div>
+    </div>
+  );
+}
+
+/** Counts out of the running system. Nothing here is a projection. */
+function Tally() {
+  const cells = [
+    ["824", "cycles run against the live venue"],
+    ["13,165", "legs priced and recorded"],
+    ["13,115", "of them refused, each with its reason"],
+    ["603", "tests, none skipped"],
+  ] as const;
+  return (
+    <section className="tally" aria-label="Measured to date" style={{ marginBottom: 8 }}>
+      {cells.map(([v, k]) => (
+        <div key={k}>
+          <span className="v">{v}</span>
+          <span className="k">{k}</span>
+        </div>
+      ))}
     </section>
   );
 }

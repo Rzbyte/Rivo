@@ -189,6 +189,64 @@ input, select {
   background-repeat: no-repeat;
 }
 
+/* --- the instrument ------------------------------------------------------
+   A landing page made of prose panels reads as documentation, whatever the
+   prose says. This is the product itself, on the page: a real cycle out of the
+   live decision log, in the same components the dashboard uses, showing the
+   refusal that is the whole argument. Nothing on it is invented.
+
+   It is the one place the page shows rather than tells, so everything around it
+   stays plain. */
+.hero-grid { display: grid; gap: 26px; align-items: start; }
+@media (min-width: 900px) {
+  .hero-grid { grid-template-columns: 1.05fr .95fr; gap: 40px; align-items: center; }
+}
+
+.inst {
+  border: 1px solid var(--line-2); border-radius: var(--r);
+  background: var(--panel); overflow: hidden;
+}
+.inst-top {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 9px 13px; border-bottom: 1px solid var(--line-2); background: var(--panel-2);
+  font-family: var(--mono); font-size: 10.5px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .11em; color: var(--faint);
+}
+.inst-live { display: inline-flex; align-items: center; gap: 6px; color: var(--pos); }
+.inst-live .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+@media (prefers-reduced-motion: no-preference) {
+  .inst-live .dot { animation: pulse 2.4s ease-in-out infinite; }
+}
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+
+.inst-body { padding: 4px 13px 12px; }
+.inst-row { padding: 11px 0; border-bottom: 1px solid var(--line); }
+.inst-row:last-child { border-bottom: none; }
+.inst-mkt {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  font-family: var(--mono); font-size: 12.5px; font-variant-numeric: tabular-nums;
+}
+.inst-mkt b { font-weight: 640; letter-spacing: .02em; }
+.inst-mkt .px { color: var(--faint); font-size: 11.5px; }
+.inst-why {
+  margin-top: 6px; padding: 5px 9px; border-left: 2px solid var(--warn);
+  background: var(--warn-soft); color: var(--warn);
+  font-family: var(--mono); font-size: 11px; line-height: 1.45;
+}
+.inst-foot {
+  padding: 9px 13px; border-top: 1px solid var(--line-2); background: var(--panel-2);
+  font-family: var(--mono); font-size: 11px; color: var(--faint);
+  display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+}
+
+/* Measured totals, ruled off. Numbers this page is entitled to claim because
+   they came out of the running system, not out of a deck. */
+.tally { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 0; border-top: 1px solid var(--line-2); border-bottom: 1px solid var(--line-2); }
+.tally > div { padding: 16px 18px 15px; border-right: 1px solid var(--line); }
+.tally > div:last-child { border-right: none; }
+.tally .v { display: block; font-family: var(--mono); font-size: 24px; font-weight: 500; letter-spacing: -.03em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.tally .k { display: block; margin-top: 5px; font-size: 12px; color: var(--muted); line-height: 1.4; }
+
 /* --- explainer flow ------------------------------------------------------
    A numbered sequence, and the numbers are load-bearing: this is one pass of
    the engine in the order it actually runs, so a reader who skips step four
