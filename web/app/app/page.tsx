@@ -329,7 +329,21 @@ function Portfolio() {
   // with a sensible default, so capital is non-zero from the first instant —
   // and ticking this step before the user has touched anything makes the whole
   // indicator untrustworthy. A saved change moves `updatedAt` past `createdAt`.
+  //
+  // This is a proxy, and it is wrong at the edges: both stamps are seconds, so a
+  // portfolio created and updated inside the same second reads as never
+  // configured. That is not hypothetical — it happened, and it hid the whole
+  // dashboard behind a settings form that the user had already filled in.
   const configured = view !== null && view.updatedAt > view.createdAt;
+
+  // Whether there is anything to look at, which is a different question.
+  //
+  // A portfolio that has priced windows and recorded decisions has a dashboard
+  // worth showing whatever a timestamp comparison thinks. Gating the product on
+  // `configured` alone meant one second of clock resolution could hide several
+  // hundred decisions, the exposure panel and the strategy gate.
+  const hasRun = (view?.counts.decisions ?? 0) > 0 || (view?.counts.executions ?? 0) > 0;
+  const showDashboard = configured || hasRun;
   const on = view?.autopilot.live === true;
 
   return (
@@ -409,7 +423,7 @@ function Portfolio() {
           almost everything this page shows. */}
       {address && !funded && <Fund address={address} balances={balances} />}
 
-      {address && funded && view && !configured && (
+      {address && funded && view && !showDashboard && (
         <Configure
           view={view}
           balances={balances}
@@ -419,7 +433,7 @@ function Portfolio() {
         />
       )}
 
-      {address && funded && view && configured && bundle && (
+      {address && funded && view && showDashboard && bundle && (
         <Dashboard
           bundle={bundle}
           balances={balances}
