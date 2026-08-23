@@ -246,6 +246,45 @@ describe.skipIf(!haveDatabase())("the worker", () => {
     expect(w.health.lastError).toBeNull(); // the PASS was fine; the cycle was not
   });
 
+  it("shouts when Privy is configured and the signing key is not", async () => {
+    // Half a signing configuration fails invisibly: portfolios pass
+    // mayTradeLive, run live, and fail at the first signature with an error
+    // naming no cause. Measured once at 586 identical failures over 560 cycles.
+    const saved = { id: process.env.PRIVY_APP_ID, secret: process.env.PRIVY_APP_SECRET, key: process.env.PRIVY_AUTHORIZATION_KEY };
+    process.env.PRIVY_APP_ID = "app";
+    process.env.PRIVY_APP_SECRET = "secret";
+    delete process.env.PRIVY_AUTHORIZATION_KEY;
+    const lines: string[] = [];
+    try {
+      await new Worker({ maxPasses: 1, idleMs: 1, out: (l) => lines.push(l), runCycle: async (p) => ({ portfolioId: p.id, ok: true }) }).start();
+      expect(lines.join("\n")).toMatch(/PRIVY_AUTHORIZATION_KEY is not set/);
+      // And it says the thing that actually fixes it, because the usual cause is
+      // that the key was added after the worker started.
+      expect(lines.join("\n")).toMatch(/needs restarting/);
+      const events = await query<{ kind: string }>("SELECT kind FROM events WHERE kind = 'signer.key.missing'");
+      expect(events).toHaveLength(1);
+    } finally {
+      for (const [k, v] of [["PRIVY_APP_ID", saved.id], ["PRIVY_APP_SECRET", saved.secret], ["PRIVY_AUTHORIZATION_KEY", saved.key]] as const) {
+        if (v === undefined) delete process.env[k];
+        else process.env[k] = v;
+      }
+    }
+  });
+
+  it("stays quiet when the signing configuration is complete", async () => {
+    const saved = { id: process.env.PRIVY_APP_ID, key: process.env.PRIVY_AUTHORIZATION_KEY };
+    delete process.env.PRIVY_APP_ID; // no Privy at all — nothing to warn about
+    delete process.env.PRIVY_AUTHORIZATION_KEY;
+    const lines: string[] = [];
+    try {
+      await new Worker({ maxPasses: 1, idleMs: 1, out: (l) => lines.push(l), runCycle: async (p) => ({ portfolioId: p.id, ok: true }) }).start();
+      expect(lines.join("\n")).not.toMatch(/PRIVY_AUTHORIZATION_KEY/);
+    } finally {
+      if (saved.id === undefined) delete process.env.PRIVY_APP_ID; else process.env.PRIVY_APP_ID = saved.id;
+      if (saved.key === undefined) delete process.env.PRIVY_AUTHORIZATION_KEY; else process.env.PRIVY_AUTHORIZATION_KEY = saved.key;
+    }
+  });
+
   it("does nothing, quietly, when the fleet has no work", async () => {
     const w = spyWorker([]);
     await w.start();

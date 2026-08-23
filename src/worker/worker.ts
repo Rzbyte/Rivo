@@ -34,6 +34,7 @@ import { runPortfolioCycle, summarise } from "./cycle.js";
 import { migrate } from "../db/migrate.js";
 import { closeDb, configured, safeTarget } from "../db/pool.js";
 import { alerterFromEnv, type Alerter } from "../runtime/alert.js";
+import { privyConfigured } from "../signing/privy.js";
 import { undelivered, markNotified } from "../db/events.js";
 
 export interface WorkerOptions {
@@ -160,6 +161,31 @@ export class Worker {
     // alter a schema, or a deploy that starts both races itself.
     const m = await migrate();
     if (m.applied.length > 0) out(`migrations ${m.applied.join(", ")}`);
+
+    // A signing configuration that is half-present is worse than one that is
+    // absent, and it fails invisibly.
+    //
+    // With Privy credentials but no authorization key, every portfolio whose
+    // owner has enabled Autopilot passes `mayTradeLive`, runs live, and then
+    // fails at the first signature — surfacing as "approving pool 0x… failed:
+    // An unknown error occurred" on every leg of every cycle. Measured here:
+    // 586 identical failures over 560 cycles, none of them naming a cause.
+    //
+    // The most common way to reach this state is the most boring one: the key
+    // was added to .env after the worker started, and `loadEnv` reads the file
+    // once at boot.
+    if (privyConfigured() && !process.env.PRIVY_AUTHORIZATION_KEY?.trim()) {
+      out("");
+      out("  WARNING: PRIVY_AUTHORIZATION_KEY is not set, and Privy credentials are.");
+      out("  Autopilot portfolios will run LIVE and fail at every signature, because a");
+      out("  session signer grants to a key quorum whose private half is that variable.");
+      out("  If you have just added it, this process needs restarting — .env is read once.");
+      out("");
+      await record(null, "signer.key.missing", "error",
+        "Worker started with Privy credentials but no PRIVY_AUTHORIZATION_KEY. Autopilot portfolios " +
+          "will fail at every signature until it is set and the worker restarted.",
+      ).catch(() => undefined);
+    }
 
     const me = await registerWorker(hostname(), process.pid, process.env.RIVO_VERSION);
     this.health.workerId = me.id;
