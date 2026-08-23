@@ -125,7 +125,7 @@ export interface PortfolioView {
     lastAt: number | null;
     /** Executions written but not yet resolved — intended or submitted. */
     pendingExecutions: number;
-    /** Executions that failed outright. */
+    /** Executions that failed in the last hour. Lifetime totals live in the ledger. */
     failedExecutions: number;
     /** Submitted, and no receipt could be found. Not the same as failed. */
     orphanedExecutions: number;
@@ -248,7 +248,15 @@ export async function buildView(portfolio: Portfolio): Promise<PortfolioView> {
             (SELECT count(*) FROM positions WHERE portfolio_id = $1 AND status = 'closed')::text AS closed,
             (SELECT count(*) FROM positions WHERE portfolio_id = $1 AND status = 'open' AND adopted)::text AS adopted,
             (SELECT count(*) FROM executions WHERE portfolio_id = $1 AND status IN ('intended','submitted'))::text AS pending,
-            (SELECT count(*) FROM executions WHERE portfolio_id = $1 AND status = 'failed')::text AS failed,
+            -- RECENT failures, not lifetime.
+            --
+            -- The panel reads as a current condition, so counting every failure
+            -- a portfolio ever had turns a bug that was fixed hours ago into a
+            -- permanent alarm. One live portfolio showed "FAILED 1227" from a
+            -- signing misconfiguration that had been corrected — frightening, and
+            -- about nothing the user could act on.
+            (SELECT count(*) FROM executions
+              WHERE portfolio_id = $1 AND status = 'failed' AND created_at > now() - interval '1 hour')::text AS failed,
             (SELECT count(*) FROM executions WHERE portfolio_id = $1 AND status = 'orphaned')::text AS orphaned`,
     [portfolio.id],
   );

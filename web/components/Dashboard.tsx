@@ -58,6 +58,7 @@ export function Dashboard({
   return (
     <>
       <StatusBanner view={view} />
+      <Headline bundle={bundle} />
 
       <div className="spread" style={{ marginBottom: 14 }}>
         <div className="row">
@@ -199,6 +200,57 @@ export function Dashboard({
   );
 }
 
+/**
+ * What is happening, in a sentence.
+ *
+ * Everything else on this page answers a question somebody who builds trading
+ * systems would ask. The person who funded this wants to know one thing —
+ * is it working, and what has it done — and nothing here said it. They were
+ * offered "+0.00 / 6.00 per 1%" and left to infer.
+ *
+ * So the page now opens with the answer, in words, derived from the same data
+ * the panels below show in detail. It is deliberately specific: "nothing worth
+ * trading right now" is a state, and saying it plainly is the difference between
+ * a product that looks idle and one that is visibly working.
+ */
+function Headline({ bundle }: { bundle: Bundle }) {
+  const { view, decisions } = bundle;
+  const latest = decisions[0];
+  const held = view.counts.openPositions;
+
+  let line: string;
+  if (view.runtime.halted) {
+    line = "Rivo has stopped trading and is waiting for you.";
+  } else if (view.runtime.cycles === 0) {
+    line = "Starting up. The first look at the market takes about a minute.";
+  } else if (held > 0) {
+    line = `Holding ${held} position${held === 1 ? "" : "s"} worth ${view.deployed.toFixed(2)}, and watching for more.`;
+  } else if (latest && latest.skipped.length > 0) {
+    // Name the constraint when one actually bound, because that is the
+    // interesting case and the one the product is about.
+    const budgetBound = latest.skipped.find((d) => /delta budget/i.test(d.binding));
+    line = budgetBound
+      ? `Watching every market. Holding nothing — your ${budgetBound.asset} limit is what stopped the last one.`
+      : "Watching every market. Nothing is worth trading at your risk settings right now.";
+  } else {
+    line = "Watching every market.";
+  }
+
+  const considered = latest ? latest.entered.length + latest.skipped.length + latest.managed.length : 0;
+
+  return (
+    <div className="panel" style={{ marginBottom: 14 }}>
+      <p style={{ fontSize: 17, color: "var(--ink)", margin: 0, lineHeight: 1.45 }}>{line}</p>
+      <p className="hint" style={{ marginTop: 6, marginBottom: 0 }}>
+        {view.runtime.cycles.toLocaleString()} checks since you switched it on
+        {considered > 0 && ` · ${considered} markets priced in the last one`}
+        {view.realizedPnl !== 0 &&
+          ` · ${view.realizedPnl >= 0 ? "up" : "down"} ${Math.abs(view.realizedPnl).toFixed(2)} so far`}
+      </p>
+    </div>
+  );
+}
+
 function StatusBanner({ view }: { view: PortfolioView }) {
   if (view.runtime.halted) {
     return (
@@ -273,21 +325,21 @@ function Reconciliation({ view }: { view: PortfolioView }) {
   if (quiet) return null;
   return (
     <div className="panel" style={{ marginTop: 14 }}>
-      <h3 style={{ marginTop: 0 }}>Reconciliation</h3>
+      <h3 style={{ marginTop: 0 }}>Needs a look</h3>
       <div className="grid cols-4" style={{ marginTop: 10 }}>
         {r.adopted > 0 && (
           <Note
             label="Adopted positions"
             value={r.adopted}
             tone="warn"
-            note="Found on-chain, not opened by Rivo. Their entry price is an estimate — nothing on-chain records what was paid."
+            note="Found in your wallet but not opened by Rivo, so what they cost is an estimate."
           />
         )}
         {r.pendingExecutions > 0 && (
-          <Note label="In flight" value={r.pendingExecutions} note="Sent, or about to be. Resolved against the chain on the next cycle." />
+          <Note label="In flight" value={r.pendingExecutions} note="Sent, or about to be. Settled against the chain on the next check." />
         )}
         {r.failedExecutions > 0 && (
-          <Note label="Failed" value={r.failedExecutions} tone="neg" note="Rejected or reverted, each with its reason on the Transactions tab." />
+          <Note label="Failed" value={r.failedExecutions} tone="neg" note="In the last hour. Each carries its reason on the Transactions tab; older ones stay in the ledger." />
         )}
         {r.orphanedExecutions > 0 && (
           <Note
@@ -300,7 +352,7 @@ function Reconciliation({ view }: { view: PortfolioView }) {
       </div>
       {r.lastAt !== null && (
         <p className="hint" style={{ marginTop: 8, marginBottom: 0 }}>
-          {r.events} reconciliation finding{r.events === 1 ? "" : "s"} recorded · last{" "}
+          {r.events} time{r.events === 1 ? "" : "s"} the chain disagreed with Rivo · last{" "}
           {new Date(r.lastAt * 1000).toISOString().slice(5, 16).replace("T", " ")}
         </p>
       )}
