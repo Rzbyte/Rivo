@@ -159,6 +159,22 @@ the public half the browser sends when enabling Autopilot;
 `PRIVY_AUTHORIZATION_KEY` is the private half the worker signs with. Both halves
 or neither.
 
+**Allowlist the deployment's origin.** Privy → Configuration → Allowed origins. Nothing in this
+repository can do it and nothing warns you: a deployment whose origin is absent renders a sign-in
+that fails, and the browser console is the only place that says why.
+
+```
+https://your-app.vercel.app          # scheme required, no trailing path
+http://localhost:3001                # only while developing; port is required
+```
+
+Wildcards work as a subdomain (`*.example.com`) and nowhere else — `*-suffix.example.com` is
+explicitly unsupported, which is exactly the shape of a Vercel preview URL. Preview deployments
+therefore cannot sign in, and that is fine: production is the one judges and users open.
+
+Leaving the list EMPTY is not a safe default. It means any origin may use the app id, so a phishing
+page can present your sign-in.
+
 Run `npm run privy:check` against the deployment's variables before trusting it.
 It exits non-zero if autonomous signing cannot work — including for a missing
 authorization key, which it used to report as advice while exiting zero.
