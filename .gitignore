@@ -62,3 +62,4 @@ web/out/
 .rivo/pg.log
 .vercel
 .env*
+!.env.example
