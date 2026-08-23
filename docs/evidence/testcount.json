@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-23T19:03:36.918Z",
+  "generatedAt": "2026-08-23T19:17:50.119Z",
   "excluded": [
     "**/*.kit.test.ts"
   ],

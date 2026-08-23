@@ -64,7 +64,12 @@ export const POST = withUserWrite(async (user, req, ctx: Ctx) => {
       privyWalletId,
     });
   } else if (!portfolio!.privyWalletId) {
-    badRequest("this portfolio has no Rivo wallet id yet — complete the Privy prompt so Rivo can be given one");
+    // No prompt exists to tell them to complete. These wallets run in a
+    // TEE, where the grant is provisioned headlessly, so a message naming a
+    // Privy prompt sends somebody looking for a window that never opens.
+    badRequest(
+      "This portfolio has no Rivo wallet yet. Reload the page so Rivo can pick up the wallet Privy created for you, then try again.",
+    );
   }
   // The browser reports that the user completed Privy's delegation prompt. It is
   // recorded, not trusted as a permission: the worker asks Privy to sign, and
@@ -72,7 +77,10 @@ export const POST = withUserWrite(async (user, req, ctx: Ctx) => {
   // whether Rivo BOTHERS to ask — so a false claim here produces a portfolio
   // that fails to sign, not one that signs without consent.
   if (body.delegated !== true) {
-    badRequest("Autopilot needs your permission to sign. Complete the prompt from Privy and try again.");
+    badRequest(
+      "Rivo did not receive permission to sign for this wallet. There is no separate prompt to approve — " +
+        "the Enable button on the previous screen IS the consent. Go back and press it again.",
+    );
   }
 
   // Which mode is being asked for, and would it actually be allowed?

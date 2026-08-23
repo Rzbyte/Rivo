@@ -174,8 +174,11 @@ anything at 3am. So:
 3. **Fund it.** Their money moves once, to an address they control.
 4. **Set a budget and a risk profile.** Three profiles do most of the work; the advanced panel is
    there for the people who want it, and only ever *tightens*.
-5. **Enable Autopilot.** One consent prompt, from Privy, granting Rivo the right to ask for
-   signatures on that wallet. Revocable, by them, at any moment.
+5. **Enable Experimental Testnet.** There is no separate Privy modal — these wallets run in a TEE
+   where the grant is provisioned headlessly, so the Rivo screen *is* the consent surface. It grants
+   Rivo the right to ask for signatures on that wallet, revocable by them at any moment. It grants
+   testnet execution only: the strategy running today is economically REJECTED and the gate refuses
+   it real capital on any network.
 6. **Close the tab.**
 
 From then on a worker somewhere else discovers windows, prices them, allocates across the whole

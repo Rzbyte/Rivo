@@ -77,18 +77,27 @@ Say the balance out loud as it appears. It is a live read.
 
 ---
 
-## 0:45–1:05 · Configure, and enable Autopilot once
+## 0:45–1:05 · Configure, and enable Experimental Testnet once
 
 **On screen:** the configure step. Set capital. Pick **Balanced**. Point at the panel underneath.
 
 > "Three profiles do the work. What they actually change is shown in collateral, not in fractions —
 > at most this much in one position, at most this much exposure to BTC per one percent move."
 
-Click **Enable Autopilot**. Let Privy's own consent prompt appear on camera.
+Click the enable button.
 
-> "One prompt, from Privy, not from us. It grants Rivo the right to *ask* Privy to sign for this
-> account. Rivo never holds the key — a full compromise of our servers gets the ability to place
+**There is no Privy modal. Do not wait for one.** An earlier version of this script told you to let
+Privy's consent prompt appear on camera; it never does. These wallets run in a TEE, where the grant
+is provisioned headlessly, so the Rivo screen you are already on *is* the consent surface — the three
+points listed on it are what the user is agreeing to. Recording a pause for a window that never opens
+is the single easiest way to make a working product look broken.
+
+> "The screen you're looking at is the consent. It grants Rivo the right to *ask* Privy to sign for
+> this account — Rivo never holds the key. A full compromise of our servers gets the ability to place
 > Event Contract orders from a funded portfolio until its owner revokes, and nothing else."
+
+Note what the button grants: **Experimental Testnet**, not Autopilot. The strategy running here failed
+economic validation, and the gate refuses it real capital on any network. That is the 2:25 shot.
 
 **Then close the tab.** On camera. This is the shot the whole submission rests on.
 
@@ -167,6 +176,24 @@ confirmed on-chain       N   receipts read back and verified here
 Click one hash through to the explorer. Then scroll to the stage list:
 
 > "And the stages it could *not* evidence are printed too."
+
+---
+
+## 2:25–2:45 · The strategy safety gate
+
+**On screen:** the **Strategy safety gate** panel on the dashboard.
+
+> "This is the part I would want a judge to see. The forecast is good — AUC 0.8158, measured. And
+> trading it lost money out of sample: minus 6.49% return on stake, walk-forward. Both are true.
+>
+> So Rivo's own research marks it REJECTED, and the execution path enforces that. It cannot receive
+> real capital on any network. What you watched run is Experimental Testnet — testnet only, chosen
+> explicitly, impossible to activate on mainnet.
+>
+> Good prediction is not permission to trade. Most systems never draw that line. This one draws it in
+> code, and the tests spy on the signing seam to prove nothing gets around it."
+
+Point at **Economic validation: REJECTED** and **Execution eligibility: Experimental Testnet Only**.
 
 ---
 
