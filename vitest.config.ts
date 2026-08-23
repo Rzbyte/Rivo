@@ -34,6 +34,22 @@ export default defineConfig({
     // correctness depends on it, and the symptom would be a rare cross-file
     // flake rather than a clean failure.
     pool: "forks",
+    /**
+     * Long enough for a REMOTE database.
+     *
+     * The default is 10 seconds, which is ample against a local server and not
+     * against a managed one. Every database suite's `beforeAll` creates a
+     * private schema and migrates into it, and `migrate()` takes a
+     * database-wide advisory lock — so five files running in parallel serialise
+     * there. At ~90ms per round trip to a managed instance that is comfortably
+     * past ten seconds, and the failure arrives as "Hook timed out", which
+     * reads like a hang rather than like latency.
+     *
+     * The suites are designed for a local or CI database; this only makes
+     * pointing them at a managed one survivable rather than fast.
+     */
+    hookTimeout: 60_000,
+    testTimeout: 30_000,
     server: {
       deps: {
         // Let vite transform the bot kit and the venue SDK rather than letting

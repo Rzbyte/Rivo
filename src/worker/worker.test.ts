@@ -18,7 +18,7 @@ import { query } from "../db/pool.js";
 import { Worker, VENUE_DOWN_AFTER } from "./worker.js";
 import type { CycleOutcome } from "./cycle.js";
 import { setState } from "../db/portfolios.js";
-import { claimDue, registerWorker } from "../db/leases.js";
+import { claim, claimDue, registerWorker } from "../db/leases.js";
 
 describe.skipIf(!haveDatabase())("the worker", () => {
   let teardown: () => Promise<void>;
@@ -71,47 +71,58 @@ describe.skipIf(!haveDatabase())("the worker", () => {
   });
 
   it("never lets two workers hold one portfolio at the same time", async () => {
-    // The property that matters is CONCURRENT exclusion, not "only one worker
-    // ever touches it" — two workers running a portfolio one after the other is
-    // the fleet working correctly, and an earlier version of this test asserted
-    // the wrong thing and passed only because the spy cycle returned instantly.
+    // The property is CONCURRENT exclusion, not "only one worker ever touches
+    // it" — two workers running a portfolio one after the other is the fleet
+    // working, and an early version of this test asserted that instead.
     //
-    // So the cycle is held open. Whichever worker claims first is still inside
-    // its pass when the other asks, and the other must come away with nothing.
-    await seedPortfolio();
-    const seenA: string[] = [];
-    const seenB: string[] = [];
+    // The second version raced two workers and checked the loser came away
+    // empty. That held locally and failed against a managed database, for a
+    // reason that was not a bug: at ~90ms a round trip, the second worker was
+    // still migrating when the first finished, so it arrived after the lease had
+    // been released and legitimately picked the portfolio up. A correct
+    // handover, failing a test that assumed it could not happen yet.
+    //
+    // So the timing is no longer part of the test. One worker is held inside its
+    // cycle, and the claim that must fail is issued explicitly, at a moment we
+    // control, against a lease we know is held.
+    const { portfolioId } = await seedPortfolio();
+    const seen: string[] = [];
     let open!: () => void;
     const gate = new Promise<void>((resolve) => {
       open = resolve;
     });
-    const hold = (seen: string[]) =>
-      new Worker({
-        maxPasses: 1,
-        idleMs: 1,
-        out: () => {},
-        runCycle: async (portfolio) => {
-          seen.push(portfolio.id);
-          await gate;
-          return { portfolioId: portfolio.id, ok: true };
-        },
-      });
+    let inside!: () => void;
+    const entered = new Promise<void>((resolve) => {
+      inside = resolve;
+    });
 
-    const a = hold(seenA).start();
-    const b = hold(seenB).start();
+    const holder = new Worker({
+      maxPasses: 1,
+      idleMs: 1,
+      out: () => {},
+      runCycle: async (portfolio) => {
+        seen.push(portfolio.id);
+        inside();
+        await gate;
+        return { portfolioId: portfolio.id, ok: true };
+      },
+    });
 
-    // Wait for one of them to be inside the cycle, holding the lease.
-    const deadline = Date.now() + 5_000;
-    while (seenA.length + seenB.length === 0 && Date.now() < deadline) {
-      await new Promise((r) => setTimeout(r, 10));
-    }
-    expect(seenA.length + seenB.length).toBe(1);
+    const running = holder.start();
+    await entered; // the lease is now held, and the cycle has not returned
+    expect(seen).toEqual([portfolioId]);
+
+    // A second worker asks for work while the first is demonstrably mid-cycle.
+    const other = await registerWorker("contender", 2);
+    expect(await claimDue(other.id)).toEqual([]);
+    expect(await claim(other.id, portfolioId)).toBeNull();
 
     open();
-    await Promise.all([a, b]);
-    // Still one: the loser's single pass found a portfolio it could not claim
-    // and finished without it.
-    expect(seenA.length + seenB.length).toBe(1);
+    await running;
+
+    // And once it is released, the same worker can have it — the handover the
+    // previous version of this test was accidentally forbidding.
+    expect(await claim(other.id, portfolioId)).not.toBeNull();
   });
 
   it("hands a portfolio on to the next worker once the first is done with it", async () => {
