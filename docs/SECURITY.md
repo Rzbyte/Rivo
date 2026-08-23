@@ -210,12 +210,21 @@ Stated rather than omitted:
 3. **Privy transaction policies are requested, not verified by Rivo.** `POLICY_INTENT` describes
    what should be attached; Rivo does not currently read back the policy attached to a wallet and
    compare it. A deployment should check the dashboard.
-4. **Privy sign-in, delegation and a real server-side signature are unverified.** No credentials
-   were available in the environment this was built in. Every code path around them is tested with
-   the credentials absent — a wallet that is not delegated refuses to build a signer, a revoked
-   grant degrades to Shadow Mode, nothing displayable can carry a secret — and the signer BINDING is
-   verified against the real kit and SDK with a local key. What is unproven is Privy's half of the
-   round trip. `npm run privy:check` authenticates for real and reports exactly what is missing.
+4. **The user-consent half of delegation is unverified; the signing mechanism is not.**
+
+   Verified against a real Privy app: the credentials authenticate, `createViemAccount` returns a
+   working viem account for a Privy wallet, **Privy signs a Somnia transaction (chainId 50312) on
+   Rivo's request**, that account binds through `ec-core`'s `setSigner` and becomes the exchange's
+   wallet, and two authorities in one process produce two different wallets. Rivo held no key at
+   any point.
+
+   What that test used was an **app-owned server wallet**, not a **user-delegated embedded wallet**.
+   The signing path is identical — same `createViemAccount`, same wallet API — but the authorisation
+   model is not: a delegated wallet requires the user's consent in Privy's own prompt and can be
+   revoked by them. So the mechanism is proven and the **consent flow is not**, which needs a
+   browser sign-in that a headless environment cannot perform.
+
+   Also unverified: a broadcast transaction to DreamDEX, which needs a funded wallet.
 5. **A crash between signing and the return of a transaction hash is unattributable.** The kit
    returns a hash only after the write completes, so there is a window in which Rivo has sent a
    transaction and cannot name it. The execution ledger records such rows as `orphaned` — not

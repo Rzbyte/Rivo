@@ -260,12 +260,19 @@ Stated here rather than implied anywhere, because the difference is the whole va
   two different wallets, and an injected signer not falling back to `PRIVATE_KEY`.
 - `next build`, `build:public`, `typecheck` across engine, page and web app.
 
+- **The Privy signing chain, against a real Privy app.** Credentials authenticate;
+  `createViemAccount` returns a working viem account; **Privy signs a Somnia transaction
+  (chainId 50312) when Rivo asks**; that account binds through `ec-core`'s `setSigner` and becomes
+  the exchange's wallet; and two authorities in one process produce two different wallets. Rivo held
+  no key material at any point.
+
 **Not verified, and why:**
 
-- **Privy sign-in, delegation, and a real server-side signature.** These need credentials this
-  environment does not have. Every code path around them is tested with the credentials absent, and
-  `npm run privy:check` reports exactly what is missing and what must be configured by hand.
-- **A live transaction from a Privy-delegated wallet.** Blocked by the same thing. The execution
-  path itself is verified with a local key; what is unproven is Privy's half of the round trip.
+- **The user-consent flow.** The chain above was proven with an app-owned Privy wallet. A production
+  portfolio uses a **user-delegated embedded wallet** — same signing path, different authorisation:
+  the user grants it in Privy's own prompt and can revoke it. Proving that needs a browser sign-in,
+  which a headless environment cannot do.
+- **A broadcast transaction to DreamDEX.** Needs a funded wallet: STT for gas and tUSDC for
+  collateral, both from the Somnia faucet.
 - **The Docker image build.** Docker is unavailable here. The workspace-free install it depends on
   was verified directly instead, and CI builds and runs the image.

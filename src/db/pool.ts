@@ -34,15 +34,29 @@ export function safeTarget(url = process.env.DATABASE_URL ?? ""): string {
  * is what a hosted deployment normally needs; `DATABASE_SSL=off` is for a local
  * postgres with no TLS at all. Neither is the default: the default is to verify.
  */
-function ssl(): { rejectUnauthorized: boolean } | false {
-  const mode = (process.env.PGSSLMODE ?? "").toLowerCase();
-  if ((process.env.DATABASE_SSL ?? "").toLowerCase() === "off" || mode === "disable") return false;
-  const url = process.env.DATABASE_URL ?? "";
-  // A local database is the one case where "no TLS" is the right guess rather
-  // than a downgrade: nothing leaves the machine.
-  if (/@(localhost|127\.0\.0\.1|\[::1\])[:/]/.test(url) && !mode) return false;
-  return { rejectUnauthorized: mode !== "no-verify" };
+export function sslFor(url: string, mode: string, off: boolean): { rejectUnauthorized: boolean } | false {
+  const m = mode.toLowerCase();
+  if (off || m === "disable") return false;
+  // Loopback wins over PGSSLMODE, deliberately.
+  //
+  // Nothing on loopback leaves the machine, and a local server usually has no
+  // TLS at all. The gate used to be "loopback AND no PGSSLMODE set", which
+  // broke the most ordinary development setup there is: a managed database in
+  // .env (so PGSSLMODE=no-verify) and DATABASE_URL pointed at localhost to run
+  // the tests. That forced TLS against a server without it and failed with
+  // "The server does not support SSL connections" — a message that names
+  // neither the cause nor the fix, and which surfaced as twenty-one tests
+  // silently skipping rather than as an error anybody would read.
+  if (/@(localhost|127\.0\.0\.1|\[::1\])[:/]/.test(url)) return false;
+  return { rejectUnauthorized: m !== "no-verify" };
 }
+
+const ssl = (): { rejectUnauthorized: boolean } | false =>
+  sslFor(
+    process.env.DATABASE_URL ?? "",
+    process.env.PGSSLMODE ?? "",
+    (process.env.DATABASE_SSL ?? "").toLowerCase() === "off",
+  );
 
 export function db(): Pool {
   if (pool) return pool;
