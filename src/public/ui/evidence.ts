@@ -94,7 +94,7 @@ export function evidence(e: EvidenceBundle): string {
 npm run backtest  -- --days 30    # Rivo against five unconstrained baselines
 npm run coherence -- --days 30    # cross-tenor arbitrage bound
 npm run proof     -- --data-dir ./data-live   # the live execution chain
-npm test                          # 115 tests, entirely offline</code></pre>
+npm test                          # 648 tests, entirely offline</code></pre>
     </div>
   </div>`;
 }
@@ -172,7 +172,17 @@ function calibrationSection(c: Calibration): string {
   const days = Math.round((c.period.to - c.period.from) / 86400);
   const skill = 1 - c.holdout.brier / c.holdout.brierCoin;
   return `
-  <div class="sec-head" style="margin-top:34px"><h2>Does the model know anything?</h2>
+  <div class="banner warn" style="margin-top:34px">
+    <strong>Read the next four numbers next to the verdict, not instead of it.</strong>
+    They measure how well the forecast separates up from down, and it does that well. Trading it lost
+    money out of sample &mdash; &minus;6.49% return on stake, walk-forward, window-clustered &mdash; so
+    Rivo&rsquo;s own research marks the strategy <strong>REJECTED</strong> for real capital, and the
+    execution path enforces that on every network. Being right about direction is not the same as being
+    right by more than the spread you cross to act on it.
+    <a href="https://github.com/Rzbyte/Rivo/blob/main/docs/ALPHA-RESEARCH.md">The study</a>.
+  </div>
+
+  <div class="sec-head"><h2>Does the model know anything?</h2>
     <span class="hint">${c.sample.forecasts.toLocaleString()} forecasts · ${c.sample.marketsUsed.toLocaleString()} settled windows · ${days} days</span></div>
   <div class="grid g4">
     ${[

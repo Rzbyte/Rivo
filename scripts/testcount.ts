@@ -43,6 +43,15 @@ const SITES: { file: string; pattern: RegExp; render: (n: number, files: number)
     render: (n, files) => `**${n} passed, 0 skipped, ${files} files**`,
   },
   {
+    // The public cockpit at rzbyte.github.io/Rivo. It said "115 tests" — stale
+    // by a factor of five, and missed by the first version of this script,
+    // which is exactly how a count drifts: not by anybody editing it, but by a
+    // site nobody remembered to list.
+    file: "src/public/ui/evidence.ts",
+    pattern: /# \d{3,4} tests, entirely offline/g,
+    render: (n) => `# ${n} tests, entirely offline`,
+  },
+  {
     file: "web/app/page.tsx",
     pattern: /\["\d{3,4}", "tests, none skipped"\]/g,
     render: (n) => `["${n}", "tests, none skipped"]`,
