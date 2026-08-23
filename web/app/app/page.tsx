@@ -239,7 +239,11 @@ function Portfolio() {
 
   const view = bundle?.view ?? null;
   const funded = (balances?.collateral ?? 0) > 0;
-  const configured = (view?.capital ?? 0) > 0;
+  // "Has a capital figure" is not "the user chose one". A portfolio is created
+  // with a sensible default, so capital is non-zero from the first instant —
+  // and ticking this step before the user has touched anything makes the whole
+  // indicator untrustworthy. A saved change moves `updatedAt` past `createdAt`.
+  const configured = view !== null && view.updatedAt > view.createdAt;
   const on = view?.autopilot.live === true;
 
   return (

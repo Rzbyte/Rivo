@@ -131,6 +131,17 @@ export interface PortfolioView {
     orphanedExecutions: number;
   };
   counts: { decisions: number; executions: number; openPositions: number; closedPositions: number };
+  /**
+   * When the portfolio was created, and when its policy was last changed.
+   *
+   * The onboarding indicator needs to tell "has a capital figure" from "the user
+   * chose one". A portfolio is created with a sensible default, so capital is
+   * non-zero from the first instant — and the step marked "Configured" was
+   * ticked before the user had done anything, which makes the whole progress
+   * indicator untrustworthy.
+   */
+  createdAt: number;
+  updatedAt: number;
 }
 
 /** Correlation used for the combined-delta figure when no cycle has measured one. */
@@ -305,6 +316,8 @@ export async function buildView(portfolio: Portfolio): Promise<PortfolioView> {
       failedExecutions: Number(counts.failed),
       orphanedExecutions: Number(counts.orphaned),
     },
+    createdAt: portfolio.createdAt,
+    updatedAt: portfolio.updatedAt,
     counts: {
       decisions: Number(counts.decisions),
       executions: Number(counts.executions),
