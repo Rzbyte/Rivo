@@ -52,9 +52,13 @@ async function main(): Promise<void> {
   console.log("     wants trading capital kept separate from it.");
   console.log(`  2. Add Somnia as a custom EVM chain: id ${VENUE.testnet.chainId} (testnet), ${VENUE.mainnet.chainId} (mainnet).`);
   console.log(`     RPC ${VENUE[net].rpc}`);
-  console.log("  3. Enable delegated actions / server sessions, so a user can grant Rivo the");
-  console.log("     right to sign while they are offline. This is what Autopilot asks for.");
-  console.log("  4. Register an authorization keypair and set PRIVY_AUTHORIZATION_KEY.");
+  console.log("  3. Turn on SIGNERS, which is what Autopilot asks a user to grant.");
+  console.log("     User management -> Authentication -> Advanced -> \"Server-side access\"");
+  console.log("     https://dashboard.privy.io/apps?page=embedded&tab=advanced");
+  console.log("     NOT called \"delegated actions\" any more, which is worth knowing before you");
+  console.log("     go looking for that phrase and conclude the setting does not exist.");
+  console.log("  4. Under that toggle, enable \"Require signed requests\". It shows a Signing key");
+  console.log("     ONCE — copy it into PRIVY_AUTHORIZATION_KEY. Privy cannot recover it.");
   console.log("");
   console.log("  Optional but recommended — a transaction policy on the portfolio wallets.");
   console.log("  Rivo declares the policy it WANTS; attaching it is your action, and until it is");

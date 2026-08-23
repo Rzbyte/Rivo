@@ -109,8 +109,19 @@ In the dashboard:
    external wallet, who are precisely the people who most want trading capital kept separate from
    their main wallet.
 4. Add Somnia as a custom EVM chain: **50312** (testnet) and **5031** (mainnet).
-5. **Register an authorization keypair.** With one, a stolen app secret alone cannot move a wallet.
-6. Consider attaching a transaction policy. Rivo declares the policy it wants in `POLICY_INTENT`
+5. **Turn on signers.** This is what Autopilot asks a user to grant, and without it the consent
+   prompt never appears at all — the button simply fails after its timeout.
+
+   **User management → Authentication → Advanced → "Server-side access"**
+   ([direct link](https://dashboard.privy.io/apps?page=embedded&tab=advanced))
+
+   It is **not** called "delegated actions" any more. That rename cost an hour here: the old phrase
+   is still all over Privy's guides and appears nowhere in the dashboard, so looking for it leads to
+   the conclusion that the setting does not exist.
+6. Under that toggle, enable **"Require signed requests"**. It shows a **Signing key** exactly once —
+   copy it into `PRIVY_AUTHORIZATION_KEY`. Privy cannot recover it, and with one a stolen app secret
+   alone cannot move a wallet.
+7. Consider attaching a transaction policy. Rivo declares the policy it wants in `POLICY_INTENT`
    (`src/signing/privy.ts`); attaching it is your action, not Rivo's, and Rivo describes it as
    *requested* until it is.
 

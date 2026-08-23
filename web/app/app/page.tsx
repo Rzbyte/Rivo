@@ -175,8 +175,8 @@ function Portfolio() {
         await withTimeout(
           delegateWallet({ address, chainType: "ethereum" }),
           90_000,
-          "Privy never showed the permission prompt. Either this app has wallet UIs suppressed in its " +
-            "Privy client config, or delegated actions (signers) are not enabled on the Privy app.",
+          "Privy never showed the permission prompt. The Privy app most likely has signers switched off: " +
+            "dashboard.privy.io -> User management -> Authentication -> Advanced -> \"Server-side access\".",
         );
       }
       // Re-read the linked account: the wallet id exists only after delegation,
