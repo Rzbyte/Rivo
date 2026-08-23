@@ -16,7 +16,7 @@
 //     column that does not exist.
 
 import { createHash } from "node:crypto";
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { PoolClient } from "pg";
@@ -25,7 +25,30 @@ import { db, safeTarget } from "./pool.js";
 /** Postgres advisory lock id. Arbitrary, constant, and Rivo's alone. */
 const LOCK_ID = 0x52_49_56_4f; // "RIVO"
 
-export const migrationsDir = (): string => join(dirname(fileURLToPath(import.meta.url)), "migrations");
+/**
+ * Where the .sql files are, whether or not a bundler has been through the code.
+ *
+ * `import.meta.url` is the right answer under Node and the wrong one after
+ * webpack: Next inlines it to the path the BUILD ran at, so a serverless
+ * function looked for /vercel/path0/src/db/migrations and threw ENOENT. That
+ * surfaced as /api/health reporting "the database did not answer" while the
+ * database was answering perfectly — the failure was three layers from the
+ * message, and cost a deploy cycle to find.
+ *
+ * So the module path is a candidate rather than the answer, and the runtime
+ * working directory is tried after it. If none of them exist the error names
+ * every path attempted, because the previous version's error named one path
+ * that was never going to be right.
+ */
+export const migrationsDir = (): string => {
+  const candidates = [
+    join(dirname(fileURLToPath(import.meta.url)), "migrations"),
+    join(process.cwd(), "src", "db", "migrations"),
+    join(process.cwd(), "..", "src", "db", "migrations"),
+  ];
+  for (const c of candidates) if (existsSync(c)) return c;
+  throw new Error(`no migrations directory found. Tried: ${candidates.join(", ")} (cwd ${process.cwd()})`);
+};
 
 export interface Migration {
   name: string;
