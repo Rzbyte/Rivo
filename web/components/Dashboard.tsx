@@ -9,7 +9,7 @@
 // that makes it a portfolio manager is the trades it declined.
 
 import { useState } from "react";
-import { modeIntendsExecution } from "@rivo/runtime/permission.js";
+import { MODE_LABEL, modeIntendsExecution } from "@rivo/runtime/permission.js";
 import type { Balances } from "@/lib/balances";
 import type { PortfolioView, DecisionGroup, ClosedPositionView } from "@rivo/db/view.js";
 import type { ExecutionRecord } from "@rivo/ledger/types.js";
@@ -75,7 +75,15 @@ export function Dashboard({
         <div className="row">
           <span className={`pill ${view.autopilot.live ? "live" : view.runtime.halted ? "stopped" : "shadow"}`}>
             <span className="dot" />
-            {view.autopilot.live ? "Autopilot" : view.runtime.halted ? "Halted" : "Shadow Mode"}
+            {/* The mode, by its own name. This said "Autopilot" for anything
+                live — on a portfolio explicitly NOT eligible for Autopilot,
+                which is the one distinction the whole strategy gate exists to
+                draw. A label that erases it undoes the honesty underneath. */}
+            {view.autopilot.live
+              ? MODE_LABEL[view.autopilot.mode]
+              : view.runtime.halted
+                ? "Halted"
+                : MODE_LABEL[view.autopilot.mode]}
           </span>
           <span className="pill">{view.profile}</span>
           <span className="faint" style={{ fontSize: 12.5 }}>
@@ -274,7 +282,8 @@ function Headline({ bundle }: { bundle: Bundle }) {
       <p style={{ fontSize: 17, color: "var(--ink)", margin: 0, lineHeight: 1.45 }}>{line}</p>
       <p className="hint" style={{ marginTop: 6, marginBottom: 0 }}>
         {view.runtime.cycles.toLocaleString()} checks since you switched it on
-        {considered > 0 && ` · ${considered} contracts across ${markets} markets priced in the last one`}
+        {considered > 0 &&
+          ` · ${considered} contract${considered === 1 ? "" : "s"} across ${markets} market${markets === 1 ? "" : "s"} priced in the last one`}
         {view.realizedPnl !== 0 &&
           ` · ${view.realizedPnl >= 0 ? "up" : "down"} ${Math.abs(view.realizedPnl).toFixed(2)} so far`}
       </p>
@@ -286,8 +295,14 @@ function StatusBanner({ view }: { view: PortfolioView }) {
   if (view.runtime.halted) {
     return (
       <div className="banner bad">
-        <strong>Trading halted.</strong> {view.runtime.halted} Rivo will not restart on its own — that is
-        deliberate, because a breaker that resets itself is not a breaker.
+        {/* The reason is a sentence with no full stop of its own, so it ran
+            straight into the next one: "…open ones will settle Rivo will not
+            restart…". A separator, not more words. */}
+        <strong>Trading halted:</strong> {view.runtime.halted}.{" "}
+        <span className="muted">
+          Rivo will not restart on its own — that is deliberate, because a breaker that resets itself is
+          not a breaker.
+        </span>
       </div>
     );
   }

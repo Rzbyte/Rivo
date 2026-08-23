@@ -68,7 +68,16 @@ export function withUserWrite<T>(
     const verdict = take(`user:${user.id}`);
     if (!verdict.ok) {
       return NextResponse.json(
-        { error: "too many changes in a short time — slow down and try again" },
+        {
+          // The limiter already computed exactly how long. Withholding it left a
+          // user who had pressed a button several times staring at "slow down"
+          // with no idea whether that meant two seconds or two minutes — which
+          // reads as the button being broken rather than as a limit.
+          error:
+            `Too many changes in a short time. Wait ${verdict.retryAfter} second` +
+            `${verdict.retryAfter === 1 ? "" : "s"} and try again — nothing was lost.`,
+          retryAfter: verdict.retryAfter,
+        },
         { status: 429, headers: { "retry-after": String(verdict.retryAfter) } },
       );
     }
