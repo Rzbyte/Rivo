@@ -23,7 +23,10 @@ async function main(): Promise<void> {
   console.log("=".repeat(78));
   console.log(`  ${tick(Boolean(p.appId))}  PRIVY_APP_ID              ${p.appId ?? "(not set)"}`);
   console.log(`  ${tick(p.configured)}  PRIVY_APP_SECRET          ${p.configured ? "set" : "(not set)"}`);
-  console.log(`  ${tick(p.authorizationKey)}  PRIVY_AUTHORIZATION_KEY   ${p.authorizationKey ? "set" : "(not set — optional, recommended)"}`);
+  console.log(`  ${tick(p.authorizationKey)}  PRIVY_AUTHORIZATION_KEY   ${p.authorizationKey ? "set" : "(NOT SET — required for TEE wallets)"}`);
+  console.log(
+    `  ${tick(Boolean(process.env.NEXT_PUBLIC_PRIVY_SIGNER_ID))}  NEXT_PUBLIC_PRIVY_SIGNER_ID  ${process.env.NEXT_PUBLIC_PRIVY_SIGNER_ID ?? "(not set)"}`,
+  );
   console.log(
     `  ${tick(Boolean(process.env.NEXT_PUBLIC_PRIVY_APP_ID))}  NEXT_PUBLIC_PRIVY_APP_ID  ${process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? "(not set)"}`,
   );
@@ -52,13 +55,15 @@ async function main(): Promise<void> {
   console.log("     wants trading capital kept separate from it.");
   console.log(`  2. Add Somnia as a custom EVM chain: id ${VENUE.testnet.chainId} (testnet), ${VENUE.mainnet.chainId} (mainnet).`);
   console.log(`     RPC ${VENUE[net].rpc}`);
-  console.log("  3. Turn on SIGNERS, which is what Autopilot asks a user to grant.");
-  console.log("     User management -> Authentication -> Advanced -> \"Server-side access\"");
-  console.log("     https://dashboard.privy.io/apps?page=embedded&tab=advanced");
-  console.log("     NOT called \"delegated actions\" any more, which is worth knowing before you");
-  console.log("     go looking for that phrase and conclude the setting does not exist.");
-  console.log("  4. Under that toggle, enable \"Require signed requests\". It shows a Signing key");
-  console.log("     ONCE — copy it into PRIVY_AUTHORIZATION_KEY. Privy cannot recover it.");
+  console.log("  3. Create a KEY QUORUM: Wallet infrastructure -> Authorization keys -> Create new key.");
+  console.log("     It gives you two halves, and both are needed:");
+  console.log("       quorum ID   -> NEXT_PUBLIC_PRIVY_SIGNER_ID   (public; the browser sends it)");
+  console.log("       private key -> PRIVY_AUTHORIZATION_KEY       (secret; the worker signs with it)");
+  console.log("     Shown ONCE. Privy never sees the private half and cannot recover it.");
+  console.log("");
+  console.log("     There is no \"enable delegated actions\" toggle to find. These wallets run in a");
+  console.log("     TEE, so Autopilot is granted by adding a session signer to a quorum — which is a");
+  console.log("     different mechanism, not a setting. Looking for the toggle costs an hour.");
   console.log("");
   console.log("  Optional but recommended — a transaction policy on the portfolio wallets.");
   console.log("  Rivo declares the policy it WANTS; attaching it is your action, and until it is");

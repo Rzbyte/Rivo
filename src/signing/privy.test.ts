@@ -25,6 +25,7 @@ beforeEach(() => {
   set("PRIVY_APP_SECRET", undefined);
   set("PRIVY_AUTHORIZATION_KEY", undefined);
   set("NEXT_PUBLIC_PRIVY_APP_ID", undefined);
+  set("NEXT_PUBLIC_PRIVY_SIGNER_ID", undefined);
 });
 afterEach(() => {
   for (const [k, v] of Object.entries(saved)) {
@@ -200,15 +201,35 @@ describe("the preflight", () => {
     expect(p.problems.join(" ")).toMatch(/two different apps/);
   });
 
-  it("treats a missing authorization key as advice, not a failure", async () => {
+  it("treats a missing authorization key as a BLOCKER, not advice", async () => {
+    // This asserted the opposite until a real deployment proved otherwise.
+    // These wallets execute in a TEE, so Autopilot is granted by adding a
+    // session signer — which names a key quorum whose private half IS this
+    // variable. Without it a user can grant Autopilot and the worker still
+    // cannot sign, which is the worst of the three possible states: it looks
+    // enabled and does nothing.
     set("PRIVY_APP_ID", "app");
     set("PRIVY_APP_SECRET", "secret");
     set("NEXT_PUBLIC_PRIVY_APP_ID", "app");
     const p = await preflight();
     expect(p.authorizationKey).toBe(false);
-    const advisory = p.problems.filter((x) => x.startsWith("PRIVY_AUTHORIZATION_KEY"));
-    expect(advisory).toHaveLength(1);
-    expect(advisory[0]).toMatch(/recommended/);
+    const problem = p.problems.find((x) => x.startsWith("PRIVY_AUTHORIZATION_KEY"));
+    expect(problem).toBeDefined();
+    expect(problem).toMatch(/REQUIRED/);
+    // And it says where the key comes from, which the old wording never did.
+    expect(problem).toMatch(/Authorization keys/);
+  });
+
+  it("also demands the public half of the quorum", async () => {
+    // Both halves or neither. The browser sends the id; the worker signs with
+    // the private key. One without the other is a portfolio that cannot trade
+    // and gives no indication why.
+    set("PRIVY_APP_ID", "app");
+    set("PRIVY_APP_SECRET", "secret");
+    set("NEXT_PUBLIC_PRIVY_APP_ID", "app");
+    set("NEXT_PUBLIC_PRIVY_SIGNER_ID", undefined);
+    const p = await preflight();
+    expect(p.problems.some((x) => x.startsWith("NEXT_PUBLIC_PRIVY_SIGNER_ID"))).toBe(true);
   });
 
   it("carries no secret in what it reports", async () => {

@@ -179,10 +179,17 @@ export function Configure({
         <span className="label">Step 4</span>
         <h2 style={{ marginTop: 8 }}>Turn on Autopilot</h2>
         <p style={{ maxWidth: "66ch" }}>
-          Rivo will ask Privy for permission to sign for your Rivo Portfolio. You approve it once, in
-          Privy&rsquo;s own prompt. After that Rivo can place, manage, exit and redeem Event Contract positions
-          from that wallet while you are offline — and you will not be asked to approve individual trades,
-          because that is the entire point.
+          Turning this on grants Rivo permission to sign for your Rivo Portfolio. After that Rivo can place,
+          manage, exit and redeem Event Contract positions from that wallet while you are offline — and you
+          will not be asked to approve individual trades, because that is the entire point.
+        </p>
+        <p style={{ maxWidth: "66ch" }}>
+          {/* No Privy modal appears for these wallets: they run in a TEE, where the
+              grant is provisioned headlessly. So this screen IS the consent, and
+              saying otherwise would promise a confirmation step that never comes. */}
+          <strong>There is no second confirmation.</strong> Your wallet is held in a secure enclave, where this
+          permission is granted directly rather than through a pop-up — so this page is where you are agreeing,
+          and the three points below are what you are agreeing to.
         </p>
         <ul style={{ color: "var(--muted)", fontSize: 13.5, paddingLeft: 18, maxWidth: "66ch" }}>
           <li>
@@ -200,7 +207,7 @@ export function Configure({
         </ul>
         <div className="row" style={{ marginTop: 8 }}>
           <button className="primary" disabled={busy !== null || !valid} onClick={() => void onEnable()}>
-            {busy === "autopilot" ? "Waiting for your approval…" : "Enable Autopilot"}
+            {busy === "autopilot" ? "Granting permission…" : "Enable Autopilot"}
           </button>
           <span className="hint">You can stop it whenever you like.</span>
         </div>

@@ -199,10 +199,23 @@ export async function preflight(): Promise<PrivyPreflight> {
       "NEXT_PUBLIC_PRIVY_APP_ID does not match PRIVY_APP_ID — the browser and the server would be talking to two different apps.",
     );
   }
+  // Not optional, and it took a browser console to find out why.
+  //
+  // These wallets execute in a TEE, so Autopilot is granted by adding a SESSION
+  // SIGNER — which names a key quorum. The public half of that quorum is what
+  // the browser sends; the private half is this variable, and it is what the
+  // worker authenticates with. Without it a user can grant Autopilot and the
+  // worker still cannot sign, which is the worst arrangement of the three.
   if (!out.authorizationKey) {
     out.problems.push(
-      "PRIVY_AUTHORIZATION_KEY is not set. Optional, and recommended: with an authorization keypair registered, " +
-        "a stolen app secret alone cannot move a wallet.",
+      "PRIVY_AUTHORIZATION_KEY is not set. REQUIRED for TEE wallets: it is the private half of the key " +
+        "quorum a session signer grants to. Privy → Wallet infrastructure → Authorization keys → Create new key.",
+    );
+  }
+  if (!process.env.NEXT_PUBLIC_PRIVY_SIGNER_ID?.trim()) {
+    out.problems.push(
+      "NEXT_PUBLIC_PRIVY_SIGNER_ID is not set. It is the key quorum ID — the PUBLIC half, which the browser " +
+        "sends when a user enables Autopilot. Without it the button cannot grant anything.",
     );
   }
   if (!out.configured) return out;

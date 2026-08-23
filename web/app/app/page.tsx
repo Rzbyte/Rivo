@@ -25,15 +25,20 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-// `useDelegatedActions`, NOT the headless variant.
+// `useSessionSigners`, because these wallets run in a TEE.
 //
-// Both expose the same two functions and they differ in exactly the thing this
-// screen promises: the headless one delegates without any UI, while this one
-// "prompts the user to delegate access". Rivo's copy says the user approves it
-// once in Privy's own prompt, and with the headless hook no prompt ever
-// appeared — the button simply sat on "Waiting for your approval…" forever,
-// waiting for something that was never going to be shown.
-import { usePrivy, useDelegatedActions, useLogout } from "@privy-io/react-auth";
+// Privy has two mechanisms and they are not interchangeable. The delegated-actions
+// hooks are for wallets executing ON DEVICE; this app's wallets execute in a
+// Trusted Execution Environment, and Privy rejects them outright:
+//
+//   useDelegatedActions is only supported for on-device execution and this app
+//   uses TEE execution. Use the useSessionSigners hook to provision server side
+//   access on behalf of your users.
+//
+// That message only ever appeared in the browser console. From the outside the
+// promise simply never settled, which is why this took four wrong guesses at the
+// Privy dashboard before anyone thought to open devtools.
+import { usePrivy, useSessionSigners, useLogout } from "@privy-io/react-auth";
 import type { WalletWithMetadata } from "@privy-io/react-auth";
 import { api, ApiError } from "@/lib/api";
 import { readBalances, type Balances } from "@/lib/balances";
@@ -45,6 +50,14 @@ import { Fund } from "@/components/Fund";
 import { Steps } from "@/components/Steps";
 
 const APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? "";
+/**
+ * The key quorum Autopilot grants signing rights to.
+ *
+ * Public by design: it names a quorum, and naming one grants nothing. The
+ * private half lives only in the worker's environment as
+ * PRIVY_AUTHORIZATION_KEY, and without it the id is inert.
+ */
+const SIGNER_ID = process.env.NEXT_PUBLIC_PRIVY_SIGNER_ID ?? "";
 
 // `Bundle` is the dashboard's payload and is defined once, next to the component
 // that renders it. Declaring it a second time here — loosely, as unknown[] —
@@ -57,7 +70,7 @@ export default function AppPage() {
 
 function Portfolio() {
   const { ready, authenticated, getAccessToken, user } = usePrivy();
-  const { delegateWallet, revokeWallets } = useDelegatedActions();
+  const { addSessionSigners, removeSessionSigners } = useSessionSigners();
   const { logout } = useLogout();
   const router = useRouter();
 
@@ -163,20 +176,33 @@ function Portfolio() {
     setBusy("autopilot");
     setError(null);
     try {
-      // The consent step. Privy shows its own prompt; Rivo is not in the middle
-      // of it and does not see anything but the outcome.
+      // The consent step.
       //
-      // Bounded, because an unsettled promise here is indistinguishable from a
-      // user who has not clicked yet — and that is exactly how this button spent
-      // its first outing stuck on "Waiting for your approval…" with nothing
-      // wrong that anybody could see. Ninety seconds is far longer than reading
-      // a prompt takes and short enough to be a failure rather than a mood.
+      // A session signer grants a KEY QUORUM the right to sign for this wallet.
+      // The quorum is created once in the Privy dashboard and its id is public —
+      // the private half never leaves the operator's environment and is what the
+      // worker authenticates with.
+      //
+      // Note there is no Privy modal here: for TEE wallets this is headless. So
+      // THIS SCREEN is the consent surface, not a Privy prompt on top of it,
+      // which makes the text beside the button the thing the user is actually
+      // agreeing to. It is written accordingly.
+      if (!SIGNER_ID) {
+        throw new Error(
+          "This deployment has no signer configured, so Autopilot cannot be granted. " +
+            "Set NEXT_PUBLIC_PRIVY_SIGNER_ID to the key quorum id from Privy → Wallet infrastructure → Authorization keys.",
+        );
+      }
       if (!embedded?.delegated) {
+        // Bounded, because an unsettled promise here is indistinguishable from a
+        // user who has not clicked yet — which is exactly how this button spent
+        // its first outings stuck on "Waiting for your approval…" with nothing
+        // wrong that anybody could see.
         await withTimeout(
-          delegateWallet({ address, chainType: "ethereum" }),
+          addSessionSigners({ address, signers: [{ signerId: SIGNER_ID }] }),
           90_000,
-          "Privy never showed the permission prompt. The Privy app most likely has signers switched off: " +
-            "dashboard.privy.io -> User management -> Authentication -> Advanced -> \"Server-side access\".",
+          "Privy did not confirm the signer. Check that NEXT_PUBLIC_PRIVY_SIGNER_ID is a key quorum id " +
+            "belonging to this Privy app.",
         );
       }
       // Re-read the linked account: the wallet id exists only after delegation,
@@ -199,7 +225,7 @@ function Portfolio() {
     } finally {
       setBusy(null);
     }
-  }, [bundle, address, embedded, delegateWallet, token, refresh, user]);
+  }, [bundle, address, embedded, addSessionSigners, token, refresh, user]);
 
   const disableAutopilot = useCallback(async () => {
     if (!bundle) return;
@@ -223,7 +249,12 @@ function Portfolio() {
       // that is stopped with a standing grant does nothing, which is the safe
       // half of the two.
       try {
-        await withTimeout(revokeWallets(), 60_000, "Privy did not confirm the revocation.");
+        // `address` is null only before the wallet has loaded, in which case
+        // there is no signer to remove and the server-side stop above is the
+        // whole of what "off" means.
+        if (address) {
+          await withTimeout(removeSessionSigners({ address }), 60_000, "Privy did not confirm the revocation.");
+        }
       } catch {
         setError(
           "Autopilot is off and Rivo will not trade this portfolio. Withdrawing the signing permission at Privy " +
@@ -236,7 +267,7 @@ function Portfolio() {
     } finally {
       setBusy(null);
     }
-  }, [bundle, token, refresh, revokeWallets]);
+  }, [bundle, token, refresh, removeSessionSigners, address]);
 
   const save = useCallback(
     async (patch: { capital?: number; profile?: string; overrides?: Record<string, unknown> }) => {
