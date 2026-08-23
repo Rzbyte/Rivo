@@ -5,6 +5,83 @@ For how to deploy it, see [DEPLOY.md](DEPLOY.md); for what it protects against, 
 
 ---
 
+## Execution permission
+
+Five things have to agree before a single unit of capital moves. Four of them are new; the fifth was
+always there and is unchanged.
+
+```
+strategy state  ·  execution mode  ·  network  ·  signer  ·  portfolio risk
+```
+
+This exists because the repository was carrying a contradiction in the open. `src/research/gating.ts`
+evaluates a strategy against out-of-sample economics and returns **REJECTED** for the one in
+production — and `mayExecuteLive()`, the function that reads that verdict, was called by exactly one
+place: the research CLI. The worker asked a smaller question,
+
+```ts
+mayTradeLive(portfolio) && authority.available()
+```
+
+which is "did the user switch Autopilot on, and can we still sign". Both are necessary. Neither knows
+whether the forecast has ever been shown to make money. So a strategy this repository's own evidence
+calls economically rejected could reach `executor.buy()` with a real balance behind it, and nothing
+in the path would object.
+
+### The three modes
+
+| mode | what it may do |
+|---|---|
+| `shadow` | Decide, price, record. Spend nothing. |
+| `experimental_testnet` | Spend, on an **approved testnet only**, on a strategy that is not validated — because somebody chose that explicitly. |
+| `validated_autopilot` | Spend, on any network, **only** behind a VALIDATED strategy. |
+
+The Autopilot boolean this replaced could not express the case this deployment actually has: run a
+strategy that failed economic validation, against a testnet, deliberately, without that being one
+flag away from doing it to real money.
+
+### What is permitted
+
+Exactly four combinations, and the table is asserted in `src/runtime/permission.test.ts`:
+
+```
+validated_autopilot  + VALIDATED  + testnet   ✓
+validated_autopilot  + VALIDATED  + mainnet   ✓
+experimental_testnet + VALIDATED  + testnet   ✓
+experimental_testnet + REJECTED   + testnet   ✓   ← what runs here today
+```
+
+`experimental_testnet` is bounded by **list membership**, not by `network !== "mainnet"`, so a typo
+fails the test instead of passing a negation. An UNVALIDATED strategy additionally needs
+`RIVO_ALLOW_UNVALIDATED_EXPERIMENTAL=true` — the exact string, nothing truthy.
+
+### Fail closed
+
+Every unknown denies, and says which: `STRATEGY_REJECTED`, `STRATEGY_UNVALIDATED`, `SHADOW_ONLY`,
+`MODE_IS_SHADOW`, `EXPERIMENTAL_TESTNET_REQUIRED`, `NETWORK_NOT_APPROVED_FOR_EXPERIMENTAL`,
+`EXPERIMENTAL_NOT_CONFIGURED`, `SIGNER_UNAVAILABLE`, `DELEGATION_MISSING`, `MODE_UNKNOWN`,
+`STRATEGY_UNKNOWN`, `NETWORK_UNKNOWN`. An empty input denies. A mode this build has never heard of
+denies — including the pre-upgrade string `autopilot`.
+
+`mayTradeLive` is **deleted** rather than deprecated. Leaving it would leave the shorter question
+available to the next person who needs a boolean.
+
+### The strategy running here
+
+| | |
+|---|---|
+| Strategy | Diffusion Taker V1 |
+| Forecast quality | **AUC 0.8158** — measured, and genuinely good |
+| Economic validation | **REJECTED** — −6.49% return on stake out of sample, walk-forward |
+| Execution eligibility | **Experimental Testnet only** |
+
+Both numbers are true and they point in opposite directions, which is the entire point of having the
+gate. A model can be right about direction and still be a losing trade, because being right is not
+the same as being right by more than the spread you cross to act on it.
+
+Evidence: [ALPHA-RESEARCH.md](ALPHA-RESEARCH.md). Live on 2026-08-23 the drawdown breaker halted this
+portfolio at −37% against a 35% limit, which is the same conclusion arriving the expensive way.
+
 ## 1. Four planes
 
 ```

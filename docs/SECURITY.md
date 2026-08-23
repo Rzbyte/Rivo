@@ -8,6 +8,36 @@ deciding whether to fund a wallet can check the reasoning rather than trust a ba
 
 ---
 
+## Economic validation is a safety control, not a report
+
+A strategy that has failed out-of-sample economic validation cannot receive real capital. That is
+enforced in the execution path — `src/runtime/permission.ts`, called by the worker before an executor
+is constructed — and not merely displayed.
+
+The design is fail-closed in every direction:
+
+- Four combinations are permitted. Everything else denies, including combinations nobody anticipated.
+- An unrecognised execution mode denies. The pre-upgrade value `autopilot` is unrecognised, so a row
+  that somehow still carries it is refused rather than honoured.
+- Experimental execution is bounded by **membership of an approved-testnet list**, not by
+  `!== "mainnet"`. A typo therefore fails the test rather than passing a negation.
+- An UNVALIDATED strategy needs `RIVO_ALLOW_UNVALIDATED_EXPERIMENTAL=true` exactly. Truthy is not
+  enough; the test asserts `"true"`, `1`, `{}` and `[]` are all refused.
+- Missing strategy metadata, an unestablished network, an absent signer or a withdrawn delegation
+  each deny on their own, and an empty input denies with every reason at once.
+
+`src/runtime/executor-gate.test.ts` proves the wiring rather than the verdict: it spies on the
+signing seam, calls every capital-moving method on the executor for real, and asserts nothing ever
+asks the signer to sign. A test that only checked `mayExecuteLive(REJECTED) === false` would have
+passed throughout the period when the verdict reached nothing.
+
+### Migration chose the safer meaning
+
+`003_execution_mode` demoted every existing `autopilot` row to `shadow` rather than to
+`validated_autopilot`, and recorded an event per portfolio saying why. Those rows were written by a
+build that never checked the verdict, so honouring them as live execution would reissue a permission
+under a stronger meaning than the one it was granted with. Owners re-enable deliberately.
+
 ## 1. The threat model, stated first
 
 | adversary | what they get | what stops them |

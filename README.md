@@ -35,6 +35,22 @@ Somnia × DreamDEX Event Contracts Hackathon.
 
 ---
 
+## Before capital moves
+
+Five things have to agree, and the first four are checked before an executor is built:
+
+```
+strategy state  ·  execution mode  ·  network  ·  signer  ·  portfolio risk
+```
+
+The strategy running today is **Diffusion Taker V1**: AUC **0.8158**, which is genuinely good, and
+**−6.49%** return on stake out of sample, which is why it is **REJECTED** for real capital. Both are
+true. Being right about direction is not the same as being right by more than the spread you cross to
+act on it, and the gate reads the second number rather than the first.
+
+It runs under **Experimental Testnet** — testnet only, chosen explicitly, and impossible to activate
+on mainnet. Full model: [docs/ARCHITECTURE.md § Execution permission](docs/ARCHITECTURE.md).
+
 ## The honest headline
 
 Two results, and the second one matters as much as the first.

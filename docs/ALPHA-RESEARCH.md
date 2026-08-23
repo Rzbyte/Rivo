@@ -163,6 +163,17 @@ deterministic in the window id and independent of position, price and outcome.
 The contradiction disappeared. It is recorded here because it was very nearly
 published.
 
+## 9. The gate — and it is now wired
+
+**Update.** When this study was written the gate existed and nothing consulted it. `mayExecuteLive()`
+was called by the research CLI and by nothing on the execution path, so the verdict below was a
+document rather than a control. That is fixed: the worker now computes
+`strategy state · execution mode · network · signer` before an executor is built, and a REJECTED
+strategy cannot receive real capital on any network. See
+[ARCHITECTURE.md § Execution permission](ARCHITECTURE.md) and `src/runtime/permission.ts`.
+
+The incumbent runs under **Experimental Testnet**, which is testnet-only and chosen explicitly.
+
 ## 9. The gate
 
 `src/research/gating.ts`. States: `UNVALIDATED` → `SHADOW_ONLY` → `VALIDATED` |
