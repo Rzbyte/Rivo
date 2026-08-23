@@ -21,14 +21,32 @@ services:
     # be two versions of the engine, and the difference would surface as a
     # portfolio behaving differently depending on which plane ran it.
     dockerCommand: node_modules/.bin/tsx src/cli/worker.ts --interval 45 --concurrency 8
-    healthCheckPath: /ready
+    # There is deliberately no healthCheckPath here.
+    #
+    # An earlier version had one, pointed at /ready, and the surrounding docs
+    # claimed it was configured. Render supports healthCheckPath on WEB services
+    # only; on a background worker the key is not honoured, so the setup that was
+    # documented as detecting a stalled worker detected nothing.
+    #
+    # Making this a web service to get the check back would publish /health,
+    # which reports lastError and the database host — nobody's business, and not
+    # worth trading for a restart policy.
+    #
+    # Liveness is observed where it actually lives: every worker holds a database
+    # lease, so a process that hangs stops renewing and disappears from
+    # liveWorkers(). The web app's public /api/health reports that as
+    # `workers: N`, which is platform-independent and true whether the worker
+    # runs here, on Fly, or on a VPS. RIVO_ALERT_WEBHOOK below is what turns that
+    # into something that reaches a person at 3am.
     envVars:
-      # /ready, not /health: a worker that is up and has not completed a pass in
-      # five minutes is not healthy in any sense a user would recognise.
       - key: PORT
         value: 8080
       - key: NETWORK
         value: testnet
+      # Pins the venue rather than relying on the built-in default, so a worker
+      # and the web app cannot end up describing two different markets.
+      - key: VENUE_ID
+        sync: false
       # Session pooler, not the transaction pooler — see docs/DEPLOY.md §1.
       - key: DATABASE_URL
         sync: false

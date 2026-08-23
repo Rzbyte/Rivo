@@ -218,9 +218,21 @@ On Render, `render.yaml` at the repository root is a Blueprint: **New → Bluepr
 repository, and it prompts for the secrets rather than reading them from the repo. On Railway or Fly
 it is the same image and the same command, configured in their own dashboard.
 
-Point the platform's health check at **`/ready`**, not `/health` — a worker that is up and has not
-completed a pass in five minutes is not healthy in any sense a user would recognise. `render.yaml`
-already does.
+The worker serves **`/health`** (is this process up) and **`/ready`** (has it completed a pass in the
+last five minutes) on `$PORT`. Point a platform health check at `/ready` where the platform has one.
+
+**Render background workers do not.** `healthCheckPath` is a web-service property; on a worker the
+key is silently ignored, and this document claimed the opposite until it was checked. Do not make the
+worker a web service to get it back — `/health` reports `lastError` and the database host.
+
+Liveness is instead observed where it already lives: every worker holds a database lease, so a hung
+process stops renewing and drops out of `liveWorkers()`. The web app's public `/api/health` reports
+that as `workers: N` — platform-independent, and true whether the worker runs on Render, on Fly, or
+on a VPS. Set `RIVO_ALERT_WEBHOOK` to turn a breaker or a stall into something that reaches a person.
+
+**Render has no free instance type for background workers** — `free` is unavailable for workers,
+private services and cron jobs, so this is `starter` and paid. Fly.io and a small VPS are the cheap
+alternatives, and the systemd unit below is there for the second one.
 
 On a VPS: `deploy/rivo-worker.service`, which carries the systemd hardening a process that signs
 transactions should have.
