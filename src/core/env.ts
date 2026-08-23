@@ -13,7 +13,7 @@
 // way anyone would expect regardless of what the file says.
 
 import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { dirname, isAbsolute, resolve } from "node:path";
 
 let loaded = false;
 
@@ -42,14 +42,44 @@ function parse(text: string): Record<string, string> {
 }
 
 /**
- * Load `.env` from `dir` if present. Idempotent, and never overwrites a
- * variable that is already set.
+ * Find `.env`, starting at `dir` and walking up.
+ *
+ * A single directory was enough while everything ran from the repository root.
+ * It stopped being enough the moment the web app existed: Next.js runs with its
+ * own directory as the cwd, so it looked for `web/.env`, found nothing, and
+ * reported "no DATABASE_URL configured" on a machine whose `.env` had one — with
+ * nothing anywhere pointing at the reason.
+ *
+ * A monorepo has one `.env` at its root, so walking up is the behaviour that
+ * matches how people actually arrange these. Bounded to six levels so a process
+ * started somewhere unexpected cannot wander into a home directory and adopt a
+ * stranger's file.
+ *
+ * An absolute `RIVO_ENV_FILE` is taken literally and never searched for.
+ */
+export function findEnvFile(dir = process.cwd()): string | null {
+  const name = process.env.RIVO_ENV_FILE ?? ".env";
+  if (isAbsolute(name)) return existsSync(name) ? name : null;
+  let at = resolve(dir);
+  for (let up = 0; up < 6; up++) {
+    const candidate = resolve(at, name);
+    if (existsSync(candidate)) return candidate;
+    const parent = dirname(at);
+    if (parent === at) break; // filesystem root
+    at = parent;
+  }
+  return null;
+}
+
+/**
+ * Load `.env` if one can be found at or above `dir`. Idempotent, and never
+ * overwrites a variable that is already set.
  */
 export function loadEnv(dir = process.cwd()): void {
   if (loaded) return;
   loaded = true;
-  const path = resolve(dir, process.env.RIVO_ENV_FILE ?? ".env");
-  if (!existsSync(path)) return;
+  const path = findEnvFile(dir);
+  if (path === null) return;
   try {
     for (const [k, v] of Object.entries(parse(readFileSync(path, "utf8")))) {
       if (process.env[k] === undefined) process.env[k] = v;

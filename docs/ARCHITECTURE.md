@@ -251,8 +251,9 @@ Stated here rather than implied anywhere, because the difference is the whole va
 
 **Verified by running it:**
 
-- 513 tests, including 60+ against a real PostgreSQL 16 — leases, fencing, append-only triggers,
-  optimistic concurrency, ownership boundaries, idempotency, crash recovery.
+- 545 tests, including 130+ against a real PostgreSQL — leases, fencing, append-only triggers,
+  optimistic concurrency, ownership boundaries, idempotency, crash recovery. Verified against both a
+  local server and a managed Supabase instance (PostgreSQL 17.6).
 - The worker managing a portfolio against the **live DreamDEX testnet venue**: market discovery,
   correlated allocation, position management including REDUCE and EXIT, settlement, claim sweeps,
   and the ledger identity holding to 1e-15 across hundreds of cycles.

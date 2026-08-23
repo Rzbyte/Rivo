@@ -22,7 +22,10 @@ const OUT = resolve("public");
  * is simply absent and the built-in constants stand.
  *
  * Scoped to `node:fs` and `node:path` on purpose. Anything else reaching for a
- * Node builtin is a real mistake and should still fail the build loudly.
+ * Node builtin is a real mistake and should still fail the build loudly — which
+ * this stub proved by doing exactly that: adding `dirname` and `isAbsolute` to
+ * the .env search broke this build until they were named here, rather than
+ * silently shipping a browser bundle with a hole in it.
  */
 const nodeStub: Plugin = {
   name: "node-stub",
@@ -33,7 +36,12 @@ const nodeStub: Plugin = {
         export const existsSync = () => false;
         export const readFileSync = () => "";
         export const resolve = (...p) => p.join("/");
-        export default { existsSync, readFileSync, resolve };
+        // The .env search walks upward looking for a file it will never find,
+        // because existsSync above always says no. These exist so the import
+        // resolves; the loop they belong to exits on the first iteration.
+        export const dirname = (p) => p.slice(0, Math.max(0, p.lastIndexOf("/")));
+        export const isAbsolute = (p) => p.startsWith("/");
+        export default { existsSync, readFileSync, resolve, dirname, isAbsolute };
       `,
       loader: "js",
     }));
