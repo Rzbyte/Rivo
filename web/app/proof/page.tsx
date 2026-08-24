@@ -29,7 +29,11 @@ interface Run {
 
 interface Payload {
   run?: Run | null;
-  agent?: { slug: string; label: string; state: string } | null;
+  agent?: {
+    id: string; slug: string; label: string; state: string;
+    /** Decisions this agent made OUTSIDE any deployment. Never merged into the run. */
+    unscopedDecisions: number; unscopedSettled: number; totalDecisions: number;
+  } | null;
   global?: { agents: number; shadowDecisions: number; shadowSettled: number };
   portfolio: { id: string; address: string; network: string; mode: string; state: string } | null;
   strategy?: { label: string; state: string; eligibility: string; auc: number; returnOnStake: number };
@@ -143,22 +147,42 @@ export default function Proof() {
               </>
             )}
 
-            {d.global && (
-              <>
-                <Reveal title="Global" hint="every agent on this deployment, not this one">
-                <div className="panel">
-                  <div className="grid cols-3">
-                    <Field k="Agents registered" v={String(d.global.agents)} />
-                    <Field k="Shadow decisions" v={d.global.shadowDecisions.toLocaleString()} />
-                    <Field k="Resolved against settlement" v={d.global.shadowSettled.toLocaleString()} />
+            {/* Evidence that is NOT this run's, in its own row, never summed.
+                The endpoint used to read `portfolio_id IS NULL OR portfolio_id
+                = $1`, which folded every decision the agent made outside any
+                deployment into this deployment's totals. An agent is asked
+                about every live market on every pass whether or not it is
+                deployed, so that pile is the biggest number available and
+                adding it made a run look busy. It is real evidence about the
+                agent and says nothing about this run. */}
+            {(d.agent || d.global) && (
+              <Reveal title="Global agent evidence" hint="not this run — never added to the counts above">
+                {d.agent && (
+                  <div className="panel">
+                    <span className="label">{d.agent.label} · outside any deployment</span>
+                    <div className="grid cols-3" style={{ marginTop: 10 }}>
+                      <Field k="Unscoped decisions" v={d.agent.unscopedDecisions.toLocaleString()} />
+                      <Field k="Of those, settled" v={d.agent.unscopedSettled.toLocaleString()} />
+                      <Field k="This agent, everywhere" v={d.agent.totalDecisions.toLocaleString()} />
+                    </div>
+                    <p className="hint" style={{ marginTop: 10, marginBottom: 0 }}>
+                      This run recorded <strong>{(d.counts?.shadow ?? 0).toLocaleString()}</strong>. The
+                      numbers here belong to the agent across every context it has ever been asked in,
+                      and the two are different questions.
+                    </p>
                   </div>
-                  <p className="hint" style={{ marginTop: 10, marginBottom: 0 }}>
-                    Kept apart on purpose. Everything outside this row belongs to the run named at the
-                    top; nothing inside it does.
-                  </p>
-                </div>
-                </Reveal>
-              </>
+                )}
+                {d.global && (
+                  <div className="panel" style={{ marginTop: 12 }}>
+                    <span className="label">Every agent on this deployment</span>
+                    <div className="grid cols-3" style={{ marginTop: 10 }}>
+                      <Field k="Agents registered" v={String(d.global.agents)} />
+                      <Field k="Shadow decisions" v={d.global.shadowDecisions.toLocaleString()} />
+                      <Field k="Resolved against settlement" v={d.global.shadowSettled.toLocaleString()} />
+                    </div>
+                  </div>
+                )}
+              </Reveal>
             )}
 
             <div className="sec-head">
@@ -211,18 +235,46 @@ function Field({ k, v, tone }: { k: string; v: string; tone?: string }) {
  */
 function RunWalkthrough({ run, network }: { run: Run; network: string }) {
   const explorer = `${EXPLORER}${run.txHash}`;
+  // Every stage the shared pipeline actually has, in the order it runs them.
+  //
+  // Two were missing and both mattered. VENUE NORMALISATION is where a size is
+  // rounded to something DreamDEX will accept — the step that used to live
+  // inside the executor and turn a deterministic refusal into an execution
+  // failure. LEDGER PERSISTED is where the attempt is written down BEFORE
+  // signing, which is the thing that makes a crash recoverable rather than a
+  // position Rivo owns and has forgotten.
+  //
+  // Statuses come from the fixed vocabulary so nothing on this page can be
+  // read as more than it is: PASSED and NORMALISED are pre-chain facts,
+  // SUBMITTED means a hash exists, CONFIRMED means a receipt was read back.
   const steps: [string, string, string, string][] = [
-    ["Decision", "CONFIRMED", `${run.asset} ${run.leg} · ${Math.round(run.intervalSec / 60)}m`, run.action],
-    ["Risk check", "CONFIRMED", "Passed — gate, exposure limits and breaker all agreed", ""],
-    ["DreamDEX", "SUBMITTED", run.filled !== null ? `Filled ${run.filled.toFixed(2)} at ${run.avgPrice?.toFixed(3)}` : "Order submitted", ""],
-    ["Somnia", "CONFIRMED", `${run.txHash.slice(0, 14)}…${run.txHash.slice(-8)}`, run.blockNumber ? `block ${run.blockNumber}` : ""],
-    ["Reconciliation", "CONFIRMED", "Position matched against the chain", ""],
+    ["Agent decision", "PASSED", `${run.asset} ${run.leg} · ${Math.round(run.intervalSec / 60)}m`, run.action],
+    ["Risk check", "PASSED", "Strategy gate, exposure limits and the drawdown breaker all agreed", ""],
+    [
+      "Venue normalisation",
+      "NORMALISED",
+      run.filled !== null
+        ? `${run.filled.toFixed(2)} shares — a size DreamDEX accepts`
+        : "Rounded down to the venue lot",
+      "",
+    ],
+    [
+      "Order submitted",
+      "SUBMITTED",
+      run.filled !== null && run.avgPrice !== null
+        ? `Filled ${run.filled.toFixed(2)} at ${run.avgPrice.toFixed(3)}`
+        : "Sent to DreamDEX",
+      "",
+    ],
+    ["Somnia confirmed", "CONFIRMED", `${run.txHash.slice(0, 14)}…${run.txHash.slice(-8)}`, run.blockNumber ? `block ${run.blockNumber}` : ""],
+    ["Ledger persisted", "RECORDED", "Written before signing, so a crash leaves a record rather than a gap", ""],
+    ["Reconciled", "RECONCILED", "Position matched against what the chain says it holds", ""],
     [
       "Settlement",
       run.settlement?.status === "closed" ? "SETTLED" : "PENDING",
       run.settlement?.status === "closed"
         ? `Closed — ${run.settlement.exit ?? "resolved"}`
-        : "Open, waiting on the contract",
+        : "Open, waiting on the contract to expire",
       "",
     ],
   ];
@@ -244,12 +296,14 @@ function RunWalkthrough({ run, network }: { run: Run; network: string }) {
                   style={{
                     fontSize: 11,
                     letterSpacing: ".08em",
-                    color: status === "SETTLED" || status === "CONFIRMED" ? "var(--pos)" : "var(--warn)",
+                    color: ["SETTLED", "CONFIRMED", "PASSED", "NORMALISED", "RECORDED", "RECONCILED"].includes(status)
+                      ? "var(--pos)"
+                      : "var(--warn)",
                   }}
                 >
                   {status}
                 </span>{" "}
-                {name === "Somnia" ? (
+                {name === "Somnia confirmed" ? (
                   <a href={explorer} target="_blank" rel="noreferrer" className="mono" style={{ fontSize: 12.5 }}>
                     {detail}
                   </a>

@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-08-24T14:58:13.976Z",
+  "generatedAt": "2026-08-24T15:05:08.040Z",
   "excluded": [
     "**/*.kit.test.ts"
   ],
-  "tests": 833,
-  "files": 55,
+  "tests": 838,
+  "files": 56,
   "skipped": 0,
   "failed": 0
 }

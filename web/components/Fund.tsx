@@ -77,7 +77,7 @@ export function Fund({ address, balances }: { address: string; balances: Balance
       </p>
 
       <div className="field">
-        <span className="label">Your Rivo Portfolio</span>
+        <span className="label">Deployment wallet</span>
         <div className="row">
           <code className="mono" style={{ fontSize: 13, wordBreak: "break-all", flex: "1 1 320px" }}>
             {address}

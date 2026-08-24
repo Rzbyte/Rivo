@@ -209,7 +209,7 @@ export function Dashboard({
             <CapitalEditor current={view.capital} busy={busy} onSave={onSave} />
           </div>
           <div>
-            <span className="label">Rivo Portfolio</span>
+            <span className="label">Deployment wallet</span>
             <p className="mono" style={{ fontSize: 12.5, wordBreak: "break-all" }}>
               {view.address}
             </p>

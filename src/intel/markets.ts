@@ -51,6 +51,18 @@ export interface MarketCard {
     cohort: Cohort; cohortLabel: string;
     /** True when a more specific cohort existed but had too few windows to use. */
     fellBack: boolean;
+    /**
+     * The probability band this contract's price fell into.
+     *
+     * Without it the realized rate is unattached: a reader sees "settled 3.3%"
+     * beside a price of 0.02 and cannot tell whether 3.3% is the rate for
+     * contracts quoted near 0.02 or for the cohort as a whole. It is the former,
+     * and saying so is the difference between a measurement and a decoration.
+     */
+    bucket: { lo: number; hi: number };
+    /** When the answering cohort was measured. A rate with no date range cannot be checked. */
+    from: number | null;
+    to: number | null;
   } | null;
 
   assessment: Assessment;
@@ -86,6 +98,9 @@ function historicalFor(
   return {
     realized: b.realized, windows: b.windows, lo95: b.lo95, hi95: b.hi95, thin: b.thin,
     cohort: hit.cohort, cohortLabel: cohortLabel(hit.cohort), fellBack: hit.fellBack,
+    bucket: { lo: b.lo, hi: b.hi },
+    from: hit.period?.from ?? null,
+    to: hit.period?.to ?? null,
   };
 }
 

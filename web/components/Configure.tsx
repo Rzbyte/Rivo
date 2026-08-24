@@ -9,9 +9,15 @@
 // one position" is a sentence somebody can check against their own judgement;
 // "maxPerPosition 0.25" is not.
 //
-// The Autopilot button is the last thing on the page and says exactly what
+// The deploy button is the last thing on the page and says exactly what
 // granting permission means, including that it is revocable. That sentence is
 // the most important text in the product.
+//
+// It used to say "Enable Autopilot". The word belonged to a product that
+// managed money on somebody's behalf; this one deploys an agent under limits
+// the operator set and can revoke. The API route and the view field are still
+// named `autopilot` — renaming a deployed endpoint to fix a noun is churn
+// against a live surface, and no user reads either.
 
 import { useState } from "react";
 import type { Balances } from "@/lib/balances";
@@ -197,7 +203,7 @@ export function Configure({
             signatures, and nothing else.
           </li>
           <li>
-            <strong>You can withdraw it at any time</strong> — switching Autopilot off here stops trading
+            <strong>You can withdraw it at any time</strong> — stopping execution here halts the deployment
             immediately and revokes the permission.
           </li>
           <li>
@@ -207,7 +213,7 @@ export function Configure({
         </ul>
         <div className="row" style={{ marginTop: 8 }}>
           <button className="primary" disabled={busy !== null || !valid} onClick={() => void onEnable()}>
-            {busy === "autopilot" ? "Granting permission…" : "Enable Autopilot"}
+            {busy === "autopilot" ? "Granting permission…" : "Deploy this agent"}
           </button>
           <span className="hint">You can stop it whenever you like.</span>
         </div>

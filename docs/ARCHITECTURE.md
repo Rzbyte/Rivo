@@ -328,7 +328,7 @@ Stated here rather than implied anywhere, because the difference is the whole va
 
 **Verified by running it:**
 
-- 833 tests, including 130+ against a real PostgreSQL — leases, fencing, append-only triggers,
+- 838 tests, including 130+ against a real PostgreSQL — leases, fencing, append-only triggers,
   optimistic concurrency, ownership boundaries, idempotency, crash recovery. Verified against both a
   local server and a managed Supabase instance (PostgreSQL 17.6).
 - The worker managing a portfolio against the **live DreamDEX testnet venue**: market discovery,

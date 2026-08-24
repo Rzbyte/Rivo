@@ -22,6 +22,8 @@ interface Card {
   historical: {
     realized: number; windows: number; lo95: number; hi95: number; thin: boolean;
     cohortLabel: string; fellBack: boolean;
+    bucket: { lo: number; hi: number };
+    from: number | null; to: number | null;
   } | null;
   assessment: { code: AssessmentCode; detail: string };
 }
@@ -33,6 +35,7 @@ interface Payload {
   error?: string;
 }
 
+const day = (unix: number) => new Date(unix * 1000).toISOString().slice(0, 10);
 const pct = (x: number | null, d = 1) => (x === null ? "—" : `${(x * 100).toFixed(d)}%`);
 
 function countdown(s: number): string {
@@ -183,13 +186,33 @@ function MarketCard({ c, now }: { c: Card; now: number }) {
       </div>
       <p className="hint" style={{ marginTop: 8, marginBottom: 0 }}>{c.assessment.detail}</p>
 
-      {/* Where the historical number came from. Without this "64.5%" is a figure
-          with no population attached, and the reader cannot check it. */}
+      {/* Everything needed to check the number, in the order a sceptic asks for
+          it: which contracts, in which price band, over how many settled
+          windows, between which dates, with what uncertainty, and whether the
+          most specific comparable set was the one that answered.
+
+          Without the band, "settled true 3.3%" sits beside a price of 0.02 and
+          a reader cannot tell whether 3.3% describes contracts quoted near 0.02
+          or the cohort as a whole. It is the former. Without the dates, nothing
+          about the claim can be dated. */}
       {h && (
-        <p className="hint" style={{ marginTop: 6, marginBottom: 0 }}>
-          Compared against <strong>{h.cohortLabel}</strong>
-          {h.fellBack && " — a wider set, because this market's own cohort had too few settled windows"}
-        </p>
+        <div className="hint" style={{ marginTop: 8, marginBottom: 0, lineHeight: 1.6 }}>
+          <div>
+            Cohort <strong>{h.cohortLabel}</strong>
+            {h.fellBack && (
+              <span className="warn-text"> — widened, this market&rsquo;s own cohort had too few settled windows</span>
+            )}
+          </div>
+          <div>
+            Price band {pct(h.bucket.lo, 0)}–{pct(h.bucket.hi, 0)} · {h.windows} settled window
+            {h.windows === 1 ? "" : "s"} · 95% CI {pct(h.lo95)}–{pct(h.hi95)}
+          </div>
+          {h.from !== null && h.to !== null && (
+            <div>
+              Measured {day(h.from)} → {day(h.to)}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

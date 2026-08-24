@@ -294,6 +294,14 @@ export interface CohortLookup {
   cohort: Cohort;
   /** True when a more specific cohort existed but was too thin to use. */
   fellBack: boolean;
+  /**
+   * When the answering cohort was measured, and over how many windows.
+   *
+   * Travels with the bucket because a realized frequency without a date range
+   * is a number nobody can date-check. A card can then say "BTC 15m, 30 windows,
+   * 22 Jul – 19 Aug" instead of asking a reader to trust 3.3%.
+   */
+  period: { from: number; to: number; windows: number } | null;
 }
 
 /**
@@ -318,12 +326,15 @@ export function lookupCohort(
     if (!report) continue;
     const bucket = report.buckets.find((b) => price >= b.lo && (b.hi === 1 ? price <= b.hi : price < b.hi));
     if (!bucket) continue;
-    const hit: CohortLookup = { bucket, cohort: c, fellBack: !sameCohort(c, chain[0]!) };
+    const hit: CohortLookup = {
+      bucket, cohort: c, fellBack: !sameCohort(c, chain[0]!),
+      period: { from: report.from, to: report.to, windows: report.windows },
+    };
     if (!bucket.thin) return hit;
     // Remember the most specific answer we saw, in case nothing thicker exists.
     firstFound ??= hit;
   }
-  return firstFound ?? { bucket: null, cohort: chain[0]!, fellBack: false };
+  return firstFound ?? { bucket: null, cohort: chain[0]!, fellBack: false, period: null };
 }
 
 /**

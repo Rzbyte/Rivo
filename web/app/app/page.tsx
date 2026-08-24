@@ -391,7 +391,7 @@ function Portfolio() {
       {!on && (
         <Steps
           steps={[
-            { label: "Rivo Portfolio", done: Boolean(address) },
+            { label: "Deployment wallet", done: Boolean(address) },
             { label: "Funded", done: funded },
             { label: "Configured", done: configured },
             // Named for what it grants. "Autopilot" was the old word and it is
@@ -403,10 +403,10 @@ function Portfolio() {
 
       {!address && (
         <div className="panel">
-          <h2>Opening your Rivo Portfolio…</h2>
+          <h2>Opening the deployment wallet…</h2>
           <p style={{ marginBottom: 0 }}>
-            This is the trading account Rivo manages. It is yours, held by Privy, and deliberately separate
-            from any wallet you already use — so what Rivo can act on is only ever what you put in it.
+            The account this agent deploys from. It is yours, held by Privy, and deliberately separate from
+            any wallet you already use — so what an agent can ever reach is only what you put in it.
           </p>
         </div>
       )}
