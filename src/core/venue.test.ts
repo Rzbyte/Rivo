@@ -14,16 +14,24 @@
 // So the rule is mechanical. The literals live here; anywhere else is a copy.
 
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { execFileSync } from "node:child_process";
 import { chainIdOf, gasTokenName, networkOfChainId, NETWORKS, rpcUrl, VENUE } from "./venue.js";
 
-/** Every tracked TypeScript source, which is narrower and faster than a walk. */
+/**
+ * Every tracked TypeScript source, which is narrower and faster than a walk.
+ *
+ * `git ls-files` lists what the index tracks, which includes files deleted from
+ * the working tree but not yet staged. Reading one of those throws ENOENT and
+ * fails a rule about hardcoded hostnames with a message about a missing file —
+ * so the existence check is part of the query, not an afterthought. This broke
+ * exactly once, mid-deletion, and cost more time to read than to fix.
+ */
 const sources = (): string[] =>
   execFileSync("git", ["ls-files", "*.ts", "*.tsx"], { encoding: "utf8" })
     .split("\n")
-    .filter((f) => f && !f.startsWith("web/.next/"));
+    .filter((f) => f && !f.startsWith("web/.next/") && existsSync(resolve(f)));
 
 /** Source with comments removed — the rule is about code, not about the note explaining it. */
 const code = (f: string): string =>

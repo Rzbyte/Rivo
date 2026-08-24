@@ -23,7 +23,7 @@ const read = (p: string): string => readFileSync(resolve(p), "utf8");
 const routesReadingEvidence = (): string[] =>
   execSync("git ls-files web/app/api", { encoding: "utf8" })
     .split("\n")
-    .filter((f) => f.endsWith("route.ts"))
+    .filter((f) => f.endsWith("route.ts") && existsSync(resolve(f)))
     .filter((f) => /@\/lib\/evidence|docs\/evidence/.test(read(f)))
     .map((f) => f.replace(/^web\/app(\/api\/.*)\/route\.ts$/, "$1"));
 

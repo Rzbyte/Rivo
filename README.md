@@ -171,7 +171,7 @@ otherwise have hit ourselves.
 npm test
 ```
 
-**810 tests** across the things that either move money or produce a published number: the
+**808 tests** across the things that either move money or produce a published number: the
 dual-crossing-path book, the fair-value model and volatility estimator, the scoring rules behind
 every figure in [EVIDENCE.md](docs/EVIDENCE.md), the capital allocator, the position manager, settlement, and
 on-chain reconciliation.
@@ -268,9 +268,12 @@ fair-value code the trading runtime uses rather than a copy, and both Somnia ind
 permissive CORS headers, so a browser can reach the venue directly. `src/public/boot.test.ts` boots
 the shipped bundle in a DOM, so that property is tested rather than claimed.
 
-It is a portability proof, not a second product. **https://rzbyte.github.io/Rivo/** used to serve it
-as one and now redirects here — two surfaces disagreeing about what Rivo is helped nobody, and every
-study that lived only there is on [/evidence](https://rivo-autopilot.vercel.app/evidence).
+It is a portability proof, not a second product. It was once published at its own address and served
+as a second Rivo with its own identity; that address is retired, because two surfaces disagreeing
+about what one product is helped nobody. Every study that lived only there — the live maker run and
+the cross-tenor coherence bound — is on [/evidence](https://rivo-autopilot.vercel.app/evidence).
+
+**Rivo is one deployment: [rivo-autopilot.vercel.app](https://rivo-autopilot.vercel.app/).**
 
 ## Quickstart
 
@@ -423,7 +426,7 @@ src/
   web/         the original cockpit server + static snapshot export
   public/      the public pricing page — browser bundle, shares the runtime's math
   cli/         start · worker · web · report · calibrate · scan · allocate · backtest · … · agent
-  *.test.ts    810 tests, colocated with what they cover
+  *.test.ts    808 tests, colocated with what they cover
 web/
   app/         Next.js — landing, the product, and the control-plane API
   components/  the dashboard, built around decisions rather than fills
@@ -591,7 +594,7 @@ validates against the real thing.
 | `npm run privy:check` | is this deployment's Privy set up? authenticates for real, lists what is missing |
 | `npm run agent -- new \| status \| fund \| sweep` | the wallet Rivo signs with, and what it may lose |
 | `npm run probe:operator` | can EC be traded non-custodially? measured, not assumed |
-| `npm test` · `npm run typecheck` | 810 tests · strict TypeScript across engine, page and web app |
+| `npm test` · `npm run typecheck` | 808 tests · strict TypeScript across engine, page and web app |
 | `npm run doctor` | can Rivo trade right now — signer, gas, collateral, venue, kit |
 | `npm run faucet` | mint testnet tUSDC — a direct `faucet(uint256)` call, no kit needed |
 | `npm run check:kit` · `npm run link:kit` | verify / install the optional bot kit |

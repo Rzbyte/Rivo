@@ -11,7 +11,7 @@
 // follows it — in either direction.
 
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { execSync } from "node:child_process";
 
@@ -81,7 +81,7 @@ describe("the shipped identity", () => {
     // not. Two definitions that agree today is how the first one got stale.
     const owners = execSync("git ls-files web/app", { encoding: "utf8" })
       .split("\n")
-      .filter((f) => f.endsWith(".tsx") && /export const metadata/.test(read(f)));
+      .filter((f) => f.endsWith(".tsx") && existsSync(resolve(f)) && /export const metadata/.test(read(f)));
     expect(owners.length, "found no metadata at all — did the glob stop matching?").toBeGreaterThan(0);
     expect(owners, "more than one file declares page metadata").toEqual(["web/app/layout.tsx"]);
   });
