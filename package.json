@@ -43,7 +43,8 @@
     "privy:check": "tsx scripts/privy-check.ts",
     "alpha": "tsx src/cli/alpha.ts",
     "testcount": "tsx scripts/testcount.ts",
-    "calibration": "tsx src/cli/calibration.ts"
+    "calibration": "tsx src/cli/calibration.ts",
+    "shadow": "tsx src/cli/shadow.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

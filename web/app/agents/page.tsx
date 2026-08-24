@@ -183,6 +183,8 @@ export default function Agents() {
           </>
         )}
 
+        <LiveShadow />
+
         <div className="sec-head">
           <h2>Connect another agent</h2>
           <span className="hint">HTTP, typed, no uploaded code</span>
@@ -218,6 +220,122 @@ export default function Agents() {
           </p>
         </div>
       </main>
+    </>
+  );
+}
+
+interface ShadowRow {
+  agent: { slug: string; label: string; state: string };
+  asset: string; leg: string; intervalSec: number;
+  decidedAt: string; expiry: string;
+  marketPrice: number; agentPrice: number | null; confidence: number | null;
+  action: string; reason: string | null;
+  hypotheticalSize: number | null; hypotheticalEntry: number | null;
+  settledAt: string | null; outcome: number | null; hypotheticalPnl: number | null;
+}
+interface ShadowPayload {
+  decisions: ShadowRow[];
+  summary: { total: number; entered: number; settled: number; hypotheticalPnl: number | null; hitRate: number | null } | null;
+}
+
+/**
+ * What the agent WOULD have done.
+ *
+ * Visually separated from anything that moved money, and labelled HYPOTHETICAL
+ * on every row that has not settled. The failure this guards against is not a
+ * bug — it is somebody quoting these numbers as a result.
+ */
+function LiveShadow() {
+  const [d, setD] = useState<ShadowPayload | null>(null);
+  useEffect(() => {
+    const load = () => fetch("/api/shadow?limit=40").then((r) => r.json()).then(setD).catch(() => undefined);
+    load();
+    const t = setInterval(load, 15_000);
+    return () => clearInterval(t);
+  }, []);
+
+  if (!d || !d.summary) return null;
+  const s = d.summary;
+
+  return (
+    <>
+      <div className="sec-head">
+        <h2>Live Shadow</h2>
+        <span className="hint">deciding against live markets · no capital can move</span>
+      </div>
+
+      <div className="banner" style={{ marginBottom: 12 }}>
+        <strong>Every number below is hypothetical.</strong> These decisions ran against real DreamDEX
+        Event Contracts at real prices, and no transaction was sent for any of them. When a contract
+        settles, the same outcome that closes a real position resolves the row.
+      </div>
+
+      <section className="grid cols-4" style={{ marginBottom: 12 }}>
+        <div className="panel stat">
+          <span className="label">Decisions</span>
+          <span className="value">{s.total.toLocaleString()}</span>
+          <span className="sub">{s.entered} would have entered.</span>
+        </div>
+        <div className="panel stat">
+          <span className="label">Settled</span>
+          <span className="value">{s.settled.toLocaleString()}</span>
+          <span className="sub">Resolved against the venue&rsquo;s own outcome.</span>
+        </div>
+        <div className="panel stat">
+          <span className="label">Hypothetical P&amp;L</span>
+          <span className={`value ${(s.hypotheticalPnl ?? 0) >= 0 ? "pos" : "neg"}`}>
+            {s.hypotheticalPnl === null ? "—" : s.hypotheticalPnl.toFixed(2)}
+          </span>
+          <span className="sub">Not a result. Nothing was staked.</span>
+        </div>
+        <div className="panel stat">
+          <span className="label">Hit rate</span>
+          <span className="value">{s.hitRate === null ? "—" : `${(s.hitRate * 100).toFixed(0)}%`}</span>
+          <span className="sub">Of settled entries only.</span>
+        </div>
+      </section>
+
+      <div className="panel">
+        <div className="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Market</th><th className="n">Venue</th><th className="n">Agent</th>
+                <th>Decision</th><th>Status</th><th className="n">Hypothetical</th>
+              </tr>
+            </thead>
+            <tbody>
+              {d.decisions.map((r, i) => (
+                <tr key={`${r.decidedAt}-${i}`}>
+                  <td className="mono">{r.asset} {r.leg} · {Math.round(r.intervalSec / 60)}m</td>
+                  <td className="n">{(r.marketPrice * 100).toFixed(1)}%</td>
+                  <td className="n">{r.agentPrice === null ? "—" : `${(r.agentPrice * 100).toFixed(1)}%`}</td>
+                  <td>
+                    <strong className={r.action === "ENTER" ? "pos" : ""}>{r.action}</strong>
+                    {r.reason && <span className="faint" style={{ fontSize: 12 }}> — {r.reason}</span>}
+                  </td>
+                  <td className="mono" style={{ fontSize: 11.5 }}>
+                    {r.settledAt ? (
+                      <span className={r.outcome === 1 ? "pos" : "neg"}>SETTLED {r.outcome === 1 ? "TRUE" : "FALSE"}</span>
+                    ) : (
+                      <span className="faint">HYPOTHETICAL</span>
+                    )}
+                  </td>
+                  <td className="n">
+                    {r.hypotheticalPnl !== null ? (
+                      <span className={r.hypotheticalPnl >= 0 ? "pos" : "neg"}>{r.hypotheticalPnl.toFixed(2)}</span>
+                    ) : r.hypotheticalSize !== null ? (
+                      <span className="faint">{r.hypotheticalSize.toFixed(2)} @ {r.hypotheticalEntry?.toFixed(3)}</span>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </>
   );
 }
