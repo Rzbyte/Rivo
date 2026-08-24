@@ -45,6 +45,7 @@ import { readBalances, type Balances } from "@/lib/balances";
 import { NETWORK, explorerAddress } from "@/lib/somnia";
 import type { PortfolioView } from "@rivo/db/view.js";
 import { Dashboard, type Bundle } from "@/components/Dashboard";
+import { Nav } from "@/components/Nav";
 import { Configure } from "@/components/Configure";
 import { Fund } from "@/components/Fund";
 import { Steps } from "@/components/Steps";
@@ -464,18 +465,18 @@ function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promi
 function Shell({ children, right }: { children: React.ReactNode; right?: React.ReactNode }) {
   return (
     <>
-      <header className="top">
-        <div className="wrap">
-          <a className="brand" href="/">
-            <span className="brand-dot" aria-hidden="true" />
-            Rivo
-          </a>
-          <div className="row">
+      {/* The same nav as every public page. This screen is the deployment
+          console for an agent, not a separate product, and giving it its own
+          chrome was most of what made the old fund-manager identity feel like
+          a competing app. */}
+      <Nav
+        right={
+          <>
             <span className="pill">{NETWORK}</span>
             {right}
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
       <main className="wrap" style={{ paddingTop: 26, paddingBottom: 64 }}>
         {children}
       </main>

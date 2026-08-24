@@ -158,7 +158,7 @@ export default function Landing() {
         <p className="hint" style={{ marginBottom: 0 }}>
           Built on the official DreamDEX bot kit and the Somnia indexer.{" "}
           <a href="https://github.com/Rzbyte/Rivo">Source</a> ·{" "}
-          <Link href="/app">Deploy an agent</Link>
+          <Link href="/app">Deployment console</Link>
         </p>
       </footer>
     </>

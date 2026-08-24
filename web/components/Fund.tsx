@@ -68,12 +68,12 @@ export function Fund({ address, balances }: { address: string; balances: Balance
   return (
     <div className="panel">
       <span className="label">Step 2</span>
-      <h2 style={{ marginTop: 8 }}>Fund your Rivo Portfolio</h2>
+      <h2 style={{ marginTop: 8 }}>Deployment wallet</h2>
       <p style={{ maxWidth: "64ch" }}>
-        Your Rivo Portfolio is a trading account of your own, kept apart from whatever wallet you normally
-        use. Rivo can place Event Contract orders from it once you enable Autopilot, and it can never move
-        funds anywhere else. Send only what you are willing to put under management — everything Rivo does is
-        bounded by this balance.
+        An agent that has passed validation needs somewhere to place Event Contract orders from. This is
+        that account — testnet funds, held by Privy, kept apart from whatever wallet you normally use, and
+        it can never move funds anywhere else. Nothing here is under management: it is the ceiling on what
+        a deployed agent can spend while it is being proved.
       </p>
 
       <div className="field">

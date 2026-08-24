@@ -55,7 +55,7 @@ export function Configure({
     <>
       <div className="panel">
         <span className="label">Step 3</span>
-        <h2 style={{ marginTop: 8 }}>How much, and how hard</h2>
+        <h2 style={{ marginTop: 8 }}>Deployment risk limits</h2>
 
         <div className="grid cols-2" style={{ marginTop: 12 }}>
           <div className="field">
@@ -177,7 +177,7 @@ export function Configure({
 
       <div className="panel">
         <span className="label">Step 4</span>
-        <h2 style={{ marginTop: 8 }}>Turn on Autopilot</h2>
+        <h2 style={{ marginTop: 8 }}>Let the agent execute</h2>
         <p style={{ maxWidth: "66ch" }}>
           Turning this on grants Rivo permission to sign for your Rivo Portfolio. After that Rivo can place,
           manage, exit and redeem Event Contract positions from that wallet while you are offline — and you
