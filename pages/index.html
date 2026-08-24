@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rivo has moved</title>
+<meta name="description" content="Rivo — Event Intelligence &amp; Agent Validation for DreamDEX. This page has moved to rivo-autopilot.vercel.app.">
+<link rel="canonical" href="https://rivo-autopilot.vercel.app/">
+<!-- Redirect first, because most arrivals want the product and not an
+     explanation. The page below is what a reader sees if the refresh is
+     blocked, if JavaScript is off, or if they stopped it deliberately — so it
+     has to stand on its own rather than say "redirecting…". -->
+<meta http-equiv="refresh" content="0; url=https://rivo-autopilot.vercel.app/">
+<!-- The mark is the venue: two assets across four tenors. -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 8'><g fill='%232f5233'><rect x='0' y='0' width='3' height='3'/><rect x='5' y='0' width='3' height='3'/><rect x='10' y='0' width='3' height='3'/><rect x='15' y='0' width='3' height='3'/><rect x='0' y='5' width='3' height='3'/><rect x='5' y='5' width='3' height='3'/><rect x='10' y='5' width='3' height='3'/><rect x='15' y='5' width='3' height='3'/></g></svg>">
+<meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12120f" media="(prefers-color-scheme: dark)">
+<style>
+  :root {
+    --bg: #f4f1ea; --panel: #fbf9f4; --ink: #1c1c18; --muted: #55564d;
+    --faint: #8a8b7f; --line: #ddd8cb; --accent: #2f5233; --r: 3px;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12120f; --panel: #191913; --ink: #eceadf; --muted: #a5a698;
+      --faint: #6f7064; --line: #2c2c23; --accent: #8fbf7a;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12120f; --panel: #191913; --ink: #eceadf; --muted: #a5a698;
+    --faint: #6f7064; --line: #2c2c23; --accent: #8fbf7a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    display: grid; place-items: center; min-height: 100vh; padding: 24px;
+  }
+  main { max-width: 46ch; }
+  .dot { display: inline-grid; grid-template-columns: repeat(4, 5px); gap: 2px; margin-bottom: 22px; }
+  .dot i { display: block; width: 5px; height: 5px; background: var(--accent); }
+  .dot i:nth-child(n+5) { opacity: .55; }
+  .label {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .13em;
+    text-transform: uppercase; color: var(--faint); display: block; margin-bottom: 10px;
+  }
+  h1 { font-size: 25px; line-height: 1.2; margin: 0 0 14px; font-weight: 600; text-wrap: balance; }
+  p { color: var(--muted); margin: 0 0 16px; }
+  a.go {
+    display: inline-block; margin-top: 6px; padding: 9px 15px;
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--bg); background: var(--accent); border-radius: var(--r); text-decoration: none;
+  }
+  a.go:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .also { margin-top: 26px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 13px; }
+  .also a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <span class="dot" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+  <span class="label">Rivo</span>
+  <h1>This page has moved.</h1>
+  <p>
+    Rivo is now one product at one address: <strong>Event Intelligence &amp; Agent Validation
+    for DreamDEX</strong>. Live markets, calibration measured against settled windows, agent
+    validation, on-chain proof, and every study behind them — including the two that came back
+    negative.
+  </p>
+  <p>
+    This address used to serve an earlier version that argued the portfolio case on its own. Two
+    surfaces disagreeing about what one product is helps nobody, so it points here instead.
+  </p>
+  <a class="go" href="https://rivo-autopilot.vercel.app/">Open Rivo</a>
+  <div class="also">
+    Source and every measured artefact:
+    <a href="https://github.com/Rzbyte/Rivo">github.com/Rzbyte/Rivo</a>
+  </div>
+</main>
+</body>
+</html>

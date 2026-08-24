@@ -171,7 +171,7 @@ otherwise have hit ourselves.
 npm test
 ```
 
-**804 tests** across the things that either move money or produce a published number: the
+**810 tests** across the things that either move money or produce a published number: the
 dual-crossing-path book, the fair-value model and volatility estimator, the scoring rules behind
 every figure in [EVIDENCE.md](docs/EVIDENCE.md), the capital allocator, the position manager, settlement, and
 on-chain reconciliation.
@@ -256,26 +256,21 @@ is in **[docs/DEPLOY.md](docs/DEPLOY.md)**.
 
 ---
 
-## The public page
+## The browser bundle
 
 ```bash
 npm run build:public     # static files in public/, no backend
 npx serve public
 ```
 
-**Live: https://rzbyte.github.io/Rivo/** — deployed from `main` by GitHub Actions on
-every push, so what is published is always what is in the repo.
+The pricing engine also runs with **no Node, no backend and no wallet** — it imports the *same*
+fair-value code the trading runtime uses rather than a copy, and both Somnia indexers send
+permissive CORS headers, so a browser can reach the venue directly. `src/public/boot.test.ts` boots
+the shipped bundle in a DOM, so that property is tested rather than claimed.
 
-Live fair value for every DreamDEX Event Contract, with the calibration evidence
-behind it. **No wallet, no sign-in, nothing to install** — both Somnia indexers send
-permissive CORS headers, so the page runs entirely in the browser against the same
-public endpoints the runtime uses, and deploys as static files anywhere.
-
-It imports the *same* pricing code the trading runtime uses rather than a copy. That
-matters: the number on the page is the number Rivo would trade on, and the calibration
-shown beneath it is the measured accuracy of that exact function over 30,771 forecasts.
-
----
+It is a portability proof, not a second product. **https://rzbyte.github.io/Rivo/** used to serve it
+as one and now redirects here — two surfaces disagreeing about what Rivo is helped nobody, and every
+study that lived only there is on [/evidence](https://rivo-autopilot.vercel.app/evidence).
 
 ## Quickstart
 
@@ -428,7 +423,7 @@ src/
   web/         the original cockpit server + static snapshot export
   public/      the public pricing page — browser bundle, shares the runtime's math
   cli/         start · worker · web · report · calibrate · scan · allocate · backtest · … · agent
-  *.test.ts    804 tests, colocated with what they cover
+  *.test.ts    810 tests, colocated with what they cover
 web/
   app/         Next.js — landing, the product, and the control-plane API
   components/  the dashboard, built around decisions rather than fills
@@ -596,7 +591,7 @@ validates against the real thing.
 | `npm run privy:check` | is this deployment's Privy set up? authenticates for real, lists what is missing |
 | `npm run agent -- new \| status \| fund \| sweep` | the wallet Rivo signs with, and what it may lose |
 | `npm run probe:operator` | can EC be traded non-custodially? measured, not assumed |
-| `npm test` · `npm run typecheck` | 804 tests · strict TypeScript across engine, page and web app |
+| `npm test` · `npm run typecheck` | 810 tests · strict TypeScript across engine, page and web app |
 | `npm run doctor` | can Rivo trade right now — signer, gas, collateral, venue, kit |
 | `npm run faucet` | mint testnet tUSDC — a direct `faucet(uint256)` call, no kit needed |
 | `npm run check:kit` · `npm run link:kit` | verify / install the optional bot kit |

@@ -1,17 +1,37 @@
-name: Deploy public page
+name: Redirect the old Pages address
+
+# rzbyte.github.io/Rivo used to serve a second, self-contained version of Rivo,
+# built from src/public and deployed here on every push. It argued the portfolio
+# case on its own terms and had its own identity, which was true when it was the
+# only surface and became a contradiction the moment the product moved to
+# intelligence and validation on Vercel.
+#
+# The last thing standing in the way of retiring it was that two studies — the
+# live maker run and the cross-tenor coherence bound — appeared on NO other
+# surface. They are on /evidence now, so this address has nothing left that is
+# only here.
+#
+# It redirects rather than 404s. The README links it, and so may a submission, a
+# message or a bookmark; disabling Pages breaks all of those, while one static
+# file lands every one of them on the product.
+#
+# `npm run build:public` still works and still runs in CI. That bundle proves the
+# pricing engine runs in a browser with no Node and no backend, which is a real
+# property worth keeping tested — it is simply not a second product any more.
 
 on:
   push:
     branches: [main]
+    paths:
+      - "pages/**"
+      - ".github/workflows/pages.yml"
   workflow_dispatch:
 
-# Only the deploy needs privileges, and only to Pages.
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Let a running deploy finish rather than cancelling it half-published.
 concurrency:
   group: pages
   cancel-in-progress: false
@@ -24,31 +44,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - run: npm ci
-      # Bundles the browser entry points and copies docs/evidence/calibration.json
-      # in beside them. The page fetches its market data live from the client, so
-      # there is nothing to schedule and no secret to hold — a build is only out of
-      # date when the pricing code or the evidence changes.
-      - run: npm run build:public
-      # `configure-pages` fails with a message that does not name the cause when
-      # Pages is set to "Deploy from a branch". That setting silently produces a
-      # WORKING but WRONG site: Jekyll renders the repo README at the Pages URL,
-      # while public/app.js 404s because it is a build artefact and is not
-      # committed. A green padlock on the wrong page is worse than a red X, so
-      # say plainly what to change before the cryptic failure happens.
-      - name: Check Pages is set to GitHub Actions
-        continue-on-error: true
-        run: |
-          echo "::notice::If this job fails at 'configure-pages', open Settings → Pages"
-          echo "::notice::and set Source to 'GitHub Actions' (not 'Deploy from a branch')."
-          echo "::notice::A branch source serves the README via Jekyll and 404s on app.js."
+      # No install and no build: one static file, which is the entire point.
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: public
+          path: pages
       - id: deployment
         uses: actions/deploy-pages@v4
