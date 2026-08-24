@@ -16,7 +16,7 @@
 // hundred times in the flattering direction. That is the mistake these labels
 // exist to make impossible.
 
-import { useEffect, useState } from "react";
+import { useLive, ago } from "@/lib/live";
 import { Nav } from "@/components/Nav";
 
 interface Run {
@@ -47,10 +47,9 @@ interface Payload {
 const EXPLORER = "https://shannon-explorer.somnia.network/tx/";
 
 export default function Proof() {
-  const [d, setD] = useState<Payload | null>(null);
-  useEffect(() => {
-    fetch("/api/proof").then((r) => r.json()).then(setD).catch(() => setD({ portfolio: null, error: "could not load" }));
-  }, []);
+  // A confirmed transaction is not going to change, but the counts around it do
+  // — attempts, settlements, and the run's own outcome once its contract closes.
+  const { data: d, updatedAt } = useLive<Payload>("/api/proof", 15_000);
 
   return (
     <>
@@ -90,7 +89,7 @@ export default function Proof() {
             <div className="sec-head">
               <h2>The chain, stage by stage</h2>
               <span className="hint">
-                {d.portfolio.network} · {d.portfolio.mode} · {d.portfolio.state}
+                {d.portfolio.network} · {d.portfolio.mode} · {d.portfolio.state} · {ago(updatedAt)}
               </span>
             </div>
 

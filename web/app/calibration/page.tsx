@@ -7,7 +7,7 @@
 // picture, and a picture is exactly what nobody should trust about somebody
 // else's money.
 
-import { useEffect, useState } from "react";
+import { useLive, ago } from "@/lib/live";
 import { Nav } from "@/components/Nav";
 
 interface Bucket {
@@ -30,15 +30,9 @@ const signed = (x: number) => `${x >= 0 ? "+" : ""}${(x * 100).toFixed(1)}%`;
 const day = (s: number) => new Date(s * 1000).toISOString().slice(0, 10);
 
 export default function Calibration() {
-  const [data, setData] = useState<Payload | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch("/api/calibration")
-      .then((r) => r.json())
-      .then(setData)
-      .catch(() => setError("could not load the calibration report"));
-  }, []);
+  // Recomputed by the worker every few hours, so a slow poll is right: this is
+  // not a price, it is a finding, and it changes when new contracts settle.
+  const { data, error, updatedAt } = useLive<Payload>("/api/calibration", 60_000);
 
   const r = data?.report ?? null;
 
@@ -76,6 +70,8 @@ export default function Calibration() {
               <h2>Quoted against settled</h2>
               <span className="hint">
                 {r.basis === "window" ? "one observation per settled contract" : "one per fill · correlated"}
+                {" · read "}
+                {ago(updatedAt)}
               </span>
             </div>
 

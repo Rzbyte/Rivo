@@ -12,6 +12,7 @@
 // model is genuinely good at what it was built for.
 
 import { useEffect, useState } from "react";
+import { useLive, ago } from "@/lib/live";
 import { Nav } from "@/components/Nav";
 import { ConnectAgent } from "@/components/ConnectAgent";
 
@@ -38,10 +39,9 @@ const STATE_TONE: Record<Agent["state"], string> = {
 };
 
 export default function Agents() {
-  const [data, setData] = useState<Payload | null>(null);
-  useEffect(() => {
-    fetch("/api/agents").then((r) => r.json()).then(setData).catch(() => undefined);
-  }, []);
+  // The registry changes when somebody connects an agent, and a verdict changes
+  // when a validation run finishes. Neither is fast, so neither needs to be.
+  const { data } = useLive<Payload>("/api/agents", 30_000);
 
   const rivo = data?.agents.find((a) => a.slug === "rivo-v1") ?? null;
   const production = data?.research?.results.find((r) => r.strategy.includes("0.03")) ?? null;
@@ -279,14 +279,7 @@ interface ShadowPayload {
  * bug — it is somebody quoting these numbers as a result.
  */
 function LiveShadow() {
-  const [d, setD] = useState<ShadowPayload | null>(null);
-  useEffect(() => {
-    const load = () => fetch("/api/shadow?limit=40").then((r) => r.json()).then(setD).catch(() => undefined);
-    load();
-    const t = setInterval(load, 15_000);
-    return () => clearInterval(t);
-  }, []);
-
+  const { data: d, updatedAt } = useLive<ShadowPayload>("/api/shadow?limit=40", 10_000);
   if (!d || !d.summary) return null;
   const s = d.summary;
 
@@ -294,7 +287,7 @@ function LiveShadow() {
     <>
       <div className="sec-head">
         <h2>Live Shadow</h2>
-        <span className="hint">deciding against live markets · no capital can move</span>
+        <span className="hint">deciding against live markets · no capital can move · {ago(updatedAt)}</span>
       </div>
 
       <div className="banner" style={{ marginBottom: 12 }}>

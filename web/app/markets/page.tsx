@@ -8,6 +8,7 @@
 // is a description of the settled record, not advice.
 
 import { useEffect, useState } from "react";
+import { useLive, ago } from "@/lib/live";
 import { Nav } from "@/components/Nav";
 import { ASSESSMENT_LABEL, ASSESSMENT_TONE, type AssessmentCode } from "@rivo/intel/assessment.js";
 import { tenorLabel } from "@rivo/core/venue.js";
@@ -39,23 +40,48 @@ function countdown(s: number): string {
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
   const sec = s % 60;
-  return h > 0 ? `${h}h ${String(m).padStart(2, "0")}m` : `${m}:${String(sec).padStart(2, "0")}`;
+  // Seconds stay visible under an hour, because that is the window where a
+  // person is actually watching one tick down.
+  return h > 0
+    ? `${h}h ${String(m).padStart(2, "0")}m ${String(sec).padStart(2, "0")}s`
+    : `${m}:${String(sec).padStart(2, "0")}`;
+}
+
+/**
+ * A clock that ticks, rather than a number the server computed.
+ *
+ * The countdown used to render `secondsLeft` straight from the payload, so it
+ * moved once per poll — ten seconds at a time, and up to eighteen behind, since
+ * the markets endpoint caches for eight. On a fifteen-minute contract that is
+ * the difference between a live venue and a screenshot of one.
+ *
+ * `expiry` is an absolute timestamp and was already on every card, so the fix is
+ * to count from it locally and let the poll do what it is for: refreshing
+ * prices, not the clock.
+ */
+function useNow(): number {
+  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
+  useEffect(() => {
+    // Align to the next whole second so every card turns over together. A timer
+    // started on mount drifts against the wall clock and the row above it.
+    let interval: ReturnType<typeof setInterval>;
+    const align = setTimeout(() => {
+      setNow(Math.floor(Date.now() / 1000));
+      interval = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1_000);
+    }, 1_000 - (Date.now() % 1_000));
+    return () => {
+      clearTimeout(align);
+      if (interval) clearInterval(interval);
+    };
+  }, []);
+  return now;
 }
 
 export default function Markets() {
-  const [data, setData] = useState<Payload | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const load = () =>
-      fetch("/api/markets")
-        .then((r) => r.json())
-        .then((d: Payload) => (d.error ? setError(d.error) : (setData(d), setError(null))))
-        .catch(() => setError("could not reach the venue"));
-    load();
-    const t = setInterval(load, 10_000);
-    return () => clearInterval(t);
-  }, []);
+  const now = useNow();
+  // Five seconds against an eight-second server cache: the poll is never the
+  // thing making it stale, and the clock above ticks regardless.
+  const { data, error, updatedAt } = useLive<Payload>("/api/markets", 5_000);
 
   return (
     <>
@@ -79,12 +105,14 @@ export default function Markets() {
                 {data.calibration
                   ? `${data.calibration.windows.toLocaleString()} settled windows across ${data.cohorts ?? 1} cohorts`
                   : "no calibration computed yet — assessments will say so"}
+                {" · prices "}
+                {ago(updatedAt, now * 1000)}
               </span>
             </div>
 
             <div className="grid cols-2">
               {data.cards.map((c) => (
-                <MarketCard key={`${c.marketId}-${c.leg}`} c={c} />
+                <MarketCard key={`${c.marketId}-${c.leg}`} c={c} now={now} />
               ))}
             </div>
 
@@ -111,8 +139,10 @@ export default function Markets() {
   );
 }
 
-function MarketCard({ c }: { c: Card }) {
+function MarketCard({ c, now }: { c: Card; now: number }) {
   const tone = ASSESSMENT_TONE[c.assessment.code];
+  // Counted from the absolute expiry, not from the payload's snapshot.
+  const left = c.expiry - now;
   return (
     <div className="panel">
       <div className="spread" style={{ marginBottom: 10 }}>
@@ -121,7 +151,7 @@ function MarketCard({ c }: { c: Card }) {
             {c.asset} {c.leg} · {tenorLabel(c.intervalSec)}
           </strong>
         </div>
-        <span className="mono faint" style={{ fontSize: 12 }}>{countdown(c.secondsLeft)} left</span>
+        <span className="mono faint" style={{ fontSize: 12 }}>{countdown(left)} left</span>
       </div>
 
       <div className="grid cols-2" style={{ gap: 8, marginBottom: 10 }}>

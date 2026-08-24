@@ -16,7 +16,11 @@ import { network } from "@rivo/core/config.js";
 
 export const dynamic = "force-dynamic";
 
-const TTL_MS = 8_000;
+// Shorter than it was, because the page now polls every five seconds and a
+// longer cache would make half those polls return the same snapshot — a live
+// surface that is only live every other request. Still long enough that a
+// crowd hitting the page does not become a crowd hitting the venue's indexer.
+const TTL_MS = 4_000;
 let cached: { at: number; view: MarketsView } | null = null;
 
 /**
