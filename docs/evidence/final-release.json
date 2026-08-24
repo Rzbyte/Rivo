@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-08-24T16:37:35.688Z",
+  "generatedAt": "2026-08-24T16:49:51.818Z",
   "about": "The repository at the moment it was frozen for submission, plus what the production deployment answered when asked. Every field is re-derivable; none is a credential.",
   "commit": {
-    "sha": "93e637be6d1cf5c045e1589756853208159c7ea2",
-    "shortSha": "93e637b",
+    "sha": "44e40ac0e430308d05aa3ef75a1c67d93ed2c9de",
+    "shortSha": "44e40ac",
     "branch": "main",
-    "subject": "The methodology document disagreed with the product it documents",
-    "committedAt": "2026-08-24T23:37:14+07:00",
+    "subject": "Every tab a judge opened showed a blank document icon",
+    "committedAt": "2026-08-24T23:47:32+07:00",
     "clean": true
   },
   "verification": {
@@ -54,8 +54,8 @@
     },
     "workers": {
       "live": 1,
-      "lastHeartbeatAt": "2026-08-24T16:37:31.690Z",
-      "lastShadowDecisionAt": "2026-08-24T16:36:11.300Z"
+      "lastHeartbeatAt": "2026-08-24T16:49:42.266Z",
+      "lastShadowDecisionAt": "2026-08-24T16:48:33.761Z"
     },
     "calibration": {
       "windows": 834,
@@ -64,8 +64,8 @@
       "servedFromArtefact": false
     },
     "shadow": {
-      "decisions": 8511,
-      "settled": 5831
+      "decisions": 8627,
+      "settled": 5855
     },
     "demoProof": {
       "published": true,
