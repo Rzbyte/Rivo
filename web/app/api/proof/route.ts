@@ -83,7 +83,50 @@ export async function GET(req: Request): Promise<Response> {
             (SELECT count(*) FROM shadow_decisions WHERE settled_at IS NOT NULL)::text AS settled`,
   );
 
+  // One run, walked end to end.
+  //
+  // The stage counts above say what a deployment has done in total; this says
+  // what happened to ONE order, which is the thing a reader can actually follow.
+  // Picking the most recent confirmed transaction rather than the most recent
+  // attempt: a run that ends at "submitted" is a story without a last page.
+  const [latest] = await query<{
+    tx_hash: string; status: string; action: string; leg: string; asset: string;
+    interval_sec: number; market_id: string; created_at: Date;
+    filled_qty: string | null; avg_price: string | null; block_number: string | null;
+  }>(
+    `SELECT e.tx_hash, e.status, e.action, e.leg, e.asset, e.interval_sec, e.market_id,
+            e.created_at, e.filled_qty::text, e.avg_price::text, e.block_number::text
+       FROM executions e
+      WHERE e.portfolio_id = $1 AND e.tx_hash IS NOT NULL AND e.status = 'confirmed'
+      ORDER BY e.created_at DESC LIMIT 1`,
+    [id],
+  );
+
+  // Whether the position that order opened has since resolved.
+  const [outcome] = latest
+    ? await query<{ status: string; exit: string | null; closed_at: Date | null }>(
+        `SELECT status, exit, closed_at FROM positions
+          WHERE portfolio_id = $1 AND market_id = $2 AND leg = $3
+          ORDER BY opened_at DESC LIMIT 1`,
+        [id, latest.market_id, latest.leg],
+      )
+    : [];
+
   return NextResponse.json({
+    run: latest
+      ? {
+          asset: latest.asset, leg: latest.leg, intervalSec: latest.interval_sec,
+          action: latest.action,
+          submittedAt: latest.created_at,
+          txHash: latest.tx_hash,
+          blockNumber: latest.block_number,
+          filled: latest.filled_qty === null ? null : Number(latest.filled_qty),
+          avgPrice: latest.avg_price === null ? null : Number(latest.avg_price),
+          settlement: outcome
+            ? { status: outcome.status, exit: outcome.exit, closedAt: outcome.closed_at }
+            : null,
+        }
+      : null,
     agent: agent ? { slug: agent.slug, label: agent.label, state: agent.state } : null,
     global: {
       agents: Number(global?.agents ?? 0),

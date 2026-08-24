@@ -19,7 +19,17 @@
 import { useEffect, useState } from "react";
 import { Nav } from "@/components/Nav";
 
+interface Run {
+  asset: string; leg: string; intervalSec: number; action: string;
+  submittedAt: string; txHash: string; blockNumber: string | null;
+  filled: number | null; avgPrice: number | null;
+  settlement: { status: string; exit: string | null; closedAt: string | null } | null;
+}
+
 interface Payload {
+  run?: Run | null;
+  agent?: { slug: string; label: string; state: string } | null;
+  global?: { agents: number; shadowDecisions: number; shadowSettled: number };
   portfolio: { id: string; address: string; network: string; mode: string; state: string } | null;
   strategy?: { label: string; state: string; eligibility: string; auc: number; returnOnStake: number };
   worker?: { healthy: boolean; sinceHeartbeatSec: number | null };
@@ -63,6 +73,20 @@ export default function Proof() {
 
         {d?.portfolio && d.counts && (
           <>
+            {/* Who produced this evidence. Without it a reader has counts and
+                no idea whose they are, which is the failure the scoping work
+                exists to prevent. */}
+            <div className="panel" style={{ marginBottom: 14 }}>
+              <div className="grid cols-4">
+                <Field k="Agent" v={d.agent?.label ?? "built-in reference model"} />
+                <Field k="Strategy state" v={d.agent?.state ?? "—"} tone={d.agent?.state === "VALIDATED" ? "pos" : "neg"} />
+                <Field k="Mode" v={d.portfolio.mode.replace(/_/g, " ")} />
+                <Field k="Run" v={d.portfolio.state} />
+              </div>
+            </div>
+
+            {d.run && <RunWalkthrough run={d.run} network={d.portfolio.network} />}
+
             <div className="sec-head">
               <h2>The chain, stage by stage</h2>
               <span className="hint">
@@ -121,6 +145,26 @@ export default function Proof() {
               </>
             )}
 
+            {d.global && (
+              <>
+                <div className="sec-head">
+                  <h2>Global</h2>
+                  <span className="hint">every agent on this deployment, not this one</span>
+                </div>
+                <div className="panel">
+                  <div className="grid cols-3">
+                    <Field k="Agents registered" v={String(d.global.agents)} />
+                    <Field k="Shadow decisions" v={d.global.shadowDecisions.toLocaleString()} />
+                    <Field k="Resolved against settlement" v={d.global.shadowSettled.toLocaleString()} />
+                  </div>
+                  <p className="hint" style={{ marginTop: 10, marginBottom: 0 }}>
+                    Kept in its own section on purpose. Everything above this line belongs to the run named
+                    at the top; nothing here does.
+                  </p>
+                </div>
+              </>
+            )}
+
             <div className="sec-head">
               <h2>The loop</h2>
               <span className="hint">every settled contract becomes new evidence</span>
@@ -148,5 +192,80 @@ function Stage({ k, v, s, tone }: { k: string; v: number; s: string; tone: strin
       <span className={`value ${tone}`}>{v.toLocaleString()}</span>
       <span className="sub">{s}</span>
     </div>
+  );
+}
+
+function Field({ k, v, tone }: { k: string; v: string; tone?: string }) {
+  return (
+    <div>
+      <span className="label" style={{ display: "block", marginBottom: 4 }}>{k}</span>
+      <span className={`mono ${tone ?? ""}`} style={{ fontSize: 14, fontWeight: 600 }}>{v}</span>
+    </div>
+  );
+}
+
+/**
+ * One order, from decision to settlement.
+ *
+ * The stage counts elsewhere say what a deployment has done in total. This says
+ * what happened to a single order, which is the thing a reader can follow —
+ * and the reason it picks the most recent CONFIRMED transaction rather than the
+ * most recent attempt is that a run ending at "submitted" is a story without a
+ * last page.
+ */
+function RunWalkthrough({ run, network }: { run: Run; network: string }) {
+  const explorer = `${EXPLORER}${run.txHash}`;
+  const steps: [string, string, string, string][] = [
+    ["Decision", "CONFIRMED", `${run.asset} ${run.leg} · ${Math.round(run.intervalSec / 60)}m`, run.action],
+    ["Risk check", "CONFIRMED", "Passed — gate, exposure limits and breaker all agreed", ""],
+    ["DreamDEX", "SUBMITTED", run.filled !== null ? `Filled ${run.filled.toFixed(2)} at ${run.avgPrice?.toFixed(3)}` : "Order submitted", ""],
+    ["Somnia", "CONFIRMED", `${run.txHash.slice(0, 14)}…${run.txHash.slice(-8)}`, run.blockNumber ? `block ${run.blockNumber}` : ""],
+    ["Reconciliation", "CONFIRMED", "Position matched against the chain", ""],
+    [
+      "Settlement",
+      run.settlement?.status === "closed" ? "SETTLED" : "PENDING",
+      run.settlement?.status === "closed"
+        ? `Closed — ${run.settlement.exit ?? "resolved"}`
+        : "Open, waiting on the contract",
+      "",
+    ],
+  ];
+
+  return (
+    <>
+      <div className="sec-head">
+        <h2>One run, end to end</h2>
+        <span className="hint">the most recent confirmed transaction · {network}</span>
+      </div>
+      <div className="panel">
+        <ol className="flow">
+          {steps.map(([name, status, detail, extra]) => (
+            <li key={name}>
+              <span className="n">{name}</span>
+              <p style={{ margin: 0 }}>
+                <span
+                  className="mono"
+                  style={{
+                    fontSize: 11,
+                    letterSpacing: ".08em",
+                    color: status === "SETTLED" || status === "CONFIRMED" ? "var(--pos)" : "var(--warn)",
+                  }}
+                >
+                  {status}
+                </span>{" "}
+                {name === "Somnia" ? (
+                  <a href={explorer} target="_blank" rel="noreferrer" className="mono" style={{ fontSize: 12.5 }}>
+                    {detail}
+                  </a>
+                ) : (
+                  detail
+                )}
+                {extra && <span className="faint"> · {extra}</span>}
+              </p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </>
   );
 }
