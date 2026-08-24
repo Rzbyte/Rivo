@@ -218,6 +218,25 @@ select name, setting from pg_settings where name = 'max_connections';
 
 ## 4. The worker — a container that stays up
 
+**It runs three things, not one.** The portfolio scheduler, and — guarded by a Postgres advisory lock
+so exactly one worker in the fleet does it — the background half of the product loop:
+
+| job | cadence | what it does |
+|---|---|---|
+| Shadow | 90s | Asks every registered agent about every live Event Contract and records what it would do. Sends nothing. |
+| Settlement | every shadow pass | Writes finalised outcomes back onto shadow rows, idempotently. |
+| Calibration | 3h | Recomputes every cohort from settled history and stores a new report per cohort. |
+
+Two workers both recording a decision for the same market at the same instant would double the
+evidence rather than deepen it, which is what the lock prevents. A worker that cannot take it is not
+behind — it simply is not the one doing that job this pass, and it keeps trading.
+
+`--no-intelligence` runs a scheduler-only replica. `RIVO_ALLOW_PRIVATE_AGENTS` must stay absent or
+`false` on a hosted deployment: agent endpoints are URLs a stranger supplied and this process calls
+them, so private and link-local addresses are refused.
+
+
+
 Same image as the CLI, pointed at a database:
 
 ```bash

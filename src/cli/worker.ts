@@ -39,6 +39,12 @@ async function main(): Promise<void> {
   const worker = new Worker({
     intervalSec: Number(arg("--interval", "45")),
     concurrency: Number(arg("--concurrency", "8")),
+    // Shadow, settlement resolution and calibration refresh, in the same
+    // process as the scheduler. On by default in a long-lived worker, because
+    // "every settled Event Contract becomes new evidence" cannot depend on
+    // somebody keeping a terminal open. Off for `--once`, which is a smoke
+    // test of the scheduler and has no business reading a month of fills.
+    intelligence: !process.argv.includes("--once") && !process.argv.includes("--no-intelligence"),
     ...(process.argv.includes("--once") ? { maxPasses: 1 } : {}),
   });
 
@@ -72,6 +78,7 @@ async function main(): Promise<void> {
       consecutiveCycleFailures: worker.health.consecutiveCycleFailures,
       venueReachable: worker.health.consecutiveCycleFailures < VENUE_DOWN_AFTER,
       lastError: worker.health.lastError,
+      intelligence: worker.intelligenceHealth,
       database: safeTarget(),
     };
     if (req.url === "/ready") {

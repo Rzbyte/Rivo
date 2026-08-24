@@ -20,6 +20,14 @@ services:
     # Same image as the CLI, pointed at a database. Two images would eventually
     # be two versions of the engine, and the difference would surface as a
     # portfolio behaving differently depending on which plane ran it.
+    # One process, three jobs: the portfolio scheduler, and — guarded by a
+    # Postgres advisory lock so exactly one worker in the fleet does it — the
+    # shadow pass, settlement resolution and calibration refresh.
+    #
+    # The intelligence half is on by default in a long-lived worker and off for
+    # `--once`, because a product whose claim is "every settled Event Contract
+    # becomes new evidence" cannot depend on somebody keeping a terminal open.
+    # `--no-intelligence` turns it off for a scheduler-only replica.
     dockerCommand: node_modules/.bin/tsx src/cli/worker.ts --interval 45 --concurrency 8
     # There is deliberately no healthCheckPath here.
     #
@@ -64,3 +72,9 @@ services:
       # 3am and tells nobody has done half its job.
       - key: RIVO_ALERT_WEBHOOK
         sync: false
+      # Agent endpoints are called by this process. Private and link-local
+      # addresses are refused unless a deployment says otherwise, which is right
+      # on a developer's machine and wrong here — so it stays absent.
+      - key: RIVO_ALLOW_PRIVATE_AGENTS
+        value: "false"
+

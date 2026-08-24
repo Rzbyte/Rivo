@@ -26,6 +26,7 @@
 
 import { hostname } from "node:os";
 import { Indexer } from "../core/indexer.js";
+import { Intelligence } from "./intelligence.js";
 import type { Network } from "../core/config.js";
 import { claimDue, heartbeat, registerWorker, release, releaseAll, LEASE_TTL_SEC, type Lease } from "../db/leases.js";
 import { portfolioById } from "../db/portfolios.js";
@@ -56,6 +57,14 @@ export interface WorkerOptions {
   idleMs?: number;
   /** Stop after this many scheduler passes. 0 = forever. Tests, and `--once`. */
   maxPasses?: number;
+  /**
+   * Run the intelligence tasks — shadow, settlement resolution, calibration.
+   *
+   * Off unless asked, because a test or a `--once` smoke run measures the
+   * scheduler, and a pass that reaches the venue and reads a month of fills is
+   * not what either is measuring. The deployed worker turns it on.
+   */
+  intelligence?: boolean;
   out?: (line: string) => void;
 }
 
@@ -131,8 +140,10 @@ export class Worker {
       concurrency: options.concurrency ?? DEFAULTS.concurrency,
       idleMs: options.idleMs ?? DEFAULTS.idleMs,
       maxPasses: options.maxPasses ?? 0,
+      intelligence: options.intelligence ?? false,
       out: options.out ?? ((l) => console.log(l)),
     };
+    this.intel = this.opts.intelligence ? new Intelligence({ out: this.opts.out }) : null;
   }
 
   /** An Indexer per network, shared across every portfolio on it. */
@@ -208,6 +219,25 @@ export class Worker {
     }
   }
 
+  /**
+   * The intelligence tasks, when this deployment runs them.
+   *
+   * Off by default in tests and in `--once` runs, because a pass that reaches
+   * the venue and a month of fills is not what those are measuring.
+   */
+  private readonly intel: Intelligence | null;
+
+  /**
+   * What the background half is doing, for the health endpoint.
+   *
+   * Null when this replica does not run intelligence, which is a different and
+   * more useful answer than zeroes: "not my job" and "my job, nothing done" look
+   * identical in a counter and mean opposite things to whoever is on call.
+   */
+  get intelligenceHealth(): Intelligence["health"] | null {
+    return this.intel?.health ?? null;
+  }
+
   /** One scheduler pass. Returns whether it found anything to do. */
   private async pass(workerId: string): Promise<boolean> {
     this.health.passes++;
@@ -215,6 +245,12 @@ export class Worker {
     try {
       await heartbeat(workerId);
       await this.deliverAlerts();
+      // The background half of the product loop: shadow decisions, settlement
+      // resolution and calibration refresh. Cheap when nothing is due, and
+      // guarded by an advisory lock so exactly one worker in the fleet does it —
+      // two recording the same decision would double the evidence rather than
+      // deepen it. A failure here is logged and never ends a trading pass.
+      if (this.intel) await this.intel.tick().catch(() => undefined);
       const leases = await claimDue(workerId, this.opts.concurrency);
       this.health.holding = leases.length;
       if (leases.length === 0) return false;
