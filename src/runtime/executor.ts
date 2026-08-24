@@ -19,6 +19,7 @@ import { AllowanceManager } from "./allowance.js";
 import { authority, AgentWalletAuthority, canSign, type ChainSigner } from "./signer.js";
 import { COLLATERAL_TOKEN, network } from "../core/config.js";
 import { chainIdOf, rpcUrl } from "../core/venue.js";
+import { normalizeToLot } from "./pipeline.js";
 
 export interface OrderRequest {
   marketId: string;
@@ -175,14 +176,9 @@ export class DryExecutor implements Executor {
  * firing at the end and halting new entries exactly as designed. Transaction
  * hashes and the full stage-by-stage account are in docs/EVIDENCE.md §7.
  */
-/**
- * Lot granularity actually accepted by the venue, in steps per share.
- *
- * 100 = a hundredth of a share. Deliberately coarser than the tick the config
- * claims, because the config's claim is what reverts. Override if a venue
- * tightens or loosens.
- */
-const LOT_STEPS_PER_SHARE = Number(process.env.RIVO_LOT_STEPS ?? 100);
+// The lot rule lives in pipeline.ts now, because both sides of the signer have
+// to apply it: a shadow run that skipped normalisation recorded hypothetical
+// trades at sizes the venue would have rejected.
 
 export class LiveExecutor implements Executor {
   readonly mode = "live" as const;
@@ -358,8 +354,13 @@ export class LiveExecutor implements Executor {
     // Fractional-Kelly sizing produces the latter constantly, so this is not an
     // edge case for Rivo — it is every order. Rounding DOWN to a hundredth of a
     // share keeps the size inside what the allocator authorised.
-    size = Math.floor(size * LOT_STEPS_PER_SHARE) / LOT_STEPS_PER_SHARE;
-    if (size <= 0) return { filled: 0, avgPrice: 0, cost: 0, rejected: "size rounds to zero at the venue's lot" };
+    // Belt and braces: the pipeline normalises before anything reaches here, so
+    // this should be a no-op. It stays because an executor that trusts its
+    // caller to have rounded is one refactor away from sending 9.749193… again.
+    size = normalizeToLot(size);
+    if (size <= 0) {
+      return { filled: 0, avgPrice: 0, cost: 0, rejected: "size rounds to zero at the venue's lot" };
+    }
     try {
       const res = await core.placeLimit(this.ctx, {
       market,

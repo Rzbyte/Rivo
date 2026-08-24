@@ -27,6 +27,18 @@ import { measureCorrelation, type Position } from "../portfolio/risk.js";
 import { legKey, manage, type PositionDecision } from "./position.js";
 import { OutcomeReader } from "./onchain.js";
 import { defaultRpcUrl } from "./receipt.js";
+import { preExecution } from "./pipeline.js";
+import type { ExecutionMode } from "./permission.js";
+import { PRODUCTION_STRATEGY } from "../research/gating.js";
+
+/**
+ * Rivo's own floor on a trade, in collateral.
+ *
+ * Not a venue rule. A top-up of a few cents pays a round trip to move a position
+ * the allocator had essentially already reached, so this refuses it once rather
+ * than every cycle. Kept here so the real path and shadow use the same number.
+ */
+export const MIN_TRADE_FLOOR = 0.25;
 import { describe as describeDiscrepancy, reconcile, type Discrepancy } from "./reconcile.js";
 import type { Executor } from "./executor.js";
 import type { DecisionSink, StateSink } from "../store/types.js";
@@ -52,6 +64,15 @@ export interface LoopDeps {
   store: StateSink;
   log: DecisionSink;
   profile: RiskProfile;
+  /**
+   * The deployment's execution mode.
+   *
+   * Threaded in rather than inferred from the executor, because the pipeline's
+   * policy stage reads it and "is this executor live" is a different question
+   * from "what mode did the operator choose". Defaults to shadow, which is the
+   * conservative answer when a caller forgets.
+   */
+  mode?: ExecutionMode;
   out: (line: string) => void;
 }
 
@@ -106,6 +127,7 @@ export const backoffSec = (failures: number): number =>
   Math.min(FAILURE_BACKOFF_CAP_SEC, 60 * 2 ** Math.max(0, failures - 1));
 
 export async function cycle(state: RivoState, deps: LoopDeps): Promise<CycleReport> {
+  const mode: ExecutionMode = deps.mode ?? "shadow";
   const { idx, executor, store, log, profile, out } = deps;
   const now = Math.floor(Date.now() / 1000);
   state.cycles++;
@@ -288,8 +310,32 @@ export async function cycle(state: RivoState, deps: LoopDeps): Promise<CycleRepo
         records.push(record(now, state.cycles, o, "SKIP", 0, 0, "not Trading on-chain at send time", d.exposure));
         continue;
       }
+      // The shared pre-execution pipeline, run here so that a deterministic
+      // refusal never becomes an execution attempt. Shadow runs the same
+      // function against the same inputs — that equivalence is the point, and
+      // pipeline.equivalence.test.ts asserts it.
+      const intent = preExecution({
+        decision: { action: "BUY", notional: d.cost, price: d.avgPrice },
+        market: { expiry: o.expiry, now, ask: o.ask },
+        policy: {
+          mode,
+          strategyState: PRODUCTION_STRATEGY.state,
+          minTrade: MIN_TRADE_FLOOR,
+          maxNotional: d.cost,
+          experimentApproved: mode === "experimental_testnet",
+        },
+        risk: { allowedCost: d.cost, binding: d.binding },
+      });
+      if (intent.outcome !== "EXECUTE") {
+        records.push({
+          ...record(now, state.cycles, o, intent.outcome, 0, 0, intent.reason, d.exposure),
+          ...(intent.code ? { code: intent.code } : {}),
+        });
+        continue;
+      }
+
       const res = await executor.buy(
-        { marketId: o.marketId, leg: o.leg, size: d.shares, limitPrice: o.fair },
+        { marketId: o.marketId, leg: o.leg, size: intent.shares, limitPrice: o.fair },
         snap.books.get(o.marketId),
       );
       if (res.filled <= 0) {

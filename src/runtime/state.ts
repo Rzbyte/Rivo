@@ -112,6 +112,19 @@ export interface DecisionRecord {
   /** The constraint that determined the outcome. */
   binding: string;
   /**
+   * Why this stopped, in a form evidence can group by.
+   *
+   * `binding` is written for a person and changes whenever the sentence reads
+   * better; this does not. It exists because the counts were unusable without
+   * it: a size that rounded to zero at the venue's lot arrived as an execution
+   * failure, indistinguishable from a transaction that actually reverted on
+   * Somnia, and the totals said the system was failing constantly when what it
+   * had done was decline correctly before sending anything.
+   *
+   * Absent on a BUY, and on refusals that predate the pipeline.
+   */
+  code?: string;
+  /**
    * What this decision did to correlated exposure, in collateral per 1% move.
    *
    * The arithmetic behind Rivo's most important refusal. A leg can have positive

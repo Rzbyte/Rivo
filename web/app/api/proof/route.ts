@@ -46,6 +46,7 @@ export async function GET(req: Request): Promise<Response> {
   const [counts] = await query<{
     attempts: string; submitted: string; confirmed: string; failed: string;
     open_lots: string; closed_lots: string; shadow: string; shadow_settled: string;
+    agent_unscoped: string; agent_unscoped_settled: string; agent_total: string;
   }>(
     `SELECT
        (SELECT count(*) FROM executions WHERE portfolio_id = $1)::text                                AS attempts,
@@ -55,15 +56,27 @@ export async function GET(req: Request): Promise<Response> {
        (SELECT count(*) FROM executions WHERE portfolio_id = $1 AND status = 'failed')::text          AS failed,
        (SELECT count(*) FROM positions  WHERE portfolio_id = $1 AND status = 'open')::text            AS open_lots,
        (SELECT count(*) FROM positions  WHERE portfolio_id = $1 AND status = 'closed')::text          AS closed_lots,
-       -- Scoped to this run's agent, and to this deployment where the shadow
-       -- row recorded one. A row with no portfolio_id belongs to the agent but
-       -- not to a specific deployment, and is counted at the agent level only.
+       -- THIS RUN. Nothing else.
+       --
+       -- This read: portfolio_id IS NULL OR portfolio_id = $1 — which merged
+       -- every decision the agent made outside any deployment into this
+       -- deployment's totals. Those unscoped rows are real evidence about the
+       -- AGENT — an agent connected but not deployed still gets asked every
+       -- pass — and they say nothing about what this run did. Adding them
+       -- inflated a run's decision count by everything the agent had ever
+       -- thought, which is a bigger number and a wrong one.
+       (SELECT count(*) FROM shadow_decisions WHERE portfolio_id = $1)::text                          AS shadow,
        (SELECT count(*) FROM shadow_decisions
-          WHERE agent_id = $2::uuid
-            AND (portfolio_id IS NULL OR portfolio_id = $1))::text                                    AS shadow,
+          WHERE portfolio_id = $1 AND settled_at IS NOT NULL)::text                                   AS shadow_settled,
+       -- The unscoped rows, kept apart and labelled. Shown as GLOBAL AGENT
+       -- EVIDENCE, never summed into the run.
        (SELECT count(*) FROM shadow_decisions
-          WHERE agent_id = $2::uuid AND settled_at IS NOT NULL
-            AND (portfolio_id IS NULL OR portfolio_id = $1))::text                                    AS shadow_settled`,
+          WHERE agent_id = $2::uuid AND portfolio_id IS NULL)::text                                   AS agent_unscoped,
+       (SELECT count(*) FROM shadow_decisions
+          WHERE agent_id = $2::uuid AND portfolio_id IS NULL AND settled_at IS NOT NULL)::text        AS agent_unscoped_settled,
+       -- Everything this agent has done, in every run plus outside them. Also
+       -- agent-level, also never merged into the run.
+       (SELECT count(*) FROM shadow_decisions WHERE agent_id = $2::uuid)::text                        AS agent_total`,
     [id, agent?.id ?? null],
   );
 
@@ -138,7 +151,6 @@ export async function GET(req: Request): Promise<Response> {
             : null,
         }
       : null,
-    agent: agent ? { slug: agent.slug, label: agent.label, state: agent.state } : null,
     global: {
       agents: Number(global?.agents ?? 0),
       shadowDecisions: Number(global?.shadow ?? 0),
@@ -154,9 +166,30 @@ export async function GET(req: Request): Promise<Response> {
     strategy: view.strategy,
     worker: view.worker,
     runtime: view.runtime,
+    /**
+     * Evidence about the AGENT that does not belong to this run.
+     *
+     * Its own object, deliberately, so no caller can add it to `counts` without
+     * writing the addition down. An agent is asked about every live market on
+     * every pass whether or not it is deployed, so this number is large and
+     * says nothing about what this deployment did.
+     */
+    agent: agent
+      ? {
+          id: agent.id,
+          slug: agent.slug,
+          label: agent.label,
+          state: agent.state,
+          /** Decisions this agent made outside any deployment. */
+          unscopedDecisions: Number(counts!.agent_unscoped),
+          unscopedSettled: Number(counts!.agent_unscoped_settled),
+          /** Everything, every run plus unscoped. Never equal to the run's count. */
+          totalDecisions: Number(counts!.agent_total),
+        }
+      : null,
     counts: {
       decisions: view.counts.decisions,
-      // HYPOTHETICAL: never left the process.
+      // HYPOTHETICAL: never left the process, and scoped to THIS run only.
       shadow: Number(counts!.shadow),
       shadowSettled: Number(counts!.shadow_settled),
       // Recorded before signing — an attempt is not a transaction.

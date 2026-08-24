@@ -180,7 +180,12 @@ export async function runPortfolioCycle(
     }
 
     const profile = resolvePolicy(portfolio.policy);
-    const report = await cycle(state, { idx: opts.indexer, executor, store, log, profile, out });
+    const report = await cycle(state, {
+      idx: opts.indexer, executor, store, log, profile, out,
+      // The mode the operator chose for THIS deployment, not a guess from the
+      // executor. The pipeline's policy stage reads it.
+      mode: portfolio.policy.mode,
+    });
 
     // A breaker firing is the one thing that must reach a person. It means the
     // portfolio stopped trading and will not resume on its own.

@@ -27,6 +27,16 @@ import { calibrate, cohortsOf } from "../intel/calibration.js";
 import { buildObservations } from "../research/dataset.js";
 import { network } from "../core/config.js";
 import type { Leg } from "../engine/book.js";
+import { preExecution } from "../runtime/pipeline.js";
+import { MIN_TRADE_FLOOR } from "../runtime/loop.js";
+import { PRODUCTION_STRATEGY } from "../research/gating.js";
+import type { ExecutionMode } from "../runtime/permission.js";
+
+/** One deployment of one agent. Null id means the agent is not deployed anywhere. */
+interface RunTarget {
+  id: string | null;
+  mode: ExecutionMode;
+}
 
 /** Arbitrary, constant, and this task's alone. Distinct from the migration lock. */
 const INTEL_LOCK = 0x52_49_4e_54; // "RINT"
@@ -81,8 +91,10 @@ export class Intelligence {
 
   private readonly opts: Required<Omit<IntelligenceOptions, "out">> & { out: (s: string) => void };
   private readonly idx = new Indexer();
-  /** Deployment per agent, refreshed with the agent list. */
-  private readonly deployments = new Map<string, string | null>();
+  // A `deployments` cache lived here, holding one portfolio id per agent — the
+  // oldest one, chosen by LIMIT 1. Runs are enumerated per pass now, because a
+  // deployment that starts or stops between passes has to be picked up, and a
+  // cache keyed by agent cannot represent an agent with two runs at all.
 
   constructor(o: IntelligenceOptions = {}) {
     this.opts = {
@@ -120,6 +132,35 @@ export class Intelligence {
     }
   }
 
+  /**
+   * Every live run belonging to these agents, by agent id.
+   *
+   * Stopped deployments are excluded: a run somebody halted should stop
+   * accumulating evidence, and continuing to record against it would make the
+   * halt invisible in the numbers.
+   *
+   * One query for all agents rather than one per agent — the pass already makes
+   * an HTTP call per agent per market, and adding a round trip per agent to the
+   * database for something this small is the wrong place to spend.
+   */
+  private async runsFor(agentIds: string[]): Promise<Map<string, RunTarget[]>> {
+    const out = new Map<string, RunTarget[]>();
+    if (agentIds.length === 0) return out;
+    const rows = await query<{ id: string; agent_id: string; mode: string }>(
+      `SELECT id, agent_id, mode
+         FROM portfolios
+        WHERE agent_id = ANY($1::uuid[]) AND state <> 'stopped'
+        ORDER BY created_at`,
+      [agentIds],
+    );
+    for (const r of rows) {
+      const list = out.get(r.agent_id) ?? [];
+      list.push({ id: r.id, mode: r.mode as ExecutionMode });
+      out.set(r.agent_id, list);
+    }
+    return out;
+  }
+
   /** Ask every agent about every live leg, and record what they would do. */
   private async shadowPass(now: number): Promise<void> {
     this.health.lastShadowAt = now;
@@ -130,15 +171,19 @@ export class Intelligence {
     );
     if (agents.length === 0) return;
 
-    for (const a of agents) {
-      if (!this.deployments.has(a.id)) {
-        const [row] = await query<{ id: string }>(
-          `SELECT id FROM portfolios WHERE agent_id = $1 ORDER BY created_at LIMIT 1`,
-          [a.id],
-        );
-        this.deployments.set(a.id, row?.id ?? null);
-      }
-    }
+    // Every run this agent has, not the oldest one that happens to exist.
+    //
+    // The previous version took `ORDER BY created_at LIMIT 1` and stamped every
+    // decision with it. An agent deployed twice — a shadow run and an
+    // experimental testnet run, which is the normal case for anything being
+    // validated — had all of its evidence attributed to whichever deployment was
+    // created first. Proof could not then answer "what did run B do", because
+    // run B owned none of it.
+    //
+    // Runs ARE portfolio rows. The schema already carries agent_id, mode and
+    // network on them, so this reuses the concept rather than inventing a second
+    // one; what changes is that the worker enumerates them instead of guessing.
+    const runsByAgent = await this.runsFor(agents.map((a) => a.id));
 
     const snap = await snapshot(this.idx);
     const rivo = referenceAgent();
@@ -172,18 +217,64 @@ export class Intelligence {
               })
             : rivo(ctx);
 
-        await recordShadow({
-          agentId: a.id,
-          portfolioId: this.deployments.get(a.id) ?? null,
-          marketId: o.marketId, asset: o.asset, leg: o.leg as Leg,
-          intervalSec: o.intervalSec, expiry: o.expiry,
-          marketPrice: o.ask ?? o.mid ?? 0,
-          agentPrice: d.probability, confidence: d.confidence,
-          action: d.action, reason: d.reason,
-          hypotheticalSize: d.action === "ENTER" ? d.notional : null,
-          hypotheticalEntry: d.action === "ENTER" ? o.ask : null,
-        });
-        recorded++;
+        // One agent call, then one record per run.
+        //
+        // The agent's opinion about a market does not depend on which deployment
+        // asked — the venue is the same and the price is the same. What differs
+        // per run is the policy it lands in: its mode, and therefore whether the
+        // pipeline would have let it through. So the expensive half (an HTTP
+        // round trip to somebody else's service) happens once, and the cheap
+        // half (a pure function) runs per run.
+        //
+        // An agent with no deployment still gets asked, and its decision is
+        // recorded against no run. That is agent-level evidence and it is real;
+        // what it must never do is count toward a deployment's totals.
+        const runs = runsByAgent.get(a.id) ?? [];
+        const targets: RunTarget[] = runs.length > 0 ? runs : [{ id: null, mode: "shadow" }];
+
+        for (const run of targets) {
+          // THE SHARED PIPELINE. Identical call, identical function, identical
+          // inputs as the real path in runtime/loop.ts — the only thing that
+          // differs downstream is that nothing here reaches a signer.
+          const intent = preExecution({
+            decision: {
+              action: d.action === "ENTER" ? "BUY" : "SKIP",
+              notional: d.notional,
+              price: o.ask,
+            },
+            market: { expiry: o.expiry, now: snap.at, ask: o.ask },
+            policy: {
+              mode: run.mode,
+              strategyState: PRODUCTION_STRATEGY.state,
+              minTrade: MIN_TRADE_FLOOR,
+              maxNotional: this.opts.maxNotional,
+              experimentApproved: run.mode === "experimental_testnet",
+            },
+          });
+
+          await recordShadow({
+            agentId: a.id,
+            portfolioId: run.id,
+            marketId: o.marketId, asset: o.asset, leg: o.leg as Leg,
+            intervalSec: o.intervalSec, expiry: o.expiry,
+            marketPrice: o.ask ?? o.mid ?? 0,
+            agentPrice: d.probability, confidence: d.confidence,
+            action: d.action, reason: d.reason,
+            // The size that would ACTUALLY have been sent, not the one the agent
+            // asked for. An agent that requests 8 and normalises to 7.99 has a
+            // hypothetical position of 7.99; recording 8 would make shadow P&L
+            // describe a trade the venue would not have accepted.
+            hypotheticalSize: intent.outcome === "EXECUTE" ? intent.cost : null,
+            hypotheticalEntry: intent.outcome === "EXECUTE" ? intent.price : null,
+            intent: {
+              outcome: intent.outcome,
+              stage: intent.stage,
+              code: intent.code,
+              normalizedSize: intent.shares,
+            },
+          });
+          recorded++;
+        }
       }
     }
     this.health.shadowDecisions += recorded;
