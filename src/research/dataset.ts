@@ -147,7 +147,6 @@ export const FEATURES = [
   "isUp",
   "isBtc",
 ] as const;
-export type FeatureName = (typeof FEATURES)[number];
 
 /**
  * The design row for a model.
