@@ -31,6 +31,9 @@ import { Providers } from "./providers";
  * renders a <title> wrongly, it just says the wrong thing.
  */
 export const metadata: Metadata = {
+  // Without this, Next resolves the social card against localhost at build time
+  // and the shared preview points nowhere.
+  metadataBase: new URL("https://rivo-autopilot.vercel.app"),
   title: "Rivo — Event Intelligence & Agent Validation for DreamDEX",
   description:
     "DreamDEX says BTC UP 15m is 67%. Rivo measures whether contracts quoted at 67% actually settled true 67% of the time — and tests an agent against live markets before it trades.",

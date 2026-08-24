@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 8" width="18" height="8">
+  <!-- The mark is the venue, not a logo: two assets across four tenors, which is
+       exactly the universe Rivo prices. No asset to fetch, and it is the one icon
+       nobody else could plausibly be using.
+
+       This existed in the browser bundle and never made it to the Next app, so
+       every tab a reader opened showed a blank document icon. -->
+  <g fill="#2f5233">
+    <rect x="0" y="0" width="3" height="3"/><rect x="5" y="0" width="3" height="3"/>
+    <rect x="10" y="0" width="3" height="3"/><rect x="15" y="0" width="3" height="3"/>
+    <rect x="0" y="5" width="3" height="3"/><rect x="5" y="5" width="3" height="3"/>
+    <rect x="10" y="5" width="3" height="3"/><rect x="15" y="5" width="3" height="3"/>
+  </g>
+</svg>
