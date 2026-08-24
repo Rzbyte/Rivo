@@ -36,15 +36,15 @@ from somewhere other than disagreeing with it. If they settle true 39% of the ti
 systematically mispriced and the number tells you where. Neither fact is visible on the venue, and
 both are computable from settlements the venue already has.
 
-Measured over 834 settled windows: Brier 0.1614 against 0.2497 for always quoting the base rate — a
-skill score of 35.4%. The middle of the book is mostly honest; parts of it are not.
+Measured over 843 settled windows: Brier 0.1604 against 0.2497 for always quoting the base rate — a
+skill score of 35.8%. The middle of the book is mostly honest; parts of it are not.
 
 ### 4 · Why is Rivo V1 REJECTED?
 
 Because it forecasts well and trades badly, and the gate reads the second thing.
 
 AUC 0.8158 — it separates up from down. Return on stake −6.49% out of sample, across five
-walk-forward folds over 737 settled windows, replayed against fills that actually executed. Every
+walk-forward folds over 843 settled windows, replayed against fills that actually executed. Every
 edge band is negative and the losses grow with the claimed edge, which is the winner's curse measured:
 selecting the leg that maximises `model − price` selects for the leg where the model's own error is
 largest.
@@ -158,7 +158,7 @@ sharper. The loop compounds for the venue.
 
 - Live Event Contract intelligence across all eight windows, with cohort, band, sample size, interval
   and date range on every card
-- Calibration over 834 settled windows, recomputed automatically by the worker
+- Calibration over 843 settled windows, recomputed automatically by the worker
 - Rivo V1 economic validation with the full walk-forward study readable in the UI
 - External HTTP agent registration, hardened as above
 - Autonomous Shadow in a background worker, with heartbeat, resolving against real settlements

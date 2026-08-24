@@ -2,10 +2,10 @@
 
 **The claim:** when DreamDEX quoted a probability, how often did the thing actually happen?
 
-**The result, on the recorded history:** DreamDEX prices carry real information. Brier **0.1647**
-against **0.2498** for always quoting the base rate — a skill score of **34.1%** over **737 settled
+**The result, measured 2026-08-24:** DreamDEX prices carry real information. Brier **0.1604**
+against **0.2497** for always quoting the base rate — a skill score of **35.8%** over **843 settled
 windows**. The middle of the book is mostly honest (65–70% settled 64.5%); parts of it are not
-(30–35% settled 43.6%, 50–55% settled 39.0%).
+(30–35% settled 41.7%, 50–55% settled 41.5%).
 
 Reproduce: `npm run calibration -- --days 90`. Artefact:
 [`evidence/calibration-report.json`](evidence/calibration-report.json).
@@ -76,5 +76,5 @@ excluded entirely** — there is no outcome, and recording 0 would say the leg l
 - **It is not a forecast.** It describes contracts that have already settled.
 - **A gap is not a mispricing.** The spread may exceed it, the depth may not be there, and the
   comparable set may be thin. Market assessments are descriptive — never BUY or SELL.
-- **34.1% skill is not profit.** Rivo's own strategy had good discrimination and lost money out of
+- **35.8% skill is not profit.** Rivo's own strategy had good discrimination and lost money out of
   sample; see [ALPHA-RESEARCH.md](ALPHA-RESEARCH.md).

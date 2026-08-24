@@ -54,7 +54,7 @@ CI 23.1%–53.8%, fallback shown. Pick a card whose own cohort answered if one i
 Then `/calibration` for the headline:
 
 ```
-834 settled windows · Brier 0.1614 against 0.2497 for the base rate · 35.4% skill
+843 settled windows · Brier 0.1604 against 0.2497 for the base rate · 35.8% skill
 ```
 
 *(Rehearsed 2026-08-24. The worker recomputes every few hours and the window count only grows.)*
@@ -192,7 +192,7 @@ All six scenes answer on production. `RIVO_DEMO_PORTFOLIO_ID` is set, so `/proof
 | Scene | What it showed |
 |---|---|
 | 1 · Market | BTC DOWN 15m @ 0.043 · `WELL CALIBRATED` · cohort **BTC 15m**, band 0–5%, 30 windows, CI 0.0–10.0%, no fallback |
-| 2 · Calibration | 834 windows · Brier 0.1614 vs 0.2497 · **35.4% skill** |
+| 2 · Calibration | 843 windows · Brier 0.1604 vs 0.2497 · **35.8% skill** |
 | 3 · Agents | Rivo V1 · AUC **0.8158** · ROS **−6.49%** · `REJECTED` · 5 folds |
 | 4 · Shadow | RUNNING · 1 worker · 8,399 decisions · 5,807 settled · pipeline 472 SKIP / 58 EXECUTE |
 | 5 · Proof | run `5b35e672` · **16 confirmed** · 144 attempts · 38 failed · 6 open / 86 closed lots · **shadow 0** |

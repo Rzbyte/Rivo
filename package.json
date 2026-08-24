@@ -1,9 +1,15 @@
 {
   "name": "rivo",
   "version": "0.1.0",
+  "description": "Event intelligence and agent validation for DreamDEX Event Contracts.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Rzbyte/Rivo.git"
+  },
+  "homepage": "https://rivo-autopilot.vercel.app",
   "private": true,
   "type": "module",
-  "description": "Event intelligence and agent validation for DreamDEX Event Contracts.",
   "engines": {
     "node": ">=20"
   },

@@ -40,10 +40,10 @@ caveat about the data outranks a claim about the price.
 
 ## 3 · Calibration — is 67% actually 67%?
 
-Measured against **737 settled windows** as of 2026-08-24: Brier **0.1647** against
-**0.2498** for always quoting the base rate, a skill score of **34.1%**.
+Measured against **843 settled windows** as of 2026-08-24: Brier **0.1604** against
+**0.2497** for always quoting the base rate, a skill score of **35.8%**.
 DreamDEX prices carry real information, and the middle of the book is mostly honest (65–70% settled
-64.5%). Parts of it are not (50–55% settled 39.0%).
+64.5%). Parts of it are not (50–55% settled 41.5%).
 
 Those are the figures in [`docs/evidence/calibration-report.json`](docs/evidence/calibration-report.json),
 and they are a snapshot on purpose — the worker recomputes this every few hours as more contracts
@@ -677,7 +677,7 @@ than add three more features to Rivo. That is the work we would like to keep doi
 - **[docs/SECURITY.md](docs/SECURITY.md)** — threat model, what is enforced by what, and six known gaps
 - **[docs/SDK-FEEDBACK.md](docs/SDK-FEEDBACK.md)** — findings from building against the SDK and indexer, including the
   on-chain measurement that the Event Contract operator entrypoints exist and are disabled
-- **[docs/DEMO.md](docs/DEMO.md)** — the 3-minute walkthrough, shot by shot, with the commands
+- **[docs/submission/](docs/submission/)** — the 3-minute demo script rehearsed against production, the final submission copy, and thirteen judge questions each answered against this repository
 - **[DISCLAIMER.md](DISCLAIMER.md)** — read before running anything with money
 - [docs/evidence/](docs/evidence/) — saved outputs and a dashboard snapshot
 
