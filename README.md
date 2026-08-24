@@ -18,20 +18,56 @@ agent and prove it on the testnet.
 
 ## What Rivo is
 
-**Understand the market. Validate the agent. Prove it on DreamDEX.**
+Four surfaces, and the first three need no wallet at all.
 
-Four things, none of which needs a wallet to read:
+### 1 · Markets
 
-| | |
-|---|---|
-| **Markets** | Every live Event Contract, with implied probability, spread, depth and time to expiry — beside how often comparable contracts actually settled true. |
-| **Calibration** | Is 67% actually 67%? Measured against 737 settled windows: Brier 0.1647 against 0.2498 for quoting the base rate, 34.1% skill. [Methodology](docs/CALIBRATION.md). |
-| **Agents** | Whether a model has economic edge rather than merely accuracy. Rivo's own model is the first case study, and it is **REJECTED**. |
-| **Proof** | Decisions, shadow runs, submitted transactions and confirmed receipts — counted separately and never merged. |
+Every live DreamDEX Event Contract, with implied probability, bid, ask, spread, depth and time to
+expiry — beside how often *comparable* contracts actually settled true. Each card names the cohort
+that answered and says when it had to widen, because "historical realized 61%" is worthless unless a
+reader can find out what 61% is the realized rate **of**.
 
-The portfolio engine, the execution ledger, the risk controls and the Privy signing path are all
-still here. They stopped being the headline and became what they always were: the deployment
-infrastructure behind the proof.
+Assessments are deterministic and descriptive: `WELL CALIBRATED`, `OVERCONFIDENT`, `UNDERCONFIDENT`,
+`LARGE DISAGREEMENT`, `LOW LIQUIDITY`, `HIGH SPREAD`, `INSUFFICIENT SAMPLE`. Never BUY or SELL — a
+caveat about the data outranks a claim about the price.
+
+### 2 · Calibration — is 67% actually 67%?
+
+Measured against **737 settled windows**: Brier **0.1647** against **0.2498** for always quoting the
+base rate, a skill score of **34.1%**. DreamDEX prices carry real information, and the middle of the
+book is mostly honest (65–70% settled 64.5%). Parts of it are not (50–55% settled 39.0%).
+
+Windows are the unit, not fills — forty rows from one settled contract are forty copies of one coin
+flip. Intervals come from resampling windows. Cohorts run BTC 15m → BTC all tenors → all assets 15m →
+global, falling back only on sample size. [Methodology](docs/CALIBRATION.md).
+
+### 3 · Agents — does the model deserve capital?
+
+Rivo's own model is the first case study and it **failed**: AUC **0.8158**, and **−6.49%** return on
+stake out of sample. Both are true, which is the point.
+
+> **A model can predict well and still trade badly.**
+
+Connect your own over HTTP. Rivo never runs your code and never trusts your answer — the endpoint is
+vetted against private and link-local ranges, resolved and re-checked, redirects refused, and every
+number you return is clamped to limits Rivo set.
+
+### 4 · Shadow and Proof
+
+An agent decides against live contracts while sending nothing, and every hypothetical resolves against
+the real settlement when the contract closes. Only then, on an approved testnet, does a decision
+become a real DreamDEX transaction — with the hash, the receipt and the reconciliation inspectable.
+
+Counted separately and never merged: `HYPOTHETICAL`, `SUBMITTED`, `CONFIRMED`, `SETTLED`, `FAILED`.
+
+### The loop
+
+```
+market → prediction → decision → outcome → evidence
+```
+
+Every settled Event Contract joins the calibration dataset and the agent's record, so the next answer
+rests on one more settled fact than the last. It runs inside the worker, not a terminal window.
 
 ## Before capital moves
 
