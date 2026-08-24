@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-08-24T15:50:26.988Z",
+  "generatedAt": "2026-08-24T15:51:49.851Z",
   "about": "The repository at the moment it was frozen for submission, plus what the production deployment answered when asked. Every field is re-derivable; none is a credential.",
   "commit": {
-    "sha": "257bbacb3a05ed584e38f9d31799db270b15ffb7",
-    "shortSha": "257bbac",
+    "sha": "ff9107e7e87c7b0a33fd881ee5b26920d3da9332",
+    "shortSha": "ff9107e",
     "branch": "main",
-    "subject": "One order a judge can check by hand",
-    "committedAt": "2026-08-24T22:21:58+07:00",
+    "subject": "Submission freeze: one run, one story, and the numbers read off production",
+    "committedAt": "2026-08-24T22:50:48+07:00",
     "clean": false
   },
   "verification": {
@@ -54,8 +54,8 @@
     },
     "workers": {
       "live": 1,
-      "lastHeartbeatAt": "2026-08-24T15:50:24.447Z",
-      "lastShadowDecisionAt": "2026-08-24T15:50:01.632Z"
+      "lastHeartbeatAt": "2026-08-24T15:51:44.900Z",
+      "lastShadowDecisionAt": "2026-08-24T15:51:33.641Z"
     },
     "calibration": {
       "windows": 834,
@@ -64,7 +64,7 @@
       "servedFromArtefact": false
     },
     "shadow": {
-      "decisions": 8101,
+      "decisions": 8117,
       "settled": 5022
     },
     "demoProof": {

@@ -82,6 +82,14 @@ async function main(): Promise<void> {
       "The repository at the moment it was frozen for submission, plus what the production " +
       "deployment answered when asked. Every field is re-derivable; none is a credential.",
 
+    /**
+     * The commit the verification ran AGAINST.
+     *
+     * Not the commit that carries this file — that one does not exist yet when
+     * this is written, and claiming it would be the only false statement in the
+     * artefact. Committing this makes the tree dirty by exactly one file, which
+     * is why `clean` describes the tree at verification time rather than after.
+     */
     commit: {
       sha: git("rev-parse", "HEAD"),
       shortSha: git("rev-parse", "--short", "HEAD"),
