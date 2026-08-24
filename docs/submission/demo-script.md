@@ -184,24 +184,32 @@ If time allows, one line on `/evidence`:
 - Do not call anything "AI-powered". The model is a diffusion-based forecaster with a published AUC.
 - Do not linger on the block explorer.
 
-## Known blocker before recording
+## Rehearsed end to end · 2026-08-24
 
-`/proof` currently shows an empty state on production because `RIVO_DEMO_PORTFOLIO_ID` is not set on
-the deployment. Everything behind it exists — the run, the transactions, the reconciliation — and
-`/evidence` carries the same order. Two options:
+All six scenes answer on production. `RIVO_DEMO_PORTFOLIO_ID` is set, so `/proof` publishes run
+`5b35e672`. Values as rehearsed:
 
-- **Set it** (Vercel → Settings → Environment Variables → `RIVO_DEMO_PORTFOLIO_ID` =
-  `5b35e672-963b-4af1-9076-539708692ec1`, then redeploy) and record Scene 5 on `/proof`.
-- **Or record Scene 5 on `/evidence`**, which reads the same artefact with no database and no
-  configuration, and shows the same tx, receipt and PENDING settlement.
+| Scene | What it showed |
+|---|---|
+| 1 · Market | BTC DOWN 15m @ 0.043 · `WELL CALIBRATED` · cohort **BTC 15m**, band 0–5%, 30 windows, CI 0.0–10.0%, no fallback |
+| 2 · Calibration | 834 windows · Brier 0.1614 vs 0.2497 · **35.4% skill** |
+| 3 · Agents | Rivo V1 · AUC **0.8158** · ROS **−6.49%** · `REJECTED` · 5 folds |
+| 4 · Shadow | RUNNING · 1 worker · 8,399 decisions · 5,807 settled · pipeline 472 SKIP / 58 EXECUTE |
+| 5 · Proof | run `5b35e672` · **16 confirmed** · 144 attempts · 38 failed · 6 open / 86 closed lots · **shadow 0** |
+| 6 · Evidence | onChain 16 · ledgerRows 106 · CONFIRMED block 469486171 · settlement PENDING |
 
-The script above assumes the first. If you take the second, say "this page needs no database, which
-is why it keeps answering when everything else cannot" — it is a strength, not a workaround.
+Two things worth pointing at if a judge is paying attention:
+
+- **Scene 1 answered from its own cohort.** `fellBack: false` means BTC 15m had enough settled windows
+  on its own — no widening needed, so the number is about this market rather than about a wider set.
+- **Scene 5 shows `shadow 0` for the run.** That is correct and it is the evidence-scoping working:
+  this is an execution deployment and it recorded no shadow decisions. The agent's 396 unscoped and
+  8,399 total sit in their own labelled block and are never added in.
 
 ## If something is not answering
 
 | Symptom | Say | Fallback |
 |---|---|---|
-| `/proof` shows an empty state | nothing — skip to `/evidence` | `docs/evidence/final-proof.json` has the same run |
+| `/proof` shows an empty state | nothing — skip to `/evidence` | `RIVO_DEMO_PORTFOLIO_ID` has been unset; `/evidence` carries the same order with no database at all |
 | Calibration shows a stale banner | "this is the stored snapshot; the live figure is larger" | it is labelled, so the label is the answer |
 | A market card shows INSUFFICIENT SAMPLE | "and that is the correct answer for a thin cohort" | pick another card |
