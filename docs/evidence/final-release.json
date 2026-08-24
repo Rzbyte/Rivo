@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-08-24T15:51:49.851Z",
+  "generatedAt": "2026-08-24T15:55:31.928Z",
   "about": "The repository at the moment it was frozen for submission, plus what the production deployment answered when asked. Every field is re-derivable; none is a credential.",
   "commit": {
-    "sha": "ff9107e7e87c7b0a33fd881ee5b26920d3da9332",
-    "shortSha": "ff9107e",
+    "sha": "0f767519ab56c31925376defee3bc70c4ff8d05b",
+    "shortSha": "0f76751",
     "branch": "main",
-    "subject": "Submission freeze: one run, one story, and the numbers read off production",
-    "committedAt": "2026-08-24T22:50:48+07:00",
-    "clean": false
+    "subject": "Date the demo numbers, and name the one thing that will not rehearse",
+    "committedAt": "2026-08-24T22:55:19+07:00",
+    "clean": true
   },
   "verification": {
     "tests": {
@@ -54,8 +54,8 @@
     },
     "workers": {
       "live": 1,
-      "lastHeartbeatAt": "2026-08-24T15:51:44.900Z",
-      "lastShadowDecisionAt": "2026-08-24T15:51:33.641Z"
+      "lastHeartbeatAt": "2026-08-24T15:55:27.469Z",
+      "lastShadowDecisionAt": "2026-08-24T15:54:37.347Z"
     },
     "calibration": {
       "windows": 834,
@@ -64,7 +64,7 @@
       "servedFromArtefact": false
     },
     "shadow": {
-      "decisions": 8117,
+      "decisions": 8147,
       "settled": 5022
     },
     "demoProof": {
