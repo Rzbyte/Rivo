@@ -85,16 +85,6 @@ export async function discover(): Promise<BackendStatus | null> {
   return null;
 }
 
-export const getPortfolio = (base: string, owner: string): Promise<BackendPortfolio> =>
-  request(`${base}/api/portfolio/${owner.toLowerCase()}`);
-
-export const putPolicy = (base: string, policy: PortfolioPolicy): Promise<BackendPortfolio> =>
-  request(`${base}/api/portfolio/${policy.owner}`, {
-    method: "PUT",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(policy),
-  });
-
 export const command = (base: string, owner: string, action: "start" | "pause" | "stop"): Promise<BackendPortfolio> =>
   request(`${base}/api/portfolio/${owner.toLowerCase()}/${action}`, { method: "POST" });
 

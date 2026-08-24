@@ -61,17 +61,9 @@ export async function readBalances(address: string): Promise<Balances> {
   };
 }
 
-/**
- * Whether a wallet can actually trade.
- *
- * Both are required and they fail differently, so they are reported separately.
- * No collateral means nothing to buy with. No gas means every transaction
- * reverts before it starts — including the approval, which is the first thing
- * Rivo sends and the one whose failure message names nothing useful.
- */
-export function fundingGap(b: Balances, needCollateral: number): { collateral: boolean; gas: boolean } {
-  return {
-    collateral: b.collateral !== null && b.collateral < needCollateral,
-    gas: b.gas !== null && b.gas < 0.01,
-  };
-}
+// A `fundingGap()` lived here, uncalled, holding a gas floor of 0.01 while the
+// component that actually ships the rule — Fund.tsx — uses 0.001. Two answers
+// to one question, an order of magnitude apart, and the wrong one was the one
+// written down as the shared helper. Fund.tsx already separates "no collateral"
+// from "no gas" and handles the dead end where a wallet has neither, so the
+// behaviour is not lost; only the contradicting copy is.

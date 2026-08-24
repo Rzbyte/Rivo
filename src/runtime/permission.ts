@@ -212,9 +212,6 @@ function summarise(allowed: boolean, mode: ExecutionMode | null, reasons: DenyRe
   return `No capital will move: ${reasons.map((r) => EXPLAIN[r]).join("; ")}.`;
 }
 
-/** Human-readable form of one reason, for a log line or a panel. */
-export const explainDenial = (r: DenyReason): string => EXPLAIN[r];
-
 /**
  * How the mode should be described to somebody who did not write it.
  *

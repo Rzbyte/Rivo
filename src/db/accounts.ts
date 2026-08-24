@@ -101,14 +101,6 @@ export async function upsertUser(privyDid: string, email?: string | null): Promi
   return toUser(r);
 }
 
-export async function userByDid(privyDid: string): Promise<User | null> {
-  const r = await maybe<UserRow>(
-    "SELECT id, privy_did, email, created_at, last_seen_at FROM users WHERE privy_did = $1",
-    [privyDid],
-  );
-  return r ? toUser(r) : null;
-}
-
 const WALLET_COLUMNS = `id, user_id, address, privy_wallet_id, kind, chain_type, delegated, delegated_at, revoked_at, created_at`;
 
 export async function upsertWallet(input: {
@@ -137,10 +129,11 @@ export async function walletsOf(userId: string): Promise<Wallet[]> {
   return rows.map(toWallet);
 }
 
-export async function walletById(id: string): Promise<Wallet | null> {
-  const r = await maybe<WalletRow>(`SELECT ${WALLET_COLUMNS} FROM wallets WHERE id = $1`, [id]);
-  return r ? toWallet(r) : null;
-}
+// There was a `walletById(id)` here, unused, and the only read in this file that
+// did not name the owner. The rule the comment below states is the whole reason
+// a route that forgets its ownership check fails safe; an accessor sitting here
+// ready to break it, tested by nothing, is a footgun rather than an API. Add it
+// back scoped by user id if something ever needs it.
 
 /**
  * Record that the user granted — or withdrew — Rivo's authority to sign.

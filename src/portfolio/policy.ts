@@ -89,7 +89,11 @@ export interface PortfolioPolicy {
   stoppedReason?: string;
 }
 
-export const POLICY_VERSION = 1;
+// A `POLICY_VERSION = 1` lived here and was never written anywhere or compared
+// to anything. The schema does have a version — `portfolios.version`, the
+// optimistic-concurrency counter in 001_init.sql — and a second, unrelated
+// notion of "version" beside a real one is worse than none: it reads as though
+// policies are versioned when nothing versions them.
 
 export function newPolicy(owner: string, capital: number, profile: ProfileName, mode: ExecutionMode = "shadow"): PortfolioPolicy {
   const now = Math.floor(Date.now() / 1000);

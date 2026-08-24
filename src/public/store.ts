@@ -106,13 +106,10 @@ export function appendActivity(owner: string, entries: Activity[]): Activity[] {
   return merged;
 }
 
-/** Start a portfolio over, keeping the wallet. Used by the reset control. */
-export function resetPortfolio(policy: PortfolioPolicy): ShadowPortfolio {
-  const fresh = emptyPortfolio(policy);
-  savePortfolio(fresh);
-  write(key(policy.owner, "activity"), []);
-  return fresh;
-}
+// A `resetPortfolio` lived here, documented as "used by the reset control".
+// There is no reset control. A comment that describes a caller which does not
+// exist is worse than the dead function under it, because the next reader
+// trusts it and goes looking.
 
 /** Create or update this wallet's policy from the configuration form. */
 export function configure(
