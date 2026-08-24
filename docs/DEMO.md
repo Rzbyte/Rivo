@@ -1,261 +1,119 @@
-# Demo script
+# Demo script — three minutes
 
-A 3-minute recording, shot by shot. Everything here is real — no mockups, no sped-up footage, no
-numbers typed into a slide. If a command is in this file it runs, and the figure it prints is the
-figure to say out loud.
+**The line the whole thing builds to:** *Understand the market. Validate the agent. Prove it on DreamDEX.*
 
-The order answers, in sequence, the three questions a judge is actually holding: *what is this?*,
-*does it work?*, and *would I trust it with money?* Most submissions answer the first and stop.
-
-**The single sentence this demo has to earn:**
-
-> A user signs in, funds an isolated Rivo Portfolio, sets a risk budget, enables Autopilot once,
-> closes the browser — and Rivo keeps managing their DreamDEX Event Contract portfolio server-side,
-> with every decision, execution and reconciliation durably recorded.
-
----
+Record against the deployed product. Nothing in the first two minutes needs a wallet, and that is
+worth showing rather than saying — a judge watching a product that works before it asks for anything
+has already learned the most important thing about it.
 
 ## Before you record
 
 ```bash
-npm ci
-npm run privy:check                      # every line ok, or you cannot shoot 0:20–1:05
-npx tsx scripts/dev-postgres.ts start    # or point DATABASE_URL at a managed database
-npm run db:migrate
-npm run link:kit && npm run check:kit    # the live path, including the signer binding
-npm run worker                           # leave it running in its own window
-npm run dev:web                          # the product, on :3001
+npm run calibration -- --days 90 --store   # so /calibration has a report to serve
+npm run shadow -- --interval 90            # leave running; the shadow feed needs decisions
 ```
 
-Have these open, in this order, so no shot needs a page load:
+Check the four surfaces answer: `/markets`, `/calibration`, `/agents`, `/proof`.
 
-1. `http://localhost:3001` — the landing page, signed out
-2. The product at `/app`, in a second profile, already signed in and funded
-3. A terminal running the worker, font large enough to read at 720p (18pt+)
-4. A second terminal for `npm run proof`
-5. The Somnia explorer on the Rivo Portfolio's address
-
-Record at 1080p. Speak over your own screen; do not narrate a slide.
-
-**If you have no Privy credentials**, shoot the alternative path in the box at the bottom. It
-demonstrates the same engine and says plainly which two shots are missing. Faking them is worse than
-not having them.
+**There is no Privy modal.** These wallets run in a TEE where the grant is provisioned headlessly, so
+the Rivo screen *is* the consent. Do not record a pause waiting for a window that never opens — an
+earlier version of this script told you to, and it is the easiest way to make a working product look
+broken.
 
 ---
 
-## 0:00–0:20 · The problem, stated once
+## 0:00–0:20 · The question
 
-**On screen:** the landing page, the "Three positive edges. One position." panel.
+**On screen:** `/markets`, on a live contract with a real price.
 
-> "DreamDEX runs eight Event Contract windows at once — BTC and ETH, at fifteen minutes, one hour,
-> four hours, a day. They are not eight independent bets. BTC UP at 15 minutes and BTC UP at 4 hours
-> are the same directional view with different clocks, and a bot that scores each market on its own
-> will buy that view three times and call it diversification."
+> "DreamDEX says this event is 67%. Every prediction market shows you a number like that. None of
+> them tells you whether 67% is actually 67%."
 
-Point at the three rows: two refused, one taken.
+Let the countdown tick on camera. It is a live venue and it should look like one.
 
-> "That is the problem Rivo exists for. Everything after this is that idea, working."
+## 0:20–0:50 · The answer
 
----
+**On screen:** `/calibration`.
 
-## 0:20–0:45 · Sign in, and the Rivo Portfolio
+> "So we measured it. Seven hundred and thirty-seven settled Event Contracts, one observation each.
+> When DreamDEX quoted 65 to 70 per cent, the thing happened 64.5 per cent of the time — that price
+> is honest. When it quoted 50 to 55, it happened 39 per cent of the time. That one is not."
 
-**On screen:** the landing page → "Continue with email".
+Point at the **windows** column.
 
-Sign in with an email address. Do not skip the code entry — the point is that there is no wallet
-software involved.
+> "Every row carries its sample size, and buckets under thirty windows are greyed out and make no
+> claim. The intervals come from resampling settled windows, not snapshots — forty fills inside one
+> contract are forty copies of one coin flip."
 
-> "No extension, no seed phrase, no private key. Rivo opens a **Rivo Portfolio** — a trading account
-> held by Privy, separate from any wallet you already have."
+> "Overall: Brier 0.165 against 0.250 for just quoting the base rate. DreamDEX prices carry real
+> information. That is a finding, and it is measured rather than asserted."
 
-**On screen:** the funding step, address visible, balances reading.
+## 0:50–1:15 · The second problem
 
-> "Separate on purpose. Whatever you put in here is the entire budget Rivo can ever act on. Your
-> main wallet is identity and a funding source, and Rivo cannot touch it."
+**On screen:** `/agents`.
 
-Say the balance out loud as it appears. It is a live read.
+> "Here is what Rivo found out about itself. Its own model separates up from down well — AUC 0.8158,
+> measured on held-out forecasts."
 
----
+Scroll to the economics.
 
-## 0:45–1:05 · Configure, and enable Experimental Testnet once
+> "And trading it lost money. Minus 6.49 per cent return on stake, out of sample, walk-forward. Look
+> at the edge buckets: claiming more edge did not earn more. There is no monotone relationship."
 
-**On screen:** the configure step. Set capital. Pick **Balanced**. Point at the panel underneath.
+> **"A model can predict well and still trade badly."**
 
-> "Three profiles do the work. What they actually change is shown in collateral, not in fractions —
-> at most this much in one position, at most this much exposure to BTC per one percent move."
+Point at **REJECTED**.
 
-Click the enable button.
+> "So Rivo's own agent is rejected for real capital, and the execution path enforces that — it is a
+> state the gate reads, not a badge on a page."
 
-**There is no Privy modal. Do not wait for one.** An earlier version of this script told you to let
-Privy's consent prompt appear on camera; it never does. These wallets run in a TEE, where the grant
-is provisioned headlessly, so the Rivo screen you are already on *is* the consent surface — the three
-points listed on it are what the user is agreeing to. Recording a pause for a window that never opens
-is the single easiest way to make a working product look broken.
+## 1:15–1:40 · Shadow
 
-> "The screen you're looking at is the consent. It grants Rivo the right to *ask* Privy to sign for
-> this account — Rivo never holds the key. A full compromise of our servers gets the ability to place
-> Event Contract orders from a funded portfolio until its owner revokes, and nothing else."
+**On screen:** the Live Shadow table on the same page.
 
-Note what the button grants: **Experimental Testnet**, not Autopilot. The strategy running here failed
-economic validation, and the gate refuses it real capital on any network. That is the 2:25 shot.
+> "Before anything trades, it runs here: deciding against live DreamDEX contracts at real prices,
+> sending nothing."
 
-**Then close the tab.** On camera. This is the shot the whole submission rests on.
+Point at a `HYPOTHETICAL` row, then at a `SETTLED` one.
 
----
+> "When the contract settles, the same outcome that would close a real position resolves the shadow
+> record. The agent said 0.38 against the market's 0.335, and here is what actually happened."
 
-## 1:05–1:40 · The portfolio-level decision
+## 1:40–2:10 · The real transaction
 
-**On screen:** the worker terminal, mid-cycle.
+**On screen:** `/proof`.
 
-> "Nothing is open now. This is a worker on a different machine, and it is the thing that trades."
+> "And when an agent does get to trade — testnet only, chosen explicitly, because this one is
+> rejected — it is real. Real DreamDEX order, real Somnia transaction."
 
-Let a cycle land. Then reopen the dashboard.
+Open a hash in the explorer. On camera.
 
-**On screen:** the Decisions tab, one cycle expanded.
+> "Attempts, submitted, confirmed — counted separately and never merged. An attempt is not a
+> transaction; a shadow decision is not a trade."
 
-> "Sixteen legs considered in this pass. One entered. Fifteen refused — and every refusal says which
-> constraint refused it."
+## 2:10–2:35 · The loop
 
-Scroll to a cycle with the correlated banner:
+**On screen:** the loop panel at the bottom of `/proof`.
 
-> "*Three BTC windows had positive edge. Rivo took the 1-hour and refused the others — same
-> directional view, and the portfolio only has one BTC budget.*"
+> "Market, prediction, decision, outcome, evidence. Every contract that settles joins the calibration
+> dataset and the agent's record — so the next answer rests on one more settled fact than the last."
 
-Point at the exposure bar under a refused leg: `+0.00 → unchanged, of ±2.50 per 1% move, 100% used`.
+## 2:35–3:00 · What it is for
 
-> "That is not a label. It is the arithmetic the decision was made against, recorded at the moment
-> it was made."
+> "Rivo turns DreamDEX Event Contract probabilities into measurable intelligence, tests whether an
+> agent actually has economic edge rather than merely accuracy, and lets a builder prove it through
+> shadow testing and verifiable testnet execution."
 
----
-
-## 1:40–2:05 · A real ENTER, REDUCE, and SKIP
-
-**On screen:** the same tab, scrolling back through cycles.
-
-Find a **REDUCE**. This is the most valuable shot in the demo, because nothing about it is
-decorative:
-
-> "*REDUCE — the model fell 0.094 since entry, 0.512 down to 0.418. Halving rather than exiting,
-> because the bid at 0.389 still under-pays the model.*"
-
-> "It did not just enter and wait. It re-priced a position it already held, decided the conviction
-> had weakened but not inverted, and cut it in half. Then it named the bid it declined and why."
-
-Then the exposure panel at the top:
-
-> "BTC and ETH, signed, against their budgets. An UP at one tenor and a DOWN at another net off here
-> exactly as they do in reality."
-
----
-
-## 2:05–2:25 · The evidence
-
-**On screen:** the second terminal.
-
-```bash
-npm run proof -- --portfolio <id>
-```
-
-> "Four numbers, and the whole point is that they are four."
-
-Read them off the screen:
-
-```
-decisions            5,324   every leg considered
-position lots           32   8 open, 24 closed
-execution attempts     186   recorded before anything was signed
-with a tx hash           N   handed to the chain
-confirmed on-chain       N   receipts read back and verified here
-```
-
-> "Decisions are not positions. Positions are not transactions. Attempts are not confirmations. An
-> earlier version of this project could show two hundred positions and ten transaction hashes with
-> no way to tell which number was the lie — so the ledger is append-only, the database refuses to
-> rewrite it, and each of those hashes is checked against the chain by this command."
-
-Click one hash through to the explorer. Then scroll to the stage list:
-
-> "And the stages it could *not* evidence are printed too."
-
----
-
-## 2:25–2:45 · The strategy safety gate
-
-**On screen:** the **Strategy safety gate** panel on the dashboard.
-
-> "This is the part I would want a judge to see. The forecast is good — AUC 0.8158, measured. And
-> trading it lost money out of sample: minus 6.49% return on stake, walk-forward. Both are true.
->
-> So Rivo's own research marks it REJECTED, and the execution path enforces that. It cannot receive
-> real capital on any network. What you watched run is Experimental Testnet — testnet only, chosen
-> explicitly, impossible to activate on mainnet.
->
-> Good prediction is not permission to trade. Most systems never draw that line. This one draws it in
-> code, and the tests spy on the signing seam to prove nothing gets around it."
-
-Point at **Economic validation: REJECTED** and **Execution eligibility: Experimental Testnet Only**.
-
----
-
-## 2:25–2:45 · Still running, nobody watching
-
-**On screen:** the worker terminal, and the browser still closed.
-
-> "The browser has been shut for four minutes. Cycles are still landing — settle, claim, reconcile,
-> allocate. The portfolio is in PostgreSQL, the lease is in PostgreSQL, and if this worker dies
-> another one picks the portfolio up when the lease expires. Two of them can never hold it at once."
-
-Kill the worker on camera. Start it again.
-
-> "It reconciles against the chain before it does anything else, because a process that comes back
-> believing it holds nothing is a process that buys everything twice."
-
----
-
-## 2:45–3:00 · What it is for
-
-> "DreamDEX settles roughly two hundred and thirty Event Contract windows a day. Nobody is going to
-> watch that by hand. Rivo is the layer that lets a person participate in all of it continuously,
-> inside a risk budget they set once — and that refuses the trades that would end the experiment
-> early, naming the limit every time."
-
-Last shot: the dashboard, Autopilot green, worker heartbeat ticking.
-
----
-
-## Without Privy credentials
-
-Two shots — the sign-in and the consent prompt — need a configured Privy app. Everything else is
-reproducible from a checkout, and the honest version of this demo says which two are missing rather
-than staging them.
-
-```bash
-npx tsx scripts/dev-postgres.ts start
-export DATABASE_URL=postgres://rivo@127.0.0.1:55432/rivo
-npm run db:migrate
-npm run seed:demo                      # a portfolio, Shadow Mode, enforced
-npm run worker                         # against the live venue
-export RIVO_DEMO_PORTFOLIO_ID=<id>     # publishes /demo read-only
-npm run dev:web
-```
-
-`/demo` is the dashboard on a real portfolio with no sign-in — the same decisions, exposure, ledger
-and reconciliation, with the controls absent rather than disabled. Then say, on camera:
-
-> "This portfolio is in Shadow Mode: it decides, records and reports, and sends nothing, because
-> this deployment has no signing credentials configured. The proof output says so too — it reports
-> zero transaction hashes and names Shadow Mode as the reason rather than looking like a failure to
-> execute."
-
-That is a weaker demo than the full one and a much stronger claim than a staged prompt.
+> **"Understand the market. Validate the agent. Prove it on DreamDEX."**
 
 ---
 
 ## What not to say
 
+- Do not say Rivo is profitable. It is not, and the evidence saying so is on the page.
+- Do not say calibration predicts anything. It describes contracts that have already settled.
+- Do not call a market–model gap a mispricing. The spread may exceed it and the depth may not be
+  there. Market assessments are descriptive, never BUY or SELL.
 - Do not say "production-ready". Say what has run, for how long, and against what.
-- Do not say Rivo's limits are enforced on-chain. They are enforced in software; the venue's
-  operator entrypoint is compiled in and disabled, and `npm run probe:operator` is the proof.
-- Do not imply profit. The backtest's headline result is that naive taker strategies lose money, and
-  saying so first is the reason anything else here is believable.
-- Do not show a number this repository cannot reproduce.
+- Do not say Rivo's limits are enforced on-chain. They are enforced in software; the venue offers no
+  way to scope what a signer may do with Event Contracts, and we do not claim otherwise.

@@ -1,39 +1,20 @@
 # Rivo
 
-**An autonomous portfolio manager for DreamDEX Event Contracts.**
+**Event intelligence and agent validation for DreamDEX Event Contracts.**
 
-Give it a budget and a risk profile once. It prices every live window against that window's own
-settlement reference, sizes the whole term structure as a single exposure, manages what it holds,
-redeems what settles, and redeploys the proceeds — without being prompted.
+Understand DreamDEX probabilities. Test agents before they trade.
 
-**Sign in with an email address. Fund a portfolio wallet. Set a budget. Close the tab.** Rivo keeps
-managing it, server-side, with no private key to paste and no per-trade approval — because it never
-holds the key at all. [How that works ↓](#the-product)
+DreamDEX may say BTC UP 15m is 67%. Nothing on the venue tells you whether contracts that quoted 67%
+went on to settle true about 67% of the time — which is the only question that number raises. Rivo
+measures it against contracts that have already settled, with the sample size attached to every claim.
 
-Built on the official [`dreamdex-bot-kit`](https://github.com/somnia-chain/dreamdex-bot-kit).
-Somnia × DreamDEX Event Contracts Hackathon.
+And a model that forecasts well can still lose money when you cross the spread to act on it. Rivo
+found that out about its own model, published the evidence, and built a gate that enforces it.
 
-> **What is the kit's, and what is Rivo's.** Fair probability from an underlying, market discovery,
-> edge gating, settlement and claim primitives, and the Event Contract bot scaffolding all already
-> exist in the kit — `ec-oracle-follow` and `ec-core` in particular. Rivo credits and extends them
-> rather than claiming them. What Rivo adds is the layer above: a calibration and evidence harness
-> for Event Contracts, cross-market capital allocation, portfolio-wide risk, post-entry position
-> management, autonomous lifecycle orchestration, on-chain state reconciliation, explainability, and
-> a consumer-facing product.
->
-> Every order Rivo sends goes through the kit. `ec-core` is 1,585 lines absorbing sixteen documented
-> sharp edges — `placeLimit` alone handles tick and lot quantisation in integer space, the mandatory
-> order expiry, and the fact that a reverted write does not throw — and reimplementing that would
-> mean relearning all of it with real money. What Rivo did instead was go deep enough into this
-> venue to find four places the kit has no answer for yet: allowance handling
-> ([#4](docs/SDK-FEEDBACK.md)), the granularity the venue's lot actually accepts (#5), reading
-> holdings from the chain rather than the indexer (#8), and the signer flexibility the SDK has and
-> `createExchange` does not expose (#15) — which is the five-line gap between "users must paste
-> private keys" and a product. Each became a finding rather than a silent fork.
->
-> **Rivo is the portfolio and evidence layer for DreamDEX Event Contracts.**
+**Nothing here needs a wallet to read.** A wallet becomes relevant only when you want to deploy an
+agent and prove it on the testnet.
 
----
+> **Understand the market. Validate the agent. Prove it on DreamDEX.**
 
 ## What Rivo is
 
@@ -91,7 +72,7 @@ rules out is a family of naive taker strategies, which is a useful thing to know
 one. Making — the structural alternative — was measured separately, with real quotes on-chain
 rather than a replay, and its own limits stated: [EVIDENCE §6](docs/EVIDENCE.md).
 
-So Rivo is not "a bot that makes money". It is an autonomous portfolio manager with a validated
+So Rivo is not "a bot that makes money". It is an intelligence and validation product with a measured
 forecasting model, a measurement apparatus honest enough to find its own negative results, and
 portfolio constraints that **demonstrably prevent ruin even when the underlying edge is negative**:
 
@@ -189,7 +170,7 @@ anything at 3am. So:
 2. **Get a Rivo portfolio wallet** — a Privy embedded wallet, created for them, separate from
    anything they already hold.
 3. **Fund it.** Their money moves once, to an address they control.
-4. **Set a budget and a risk profile.** Three profiles do most of the work; the advanced panel is
+4. **Set the deployment risk limits.** Three profiles do most of the work; the advanced panel is
    there for the people who want it, and only ever *tightens*.
 5. **Enable Experimental Testnet.** There is no separate Privy modal — these wallets run in a TEE
    where the grant is provisioned headlessly, so the Rivo screen *is* the consent surface. It grants
