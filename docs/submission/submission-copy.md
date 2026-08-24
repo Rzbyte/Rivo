@@ -112,8 +112,11 @@ carry, and rounds every size down to a lot the venue actually accepts — measur
 tick is not what reverts.
 
 TESTNET TRANSACTIONS
-Real orders on Somnia Shannon, chain 50312. The demo run holds 106 confirmed executions across 92
-positions with the transaction hashes, receipts and reconciliation state all inspectable.
+Real orders on Somnia Shannon, chain 50312. The demo run holds 16 executions carrying a transaction
+hash, every one of them confirmed, across 92 positions. A further 90 ledger rows are marked confirmed
+without a hash — claims, exits, merges and reconciliation adoptions that resolved against chain state
+rather than being sent as orders by Rivo. /proof counts only the 16, because "confirmed" and "reached
+the chain as our transaction" are different claims and merging them would inflate the better one.
 
 SOMNIA EVIDENCE
 Every hash resolves on shannon-explorer.somnia.network. Receipt status, block number and gas used are

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-24T15:44:00.239Z",
+  "generatedAt": "2026-08-24T16:19:16.129Z",
   "about": "One order from one deployment, walked end to end. The same run /proof shows, so the product page and this file cannot disagree. Fields that have not happened yet say PENDING.",
   "run": {
     "id": "5b35e672-963b-4af1-9076-539708692ec1",
@@ -13,7 +13,8 @@
     "startedAt": 1787512502,
     "counts": {
       "executionAttempts": 144,
-      "confirmed": 106,
+      "confirmedOnChain": 16,
+      "confirmedLedgerRows": 106,
       "failed": 38,
       "openLots": 6,
       "closedLots": 86,

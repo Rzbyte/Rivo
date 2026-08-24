@@ -116,6 +116,23 @@ d("the final proof artefact", () => {
     expect(p.execution.signer.address).toMatch(/^0x[0-9a-f]{40}$/i);
   });
 
+  it("never lets a ledger count be read as a transaction count", () => {
+    // "208 positions but only 10 transaction hashes" is this repository's own
+    // name for the defect: two true numbers, no stated relationship, and a
+    // reader left to assume the better one. A ledger row is confirmed when it
+    // RESOLVED — which includes claims, exits, merges and reconciliation
+    // adoptions that never had a transaction of their own.
+    const p = proof() as unknown as {
+      run: { counts?: { confirmedOnChain?: number; confirmedLedgerRows?: number; confirmed?: number } };
+    };
+    const c = p.run.counts;
+    if (!c) return; // file-sourced artefacts carry no deployment counts
+    expect(c.confirmed, "the ambiguous name is back").toBeUndefined();
+    expect(typeof c.confirmedOnChain).toBe("number");
+    expect(typeof c.confirmedLedgerRows).toBe("number");
+    expect(c.confirmedOnChain!).toBeLessThanOrEqual(c.confirmedLedgerRows!);
+  });
+
   it("says how to reproduce it", () => {
     const p = proof();
     expect(p.provenance.producedBy).toContain("final-proof");

@@ -98,8 +98,13 @@ receipt   CONFIRMED, block 469486171
 ```
 
 The receipt was read back from the RPC rather than inferred from a successful send, which is why the
-block number is in the record. The full artefact is `docs/evidence/final-proof.json`, and the run has
-106 confirmed executions across 92 positions.
+block number is in the record. The full artefact is `docs/evidence/final-proof.json`.
+
+The run holds **16 executions carrying a transaction hash**, all confirmed, across 92 positions. The
+ledger has 106 rows marked confirmed in total; the other 90 are claims, exits, merges and
+reconciliation adoptions that resolved against chain state rather than being sent as orders. `/proof`
+counts only the 16 — this repository has a name for the alternative ("208 positions but only 10
+transaction hashes") and tests written specifically to stop one number being presented as the other.
 
 ### 9 · Why is settlement PENDING?
 
@@ -158,7 +163,8 @@ sharper. The loop compounds for the venue.
 - External HTTP agent registration, hardened as above
 - Autonomous Shadow in a background worker, with heartbeat, resolving against real settlements
 - Shared pre-execution pipeline across Shadow and testnet execution
-- Experimental Testnet execution with 106 confirmed transactions, receipts, ledger and reconciliation
+- Experimental Testnet execution with 16 confirmed on-chain transactions and their receipts, over 92
+  positions, with the ledger and reconciliation state for each
 - Append-only decision and execution logs, run-scoped evidence, fail-closed strategy gate
 
 **Future work, deliberately not built for this submission:**

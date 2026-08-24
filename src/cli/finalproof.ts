@@ -109,10 +109,21 @@ async function fromPortfolio(portfolioId: string, out: string, net: "testnet" | 
   );
 
   const [counts] = await query<{
-    attempts: string; confirmed: string; failed: string; open_lots: string; closed_lots: string; shadow: string;
+    attempts: string; confirmed: string; confirmed_onchain: string; failed: string;
+    open_lots: string; closed_lots: string; shadow: string;
   }>(
     `SELECT (SELECT count(*) FROM executions WHERE portfolio_id=$1)::text                        AS attempts,
+            -- Two different claims, deliberately not sharing a name.
+            --
+            -- A ledger row is 'confirmed' when it resolved, which includes
+            -- claims, exits, merges and reconciliation adoptions that settled
+            -- against chain state rather than being sent as orders. Only the
+            -- rows carrying a tx_hash reached the chain AS OUR TRANSACTION.
+            -- This repository has a name for conflating them — "208 positions
+            -- but only 10 transaction hashes" — and tests written to stop it.
             (SELECT count(*) FROM executions WHERE portfolio_id=$1 AND status='confirmed')::text AS confirmed,
+            (SELECT count(*) FROM executions
+              WHERE portfolio_id=$1 AND status='confirmed' AND tx_hash IS NOT NULL)::text        AS confirmed_onchain,
             (SELECT count(*) FROM executions WHERE portfolio_id=$1 AND status='failed')::text    AS failed,
             (SELECT count(*) FROM positions WHERE portfolio_id=$1 AND status='open')::text       AS open_lots,
             (SELECT count(*) FROM positions WHERE portfolio_id=$1 AND status='closed')::text     AS closed_lots,
@@ -140,7 +151,14 @@ async function fromPortfolio(portfolioId: string, out: string, net: "testnet" | 
       startedAt: Math.floor(new Date(p.created_at).getTime() / 1000),
       counts: {
         executionAttempts: Number(counts!.attempts),
-        confirmed: Number(counts!.confirmed),
+        /** Reached the chain as a transaction Rivo sent. What /proof shows. */
+        confirmedOnChain: Number(counts!.confirmed_onchain),
+        /**
+         * Ledger rows that resolved, INCLUDING claims, exits, merges and
+         * reconciliation adoptions with no transaction of their own. Larger,
+         * and a different claim — never quote it as "transactions".
+         */
+        confirmedLedgerRows: Number(counts!.confirmed),
         failed: Number(counts!.failed),
         openLots: Number(counts!.open_lots),
         closedLots: Number(counts!.closed_lots),
