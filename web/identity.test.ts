@@ -33,11 +33,21 @@ const copy = (p: string): string =>
     .replace(/^\s*\/\/.*$/gm, "")
     .toLowerCase();
 
-/** The product's own one-line positioning, from the README's opening claim. */
+/**
+ * The product's own positioning, from the README's opening.
+ *
+ * Everything above the first `##` — the tagline and the sentence under it. It
+ * used to read only the bold line, which broke the moment the README was
+ * restructured and the bold line became the three-word promise while the
+ * subject moved to the paragraph below it. Both are the positioning; a title
+ * has to be consistent with the opening a reader actually gets, not with
+ * whichever line happens to be bold.
+ */
 const positioning = (): string => {
-  const claim = read("README.md").match(/^\*\*(.+?)\*\*$/m)?.[1];
-  expect(claim, "README no longer opens with a bold positioning line").toBeTruthy();
-  return (claim ?? "").toLowerCase();
+  const readme = read("README.md");
+  const opening = readme.slice(0, readme.indexOf("\n## "));
+  expect(opening.length, "README has no content before its first section").toBeGreaterThan(80);
+  return opening.toLowerCase();
 };
 
 const metadataOf = (file: string): string => {

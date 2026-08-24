@@ -59,16 +59,22 @@ describe("one web surface", () => {
     // is the drift a reader notices before anybody else does: the document
     // introducing the product disagreed with the product about how many parts it
     // has. Derived from the nav rather than from a number typed twice.
+    // Every section the nav offers must be a heading in the README.
+    //
+    // Derived from Nav.tsx rather than from a count typed twice: the nav gained
+    // /evidence once and the README kept saying "four surfaces", which is the
+    // drift a reader notices before anybody on the inside does. Matching on the
+    // label rather than on a number survives the README being renumbered, which
+    // it since has been.
     const nav = read("web/components/Nav.tsx");
     const block = nav.slice(nav.indexOf("const SECTIONS"), nav.indexOf("] as const"));
-    const count = (block.match(/\["\//g) ?? []).length;
-    expect(count, "no sections found — did SECTIONS move?").toBeGreaterThan(3);
-    const words = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight"];
+    const labels = [...block.matchAll(/\["\/[a-z]+",\s*"([^"]+)"/g)].map((m) => m[1]!);
+    expect(labels.length, "no sections found — did SECTIONS move?").toBeGreaterThan(3);
     const readme = read("README.md");
-    // Case-insensitive: it opens a sentence, so it is capitalised there.
-    expect(readme.toLowerCase(), `the nav has ${count} sections`).toContain(`${words[count]} surfaces`);
-    // Every one of them has a numbered heading of its own.
-    for (let i = 1; i <= count; i++) expect(readme, `section ${i}`).toMatch(new RegExp(`^### ${i} · `, "m"));
+    for (const label of labels) {
+      expect(readme, `the nav offers ${label} and the README has no heading for it`)
+        .toMatch(new RegExp(`^## \\d+ · .*${label}`, "mi"));
+    }
   });
 
   it("quotes calibration figures that match the artefact they came from", () => {
@@ -80,8 +86,12 @@ describe("one web surface", () => {
       window: { windows: number; brier: number; brierBase: number; skill: number };
     };
     const w = cal.window;
-    const section = read("README.md");
-    const body = section.slice(section.indexOf("### 2 · Calibration"), section.indexOf("### 3 · Agents"));
+    const readme = read("README.md");
+    const start = readme.search(/^## \d+ · Calibration/m);
+    expect(start, "no Calibration section in the README").toBeGreaterThan(-1);
+    const rest = readme.slice(start + 4);
+    const end = rest.search(/^## /m);
+    const body = rest.slice(0, end === -1 ? undefined : end);
     expect(body, "window count").toContain(w.windows.toLocaleString("en-US"));
     expect(body, "brier").toContain(w.brier.toFixed(4));
     expect(body, "base rate brier").toContain(w.brierBase.toFixed(4));

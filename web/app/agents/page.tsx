@@ -257,10 +257,28 @@ interface ShadowRow {
   action: string; reason: string | null;
   hypotheticalSize: number | null; hypotheticalEntry: number | null;
   settledAt: string | null; outcome: number | null; hypotheticalPnl: number | null;
+  runId: string | null; runMode: string | null;
+  intent: { outcome: string; stage: string | null; code: string | null; normalizedSize: number | null } | null;
 }
 interface ShadowPayload {
   decisions: ShadowRow[];
   summary: { total: number; entered: number; settled: number; hypotheticalPnl: number | null; hitRate: number | null } | null;
+  intents?: { outcome: string; code: string | null; n: number }[];
+  heartbeat?: { lastDecisionAt: string | null; lastWorkerBeatAt: string | null; liveWorkers: number };
+}
+
+/**
+ * "42s ago", from a timestamp the server sent.
+ *
+ * Recomputed on every render rather than stored, so a tab left open does not
+ * quietly display an age that stopped counting.
+ */
+function sinceText(iso: string): string {
+  const secs = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000));
+  if (secs < 60) return `${secs}s ago`;
+  if (secs < 3600) return `${Math.round(secs / 60)}m ago`;
+  if (secs < 86400) return `${Math.round(secs / 3600)}h ago`;
+  return `${Math.round(secs / 86400)}d ago`;
 }
 
 /**
@@ -281,6 +299,37 @@ function LiveShadow() {
         <h2>Live Shadow</h2>
         <span className="hint">deciding against live markets · no capital can move · {ago(updatedAt)}</span>
       </div>
+
+      {/* Proof of life, before any count.
+          "Autonomous" is a claim, and a page of totals cannot distinguish a
+          worker deciding right now from one that stopped days ago leaving its
+          numbers behind. */}
+      {d.heartbeat && (
+        <div className="kv" style={{ marginBottom: 12 }}>
+          <div>
+            <span className="k">Runtime</span>
+            <span className={`v ${d.heartbeat.liveWorkers > 0 ? "pos" : "neg"}`}>
+              {d.heartbeat.liveWorkers > 0 ? "RUNNING" : "NO LIVE WORKER"}
+            </span>
+          </div>
+          <div>
+            <span className="k">Workers</span>
+            <span className="v">{d.heartbeat.liveWorkers}</span>
+          </div>
+          <div>
+            <span className="k">Last heartbeat</span>
+            <span className="v">
+              {d.heartbeat.lastWorkerBeatAt ? sinceText(d.heartbeat.lastWorkerBeatAt) : "never"}
+            </span>
+          </div>
+          <div>
+            <span className="k">Last decision</span>
+            <span className="v">
+              {d.heartbeat.lastDecisionAt ? sinceText(d.heartbeat.lastDecisionAt) : "none yet"}
+            </span>
+          </div>
+        </div>
+      )}
 
       <div className="banner" style={{ marginBottom: 12 }}>
         <strong>Every number below is hypothetical.</strong> These decisions ran against real DreamDEX
@@ -312,6 +361,44 @@ function LiveShadow() {
           <span className="sub">Of settled entries only.</span>
         </div>
       </section>
+
+      {/* What the shared pipeline did with them.
+          The number that says shadow is running the same checks as the real
+          path rather than writing down whatever an agent said: if every
+          decision were EXECUTE, none of the constraints would be binding. */}
+      {d.intents && d.intents.length > 0 && (
+        <Reveal
+          title="What the pre-execution pipeline decided"
+          hint="the same checks the real path runs, before any signer"
+        >
+          <div className="panel">
+            <div className="scroll">
+              <table>
+                <thead>
+                  <tr><th>Outcome</th><th>Why</th><th className="n">Decisions</th></tr>
+                </thead>
+                <tbody>
+                  {d.intents.map((i) => (
+                    <tr key={`${i.outcome}-${i.code ?? "none"}`}>
+                      <td>
+                        <span className={`verdict ${i.outcome === "EXECUTE" ? "good" : i.outcome === "REFUSED" ? "caution" : ""}`}>
+                          {i.outcome === "EXECUTE" ? "HYPOTHETICAL" : i.outcome}
+                        </span>
+                      </td>
+                      <td className="mono" style={{ fontSize: 12 }}>{i.code ?? "—"}</td>
+                      <td className="n">{i.n.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="hint" style={{ marginTop: 10, marginBottom: 0 }}>
+              EXECUTE means every check passed and a real deployment would have sent an order. Here it
+              means a hypothetical position and nothing else — no signer is reachable from this path.
+            </p>
+          </div>
+        </Reveal>
+      )}
 
       <Reveal title="Recent decisions" hint={`${d.decisions.length} shown · every one hypothetical`}>
       <div className="panel">

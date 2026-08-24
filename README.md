@@ -1,29 +1,33 @@
 # Rivo
 
-**Event intelligence and agent validation for DreamDEX Event Contracts.**
+**Understand the market. Validate the agent. Prove it on DreamDEX.**
 
-Understand DreamDEX probabilities. Test agents before they trade.
+**Event intelligence and agent validation for DreamDEX Event Contracts.** Rivo turns DreamDEX Event
+Contract probabilities into measurable intelligence, validates whether autonomous agents have
+economic edge, and lets builders prove them through live shadow testing and verifiable DreamDEX
+testnet execution.
 
-DreamDEX may say BTC UP 15m is 67%. Nothing on the venue tells you whether contracts that quoted 67%
-went on to settle true about 67% of the time — which is the only question that number raises. Rivo
-measures it against contracts that have already settled, with the sample size attached to every claim.
+**Live: [rivo-autopilot.vercel.app](https://rivo-autopilot.vercel.app/)** — five sections, four of
+which open with no wallet and no account.
 
-And a model that forecasts well can still lose money when you cross the spread to act on it. Rivo
-found that out about its own model, published the evidence, and built a gate that enforces it.
+---
 
-**Nothing here needs a wallet to read.** A wallet becomes relevant only when you want to deploy an
-agent and prove it on the testnet.
+## 1 · The problem
 
-> **Understand the market. Validate the agent. Prove it on DreamDEX.**
+DreamDEX may say BTC UP 15m is **67%**. Nothing on the venue tells you whether contracts that quoted
+67% went on to settle true about 67% of the time — which is the only question that number raises.
 
-**Live: [rivo-autopilot.vercel.app](https://rivo-autopilot.vercel.app/)** — one deployment, five
-sections, four of which open without a wallet or an account.
+And a model that forecasts well can still lose money when you cross the spread to act on it. Those
+are two different measurements, and a builder deploying an agent needs both before capital moves.
 
-## What Rivo is
+Rivo answers the first against contracts that have already settled, with the sample size attached to
+every claim. It answers the second by validating agents economically rather than by accuracy — and
+it found its own model wanting, published the evidence, and built a gate that enforces it.
 
-Five surfaces, and four of them need no wallet at all.
+> **A model can predict well and still trade badly.**
 
-### 1 · Markets
+
+## 2 · Markets
 
 Every live DreamDEX Event Contract, with implied probability, bid, ask, spread, depth and time to
 expiry — beside how often *comparable* contracts actually settled true. Each card names the cohort
@@ -34,7 +38,7 @@ Assessments are deterministic and descriptive: `WELL CALIBRATED`, `OVERCONFIDENT
 `LARGE DISAGREEMENT`, `LOW LIQUIDITY`, `HIGH SPREAD`, `INSUFFICIENT SAMPLE`. Never BUY or SELL — a
 caveat about the data outranks a claim about the price.
 
-### 2 · Calibration — is 67% actually 67%?
+## 3 · Calibration — is 67% actually 67%?
 
 Measured against **737 settled windows** as of 2026-08-24: Brier **0.1647** against
 **0.2498** for always quoting the base rate, a skill score of **34.1%**.
@@ -51,8 +55,7 @@ Windows are the unit, not fills — forty rows from one settled contract are for
 flip. Intervals come from resampling windows. Cohorts run BTC 15m → BTC all tenors → all assets 15m →
 global, falling back only on sample size. [Methodology](docs/CALIBRATION.md).
 
-### 3 · Agents — does the model deserve capital?
-
+## 4 · Agents — does the model deserve capital?
 Rivo's own model is the first case study and it **failed**: AUC **0.8158**, and **−6.49%** return on
 stake out of sample. Both are true, which is the point.
 
@@ -62,15 +65,66 @@ Connect your own over HTTP. Rivo never runs your code and never trusts your answ
 vetted against private and link-local ranges, resolved and re-checked, redirects refused, and every
 number you return is clamped to limits Rivo set.
 
-### 4 · Shadow and Proof
+## 5 · Live Shadow
 
-An agent decides against live contracts while sending nothing, and every hypothetical resolves against
-the real settlement when the contract closes. Only then, on an approved testnet, does a decision
-become a real DreamDEX transaction — with the hash, the receipt and the reconciliation inspectable.
+An agent decides against live DreamDEX contracts on a schedule, in a background worker, and sends
+nothing. It runs **the same pre-execution pipeline as real execution** — market eligibility, the
+strategy gate, risk ceilings and the venue's lot rule — and stops at the signer:
 
-Counted separately and never merged: `HYPOTHETICAL`, `SUBMITTED`, `CONFIRMED`, `SETTLED`, `FAILED`.
+```
+agent decision → schema → eligibility → policy → risk → venue normalisation → intent
+                                                                                ├── SHADOW      hypothetical, no signer, no transaction
+                                                                                └── TESTNET     signer → DreamDEX SDK → transaction
+```
 
-### 5 · Evidence — five questions, and two answers are no
+That shared path is the point. Shadow used to ask an agent and write the answer down, which meant it
+could record a hypothetical trade real Rivo would have refused — an agent looked best exactly where
+the constraints would have stopped it. `src/runtime/pipeline.ts` is now the only route to a signer,
+and `src/runtime/pipeline.test.ts` asserts the two modes reach byte-identical intents except for one
+field: whether a signature may be requested.
+
+Every hypothetical resolves against the venue's own settlement when the contract closes. Columns are
+named `hypothetical_*` throughout, so a query has to opt into the lie.
+
+## 6 · Experimental Testnet
+
+Five things must agree before capital moves, and the first four are checked before an executor is
+built:
+
+```
+strategy state  ·  execution mode  ·  network  ·  signer  ·  portfolio risk
+```
+
+The strategy running today is **Diffusion Taker V1**: AUC **0.8158**, which is genuinely good, and
+**−6.49%** return on stake out of sample, which is why it is **REJECTED** for real capital. Both are
+true. The gate reads the second number rather than the first.
+
+It runs under **Experimental Testnet** — testnet only, chosen explicitly, and impossible to activate
+on mainnet. Unknown chain, unknown strategy state and unknown mode all block. Fail closed. Full
+model: [docs/ARCHITECTURE.md § Execution permission](docs/ARCHITECTURE.md).
+
+## 7 · Proof
+
+Only on an approved testnet does a decision become a real DreamDEX transaction — with the hash, the
+receipt and the reconciliation all inspectable. One run is walked end to end, stage by stage:
+
+```
+AGENT DECISION → RISK CHECK → VENUE NORMALISATION → ORDER SUBMITTED
+              → SOMNIA CONFIRMED → LEDGER PERSISTED → RECONCILED → SETTLED / PENDING
+```
+
+Counted separately and never merged: `HYPOTHETICAL`, `SKIPPED`, `REFUSED`, `SUBMITTED`, `CONFIRMED`,
+`REVERTED`, `RECONCILED`, `SETTLED`, `CLAIMED`, `PENDING`.
+
+A deterministic refusal is not a failure. A size that rounds to zero at DreamDEX's lot is
+`REFUSED / NORMALIZED_SIZE_ZERO` before anything is signed, rather than an execution attempt that
+reverts — so `failed` counts genuine chain and SDK failures and nothing else.
+
+Evidence belongs to exactly one run. A deployment's counts contain only that deployment's rows;
+decisions an agent made outside any deployment are shown as **GLOBAL AGENT EVIDENCE** and never
+merged in. `src/intel/scope.test.ts` constructs two agents and two runs and demands they stay apart.
+
+## 8 · Evidence — five questions, and two answers are no
 
 Every study behind the four sections above, read from the JSON artefact each one wrote. Does it run
 on-chain? Does the model know anything? Does the portfolio layer matter? **Would providing liquidity
@@ -82,7 +136,7 @@ Anyone can publish the result that flattered them. Publishing the refusals with 
 attached is the only cheap way to tell the difference, and this page needs no database to do it — so
 it keeps answering when everything else on this deployment cannot.
 
-### The loop
+### The loop that closes it
 
 ```
 market → prediction → decision → outcome → evidence
@@ -91,23 +145,7 @@ market → prediction → decision → outcome → evidence
 Every settled Event Contract joins the calibration dataset and the agent's record, so the next answer
 rests on one more settled fact than the last. It runs inside the worker, not a terminal window.
 
-## Before capital moves
-
-Five things have to agree, and the first four are checked before an executor is built:
-
-```
-strategy state  ·  execution mode  ·  network  ·  signer  ·  portfolio risk
-```
-
-The strategy running today is **Diffusion Taker V1**: AUC **0.8158**, which is genuinely good, and
-**−6.49%** return on stake out of sample, which is why it is **REJECTED** for real capital. Both are
-true. Being right about direction is not the same as being right by more than the spread you cross to
-act on it, and the gate reads the second number rather than the first.
-
-It runs under **Experimental Testnet** — testnet only, chosen explicitly, and impossible to activate
-on mainnet. Full model: [docs/ARCHITECTURE.md § Execution permission](docs/ARCHITECTURE.md).
-
-## The honest headline
+## 9 · The honest headline
 
 Two results, and the second one matters as much as the first.
 
@@ -187,222 +225,7 @@ otherwise have hit ourselves.
 
 ---
 
-## Tests
-
-```bash
-npm test
-```
-
-**838 tests** across the things that either move money or produce a published number: the
-dual-crossing-path book, the fair-value model and volatility estimator, the scoring rules behind
-every figure in [EVIDENCE.md](docs/EVIDENCE.md), the capital allocator, the position manager, settlement, and
-on-chain reconciliation.
-
-Written after two bugs reached a live run, so both are pinned as regressions — the allocator
-sizing each cycle's order against remaining budget instead of a target for the whole leg, and a
-conviction stop that re-fired on the same information every cycle (3.06 → 1.53 → 0.76 → 0.38,
-paying a spread each time).
-
-The suite then found a third bug on its own: `fitPlatt` diverged on a confidently-wrong model —
-plain Newton-Raphson overshoots, the IRLS weights collapse to their floor, and a finite gradient
-becomes an astronomical step. Measured at `a = 8.7e7` where the correct answer is `0.088`. Fixed
-with a ridge and a backtracking line search. Re-running the calibration study with the corrected
-fit moved Platt's parameters by 0.0005 and changed no conclusion, which is recorded in EVIDENCE.md
-because the check mattered more than the outcome.
-
-The scoring rules are checked against cases whose answers are known by construction rather than by
-having been run once — AUC 1 for a perfect ranking, 0.5 for a constant one, Brier 0.25 for a coin
-flip — so the headline numbers rest on more than a single execution.
-
-Three of the fixtures were wrong before the code was, and each failure demonstrated the code
-working: a book helper offering only `SELL_YES` left a DOWN leg with no asks at all, a comment
-claiming "40% of 3600s = 1440s" ignored that `headroomSec` caps at 300s, and an assertion demanded
-ten decimal places from an approximation documented to 1.5e-7.
-
----
-
-## The product
-
-A person should be able to use this without ever seeing a private key, and without approving
-anything at 3am. So:
-
-1. **Sign in** with an email address, a Google account, or a wallet they already have.
-2. **Get a Rivo portfolio wallet** — a Privy embedded wallet, created for them, separate from
-   anything they already hold.
-3. **Fund it.** Their money moves once, to an address they control.
-4. **Set the deployment risk limits.** Three profiles do most of the work; the advanced panel is
-   there for the people who want it, and only ever *tightens*.
-5. **Enable Experimental Testnet.** There is no separate Privy modal — these wallets run in a TEE
-   where the grant is provisioned headlessly, so the Rivo screen *is* the consent surface. It grants
-   Rivo the right to ask for signatures on that wallet, revocable by them at any moment. It grants
-   testnet execution only: the strategy running today is economically REJECTED and the gate refuses
-   it real capital on any network.
-6. **Close the tab.**
-
-From then on a worker somewhere else discovers windows, prices them, allocates across the whole
-term structure, manages what it holds, redeems what settles, and redeploys the proceeds — with no
-browser open and no per-trade approval.
-
-**Rivo never holds the key.** Privy does. That is not a detail: it is the difference between a
-product a stranger can use and a script you run for yourself. It works because the venue's SDK
-accepts any object with a `signTransaction` method as its local-signing path, and Privy's server
-SDK returns exactly that — a viem account whose signing happens inside a TEE. `npm run check:kit`
-verifies that binding against the real kit rather than asserting it.
-[SDK-FEEDBACK §15](docs/SDK-FEEDBACK.md) has the reading; [SECURITY.md](docs/SECURITY.md) has the
-threat model, including what a full compromise of Rivo's servers would and would not get.
-
-**What is enforced, and by what.** Stated here because overclaiming it would be the most damaging
-dishonesty in the product:
-
-| | |
-|---|---|
-| **on-chain** | *nothing*. The venue's operator entrypoint is compiled in and disabled — `npm run probe:operator` |
-| **by custody** | Rivo cannot exfiltrate a key it never has. Revoking delegation ends its authority immediately |
-| **by software** | capital ceiling, correlated delta budget, expiry buckets, tenor caps, drawdown breaker, kill switch — real, and exactly as strong as Rivo's own correctness |
-| **by arithmetic** | the portfolio wallet holds only what its owner funded it with |
-
-```bash
-npx tsx scripts/dev-postgres.ts start   # a real PostgreSQL, no docker, no root
-export DATABASE_URL=postgres://rivo@127.0.0.1:55432/rivo
-npm run db:migrate
-npm run seed:demo                        # a portfolio, without signing in
-npm run worker -- --once                 # one pass against the live venue
-npm run dev:web                          # the product, on :3001
-
-npm run privy:check                      # what still needs configuring, checked for real
-npm run proof -- --portfolio <id>        # the evidence, out of the database
-```
-
-Deployment — Vercel for the web tier, a container for the worker, managed PostgreSQL between them —
-is in **[docs/DEPLOY.md](docs/DEPLOY.md)**.
-
----
-
-## The browser bundle
-
-```bash
-npm run build:public     # static files in public/, no backend
-npx serve public
-```
-
-The pricing engine also runs with **no Node, no backend and no wallet** — it imports the *same*
-fair-value code the trading runtime uses rather than a copy, and both Somnia indexers send
-permissive CORS headers, so a browser can reach the venue directly. `src/public/boot.test.ts` boots
-the shipped bundle in a DOM, so that property is tested rather than claimed.
-
-It is a portability proof, not a second product. It was once published at its own address and served
-as a second Rivo with its own identity; that address is retired, because two surfaces disagreeing
-about what one product is helped nobody. Every study that lived only there — the live maker run and
-the cross-tenor coherence bound — is on [/evidence](https://rivo-autopilot.vercel.app/evidence).
-
-**Rivo is one deployment: [rivo-autopilot.vercel.app](https://rivo-autopilot.vercel.app/).**
-
-## Quickstart
-
-```bash
-npm install
-npm run calibrate -- --days 30    # forecasting skill, holdout-validated
-npm run scan                       # price every live leg right now
-npm run allocate -- --capital 50 --profile balanced
-```
-
-No key, no wallet, no config. Every command above reads public indexers.
-
-```bash
-npm start -- --capital 50 --profile balanced   # the autopilot (dry run by default)
-npm run web                                     # dashboard at localhost:3000
-npm run report                                  # what it did, and why
-```
-
----
-
-## What it looks like when it decides
-
-```
-ALLOCATION
-  market            leg    shares      @      cost    edge   kelly-asked   bound by
-  BTC-240m          DOWN       7   0.174      1.25  +0.080       2.43     BTC delta budget ±2.50/1%
-  ETH-240m          UP        12   0.851     10.00  +0.076      12.71     max position 20%
-
-  deployed      11.25   (22.5%)
-  cash          38.75   (77.5%)
-
-PORTFOLIO RISK
-  BTC delta      -2.500 per 1% move   budget ±2.50   100% used
-  ETH delta      +1.238 per 1% move   budget ±2.50    50% used
-  combined       -1.585 per 1% move   budget ±3.00    53% used
-  max loss       11.25   (exact: a long binary cannot lose more than its premium)
-
-WHY — every leg considered, and what stopped it
-  BTC-240m DOWN   fair 0.254  ask 0.174  edge +0.080  BUY 7 @ 0.174   BTC delta budget ±2.50/1%
-  ETH-240m UP     fair 0.927  ask 0.851  edge +0.076  BUY 12 @ 0.851  max position 20%
-  BTC-15m  DOWN   fair 0.118  ask 0.059  edge +0.059  SKIP            BTC delta budget ±2.50/1%
-  ...
-```
-
-`BTC-15m DOWN` has a real +0.059 edge and available depth, and is **skipped anyway** — BTC exposure
-is already at budget from a better-scoring leg. A signal bot takes both. They are the same
-directional view at two tenors.
-
-And when nothing qualifies, it says so and holds cash:
-
-```
-0 of 16 legs tradeable
-  BTC-15m  UP   fair 0.345  ask 0.309  edge +0.036   inside expiry headroom (195s left)
-  BTC-60m  UP   fair 0.963  ask 0.945  edge +0.018   edge below floor
-```
-
----
-
-## Why this venue is a portfolio problem
-
-The universe is not a market list, it is a **term structure**: `{BTC, ETH} × {15m, 1h, 4h, 1d}` —
-exactly 8 windows live at any moment, ~232 settling per day, positions overlapping in time. A 1d
-position spans 96 15m windows.
-
-Measured on the venue, 2026-08-19:
-
-| | |
-|---|---|
-| live windows at any moment | 8 |
-| every live window's `strike` | `0` → settles against its own **opening price** |
-| fees | maker = taker = settlement = **0** |
-| resting side split | 26 `BUY_YES` vs 10 `SELL_YES` |
-| testnet collateral | tUSDC, **6 decimals** (mainnet: USDso, 18) |
-
-Two consequences that shape the code:
-
-**Down-leg liquidity comes from resting `BUY_YES`**, because buying Down crosses a resting Buy-Up
-(mint-a-pair). A depth model counting only `SELL_YES` underestimates the Down side — which here is
-usually the deeper one.
-
-**Complete sets make capital recovery a portfolio operation.** `mergeCompleteSet` turns offsetting
-inventory back into collateral immediately, with no counterparty and no spread, instead of leaving
-it locked until expiry earning nothing. It is *not* an exit — it needs both legs, so it cannot
-close a directional position. Selling the held leg does that.
-
----
-
-## How it decides
-
-**Fair value.** `P(close ≥ reference) = Φ( ln(S/R) / (σ·√τ) )`, with the opening reference resolved
-per window, realized volatility measured rather than assumed, and no drift term.
-
-**Sizing.** Fractional Kelly — `f* = (p − c) / (1 − c)` is exact for a binary — with the risk
-profile's multiplier as the only haircut. [We tested calibration corrections and shipped none](docs/EVIDENCE.md#2-no-calibration-correction-survives-a-holdout);
-they all lost to doing nothing out of sample.
-
-**Risk.** Three numbers, no covariance matrix. Per-asset delta (collateral lost per 1% move, so
-BTC-15m UP and BTC-4h UP count as one bet), combined exposure through a *measured* BTC/ETH
-correlation, and per-expiry-bucket capital. Max loss on a long binary is exactly the premium, so
-capital-at-risk needs no VaR.
-
-**Profiles.** Conservative / Balanced / Active change *which constraint binds first*, not just a
-size multiplier — the same market can be a full position under one and no position under another.
-
----
-
-## Architecture
+## 10 · Architecture
 
 Four planes, deployed apart because they fail apart:
 
@@ -495,7 +318,150 @@ settlement and claim sweeps — are the kit's, not ours.
 
 ---
 
-## Live trading (optional)
+## How it decides
+
+**Fair value.** `P(close ≥ reference) = Φ( ln(S/R) / (σ·√τ) )`, with the opening reference resolved
+per window, realized volatility measured rather than assumed, and no drift term.
+
+**Sizing.** Fractional Kelly — `f* = (p − c) / (1 − c)` is exact for a binary — with the risk
+profile's multiplier as the only haircut. [We tested calibration corrections and shipped none](docs/EVIDENCE.md#2-no-calibration-correction-survives-a-holdout);
+they all lost to doing nothing out of sample.
+
+**Risk.** Three numbers, no covariance matrix. Per-asset delta (collateral lost per 1% move, so
+BTC-15m UP and BTC-4h UP count as one bet), combined exposure through a *measured* BTC/ETH
+correlation, and per-expiry-bucket capital. Max loss on a long binary is exactly the premium, so
+capital-at-risk needs no VaR.
+
+**Profiles.** Conservative / Balanced / Active change *which constraint binds first*, not just a
+size multiplier — the same market can be a full position under one and no position under another.
+
+---
+
+## Why this venue is a portfolio problem
+
+The universe is not a market list, it is a **term structure**: `{BTC, ETH} × {15m, 1h, 4h, 1d}` —
+exactly 8 windows live at any moment, ~232 settling per day, positions overlapping in time. A 1d
+position spans 96 15m windows.
+
+Measured on the venue, 2026-08-19:
+
+| | |
+|---|---|
+| live windows at any moment | 8 |
+| every live window's `strike` | `0` → settles against its own **opening price** |
+| fees | maker = taker = settlement = **0** |
+| resting side split | 26 `BUY_YES` vs 10 `SELL_YES` |
+| testnet collateral | tUSDC, **6 decimals** (mainnet: USDso, 18) |
+
+Two consequences that shape the code:
+
+**Down-leg liquidity comes from resting `BUY_YES`**, because buying Down crosses a resting Buy-Up
+(mint-a-pair). A depth model counting only `SELL_YES` underestimates the Down side — which here is
+usually the deeper one.
+
+**Complete sets make capital recovery a portfolio operation.** `mergeCompleteSet` turns offsetting
+inventory back into collateral immediately, with no counterparty and no spread, instead of leaving
+it locked until expiry earning nothing. It is *not* an exit — it needs both legs, so it cannot
+close a directional position. Selling the held leg does that.
+
+---
+
+## What it looks like when it decides
+
+```
+ALLOCATION
+  market            leg    shares      @      cost    edge   kelly-asked   bound by
+  BTC-240m          DOWN       7   0.174      1.25  +0.080       2.43     BTC delta budget ±2.50/1%
+  ETH-240m          UP        12   0.851     10.00  +0.076      12.71     max position 20%
+
+  deployed      11.25   (22.5%)
+  cash          38.75   (77.5%)
+
+PORTFOLIO RISK
+  BTC delta      -2.500 per 1% move   budget ±2.50   100% used
+  ETH delta      +1.238 per 1% move   budget ±2.50    50% used
+  combined       -1.585 per 1% move   budget ±3.00    53% used
+  max loss       11.25   (exact: a long binary cannot lose more than its premium)
+
+WHY — every leg considered, and what stopped it
+  BTC-240m DOWN   fair 0.254  ask 0.174  edge +0.080  BUY 7 @ 0.174   BTC delta budget ±2.50/1%
+  ETH-240m UP     fair 0.927  ask 0.851  edge +0.076  BUY 12 @ 0.851  max position 20%
+  BTC-15m  DOWN   fair 0.118  ask 0.059  edge +0.059  SKIP            BTC delta budget ±2.50/1%
+  ...
+```
+
+`BTC-15m DOWN` has a real +0.059 edge and available depth, and is **skipped anyway** — BTC exposure
+is already at budget from a better-scoring leg. A signal bot takes both. They are the same
+directional view at two tenors.
+
+And when nothing qualifies, it says so and holds cash:
+
+```
+0 of 16 legs tradeable
+  BTC-15m  UP   fair 0.345  ask 0.309  edge +0.036   inside expiry headroom (195s left)
+  BTC-60m  UP   fair 0.963  ask 0.945  edge +0.018   edge below floor
+```
+
+---
+
+## 11 · Run locally
+
+```bash
+npm install
+npm run calibrate -- --days 30    # forecasting skill, holdout-validated
+npm run scan                       # price every live leg right now
+npm run allocate -- --capital 50 --profile balanced
+```
+
+No key, no wallet, no config. Every command above reads public indexers.
+
+```bash
+npm start -- --capital 50 --profile balanced   # the autopilot (dry run by default)
+npm run web                                     # dashboard at localhost:3000
+npm run report                                  # what it did, and why
+```
+
+---
+
+## Commands
+
+| | |
+|---|---|
+| `npm start -- --capital 50 --profile balanced` | one portfolio, files, no database — the CLI autopilot (dry run by default) |
+| `npm run worker` | the execution plane: many portfolios out of PostgreSQL (`--once`, `--interval`, `--concurrency`) |
+| `npm run dev:web` | the product — sign-in, funding, dashboard — on localhost:3001 |
+| `npm run db:migrate` | bring a database up to date (the worker also does this on boot) |
+| `npm run dev:pg` | a real PostgreSQL locally, no Docker and no root (`start`/`stop`/`reset`) |
+| `npm run seed:demo` | a portfolio to look at without signing in — Shadow Mode, enforced |
+| `npm run web` | the original single-portfolio cockpit at localhost:3000 (`--snapshot out.html` freezes it) |
+| `npm run report` | what it did, and why |
+| `npm run scan` | price every live leg right now |
+| `npm run allocate -- --capital 50` | one allocation pass, with the binding constraint per leg |
+| `npm run calibrate -- --days 30` | forecasting skill, holdout-validated (`--traded-only`, `--out`) |
+| `npm run backtest -- --days 30` | Rivo's sizing against five alternatives on identical forecasts |
+| `npm run band -- --days 30` | edge-floor/ceiling sweep |
+| `npm run diagnose -- --days 30` | why taking liquidity loses |
+| `npm run concentration -- --days 30` | whether losses are a trade-weighting artefact |
+| `npm run maker -- --days 30` | the maker replay, and its methodological limit |
+| `npm run maker:live -- --live --mint` | two-sided quoting on testnet — measured, and negative |
+| `npm run coherence -- --days 30` | cross-tenor arbitrage bound — derived, tested, rejected on size |
+| `npm run build:public` | build the public page — static, no backend |
+| `npm run proof` | capture the live execution chain as a checkable artefact (`--portfolio <id>` for a database portfolio) |
+| `npm run report -- --portfolio <id>` | the same report over PostgreSQL, with the constraint histogram |
+| `npm run privy:check` | is this deployment's Privy set up? authenticates for real, lists what is missing |
+| `npm run agent -- new \| status \| fund \| sweep` | the wallet Rivo signs with, and what it may lose |
+| `npm run probe:operator` | can EC be traded non-custodially? measured, not assumed |
+| `npm test` · `npm run typecheck` | 838 tests · strict TypeScript across engine, page and web app |
+| `npm run doctor` | can Rivo trade right now — signer, gas, collateral, venue, kit |
+| `npm run faucet` | mint testnet tUSDC — a direct `faucet(uint256)` call, no kit needed |
+| `npm run check:kit` · `npm run link:kit` | verify / install the optional bot kit |
+
+Every command except `link:kit` runs with no private key. All `--days` commands read public
+indexers.
+
+---
+
+## 12 · Deployment
 
 Dry run is the default, matching every strategy in the kit. Without a funded key Rivo stays dry
 regardless of the flag, and a placeholder like `0x...` is rejected rather than accepted.
@@ -588,41 +554,62 @@ validates against the real thing.
 
 ---
 
-## Commands
+## The browser bundle
 
-| | |
-|---|---|
-| `npm start -- --capital 50 --profile balanced` | one portfolio, files, no database — the CLI autopilot (dry run by default) |
-| `npm run worker` | the execution plane: many portfolios out of PostgreSQL (`--once`, `--interval`, `--concurrency`) |
-| `npm run dev:web` | the product — sign-in, funding, dashboard — on localhost:3001 |
-| `npm run db:migrate` | bring a database up to date (the worker also does this on boot) |
-| `npm run dev:pg` | a real PostgreSQL locally, no Docker and no root (`start`/`stop`/`reset`) |
-| `npm run seed:demo` | a portfolio to look at without signing in — Shadow Mode, enforced |
-| `npm run web` | the original single-portfolio cockpit at localhost:3000 (`--snapshot out.html` freezes it) |
-| `npm run report` | what it did, and why |
-| `npm run scan` | price every live leg right now |
-| `npm run allocate -- --capital 50` | one allocation pass, with the binding constraint per leg |
-| `npm run calibrate -- --days 30` | forecasting skill, holdout-validated (`--traded-only`, `--out`) |
-| `npm run backtest -- --days 30` | Rivo's sizing against five alternatives on identical forecasts |
-| `npm run band -- --days 30` | edge-floor/ceiling sweep |
-| `npm run diagnose -- --days 30` | why taking liquidity loses |
-| `npm run concentration -- --days 30` | whether losses are a trade-weighting artefact |
-| `npm run maker -- --days 30` | the maker replay, and its methodological limit |
-| `npm run maker:live -- --live --mint` | two-sided quoting on testnet — measured, and negative |
-| `npm run coherence -- --days 30` | cross-tenor arbitrage bound — derived, tested, rejected on size |
-| `npm run build:public` | build the public page — static, no backend |
-| `npm run proof` | capture the live execution chain as a checkable artefact (`--portfolio <id>` for a database portfolio) |
-| `npm run report -- --portfolio <id>` | the same report over PostgreSQL, with the constraint histogram |
-| `npm run privy:check` | is this deployment's Privy set up? authenticates for real, lists what is missing |
-| `npm run agent -- new \| status \| fund \| sweep` | the wallet Rivo signs with, and what it may lose |
-| `npm run probe:operator` | can EC be traded non-custodially? measured, not assumed |
-| `npm test` · `npm run typecheck` | 838 tests · strict TypeScript across engine, page and web app |
-| `npm run doctor` | can Rivo trade right now — signer, gas, collateral, venue, kit |
-| `npm run faucet` | mint testnet tUSDC — a direct `faucet(uint256)` call, no kit needed |
-| `npm run check:kit` · `npm run link:kit` | verify / install the optional bot kit |
+```bash
+npm run build:public     # static files in public/, no backend
+npx serve public
+```
 
-Every command except `link:kit` runs with no private key. All `--days` commands read public
-indexers.
+The pricing engine also runs with **no Node, no backend and no wallet** — it imports the *same*
+fair-value code the trading runtime uses rather than a copy, and both Somnia indexers send
+permissive CORS headers, so a browser can reach the venue directly. `src/public/boot.test.ts` boots
+the shipped bundle in a DOM, so that property is tested rather than claimed.
+
+It is a portability proof, not a second product. It was once published at its own address and served
+as a second Rivo with its own identity; that address is retired, because two surfaces disagreeing
+about what one product is helped nobody. Every study that lived only there — the live maker run and
+the cross-tenor coherence bound — is on [/evidence](https://rivo-autopilot.vercel.app/evidence).
+
+**Rivo is one deployment: [rivo-autopilot.vercel.app](https://rivo-autopilot.vercel.app/).**
+
+## 13 · Reproducing every number
+
+Every number in this document was produced by a command in this repository and written to
+`docs/evidence/` as JSON. Nothing here is typed in by hand, and the tests refuse to let the
+documented figures drift from the artefacts they claim to quote.
+
+### Tests
+
+```bash
+npm test
+```
+
+**838 tests** across the things that either move money or produce a published number: the
+dual-crossing-path book, the fair-value model and volatility estimator, the scoring rules behind
+every figure in [EVIDENCE.md](docs/EVIDENCE.md), the capital allocator, the position manager, settlement, and
+on-chain reconciliation.
+
+Written after two bugs reached a live run, so both are pinned as regressions — the allocator
+sizing each cycle's order against remaining budget instead of a target for the whole leg, and a
+conviction stop that re-fired on the same information every cycle (3.06 → 1.53 → 0.76 → 0.38,
+paying a spread each time).
+
+The suite then found a third bug on its own: `fitPlatt` diverged on a confidently-wrong model —
+plain Newton-Raphson overshoots, the IRLS weights collapse to their floor, and a finite gradient
+becomes an astronomical step. Measured at `a = 8.7e7` where the correct answer is `0.088`. Fixed
+with a ridge and a backtracking line search. Re-running the calibration study with the corrected
+fit moved Platt's parameters by 0.0005 and changed no conclusion, which is recorded in EVIDENCE.md
+because the check mattered more than the outcome.
+
+The scoring rules are checked against cases whose answers are known by construction rather than by
+having been run once — AUC 1 for a perfect ranking, 0.5 for a constant one, Brier 0.25 for a coin
+flip — so the headline numbers rest on more than a single execution.
+
+Three of the fixtures were wrong before the code was, and each failure demonstrated the code
+working: a book helper offering only `SELL_YES` left a DOWN leg with no asks at all, a comment
+claiming "40% of 3600s = 1440s" ignored that `headroomSec` caps at 300s, and an assertion demanded
+ten decimal places from an approximation documented to 1.5e-7.
 
 ---
 
