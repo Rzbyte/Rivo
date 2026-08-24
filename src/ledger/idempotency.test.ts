@@ -27,7 +27,7 @@
 // Together those cover the crash at every point. Neither claims to cover it alone.
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { FileExecutionLedger, executionLogPath } from "./file.js";

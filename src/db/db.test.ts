@@ -19,7 +19,7 @@ import { PostgresDecisionLog, PostgresStateStore } from "../store/postgres.js";
 import { PostgresExecutionLedger } from "../ledger/postgres.js";
 import { closedPositions } from "./view.js";
 import { StaleStateError } from "../store/types.js";
-import { emptyState, ledgerBalances, type HeldPosition, type RivoState } from "../runtime/state.js";
+import { ledgerBalances, type HeldPosition } from "../runtime/state.js";
 
 describe.skipIf(!haveDatabase())("the durable layer", () => {
   let teardown: () => Promise<void>;

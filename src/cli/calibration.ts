@@ -11,7 +11,7 @@ import { writeFileSync, readFileSync, existsSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { Indexer } from "../core/indexer.js";
 import { buildObservations, type Observation } from "../research/dataset.js";
-import { calibrate, cohortsOf, cohortKey, cohortLabel, GLOBAL_COHORT, type CalibrationReport } from "../intel/calibration.js";
+import { calibrate, cohortsOf, cohortLabel, type CalibrationReport } from "../intel/calibration.js";
 import { network } from "../core/config.js";
 
 const arg = (flag: string, fallback?: string): string | undefined => {
@@ -21,7 +21,6 @@ const arg = (flag: string, fallback?: string): string | undefined => {
 const has = (f: string): boolean => process.argv.includes(f);
 
 const pct = (x: number): string => `${(x * 100).toFixed(1)}%`;
-const bar = (x: number, w = 22): string => "█".repeat(Math.round(x * w)).padEnd(w, "·");
 
 function print(r: CalibrationReport, title: string): void {
   console.log("");

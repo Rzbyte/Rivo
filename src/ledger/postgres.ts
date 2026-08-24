@@ -45,8 +45,6 @@ interface Row {
   confirmed_at: Date | null;
 }
 
-const optional = <T>(v: T | null): T | undefined => (v === null ? undefined : v);
-
 export function toRecord(r: Row): ExecutionRecord {
   const meta = r.meta ?? {};
   const rec: ExecutionRecord = {

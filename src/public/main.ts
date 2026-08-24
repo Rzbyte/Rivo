@@ -20,9 +20,9 @@ import { modeIntendsExecution } from "../runtime/permission.js";
 import type { ProfileName } from "../portfolio/profiles.js";
 import {
   connect, detectProvider, readWallet, silentAccounts, switchNetwork, WalletError,
-  type Eip1193Provider, type WalletState,
+  type Eip1193Provider,
 } from "./wallet.js";
-import { autopilotBlocker, discover, type BackendStatus } from "./backend.js";
+import { autopilotBlocker, discover } from "./backend.js";
 import * as store from "./store.js";
 import { esc, mount, onAction } from "./ui/dom.js";
 import { connectGate, configure, dashboard, walletChip, type AppState } from "./ui/portfolio.js";

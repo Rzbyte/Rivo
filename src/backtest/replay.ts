@@ -16,13 +16,12 @@
 // the constraints do not earn their keep, the whole portfolio layer is decoration.
 
 import type { Asset } from "../core/config.js";
-import { Indexer, scaleReference, type FillRow, type MarketRow } from "../core/indexer.js";
+import { Indexer, scaleReference, type MarketRow } from "../core/indexer.js";
 import { ASSETS } from "../core/config.js";
 import { fairValue, clampProbability } from "../model/fairvalue.js";
 import { sigmaPerMinute, type Bar } from "../model/vol.js";
 import { legDelta } from "../engine/opportunity.js";
-import { deltaPer1Pct, expiryBucket } from "../portfolio/risk.js";
-import { kellyFraction } from "../portfolio/allocator.js";
+import { deltaPer1Pct } from "../portfolio/risk.js";
 import type { RiskProfile } from "../portfolio/profiles.js";
 import type { Leg } from "../engine/book.js";
 import { DEFAULT_VOL_LOOKBACK_MIN } from "../calibration/dataset.js";

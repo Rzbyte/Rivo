@@ -17,7 +17,7 @@
 import { NextResponse } from "next/server";
 import { executionPermission, isExecutionMode } from "@rivo/runtime/permission.js";
 import { PRODUCTION_STRATEGY } from "@rivo/research/gating.js";
-import { badRequest, notFound, withUser, withUserWrite } from "@/lib/auth";
+import { badRequest, notFound, withUserWrite } from "@/lib/auth";
 import { jsonBody } from "@/lib/validate";
 import { portfolioOf, setState, updatePolicy } from "@rivo/db/portfolios.js";
 import { setDelegated, upsertWallet } from "@rivo/db/accounts.js";

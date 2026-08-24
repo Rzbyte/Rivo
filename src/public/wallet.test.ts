@@ -2,7 +2,7 @@
 // is pinned here is the arithmetic and the refusal to guess: unit conversion at
 // 18 decimals, and reporting nothing rather than zero when the chain is wrong.
 
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { connect, fromUnits, networkOf, silentAccounts, WalletError, type Eip1193Provider } from "./wallet.js";
 import { VENUE } from "../core/venue.js";
 

@@ -32,7 +32,7 @@ import { permissionFor, scheduleNext, setState, type Portfolio } from "../db/por
 import { modeIntendsExecution, type Permission } from "../runtime/permission.js";
 import { setDelegated } from "../db/accounts.js";
 import { record, recordOnce } from "../db/events.js";
-import { held, renew, type Lease } from "../db/leases.js";
+import { renew, type Lease } from "../db/leases.js";
 import { equityOf } from "../runtime/state.js";
 
 export interface CycleOptions {

@@ -11,7 +11,6 @@
 // profitability the evidence does not support; the verdict alone hides that the
 // model is genuinely good at what it was built for.
 
-import { useEffect, useState } from "react";
 import { useLive, ago } from "@/lib/live";
 import { Nav } from "@/components/Nav";
 import { ConnectAgent } from "@/components/ConnectAgent";

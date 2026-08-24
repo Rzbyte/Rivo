@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 type Ctx = { params: Promise<{ id: string }> };
 
-export const GET = withUser(async (user, req, ctx: Ctx) => {
+export const GET = withUser(async (user, _req, ctx: Ctx) => {
   const { id } = await ctx.params;
   const portfolio = await portfolioOf(user.id, id);
   if (!portfolio) notFound();

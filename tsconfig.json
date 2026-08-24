@@ -7,6 +7,18 @@
       "ES2023"
     ],
     "strict": true,
+    // Twenty unused imports and three unreachable helpers had accumulated where
+    // nothing was looking. None of it broke anything, which is exactly why it
+    // survived: an unused import type-checks, bundles and ships. It is also the
+    // camouflage dead code hides in — a reader cannot tell an import that is
+    // merely unused from one whose caller was deleted by mistake.
+    //
+    // `npm run typecheck` runs in CI, so this is now the thing that notices,
+    // rather than somebody choosing to grep. Parameters prefixed with `_` are
+    // exempt, which is how a signature keeps a positional argument it does not
+    // read.
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "noUncheckedIndexedAccess": true,
     "esModuleInterop": true,
     "skipLibCheck": true,

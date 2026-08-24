@@ -11,7 +11,7 @@
 // that legitimately have no user in hand are the scheduler's, and they are named
 // so that using one by accident in a request handler reads wrong.
 
-import { maybe, one, query, secs, tx } from "./pool.js";
+import { maybe, query, secs, tx } from "./pool.js";
 import { parsePolicy, type PortfolioPolicy, type RunMode, type RunState } from "../portfolio/policy.js";
 import type { ProfileName } from "../portfolio/profiles.js";
 import type { Network } from "../core/config.js";

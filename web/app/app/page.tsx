@@ -43,7 +43,6 @@ import type { WalletWithMetadata } from "@privy-io/react-auth";
 import { api, ApiError } from "@/lib/api";
 import { readBalances, type Balances } from "@/lib/balances";
 import { NETWORK, explorerAddress } from "@/lib/somnia";
-import type { PortfolioView } from "@rivo/db/view.js";
 import { Dashboard, type Bundle } from "@/components/Dashboard";
 import { Nav } from "@/components/Nav";
 import { Configure } from "@/components/Configure";

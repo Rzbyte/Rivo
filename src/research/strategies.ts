@@ -13,7 +13,6 @@
 // training fold — is only interpretable next to it: if the two disagree, the
 // cutoff was luck.
 
-import type { Observation } from "./dataset.js";
 import { featureVector } from "./dataset.js";
 import { fitRidge, predict, type RidgeModel } from "./residual.js";
 import type { Strategy } from "./walkforward.js";

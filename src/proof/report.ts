@@ -11,7 +11,7 @@
 // eight repeatedly across cycles, and mislabelling that as breadth would be the
 // easiest number in the whole submission to falsify.
 
-import { num, one, query, secs } from "../db/pool.js";
+import { num, one, query } from "../db/pool.js";
 import { portfolioById } from "../db/portfolios.js";
 import { buildView } from "../db/view.js";
 import { recent } from "../db/events.js";
