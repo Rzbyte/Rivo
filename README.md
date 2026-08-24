@@ -116,6 +116,21 @@ AGENT DECISION → RISK CHECK → VENUE NORMALISATION → ORDER SUBMITTED
 Counted separately and never merged: `HYPOTHETICAL`, `SKIPPED`, `REFUSED`, `SUBMITTED`, `CONFIRMED`,
 `REVERTED`, `RECONCILED`, `SETTLED`, `CLAIMED`, `PENDING`.
 
+**One order, checkable by hand** — [`docs/evidence/final-proof.json`](docs/evidence/final-proof.json),
+produced by `npm run final-proof`:
+
+| | |
+|---|---|
+| market | BTC DOWN · 1d |
+| strategy state | `REJECTED` — running only because Experimental Testnet was chosen explicitly |
+| normalised size | 0.65 shares at 0.438, cost 0.2847 — rounded down to a lot DreamDEX accepts |
+| transaction | [`0xea3946bd…72ce`](https://shannon-explorer.somnia.network/tx/0xea3946bddff3cb5777bcb549b154f1bf136358ae836f37d003cc13c15db572ce) |
+| receipt | `CONFIRMED`, block 468724348 — read back from the RPC, not inferred from the send |
+| settlement | `PENDING` — the contract is still open, and saying so is the point |
+
+`src/cli/finalproof.test.ts` refuses an artefact that claims a settlement which has not happened, a
+confirmation with no block number, or a size that is not on a lot boundary.
+
 A deterministic refusal is not a failure. A size that rounds to zero at DreamDEX's lot is
 `REFUSED / NORMALIZED_SIZE_ZERO` before anything is signed, rather than an execution attempt that
 reverts — so `failed` counts genuine chain and SDK failures and nothing else.
@@ -271,7 +286,7 @@ src/
   web/         the original cockpit server + static snapshot export
   public/      the public pricing page — browser bundle, shares the runtime's math
   cli/         start · worker · web · report · calibrate · scan · allocate · backtest · … · agent
-  *.test.ts    838 tests, colocated with what they cover
+  *.test.ts    847 tests, colocated with what they cover
 web/
   app/         Next.js — landing, the product, and the control-plane API
   components/  the dashboard, built around decisions rather than fills
@@ -451,7 +466,7 @@ npm run report                                  # what it did, and why
 | `npm run privy:check` | is this deployment's Privy set up? authenticates for real, lists what is missing |
 | `npm run agent -- new \| status \| fund \| sweep` | the wallet Rivo signs with, and what it may lose |
 | `npm run probe:operator` | can EC be traded non-custodially? measured, not assumed |
-| `npm test` · `npm run typecheck` | 838 tests · strict TypeScript across engine, page and web app |
+| `npm test` · `npm run typecheck` | 847 tests · strict TypeScript across engine, page and web app |
 | `npm run doctor` | can Rivo trade right now — signer, gas, collateral, venue, kit |
 | `npm run faucet` | mint testnet tUSDC — a direct `faucet(uint256)` call, no kit needed |
 | `npm run check:kit` · `npm run link:kit` | verify / install the optional bot kit |
@@ -585,7 +600,7 @@ documented figures drift from the artefacts they claim to quote.
 npm test
 ```
 
-**838 tests** across the things that either move money or produce a published number: the
+**847 tests** across the things that either move money or produce a published number: the
 dual-crossing-path book, the fair-value model and volatility estimator, the scoring rules behind
 every figure in [EVIDENCE.md](docs/EVIDENCE.md), the capital allocator, the position manager, settlement, and
 on-chain reconciliation.

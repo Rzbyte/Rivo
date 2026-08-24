@@ -461,6 +461,7 @@ export default function Evidence() {
             <table>
               <thead><tr><th>Question</th><th>Command</th><th>Writes</th></tr></thead>
               <tbody>
+                <tr><td>00 · one clean order</td><td className="mono">npm run final-proof</td><td className="mono faint">final-proof.json</td></tr>
                 <tr><td>01 · on-chain</td><td className="mono">npm run proof</td><td className="mono faint">live-canary.json</td></tr>
                 <tr><td>02 · the model</td><td className="mono">npm run calibrate</td><td className="mono faint">calibration.json</td></tr>
                 <tr><td>03 · portfolio layer</td><td className="mono">npm run backtest</td><td className="mono faint">backtest.json</td></tr>

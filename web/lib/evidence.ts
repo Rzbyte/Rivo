@@ -20,6 +20,7 @@ import { resolve } from "node:path";
 
 /** Artefacts this app reads. The names are the filenames without `.json`. */
 export const ARTEFACTS = [
+  "final-proof",
   "canary-fresh",
   "calibration",
   "backtest",

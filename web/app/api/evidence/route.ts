@@ -13,6 +13,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(): Promise<Response> {
   return NextResponse.json({
+    finalProof: artefact("final-proof"),
     canary: artefact("canary-fresh"),
     calibration: artefact("calibration"),
     backtest: artefact("backtest"),

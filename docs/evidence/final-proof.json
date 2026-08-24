@@ -1,0 +1,108 @@
+{
+  "generatedAt": "2026-08-24T15:19:29.298Z",
+  "about": "One order, walked end to end. Small on purpose: a single verifiable sequence is worth more than an aggregate nobody can check. Fields that have not happened yet say PENDING.",
+  "run": {
+    "id": "agent-wallet-testnet-2026-08-24",
+    "dataDir": "./data-agent",
+    "startedAt": 1787404723,
+    "cycles": 1294,
+    "capital": 25,
+    "dryRun": false,
+    "halted": null
+  },
+  "agent": {
+    "id": "diffusion-taker-v1",
+    "label": "Diffusion Taker V1",
+    "kind": "builtin",
+    "strategyState": "REJECTED",
+    "auc": 0.8158,
+    "returnOnStake": -0.0649,
+    "note": "Predictive accuracy is not sufficient for live-capital deployment. This strategy failed out-of-sample economic validation.",
+    "evidence": "docs/ALPHA-RESEARCH.md"
+  },
+  "execution": {
+    "mode": "experimental_testnet",
+    "network": "testnet",
+    "chainId": 50312,
+    "venueId": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
+    "rpc": "https://api.infra.testnet.somnia.network",
+    "signer": {
+      "kind": "agent-wallet",
+      "address": "0x3bd75480952054aca9f6e6d1df7ce1da6a87dbb1",
+      "explorer": "https://shannon-explorer.somnia.network/address/0x3bd75480952054aca9f6e6d1df7ce1da6a87dbb1",
+      "gas": 0.599620038,
+      "gasSymbol": "STT",
+      "collateral": 6.8082,
+      "collateralSymbol": "tUSDC"
+    },
+    "pipeline": {
+      "module": "src/runtime/pipeline.ts",
+      "minTradeFloor": 0.25,
+      "lotStepsPerShare": 100,
+      "stages": [
+        "SCHEMA",
+        "ELIGIBILITY",
+        "POLICY",
+        "RISK",
+        "VENUE",
+        "INTENT"
+      ],
+      "sharedWithShadow": true
+    }
+  },
+  "order": {
+    "market": {
+      "marketId": "0x0000000000000000000000000000000000000000000000000000000000006ed5",
+      "asset": "BTC",
+      "leg": "DOWN",
+      "intervalSec": 86400,
+      "tenor": "1d",
+      "expiry": 1787529600
+    },
+    "decision": {
+      "action": "BUY",
+      "fairAtEntry": 0.4375199243071435,
+      "openedAt": 1787445231
+    },
+    "risk": {
+      "result": "PASSED",
+      "detail": "gate, exposure limits and the drawdown breaker all agreed before signing"
+    },
+    "venue": {
+      "result": "NORMALISED",
+      "normalizedSize": 0.65,
+      "entryPrice": 0.438,
+      "cost": 0.2847
+    },
+    "chain": {
+      "txHash": "0xea3946bddff3cb5777bcb549b154f1bf136358ae836f37d003cc13c15db572ce",
+      "explorer": "https://shannon-explorer.somnia.network/tx/0xea3946bddff3cb5777bcb549b154f1bf136358ae836f37d003cc13c15db572ce",
+      "receiptStatus": "CONFIRMED",
+      "blockNumber": 468724348,
+      "gasUsed": 626781
+    },
+    "ledger": {
+      "result": "PENDING",
+      "executionId": null,
+      "detail": "written before signing, so a crash leaves a record rather than a gap"
+    },
+    "reconciliation": {
+      "result": "RECONCILED",
+      "detail": "position matched against what the chain reports the wallet holds"
+    },
+    "settlement": {
+      "result": "PENDING",
+      "detail": "the contract has not settled yet"
+    }
+  },
+  "note": null,
+  "provenance": {
+    "producedBy": "npm run final-proof",
+    "source": "local state file plus RPC reads against the network above",
+    "verifiable": [
+      "every txHash resolves on the explorer linked beside it",
+      "receiptStatus was read back from the RPC, not inferred from the send",
+      "normalizedSize is what the venue accepted, not what was requested"
+    ]
+  }
+}
