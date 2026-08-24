@@ -59,8 +59,18 @@ const config = {
   // Listing them here is the narrow fix. The alternative, compiling the SQL into
   // the bundle, would give the web tier its own copy of the schema and a second
   // place for it to drift from the worker's.
+  //
+  // The evidence artefacts are the same shape of bug and it had already shipped:
+  // /api/agents opens docs/evidence/alpha-research.json, nothing imports it, so
+  // it was traced out of the bundle and the route answered `research: null` in
+  // production. Locally every fold rendered; on Vercel the fold table, the edge
+  // buckets and the gate's reasons were empty dashes — the working behind a
+  // verdict, missing on the one deployment anybody would read it on.
   outputFileTracingIncludes: {
     "/api/health": ["../src/db/migrations/**"],
+    "/api/agents": ["../docs/evidence/*.json"],
+    "/api/evidence": ["../docs/evidence/*.json"],
+    "/api/calibration": ["../docs/evidence/*.json"],
   },
 
   webpack: (cfg) => {

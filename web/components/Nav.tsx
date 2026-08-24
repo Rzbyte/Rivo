@@ -1,11 +1,12 @@
 "use client";
 
-// The four things Rivo does, in the order a person needs them.
+// The five things Rivo does, in the order a person needs them.
 //
 // UNDERSTAND → VALIDATE → PROVE. Markets and Calibration answer what a
 // probability means; Agents answers whether a model deserves capital; Proof is
-// what actually happened on-chain. Nothing about wallets, funding or workers is
-// here, because none of it is why somebody arrives.
+// what actually happened on-chain; Evidence is every study behind those answers,
+// including the two that came back no. Nothing about wallets, funding or workers
+// is here, because none of it is why somebody arrives.
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -15,6 +16,7 @@ const SECTIONS = [
   ["/calibration", "Calibration", "Is the price the real probability?"],
   ["/agents", "Agents", "Does the model deserve capital?"],
   ["/proof", "Proof", "What happened on-chain"],
+  ["/evidence", "Evidence", "Every study, including the negative ones"],
 ] as const;
 
 export function Nav({ right }: { right?: React.ReactNode }) {
