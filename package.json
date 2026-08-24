@@ -42,7 +42,8 @@
     "seed:demo": "tsx scripts/seed-demo.ts",
     "privy:check": "tsx scripts/privy-check.ts",
     "alpha": "tsx src/cli/alpha.ts",
-    "testcount": "tsx scripts/testcount.ts"
+    "testcount": "tsx scripts/testcount.ts",
+    "calibration": "tsx src/cli/calibration.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
