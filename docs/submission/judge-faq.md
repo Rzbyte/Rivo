@@ -125,7 +125,19 @@ the venue's answer and whether Rivo's own record has caught up.
 
 ### 10 · Can external agents use Rivo?
 
-Yes, over HTTP, with no code uploaded and nothing of yours running here.
+Yes, over HTTP, with no code uploaded and nothing of yours running here — **and you can try it
+without an account**. Paste an endpoint into `/agents`, or:
+
+```bash
+curl -X POST https://rivo-autopilot.vercel.app/api/try-agent \
+  -H "content-type: application/json" \
+  -d '{"endpoint":"https://your-agent.example/decide"}'
+```
+
+Rivo picks the deepest live DreamDEX window, POSTs it to you, and runs your answer through the same
+pre-execution pipeline real execution uses. It stores nothing and signs nothing. Registering the
+agent — which makes it run against every window and resolve against real settlements — is the step
+that needs a sign-in.
 
 Rivo POSTs one Event Contract's context to your endpoint and expects a typed decision back. It never
 trusts the answer: the URL is checked against private, loopback and link-local ranges, the hostname is

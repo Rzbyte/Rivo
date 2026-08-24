@@ -118,6 +118,15 @@ Open **"What the pre-execution pipeline decided"**:
 >
 > Every row here is HYPOTHETICAL. No transaction was sent for any of them."
 
+**Then scroll up to "Try your agent now" and paste an endpoint, live on camera.**
+
+> "And you can do this yourself right now, with no account. Rivo takes the deepest live window, asks
+> your endpoint, and runs the answer through that same pipeline. Nothing stored, nothing signed."
+
+Even a URL that answers nothing useful makes the point — the verdict comes back naming the stage that
+refused it and why. If no leg has an offer, the endpoint says so; do not read that as a failure on
+camera, it is the product being correct about a thin book.
+
 ---
 
 ## Scene 5 — Proof on DreamDEX · 1:50–2:25

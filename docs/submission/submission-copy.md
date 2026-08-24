@@ -190,7 +190,9 @@ Rivo closes a loop that currently has a gap in it.
 
 The gap today is between "my backtest looks good" and "I am willing to fund this". Nothing on the
 venue closes it, so the honest options are to deploy on faith or not deploy at all. Rivo makes the
-step in between cheap: connect an HTTP endpoint, get scored against live markets and real settlements,
+step in between cheap, and the first move needs no account at all: POST a URL to /api/try-agent and
+Rivo runs one decision against one live DreamDEX window, judged by the same pipeline real execution
+uses. Then connect the endpoint properly, get scored against live markets and real settlements,
 and see a verdict that reads the economics rather than the accuracy.
 
 The loop compounds for the venue rather than for Rivo. Every settled contract makes the calibration
