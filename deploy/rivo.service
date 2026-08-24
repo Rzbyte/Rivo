@@ -17,7 +17,7 @@
 # rather than both trading the same wallet.
 
 [Unit]
-Description=Rivo — autonomous portfolio manager for DreamDEX Event Contracts
+Description=Rivo — event intelligence and agent validation for DreamDEX Event Contracts
 Documentation=https://github.com/Rzbyte/Rivo
 # The venue lives on the internet; starting before there is a route just burns a
 # restart and logs a confusing first error.

@@ -1,9 +1,14 @@
 // The front door.
 //
 // A judge opening this project has to understand within seconds that it is an
-// autonomous portfolio manager rather than another pricing dashboard, so the page
-// leads with the sentence that says so and with the one number that proves the
-// portfolio layer is doing something: live exposure against a live budget.
+// portfolio layer over DreamDEX rather than another pricing dashboard, so the
+// page leads with the sentence that says so and with the one number that proves
+// the layer is doing something: live exposure against a live budget.
+//
+// This bundle is no longer published as a product of its own — see the README's
+// "browser bundle" section. It is kept and tested because the pricing engine
+// running in a browser with no Node is a real property, and boot.test.ts proves
+// it against what actually ships.
 //
 // It deliberately does NOT open with the model, the mathematics, or the venue.
 // Those are the reason the product works; they are not the product.

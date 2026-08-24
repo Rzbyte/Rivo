@@ -63,16 +63,54 @@ describe("the shipped identity", () => {
     }
   });
 
-  it("does not advertise the product Rivo stopped being", () => {
+  it("does not advertise the product Rivo stopped being, anywhere", () => {
     // The specific phrases the pivot retired. Listed rather than inferred,
     // because a general rule would not have caught these and did not.
-    const retired = ["autonomous portfolio manager", "set a budget and a risk profile", "while you are offline"];
-    for (const file of ["web/app/layout.tsx", "web/app/page.tsx"]) {
+    //
+    // This checked two files and passed while the retired identity sat in three
+    // more: package.json's description, and the Description= line of both
+    // systemd units. Scoping a rule to where you happen to have looked is how a
+    // sweep reports clean and is not. So it reads every tracked file and names
+    // the exceptions, which are the places that must say the old words in order
+    // to forbid them.
+    //
+    // The phrases are whole claims, not fragments. "while you are offline" was
+    // in the retired pitch and is ALSO a true description of what a session
+    // signer does — Configure.tsx says it about a permission grant and is right
+    // to. A rule that forces accurate copy to be deleted is worse than no rule,
+    // so each entry here is long enough to only match the claim it retires.
+    const retired = [
+      "autonomous portfolio manager",
+      "set a budget and a risk profile",
+      "manages it while you are offline",
+      "sizes the whole term structure as one exposure",
+    ];
+    const explains = new Set([
+      "web/identity.test.ts", // this file
+      "web/app/layout.tsx", // the note above the metadata, naming what it replaced
+      "public/index.html", // the note explaining why its title changed
+    ]);
+    const tracked = execSync("git ls-files", { encoding: "utf8" })
+      .split("\n")
+      .filter((f) => f && !explains.has(f) && !f.startsWith("public/app.js") && !f.startsWith("public/rivo-public.html"))
+      .filter((f) => /\.(ts|tsx|json|md|html|service|yml|yaml|sql|css)$/.test(f))
+      .filter((f) => existsSync(resolve(f)));
+    expect(tracked.length, "no tracked files matched — did the filter break?").toBeGreaterThan(50);
+    for (const file of tracked) {
       const src = copy(file);
       for (const phrase of retired) {
         expect(src, `${file} still carries "${phrase}"`).not.toContain(phrase);
       }
     }
+  });
+
+  it("says the same thing in the metadata nobody looks at", () => {
+    // package.json's description is what GitHub, npm and every tool that reads a
+    // manifest will repeat, and it had the retired pitch in it long after every
+    // page was rewritten.
+    const pkg = JSON.parse(read("package.json")) as { description: string };
+    expect(pkg.description.toLowerCase()).toContain("intelligence");
+    expect(pkg.description.toLowerCase()).toContain("validation");
   });
 
   it("defines the title exactly once", () => {

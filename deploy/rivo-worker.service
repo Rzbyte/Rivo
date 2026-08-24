@@ -14,7 +14,7 @@
 # `ps` would show it.
 
 [Unit]
-Description=Rivo — autonomous portfolio manager (execution plane)
+Description=Rivo — event intelligence and agent validation (execution plane)
 Documentation=https://github.com/Rzbyte/rivo
 After=network-online.target
 Wants=network-online.target

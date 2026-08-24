@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Autonomous portfolio manager for DreamDEX Event Contracts.",
+  "description": "Event intelligence and agent validation for DreamDEX Event Contracts.",
   "engines": {
     "node": ">=20"
   },
