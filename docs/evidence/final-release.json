@@ -1,0 +1,84 @@
+{
+  "generatedAt": "2026-08-24T15:50:26.988Z",
+  "about": "The repository at the moment it was frozen for submission, plus what the production deployment answered when asked. Every field is re-derivable; none is a credential.",
+  "commit": {
+    "sha": "257bbacb3a05ed584e38f9d31799db270b15ffb7",
+    "shortSha": "257bbac",
+    "branch": "main",
+    "subject": "One order a judge can check by hand",
+    "committedAt": "2026-08-24T22:21:58+07:00",
+    "clean": false
+  },
+  "verification": {
+    "tests": {
+      "passed": 847,
+      "failed": 0,
+      "skipped": 0,
+      "files": 57,
+      "note": "optional kit integrations excluded, as in CI"
+    },
+    "typecheck": "PASS",
+    "buildWeb": "PASS",
+    "buildPublic": "PASS",
+    "migrations": "idempotent — a second run is a no-op",
+    "lint": "no separate linter; strict TypeScript across engine, browser bundle and web app is the gate",
+    "secretScan": "no .env, .pem or .key tracked; the signing key appears in no tracked file"
+  },
+  "production": {
+    "url": "https://rivo-autopilot.vercel.app",
+    "pages": {
+      "/": 200,
+      "/markets": 200,
+      "/calibration": 200,
+      "/agents": 200,
+      "/proof": 200,
+      "/evidence": 200,
+      "/app": 200
+    },
+    "apis": {
+      "/api/health": 200,
+      "/api/markets": 200,
+      "/api/calibration": 200,
+      "/api/agents": 200,
+      "/api/shadow": 200,
+      "/api/proof": 200,
+      "/api/evidence": 200
+    },
+    "health": {
+      "ok": true,
+      "database": true,
+      "privy": true,
+      "schemaCurrent": true,
+      "workers": 1,
+      "note": ""
+    },
+    "workers": {
+      "live": 1,
+      "lastHeartbeatAt": "2026-08-24T15:50:24.447Z",
+      "lastShadowDecisionAt": "2026-08-24T15:50:01.632Z"
+    },
+    "calibration": {
+      "windows": 834,
+      "brier": 0.16135801,
+      "skill": 0.35383964,
+      "servedFromArtefact": false
+    },
+    "shadow": {
+      "decisions": 8101,
+      "settled": 5022
+    },
+    "demoProof": {
+      "published": false,
+      "note": "No portfolio is published on this deployment. Set RIVO_DEMO_PORTFOLIO_ID to publish one read-only."
+    }
+  },
+  "demoRun": {
+    "runId": "5b35e672-963b-4af1-9076-539708692ec1",
+    "mode": "experimental_testnet",
+    "txHash": "0x48cbabda4ad7a9f0f9196949278a0ec5fb09097d16a7a893ce592b66a18e8b91",
+    "receiptStatus": "CONFIRMED",
+    "blockNumber": 469486171,
+    "settlementStatus": "PENDING",
+    "artefact": "docs/evidence/final-proof.json"
+  }
+}

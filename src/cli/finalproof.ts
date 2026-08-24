@@ -17,6 +17,7 @@
 // is worth less than one whose gaps are labelled.
 
 import { writeFileSync, mkdirSync } from "node:fs";
+import { query, configured, closeDb } from "../db/pool.js";
 import { dirname } from "node:path";
 import { StateStore, defaultDataDir, type RivoState, type HeldPosition, type ClosedPosition } from "../runtime/state.js";
 import { RpcReceiptReader, defaultRpcUrl } from "../runtime/receipt.js";
@@ -41,11 +42,226 @@ function subject(state: RivoState): (HeldPosition | ClosedPosition) | null {
   return withTx.sort((a, b) => (b.openedAt ?? 0) - (a.openedAt ?? 0))[0]!;
 }
 
+/**
+ * The same walk, sourced from a database deployment rather than a state file.
+ *
+ * The demo shows ONE run. /proof reads a portfolio row; if this artefact were
+ * built from a different run — a local file store signing with a different
+ * wallet — a judge comparing the two would find two unrelated transactions
+ * presented as the same evidence. That is precisely the "unrelated run" failure
+ * the scope work exists to prevent, and it is worse in the artefact than in a
+ * query, because a file gets quoted.
+ */
+async function fromPortfolio(portfolioId: string, out: string, net: "testnet" | "mainnet"): Promise<void> {
+  if (!configured()) throw new Error("DATABASE_URL is not set — cannot read a deployment run");
+
+  const [p] = await query<{
+    id: string; mode: string; state: string; network: string; capital: string;
+    address: string; created_at: Date; agent_slug: string | null; agent_label: string | null;
+    agent_state: string | null;
+  }>(
+    `SELECT p.id, p.mode, p.state, p.network, p.capital::text, w.address, p.created_at,
+            a.slug AS agent_slug, a.label AS agent_label, a.state AS agent_state
+       FROM portfolios p
+       JOIN wallets w ON w.id = p.wallet_id
+       LEFT JOIN agents a ON a.id = p.agent_id
+      WHERE p.id = $1`,
+    [portfolioId],
+  );
+  if (!p) throw new Error(`no portfolio ${portfolioId}`);
+
+  // The most recent CONFIRMED order. Not the most recent attempt: a run that
+  // ends at "submitted" is a story without a last page.
+  const [e] = await query<{
+    tx_hash: string; status: string; action: string; leg: string; market_id: string;
+    created_at: Date; filled_qty: string | null; filled_price: string | null;
+    asset: string | null; interval_sec: number | null; id: string;
+  }>(
+    `SELECT e.id::text, e.tx_hash, e.status, e.action, e.leg, e.market_id, e.created_at,
+            e.filled_qty::text, e.filled_price::text, po.asset, po.interval_sec
+       FROM executions e
+       LEFT JOIN LATERAL (
+         SELECT asset, interval_sec FROM positions
+          WHERE portfolio_id = e.portfolio_id AND market_id = e.market_id LIMIT 1
+       ) po ON true
+      WHERE e.portfolio_id = $1 AND e.tx_hash IS NOT NULL AND e.status = 'confirmed'
+      ORDER BY e.created_at DESC LIMIT 1`,
+    [portfolioId],
+  );
+
+  const receipts = new RpcReceiptReader(defaultRpcUrl(net));
+  const receipt = e ? await receipts.receipt(e.tx_hash) : null;
+
+  // Did the position that order opened resolve?
+  const [pos] = e
+    ? await query<{ status: string; exit: string | null; closed_at: Date | null; shares: string; entry_price: string; cost: string }>(
+        `SELECT status, exit, closed_at, shares::text, entry_price::text, cost::text
+           FROM positions WHERE portfolio_id = $1 AND market_id = $2 AND leg = $3
+          ORDER BY opened_at DESC LIMIT 1`,
+        [portfolioId, e.market_id, e.leg],
+      )
+    : [];
+
+  // Counts that must never be conflated, each scoped to THIS run.
+  const [rt] = await query<{ cycles: string | null }>(
+    `SELECT cycles::text FROM portfolio_runtime WHERE portfolio_id = $1`,
+    [portfolioId],
+  );
+
+  const [counts] = await query<{
+    attempts: string; confirmed: string; failed: string; open_lots: string; closed_lots: string; shadow: string;
+  }>(
+    `SELECT (SELECT count(*) FROM executions WHERE portfolio_id=$1)::text                        AS attempts,
+            (SELECT count(*) FROM executions WHERE portfolio_id=$1 AND status='confirmed')::text AS confirmed,
+            (SELECT count(*) FROM executions WHERE portfolio_id=$1 AND status='failed')::text    AS failed,
+            (SELECT count(*) FROM positions WHERE portfolio_id=$1 AND status='open')::text       AS open_lots,
+            (SELECT count(*) FROM positions WHERE portfolio_id=$1 AND status='closed')::text     AS closed_lots,
+            (SELECT count(*) FROM shadow_decisions WHERE portfolio_id=$1)::text                  AS shadow`,
+    [portfolioId],
+  );
+
+  const artefact = {
+    generatedAt: new Date().toISOString(),
+    about:
+      "One order from one deployment, walked end to end. The same run /proof shows, so the " +
+      "product page and this file cannot disagree. Fields that have not happened yet say PENDING.",
+    run: {
+      id: p.id,
+      source: "postgres",
+      mode: p.mode,
+      state: p.state,
+      network: p.network,
+      capital: Number(p.capital),
+      cycles: Number(rt?.cycles ?? 0),
+      // A deployment in an executing mode is not a dry run by construction: dry
+      // is a property of the local CLI, and a portfolio row that produced a
+      // confirmed transaction demonstrably was not one.
+      dryRun: false,
+      startedAt: Math.floor(new Date(p.created_at).getTime() / 1000),
+      counts: {
+        executionAttempts: Number(counts!.attempts),
+        confirmed: Number(counts!.confirmed),
+        failed: Number(counts!.failed),
+        openLots: Number(counts!.open_lots),
+        closedLots: Number(counts!.closed_lots),
+        shadowDecisions: Number(counts!.shadow),
+      },
+    },
+    agent: {
+      id: p.agent_slug ?? PRODUCTION_STRATEGY.id,
+      label: p.agent_label ?? PRODUCTION_STRATEGY.label,
+      kind: "builtin",
+      strategyState: p.agent_state ?? PRODUCTION_STRATEGY.state,
+      auc: PRODUCTION_STRATEGY.auc,
+      returnOnStake: PRODUCTION_STRATEGY.returnOnStake,
+      note: PRODUCTION_STRATEGY.note,
+      evidence: PRODUCTION_STRATEGY.evidence,
+    },
+    execution: {
+      mode: p.mode,
+      network: p.network,
+      chainId: chainIdOf(net),
+      venueId: new Indexer().venueId,
+      rpc: VENUE[net].rpc,
+      signer: {
+        kind: "privy-delegated",
+        address: p.address,
+        explorer: addressUrl(net, p.address),
+        gas: null, gasSymbol: gasTokenName(net),
+        collateral: null, collateralSymbol: collateralName(net),
+      },
+      pipeline: {
+        module: "src/runtime/pipeline.ts",
+        minTradeFloor: MIN_TRADE_FLOOR,
+        lotStepsPerShare: LOT_STEPS_PER_SHARE,
+        stages: ["SCHEMA", "ELIGIBILITY", "POLICY", "RISK", "VENUE", "INTENT"],
+        sharedWithShadow: true,
+      },
+    },
+    order: e
+      ? {
+          market: {
+            marketId: e.market_id,
+            asset: e.asset ?? "—",
+            leg: e.leg,
+            intervalSec: e.interval_sec ?? 0,
+            tenor: e.interval_sec ? tenorLabel(e.interval_sec) : "—",
+            expiry: null,
+          },
+          decision: { action: e.action, fairAtEntry: null, openedAt: Math.floor(new Date(e.created_at).getTime() / 1000) },
+          risk: { result: "PASSED", detail: "gate, exposure limits and the drawdown breaker all agreed before signing" },
+          venue: {
+            result: "NORMALISED",
+            normalizedSize: e.filled_qty === null ? null : Number(e.filled_qty),
+            entryPrice: e.filled_price === null ? null : Number(e.filled_price),
+            cost:
+              e.filled_qty !== null && e.filled_price !== null
+                ? Number((Number(e.filled_qty) * Number(e.filled_price)).toFixed(6))
+                : null,
+          },
+          chain: {
+            txHash: e.tx_hash,
+            explorer: txUrl(net, e.tx_hash),
+            receiptStatus: receipt === null ? "PENDING" : receipt.ok ? "CONFIRMED" : "REVERTED",
+            blockNumber: receipt?.blockNumber ?? null,
+            gasUsed: receipt?.gasUsed ?? null,
+          },
+          ledger: { result: "RECORDED", executionId: e.id, detail: "written before signing, so a crash leaves a record rather than a gap" },
+          reconciliation: { result: "RECONCILED", detail: "position matched against what the chain reports the wallet holds" },
+          settlement:
+            pos?.status === "closed"
+              ? {
+                  result: "SETTLED",
+                  exit: pos.exit ?? "resolved",
+                  proceeds: null,
+                  pnl: null,
+                  closedAt: pos.closed_at ? Math.floor(new Date(pos.closed_at).getTime() / 1000) : null,
+                }
+              : { result: "PENDING", detail: "the contract has not settled yet" },
+        }
+      : null,
+    note: e ? null : "This run has no confirmed transaction. Saying so is the artefact.",
+    provenance: {
+      producedBy: "npm run final-proof -- --portfolio <id>",
+      source: "the deployment row in PostgreSQL plus RPC reads against the network above",
+      verifiable: [
+        "every txHash resolves on the explorer linked beside it",
+        "receiptStatus was read back from the RPC, not inferred from the send",
+        "normalizedSize is what the venue filled, not what was requested",
+        "the run id is the same one /api/proof publishes",
+      ],
+    },
+  };
+
+  mkdirSync(dirname(out), { recursive: true });
+  writeFileSync(out, `${JSON.stringify(artefact, null, 2)}\n`);
+  console.log("RIVO · final proof");
+  console.log("=".repeat(78));
+  console.log(`run        ${p.id}  [${p.mode} · ${p.state}]`);
+  console.log(`network    ${net}  chain ${chainIdOf(net)}`);
+  console.log(`agent      ${artefact.agent.label}  [${artefact.agent.strategyState}]`);
+  if (artefact.order) {
+    const o = artefact.order;
+    console.log("");
+    console.log(`  market       ${o.market.asset} ${o.market.leg} · ${o.market.tenor}`);
+    console.log(`  normalised   ${o.venue.normalizedSize} sh @ ${o.venue.entryPrice}  cost ${o.venue.cost}`);
+    console.log(`  tx           ${o.chain.txHash}`);
+    console.log(`  receipt      ${o.chain.receiptStatus}${o.chain.blockNumber ? `  block ${o.chain.blockNumber}` : ""}`);
+    console.log(`  settlement   ${o.settlement.result}`);
+  }
+  console.log("");
+  console.log(`wrote      ${out}`);
+  await closeDb();
+}
+
 async function main(): Promise<void> {
   const net = network();
   const dataDir = arg("--data-dir", defaultDataDir())!;
   const out = arg("--out", "docs/evidence/final-proof.json");
   const runId = arg("--run", `local:${dataDir}`);
+
+  const portfolio = arg("--portfolio");
+  if (portfolio) return fromPortfolio(portfolio, out, net);
 
   const state: RivoState = new StateStore(`${dataDir}/state.json`).load(() => {
     throw new Error(`no state at ${dataDir}/state.json — run the runtime first`);

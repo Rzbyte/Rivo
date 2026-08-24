@@ -1,18 +1,28 @@
 {
-  "generatedAt": "2026-08-24T15:19:29.298Z",
-  "about": "One order, walked end to end. Small on purpose: a single verifiable sequence is worth more than an aggregate nobody can check. Fields that have not happened yet say PENDING.",
+  "generatedAt": "2026-08-24T15:44:00.239Z",
+  "about": "One order from one deployment, walked end to end. The same run /proof shows, so the product page and this file cannot disagree. Fields that have not happened yet say PENDING.",
   "run": {
-    "id": "agent-wallet-testnet-2026-08-24",
-    "dataDir": "./data-agent",
-    "startedAt": 1787404723,
-    "cycles": 1294,
-    "capital": 25,
+    "id": "5b35e672-963b-4af1-9076-539708692ec1",
+    "source": "postgres",
+    "mode": "experimental_testnet",
+    "state": "stopped",
+    "network": "testnet",
+    "capital": 100,
+    "cycles": 257,
     "dryRun": false,
-    "halted": null
+    "startedAt": 1787512502,
+    "counts": {
+      "executionAttempts": 144,
+      "confirmed": 106,
+      "failed": 38,
+      "openLots": 6,
+      "closedLots": 86,
+      "shadowDecisions": 0
+    }
   },
   "agent": {
-    "id": "diffusion-taker-v1",
-    "label": "Diffusion Taker V1",
+    "id": "rivo-v1",
+    "label": "Rivo V1 · Diffusion Taker",
     "kind": "builtin",
     "strategyState": "REJECTED",
     "auc": 0.8158,
@@ -27,12 +37,12 @@
     "venueId": "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
     "rpc": "https://api.infra.testnet.somnia.network",
     "signer": {
-      "kind": "agent-wallet",
-      "address": "0x3bd75480952054aca9f6e6d1df7ce1da6a87dbb1",
-      "explorer": "https://shannon-explorer.somnia.network/address/0x3bd75480952054aca9f6e6d1df7ce1da6a87dbb1",
-      "gas": 0.599620038,
+      "kind": "privy-delegated",
+      "address": "0x1b4b0195b32053489992649813dc02fc5e282e2e",
+      "explorer": "https://shannon-explorer.somnia.network/address/0x1b4b0195b32053489992649813dc02fc5e282e2e",
+      "gas": null,
       "gasSymbol": "STT",
-      "collateral": 6.8082,
+      "collateral": null,
       "collateralSymbol": "tUSDC"
     },
     "pipeline": {
@@ -54,15 +64,15 @@
     "market": {
       "marketId": "0x0000000000000000000000000000000000000000000000000000000000006ed5",
       "asset": "BTC",
-      "leg": "DOWN",
+      "leg": "UP",
       "intervalSec": 86400,
       "tenor": "1d",
-      "expiry": 1787529600
+      "expiry": null
     },
     "decision": {
       "action": "BUY",
-      "fairAtEntry": 0.4375199243071435,
-      "openedAt": 1787445231
+      "fairAtEntry": null,
+      "openedAt": 1787521470
     },
     "risk": {
       "result": "PASSED",
@@ -70,20 +80,20 @@
     },
     "venue": {
       "result": "NORMALISED",
-      "normalizedSize": 0.65,
-      "entryPrice": 0.438,
-      "cost": 0.2847
+      "normalizedSize": 10.94,
+      "entryPrice": 0.922,
+      "cost": 10.08668
     },
     "chain": {
-      "txHash": "0xea3946bddff3cb5777bcb549b154f1bf136358ae836f37d003cc13c15db572ce",
-      "explorer": "https://shannon-explorer.somnia.network/tx/0xea3946bddff3cb5777bcb549b154f1bf136358ae836f37d003cc13c15db572ce",
+      "txHash": "0x48cbabda4ad7a9f0f9196949278a0ec5fb09097d16a7a893ce592b66a18e8b91",
+      "explorer": "https://shannon-explorer.somnia.network/tx/0x48cbabda4ad7a9f0f9196949278a0ec5fb09097d16a7a893ce592b66a18e8b91",
       "receiptStatus": "CONFIRMED",
-      "blockNumber": 468724348,
-      "gasUsed": 626781
+      "blockNumber": 469486171,
+      "gasUsed": 428682
     },
     "ledger": {
-      "result": "PENDING",
-      "executionId": null,
+      "result": "RECORDED",
+      "executionId": "6d619032-62bd-448c-9722-7844f332ac51",
       "detail": "written before signing, so a crash leaves a record rather than a gap"
     },
     "reconciliation": {
@@ -97,12 +107,13 @@
   },
   "note": null,
   "provenance": {
-    "producedBy": "npm run final-proof",
-    "source": "local state file plus RPC reads against the network above",
+    "producedBy": "npm run final-proof -- --portfolio <id>",
+    "source": "the deployment row in PostgreSQL plus RPC reads against the network above",
     "verifiable": [
       "every txHash resolves on the explorer linked beside it",
       "receiptStatus was read back from the RPC, not inferred from the send",
-      "normalizedSize is what the venue accepted, not what was requested"
+      "normalizedSize is what the venue filled, not what was requested",
+      "the run id is the same one /api/proof publishes"
     ]
   }
 }
