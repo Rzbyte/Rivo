@@ -11,6 +11,9 @@
 // order that already filled.
 
 import { timeoutSignal } from "../core/timeout.js";
+// venue.js is constants and pure functions with no imports of its own, so it
+// does not cost this module the property described above.
+import { rpcUrl, type Network } from "../core/venue.js";
 
 export interface Receipt {
   /** True when the transaction succeeded on-chain. */
@@ -54,6 +57,4 @@ export class RpcReceiptReader implements ReceiptReader {
 }
 
 /** The RPC this network uses, unless RPC_URL says otherwise. */
-export const defaultRpcUrl = (network: "testnet" | "mainnet"): string =>
-  process.env.RPC_URL ??
-  (network === "mainnet" ? "https://api.infra.mainnet.somnia.network" : "https://api.infra.testnet.somnia.network");
+export const defaultRpcUrl = (network: Network): string => rpcUrl(network, process.env.RPC_URL);

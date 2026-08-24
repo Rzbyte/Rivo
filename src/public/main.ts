@@ -12,6 +12,7 @@
 // re-render costs.
 
 import { Indexer } from "../core/indexer.js";
+import { collateralName, gasTokenName } from "../core/venue.js";
 import { runCycle, emptyPortfolio, type Activity, type PortfolioView, type ShadowPortfolio } from "./engine.js";
 import { snapshot, type Snapshot } from "../engine/scan.js";
 import { newPolicy, type PortfolioPolicy, type RunMode } from "../portfolio/policy.js";
@@ -288,7 +289,7 @@ onAction((act, el) => {
       const owner = store.demoIdentity();
       state.wallet = {
         address: owner, chainId: 0, network: "testnet", gas: 0, collateral: 0,
-        gasSymbol: "STT", collateralSymbol: "tUSDC",
+        gasSymbol: gasTokenName("testnet"), collateralSymbol: collateralName("testnet"),
       };
       state.error = null;
       adoptWallet(owner);

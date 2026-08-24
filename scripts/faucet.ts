@@ -22,7 +22,7 @@
 import { collateralName, COLLATERAL_TOKEN, network } from "../src/core/config.js";
 import { loadEnv } from "../src/core/env.js";
 import { Indexer } from "../src/core/indexer.js";
-import { VENUE } from "../src/core/venue.js";
+import { gasTokenName, rpcUrl, VENUE } from "../src/core/venue.js";
 
 /** What one call mints, in raw units — the amount the venue team's own command uses. */
 const AMOUNT = 10_000_000_000;
@@ -56,7 +56,7 @@ async function main(): Promise<void> {
   }
 
   const idx = new Indexer();
-  const rpc = process.env.RPC_URL ?? "https://api.infra.testnet.somnia.network";
+  const rpc = rpcUrl(net, process.env.RPC_URL);
   const token = process.env.COLLATERAL_TOKEN ?? COLLATERAL_TOKEN[net];
   const name = collateralName(net);
 
@@ -74,7 +74,7 @@ async function main(): Promise<void> {
   const chain = {
     id: VENUE[net].chainId,
     name: VENUE[net].chainName,
-    nativeCurrency: { name: "STT", symbol: "STT", decimals: 18 },
+    nativeCurrency: { name: gasTokenName(net), symbol: gasTokenName(net), decimals: 18 },
     rpcUrls: { default: { http: [rpc] } },
   } as const;
   const account = privateKeyToAccount(pk as `0x${string}`);

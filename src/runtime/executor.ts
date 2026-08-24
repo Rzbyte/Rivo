@@ -18,6 +18,7 @@ import { loadEnv } from "../core/env.js";
 import { AllowanceManager } from "./allowance.js";
 import { authority, AgentWalletAuthority, canSign, type ChainSigner } from "./signer.js";
 import { COLLATERAL_TOKEN, network } from "../core/config.js";
+import { chainIdOf, rpcUrl } from "../core/venue.js";
 
 export interface OrderRequest {
   marketId: string;
@@ -266,10 +267,8 @@ export class LiveExecutor implements Executor {
     loadEnv();
     const net = network();
     const common = {
-      rpcUrl:
-        process.env.RPC_URL ??
-        (net === "mainnet" ? "https://api.infra.mainnet.somnia.network" : "https://api.infra.testnet.somnia.network"),
-      chainId: net === "mainnet" ? 5031 : 50312,
+      rpcUrl: rpcUrl(net, process.env.RPC_URL),
+      chainId: chainIdOf(net),
       token: (process.env.COLLATERAL_TOKEN ?? COLLATERAL_TOKEN[net]) as `0x${string}`,
     };
     // An approval is a chain write and has to come from the SAME account that

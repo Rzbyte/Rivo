@@ -5,7 +5,9 @@
 // bundled; everything here is constants and pure functions, so the public page
 // and the runtime read from ONE source rather than drifting copies.
 
-export type Network = "testnet" | "mainnet";
+/** Both networks, in the order a reader expects them. Iterable, unlike the type. */
+export const NETWORKS = ["testnet", "mainnet"] as const;
+export type Network = (typeof NETWORKS)[number];
 
 export interface VenueEndpoints {
   /** Somnia Markets indexer — binary markets, orders, fills, oracle answers. */
@@ -47,6 +49,35 @@ export const VENUE: Record<Network, VenueEndpoints> = {
     chainName: "Somnia",
   },
 };
+
+/**
+ * The RPC for a network, with an optional override layered on top.
+ *
+ * This existed as a copied ternary in six places — three in the runtime, three
+ * in scripts — each spelling both hostnames out again, and one of them
+ * (scripts/doctor.ts) reading the registry on the line above and then ignoring
+ * it. The failure mode is not a bug today; it is that Somnia moves an endpoint,
+ * the table below is corrected, and five call sites keep the old host with
+ * nothing red to say so.
+ *
+ * The override is a parameter rather than a `process.env` read, so this stays a
+ * pure function of the venue table and callers that must not touch the
+ * environment — `receipt.ts` is deliberately dependency-free — can still use it.
+ */
+export const rpcUrl = (net: Network, override?: string | null): string => override?.trim() || VENUE[net].rpc;
+
+/** The chain id for a network. Same reason as `rpcUrl`: it was written twice. */
+export const chainIdOf = (net: Network): number => VENUE[net].chainId;
+
+/**
+ * Which network a chain id belongs to.
+ *
+ * Anything unrecognised answers testnet, which is the safe direction: the one
+ * place this is consulted picks a gas-token label, and being wrong toward the
+ * testnet name is a cosmetic error while being wrong toward mainnet reads as a
+ * claim about real money.
+ */
+export const networkOfChainId = (id: number): Network => (id === VENUE.mainnet.chainId ? "mainnet" : "testnet");
 
 /** Explorer link for a transaction, so evidence in the UI is checkable by a stranger. */
 export const txUrl = (net: Network, hash: string): string => `${VENUE[net].explorer}/tx/${hash}`;

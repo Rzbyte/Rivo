@@ -9,6 +9,7 @@
 
 import { loadEnv } from "../src/core/env.js";
 import { Indexer } from "../src/core/indexer.js";
+import { rpcUrl } from "../src/core/venue.js";
 import { collateralName, COLLATERAL_TOKEN, endpoints, network } from "../src/core/config.js";
 import { authority, authorityStatus } from "../src/runtime/signer.js";
 
@@ -81,7 +82,7 @@ async function main(): Promise<void> {
   const net = network();
   const ep = endpoints(net);
   const idx = new Indexer();
-  const rpc = process.env.RPC_URL ?? (net === "mainnet" ? "https://api.infra.mainnet.somnia.network" : "https://api.infra.testnet.somnia.network");
+  const rpc = rpcUrl(net, process.env.RPC_URL);
 
   console.log("RIVO · doctor");
   console.log("=".repeat(72));

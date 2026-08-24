@@ -26,6 +26,7 @@ import type { RiskProfile } from "../portfolio/profiles.js";
 import { measureCorrelation, type Position } from "../portfolio/risk.js";
 import { legKey, manage, type PositionDecision } from "./position.js";
 import { OutcomeReader } from "./onchain.js";
+import { defaultRpcUrl } from "./receipt.js";
 import { describe as describeDiscrepancy, reconcile, type Discrepancy } from "./reconcile.js";
 import type { Executor } from "./executor.js";
 import type { DecisionSink, StateSink } from "../store/types.js";
@@ -605,10 +606,7 @@ export async function verifyAgainstChain(
 /** One reader per process, so pool ids are resolved once rather than per cycle. */
 let reader: OutcomeReader | null = null;
 function outcomeReader(): OutcomeReader {
-  reader ??= new OutcomeReader(
-    process.env.RPC_URL ||
-      (network() === "mainnet" ? "https://api.infra.mainnet.somnia.network" : "https://api.infra.testnet.somnia.network"),
-  );
+  reader ??= new OutcomeReader(defaultRpcUrl(network()));
   return reader;
 }
 

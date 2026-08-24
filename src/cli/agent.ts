@@ -24,7 +24,7 @@ import { mkdirSync, writeFileSync, existsSync, chmodSync } from "node:fs";
 import { dirname } from "node:path";
 import { loadEnv } from "../core/env.js";
 import { network, COLLATERAL_TOKEN, collateralName } from "../core/config.js";
-import { VENUE } from "../core/venue.js";
+import { gasTokenName, VENUE } from "../core/venue.js";
 import { AgentWalletAuthority } from "../runtime/signer.js";
 
 const args = process.argv.slice(2);
@@ -41,7 +41,7 @@ const rpcUrl = process.env.RPC_URL || VENUE[net].rpc;
 const chain = {
   id: VENUE[net].chainId,
   name: VENUE[net].chainName,
-  nativeCurrency: { name: net === "mainnet" ? "SOMI" : "STT", symbol: net === "mainnet" ? "SOMI" : "STT", decimals: 18 },
+  nativeCurrency: { name: gasTokenName(net), symbol: gasTokenName(net), decimals: 18 },
   rpcUrls: { default: { http: [rpcUrl] } },
 } as const;
 const gasSymbol = chain.nativeCurrency.symbol;

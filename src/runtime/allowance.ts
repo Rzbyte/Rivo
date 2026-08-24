@@ -19,6 +19,7 @@
 
 import { createPublicClient, createWalletClient, defineChain, http, maxUint256, type Account, type Address } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+import { gasTokenName, networkOfChainId } from "../core/venue.js";
 
 const ERC20 = [
   {
@@ -79,7 +80,9 @@ export class AllowanceManager {
     const chain = defineChain({
       id: cfg.chainId,
       name: `somnia-${cfg.chainId}`,
-      nativeCurrency: { name: "Somnia", symbol: cfg.chainId === 5031 ? "SOMI" : "STT", decimals: 18 },
+      // A third copy of the gas-token rule lived here as `chainId === 5031`.
+      // venue.ts already owns it.
+      nativeCurrency: { name: "Somnia", symbol: gasTokenName(networkOfChainId(cfg.chainId)), decimals: 18 },
       rpcUrls: { default: { http: [cfg.rpcUrl] } },
     });
     this.pub = createPublicClient({ chain, transport: http(cfg.rpcUrl) });

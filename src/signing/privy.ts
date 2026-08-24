@@ -58,6 +58,7 @@
 import type { Account } from "viem";
 import type { AuthorityDescription, ChainSigner } from "../runtime/signer.js";
 import { network, type Network } from "../core/config.js";
+import { chainIdOf, NETWORKS } from "../core/venue.js";
 import { loadEnv } from "../core/env.js";
 
 /** The wallet Rivo is being asked to sign for. An address and an id, nothing more. */
@@ -86,7 +87,10 @@ export function privyConfigured(): boolean {
  * `describe()` says "requested" rather than "enforced" for that reason.
  */
 export const POLICY_INTENT = {
-  chains: ["eip155:50312", "eip155:5031"],
+  // CAIP-2, derived rather than typed out: the ids belong to the venue table
+  // and a policy document that quietly disagrees with it about which chain is
+  // which would be worse than having no document.
+  chains: NETWORKS.map((n) => `eip155:${chainIdOf(n)}`),
   allow: [
     "ERC-20 approve, to a DreamDEX BinaryPool, for the venue's collateral token",
     "BinaryPool placeBinaryOrder / cancelOrder",

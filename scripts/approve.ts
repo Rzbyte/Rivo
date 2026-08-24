@@ -26,6 +26,7 @@ import { maxUint256 } from "viem";
 import { loadEnv } from "../src/core/env.js";
 import { collateralName, COLLATERAL_TOKEN, network } from "../src/core/config.js";
 import { Indexer } from "../src/core/indexer.js";
+import { chainIdOf, rpcUrl } from "../src/core/venue.js";
 import { AllowanceManager } from "../src/runtime/allowance.js";
 
 async function main(): Promise<void> {
@@ -41,10 +42,8 @@ async function main(): Promise<void> {
 
   const idx = new Indexer();
   const mgr = new AllowanceManager({
-    rpcUrl:
-      process.env.RPC_URL ??
-      (net === "mainnet" ? "https://api.infra.mainnet.somnia.network" : "https://api.infra.testnet.somnia.network"),
-    chainId: net === "mainnet" ? 5031 : 50312,
+    rpcUrl: rpcUrl(net, process.env.RPC_URL),
+    chainId: chainIdOf(net),
     privateKey: pk,
     token: (process.env.COLLATERAL_TOKEN ?? COLLATERAL_TOKEN[net]) as `0x${string}`,
   });
