@@ -118,6 +118,16 @@ without a hash — claims, exits, merges and reconciliation adoptions that resol
 rather than being sent as orders by Rivo. /proof counts only the 16, because "confirmed" and "reached
 the chain as our transaction" are different claims and merging them would inflate the better one.
 
+SETTLEMENT PROVENANCE
+Rivo links each settled window to the Prophecy Oracle question that resolved it — the literal
+question ("What is the price of BTC in USDC at unix time N?"), the subcommittee that answered, the
+declared price, and the oracle's OWN transaction hash. That is a second on-chain record, independent
+of Rivo's, and it is why the proof does not stop at "the venue says UP".
+
+The oracle also publishes `numericDecimals`, which the markets path does not carry — the missing
+field that forces Rivo to infer a price magnitude by matching against a known value. Documented as
+SDK feedback: the field exists, it just does not travel.
+
 SOMNIA EVIDENCE
 Every hash resolves on shannon-explorer.somnia.network. Receipt status, block number and gas used are
 read back from api.infra.testnet.somnia.network rather than assumed from a successful send.

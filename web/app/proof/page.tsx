@@ -27,6 +27,10 @@ interface Run {
   settlement: {
     status: string; source?: string; outcome?: string; won?: boolean;
     closedAt?: string | null; rivoRecord?: string; detail?: string;
+    provenance?: {
+      questionId: string; question: string; committee: string;
+      settledPrice: number | null; txHash: string | null; block: number | null;
+    } | null;
   } | null;
 }
 
@@ -272,6 +276,25 @@ function RunWalkthrough({ run, network }: { run: Run; network: string }) {
     ["Somnia confirmed", "CONFIRMED", `${run.txHash.slice(0, 14)}…${run.txHash.slice(-8)}`, run.blockNumber ? `block ${run.blockNumber}` : ""],
     ["Ledger persisted", "RECORDED", "Written before signing, so a crash leaves a record rather than a gap", ""],
     ["Reconciled", "RECONCILED", "Position matched against what the chain says it holds", ""],
+    // The link that was missing. A settlement stage that says only "the venue
+    // says UP" does not say WHO decided, on what schedule, by what agreement,
+    // or in which transaction — and the oracle publishes all four, plus a
+    // second on-chain hash a reader can check independently of Rivo's.
+    ...(run.settlement?.provenance
+      ? ([
+          [
+            "Oracle answered",
+            "RESOLVED",
+            `Question #${run.settlement.provenance.questionId} — ${run.settlement.provenance.committee}` +
+              (run.settlement.provenance.settledPrice !== null
+                ? `, settled at ${run.settlement.provenance.settledPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}`
+                : ""),
+            run.settlement.provenance.txHash
+              ? `oracle tx ${run.settlement.provenance.txHash.slice(0, 12)}…${run.settlement.provenance.txHash.slice(-6)}`
+              : "",
+          ],
+        ] as [string, string, string, string][])
+      : []),
     [
       "Settlement",
       run.settlement?.status ?? "PENDING",
@@ -303,7 +326,7 @@ function RunWalkthrough({ run, network }: { run: Run; network: string }) {
                   style={{
                     fontSize: 11,
                     letterSpacing: ".08em",
-                    color: ["SETTLED", "CONFIRMED", "PASSED", "NORMALISED", "RECORDED", "RECONCILED"].includes(status)
+                    color: ["SETTLED", "CONFIRMED", "PASSED", "NORMALISED", "RECORDED", "RECONCILED", "RESOLVED"].includes(status)
                       ? "var(--pos)"
                       : "var(--warn)",
                   }}

@@ -14,6 +14,18 @@ export interface VenueEndpoints {
   indexer: string;
   /** Oracle price-feed indexer — the UNDERLYING BTC/ETH spot, not a contract's own price. */
   priceFeed: string;
+  /**
+   * Prophecy Oracle — the committee that ANSWERS the question a window settles on.
+   *
+   * A different service from `priceFeed`, and the distinction matters. The price
+   * feed is a stream of observations. This is the record of one scheduled
+   * question — "what is the price of BTC in USDC at unix time N" — the
+   * subcommittee that answered it, the value they agreed on, and the
+   * transaction that wrote it down. It is where a settlement comes FROM, and it
+   * publishes `numericDecimals`, which the markets path does not carry and
+   * which is why scaleReference() has to guess a power of ten.
+   */
+  oracle: string;
   /** The DreamDEX venue. These move; see .env.example. */
   venueId: string;
   rpc: string;
@@ -30,6 +42,7 @@ export const VENUE: Record<Network, VenueEndpoints> = {
   testnet: {
     indexer: "https://dev.smk.somnia.host/v1/graphql",
     priceFeed: "https://price-feed.dev.oracle.somnia.host/v1/graphql",
+    oracle: "https://dev.oracle.somnia.host/v1/graphql",
     venueId: "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c",
     rpc: "https://api.infra.testnet.somnia.network",
     decimals: 6,
@@ -41,6 +54,7 @@ export const VENUE: Record<Network, VenueEndpoints> = {
     indexer: "https://prd.smk.somnia.host/v1/graphql",
     // No bundled mainnet price feed yet — set RIVO_PRICE_FEED_URL there.
     priceFeed: "",
+    oracle: "https://prd.oracle.somnia.host/v1/graphql",
     venueId: "0x458b30c2d72bfd2c6317304a4594ecbafe5f729d3111b65fdc3a33bd48e5432d",
     rpc: "https://api.infra.mainnet.somnia.network",
     decimals: 18,

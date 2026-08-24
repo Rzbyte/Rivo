@@ -10,6 +10,7 @@ import { query, configured } from "@rivo/db/pool.js";
 import { portfolioById } from "@rivo/db/portfolios.js";
 import { buildView } from "@rivo/db/view.js";
 import { Indexer } from "@rivo/core/indexer.js";
+import { questionFor, type OracleQuestion } from "@rivo/core/oracle.js";
 
 export const dynamic = "force-dynamic";
 
@@ -23,18 +24,34 @@ function settlementView(
   chain: { finalized: boolean; voided: boolean; winningOutcome: number | null } | null,
   leg: string,
   local: { status: string; exit: string | null; closed_at: Date | null } | null,
+  /** The oracle question the window settled on — who decided, and in which transaction. */
+  oracle: OracleQuestion | null,
 ): Record<string, unknown> {
+  // "The venue says UP" is one link short of a proof: it does not say who
+  // decided, on what schedule, by what agreement, or in which transaction. This
+  // carries a SECOND on-chain hash — the oracle's, not Rivo's.
+  const provenance = oracle
+    ? {
+        questionId: oracle.id,
+        question: oracle.text,
+        committee: `${oracle.committee.size} members, threshold ${oracle.committee.threshold}`,
+        settledPrice: oracle.value,
+        txHash: oracle.resolvedTxHash,
+        block: oracle.resolvedAtBlock,
+      }
+    : null;
+
   if (!chain || !chain.finalized) {
-    return { status: "PENDING", source: "venue", detail: "the contract has not finalised on-chain yet" };
+    return { status: "PENDING", source: "venue", detail: "the contract has not finalised on-chain yet", provenance };
   }
   if (chain.voided) {
-    return { status: "VOIDED", source: "venue", detail: "the window was voided; no side paid out" };
+    return { status: "VOIDED", source: "venue", detail: "the window was voided; no side paid out", provenance };
   }
   // Outcome 0 is UP, the same mapping the shadow resolver uses. A finalised,
   // non-voided window always carries one; without it there is no win or loss to
   // report and PENDING is the only honest answer.
   if (chain.winningOutcome === null) {
-    return { status: "PENDING", source: "venue", detail: "finalised without a recorded outcome" };
+    return { status: "PENDING", source: "venue", detail: "finalised without a recorded outcome", provenance };
   }
   const upWon = chain.winningOutcome === 0;
   const won = leg.toUpperCase() === "UP" ? upWon : !upWon;
@@ -48,6 +65,7 @@ function settlementView(
     // out loud, because a page quietly preferring its own stale copy is how the
     // wrong thing gets asserted confidently.
     rivoRecord: local?.status === "closed" ? "closed" : "still open — this deployment no longer reconciles",
+    provenance,
   };
 }
 
@@ -181,6 +199,12 @@ export async function GET(req: Request): Promise<Response> {
         .catch(() => null)
     : null;
 
+  // And the question that answer came FROM. Matched on the window's own expiry.
+  const oracleQuestion =
+    finalised && latest?.asset && finalised.expiry
+      ? await questionFor(p.network, latest.asset, finalised.expiry)
+      : null;
+
   // Whether the position that order opened has since resolved.
   const [outcome] = latest
     ? await query<{ status: string; exit: string | null; closed_at: Date | null }>(
@@ -201,7 +225,7 @@ export async function GET(req: Request): Promise<Response> {
           blockNumber: latest.block_number,
           filled: latest.filled_qty === null ? null : Number(latest.filled_qty),
           avgPrice: latest.filled_price === null ? null : Number(latest.filled_price),
-          settlement: settlementView(finalised, latest.leg, outcome ?? null),
+          settlement: settlementView(finalised, latest.leg, outcome ?? null, oracleQuestion),
         }
       : null,
     global: {

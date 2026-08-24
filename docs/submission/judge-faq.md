@@ -106,14 +106,28 @@ reconciliation adoptions that resolved against chain state rather than being sen
 counts only the 16 — this repository has a name for the alternative ("208 positions but only 10
 transaction hashes") and tests written specifically to stop one number being presented as the other.
 
-### 9 · What is the difference between CONFIRMED and SETTLED?
+### 9 · What is the difference between CONFIRMED and SETTLED, and how do you know?
 
 `CONFIRMED` means Somnia accepted the transaction. `SETTLED` means the Event Contract expired and the
-venue finalised an outcome. They are different facts about different moments and the Proof page never
-merges them.
+venue finalised an outcome. Different facts about different moments, never merged.
 
-The demo order is both: confirmed in block 469486171, and since settled — the venue finalised that
-window **UP**, and the position was an UP leg, so it paid out.
+And the proof does not stop at the venue's word for it. Every settled window is linked to the
+Prophecy Oracle question that resolved it:
+
+```
+question   #44395 — "What is the price of BTC in USDC at unix time 1787529600 UTC?"
+committee  3 members, threshold 2, minAgreement 4
+answer     77,730.00  (declared to 2 decimals by the oracle)
+oracle tx  0x883cbc87468a93f6efe22a41a0cc8f912ff35fdf6b801db606ddf0dd7d082671
+```
+
+That hash is a **second, independent on-chain record** — the oracle's, not Rivo's. A reader can check
+it without trusting anything in this repository.
+
+### 10 · Why not just trust your own database for settlement?
+
+The demo order is both confirmed and settled: confirmed in block 469486171, and the venue finalised
+that window **UP** — the position was an UP leg, so it paid out.
 
 Settlement is read from **the venue**, not from Rivo's own positions table. That distinction is not
 pedantry, it is a defect this project shipped and fixed: the table is exactly as current as the last
@@ -123,7 +137,7 @@ early would be the single most damaging thing this project could do; asserting P
 world has already answered is the same failure pointing the other way. The artefact now carries both
 the venue's answer and whether Rivo's own record has caught up.
 
-### 10 · Can external agents use Rivo?
+### 11 · Can external agents use Rivo?
 
 Yes, over HTTP, with no code uploaded and nothing of yours running here — **and you can try it
 without an account**. Paste an endpoint into `/agents`, or:
@@ -147,7 +161,7 @@ response is a `SKIP`, not an error.
 
 Your endpoint and your auth header are never returned to a browser — `/api/agents` selects neither.
 
-### 11 · What is uniquely enabled by Event Contracts?
+### 12 · What is uniquely enabled by Event Contracts?
 
 Settlement. These contracts expire and the world answers.
 
@@ -158,7 +172,7 @@ right or wrong; here there is one, on a schedule, several times an hour, across 
 Both of Rivo's core measurements — calibration and economic validation — are downstream of that single
 property and would not exist without it.
 
-### 12 · Why would this increase DreamDEX usage?
+### 13 · Why would this increase DreamDEX usage?
 
 Because the expensive step in deploying an agent is the one between "my backtest looks good" and "I
 am willing to fund this", and nothing currently closes it.
@@ -171,7 +185,7 @@ rather than after.
 Every settled contract then makes the calibration dataset larger, which makes the next validation
 sharper. The loop compounds for the venue.
 
-### 13 · What is working, and what is future work?
+### 14 · What is working, and what is future work?
 
 **Working, in production, verifiable from the live URL:**
 

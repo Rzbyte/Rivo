@@ -146,8 +146,15 @@ ORDER SUBMITTED     SUBMITTED
 SOMNIA CONFIRMED    CONFIRMED    block 469486171
 LEDGER PERSISTED    RECORDED
 RECONCILED          RECONCILED
-SETTLEMENT          PENDING
+ORACLE ANSWERED     RESOLVED     question #44395, 3 members threshold 2, settled at 77,730.00
+SETTLEMENT          SETTLED      UP — this leg paid out
 ```
+
+The oracle line is the one to pause on for three seconds:
+
+> "And this is where the settlement came from. Not our database — the Prophecy Oracle question this
+> window resolves on, the committee that answered it, and their own transaction hash. That is a
+> second on-chain record, independent of anything we wrote."
 
 > "A real Somnia transaction, and the receipt was read back from the chain rather than assumed from
 > the send — that is why there is a block number.

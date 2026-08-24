@@ -27,6 +27,7 @@ import { Indexer } from "../core/indexer.js";
 import { VENUE, txUrl, addressUrl, collateralName, gasTokenName, tenorLabel, chainIdOf } from "../core/venue.js";
 import { network } from "../core/config.js";
 import { PRODUCTION_STRATEGY } from "../research/gating.js";
+import { questionFor, type OracleQuestion } from "../core/oracle.js";
 import { MIN_TRADE_FLOOR } from "../runtime/loop.js";
 import { LOT_STEPS_PER_SHARE } from "../runtime/pipeline.js";
 
@@ -62,18 +63,46 @@ function settlementOf(
   chain: { finalized: boolean; voided: boolean; winningOutcome: number | null } | null,
   leg: string,
   local: { status: string; closed_at: Date | null } | null,
+  /**
+   * The oracle question this window settled on, when it could be reached.
+   *
+   * The link that was missing. "The venue says UP" is one link short of a proof:
+   * it does not say who decided, on what schedule, by what agreement, or in
+   * which transaction. This carries a SECOND on-chain hash — the oracle's, not
+   * Rivo's — that a reader can check independently of anything here.
+   */
+  oracle: OracleQuestion | null,
 ): Record<string, unknown> {
+  const provenance = oracle
+    ? {
+        oracleQuestionId: oracle.id,
+        question: oracle.text,
+        oracleStatus: oracle.status,
+        // The committee that answered, in the oracle's own terms.
+        committee: oracle.committee,
+        // Scaled by the oracle's DECLARED decimals rather than by a guess. The
+        // markets path does not carry this field, which is why scaleReference()
+        // has to infer a power of ten — see docs/SDK-FEEDBACK.md §1.
+        settledPrice: oracle.value,
+        priceDecimals: oracle.decimals,
+        resolvedAt: oracle.resolvedAt,
+        resolvedAtBlock: oracle.resolvedAtBlock,
+        /** A second transaction, independent of Rivo's, that a reader can check. */
+        oracleTxHash: oracle.resolvedTxHash,
+      }
+    : { oracleQuestionId: null, detail: "the settling question could not be reached when this was written" };
+
   if (!chain || !chain.finalized) {
-    return { result: "PENDING", source: "venue", detail: "the contract has not finalised on-chain yet" };
+    return { result: "PENDING", source: "venue", detail: "the contract has not finalised on-chain yet", provenance };
   }
   if (chain.voided) {
-    return { result: "VOIDED", source: "venue", detail: "the window was voided; no side paid out" };
+    return { result: "VOIDED", source: "venue", detail: "the window was voided; no side paid out", provenance };
   }
   // Outcome 0 is UP on this venue — the same mapping the shadow resolver uses.
   // A finalised, non-voided window always carries one; if it somehow does not,
   // that is not a settlement anybody should read a win or a loss out of.
   if (chain.winningOutcome === null) {
-    return { result: "PENDING", source: "venue", detail: "finalised without a recorded outcome" };
+    return { result: "PENDING", source: "venue", detail: "finalised without a recorded outcome", provenance };
   }
   const upWon = chain.winningOutcome === 0;
   const won = leg.toUpperCase() === "UP" ? upWon : !upWon;
@@ -92,6 +121,7 @@ function settlementOf(
       local?.status === "closed"
         ? "closed — Rivo reconciled it"
         : "still open — this deployment is stopped and no longer reconciles",
+    provenance,
   };
 }
 
@@ -159,6 +189,12 @@ async function fromPortfolio(portfolioId: string, out: string, net: "testnet" | 
   // record has not caught up that gap is REPORTED rather than smoothed over.
   const outcomes = e ? await new Indexer().outcomes([e.market_id]) : new Map();
   const settled = e ? (outcomes.get(e.market_id.toLowerCase()) ?? outcomes.get(e.market_id) ?? null) : null;
+
+  // And the question the venue's answer came FROM. Matched on the window's own
+  // expiry — exact, not approximate, because a tolerance would silently attach
+  // one window's provenance to another's.
+  const oracleQuestion =
+    settled && e?.asset && settled.expiry ? await questionFor(net, e.asset, settled.expiry) : null;
 
   // Did the position that order opened resolve?
   const [pos] = e
@@ -294,7 +330,7 @@ async function fromPortfolio(portfolioId: string, out: string, net: "testnet" | 
           },
           ledger: { result: "RECORDED", executionId: e.id, detail: "written before signing, so a crash leaves a record rather than a gap" },
           reconciliation: { result: "RECONCILED", detail: "position matched against what the chain reports the wallet holds" },
-          settlement: settlementOf(settled, e.leg, pos ?? null),
+          settlement: settlementOf(settled, e.leg, pos ?? null, oracleQuestion),
         }
       : null,
     note: e ? null : "This run has no confirmed transaction. Saying so is the artefact.",

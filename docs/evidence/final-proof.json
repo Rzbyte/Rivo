@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-24T17:07:44.656Z",
+  "generatedAt": "2026-08-24T19:58:20.614Z",
   "about": "One order from one deployment, walked end to end. The same run /proof shows, so the product page and this file cannot disagree. Fields that have not happened yet say PENDING.",
   "run": {
     "id": "5b35e672-963b-4af1-9076-539708692ec1",
@@ -109,7 +109,22 @@
       "won": true,
       "detail": "this leg paid out",
       "closedAt": null,
-      "rivoRecord": "still open — this deployment is stopped and no longer reconciles"
+      "rivoRecord": "still open — this deployment is stopped and no longer reconciles",
+      "provenance": {
+        "oracleQuestionId": "44395",
+        "question": "What is the price of BTC in USDC at unix time 1787529600 UTC?",
+        "oracleStatus": "Resolved",
+        "committee": {
+          "size": 3,
+          "threshold": 2,
+          "minAgreement": 4
+        },
+        "settledPrice": 77730,
+        "priceDecimals": 2,
+        "resolvedAt": 1787529602,
+        "resolvedAtBlock": 469567400,
+        "oracleTxHash": "0x883cbc87468a93f6efe22a41a0cc8f912ff35fdf6b801db606ddf0dd7d082671"
+      }
     }
   },
   "note": null,
