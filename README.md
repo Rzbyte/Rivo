@@ -35,6 +35,23 @@ Somnia × DreamDEX Event Contracts Hackathon.
 
 ---
 
+## What Rivo is
+
+**Understand the market. Validate the agent. Prove it on DreamDEX.**
+
+Four things, none of which needs a wallet to read:
+
+| | |
+|---|---|
+| **Markets** | Every live Event Contract, with implied probability, spread, depth and time to expiry — beside how often comparable contracts actually settled true. |
+| **Calibration** | Is 67% actually 67%? Measured against 737 settled windows: Brier 0.1647 against 0.2498 for quoting the base rate, 34.1% skill. [Methodology](docs/CALIBRATION.md). |
+| **Agents** | Whether a model has economic edge rather than merely accuracy. Rivo's own model is the first case study, and it is **REJECTED**. |
+| **Proof** | Decisions, shadow runs, submitted transactions and confirmed receipts — counted separately and never merged. |
+
+The portfolio engine, the execution ledger, the risk controls and the Privy signing path are all
+still here. They stopped being the headline and became what they always were: the deployment
+infrastructure behind the proof.
+
 ## Before capital moves
 
 Five things have to agree, and the first four are checked before an executor is built:
@@ -135,7 +152,7 @@ otherwise have hit ourselves.
 npm test
 ```
 
-**673 tests** across the things that either move money or produce a published number: the
+**685 tests** across the things that either move money or produce a published number: the
 dual-crossing-path book, the fair-value model and volatility estimator, the scoring rules behind
 every figure in [EVIDENCE.md](docs/EVIDENCE.md), the capital allocator, the position manager, settlement, and
 on-chain reconciliation.
@@ -392,7 +409,7 @@ src/
   web/         the original cockpit server + static snapshot export
   public/      the public pricing page — browser bundle, shares the runtime's math
   cli/         start · worker · web · report · calibrate · scan · allocate · backtest · … · agent
-  *.test.ts    673 tests, colocated with what they cover
+  *.test.ts    685 tests, colocated with what they cover
 web/
   app/         Next.js — landing, the product, and the control-plane API
   components/  the dashboard, built around decisions rather than fills
@@ -560,7 +577,7 @@ validates against the real thing.
 | `npm run privy:check` | is this deployment's Privy set up? authenticates for real, lists what is missing |
 | `npm run agent -- new \| status \| fund \| sweep` | the wallet Rivo signs with, and what it may lose |
 | `npm run probe:operator` | can EC be traded non-custodially? measured, not assumed |
-| `npm test` · `npm run typecheck` | 673 tests · strict TypeScript across engine, page and web app |
+| `npm test` · `npm run typecheck` | 685 tests · strict TypeScript across engine, page and web app |
 | `npm run doctor` | can Rivo trade right now — signer, gas, collateral, venue, kit |
 | `npm run faucet` | mint testnet tUSDC — a direct `faucet(uint256)` call, no kit needed |
 | `npm run check:kit` · `npm run link:kit` | verify / install the optional bot kit |
