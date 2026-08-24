@@ -10,7 +10,7 @@ import { NextResponse } from "next/server";
 import { Indexer } from "@rivo/core/indexer.js";
 import { snapshot } from "@rivo/engine/scan.js";
 import { marketsView, type MarketsView } from "@rivo/intel/markets.js";
-import type { CalibrationReport } from "@rivo/intel/calibration.js";
+import { cohortKey, type CalibrationReport } from "@rivo/intel/calibration.js";
 import { query, configured } from "@rivo/db/pool.js";
 import { network } from "@rivo/core/config.js";
 
@@ -19,16 +19,25 @@ export const dynamic = "force-dynamic";
 const TTL_MS = 8_000;
 let cached: { at: number; view: MarketsView } | null = null;
 
-/** The stored calibration, or null when none has been computed. */
-async function calibration(): Promise<CalibrationReport | null> {
-  if (!configured()) return null;
-  const rows = await query<{ report: CalibrationReport }>(
-    `SELECT report FROM calibration_reports
-      WHERE network = $1 AND asset IS NULL AND interval_sec IS NULL AND basis = 'window'
-      ORDER BY computed_at DESC LIMIT 1`,
+/**
+ * The newest report for every cohort, keyed by cohort.
+ *
+ * `DISTINCT ON` takes the latest row per cohort in one pass — a market card
+ * needs its own cohort and every wider one it might fall back to, and fetching
+ * them separately would be four round trips per card.
+ */
+async function calibration(): Promise<Map<string, CalibrationReport>> {
+  const out = new Map<string, CalibrationReport>();
+  if (!configured()) return out;
+  const rows = await query<{ asset: string | null; interval_sec: number | null; report: CalibrationReport }>(
+    `SELECT DISTINCT ON (asset, interval_sec) asset, interval_sec, report
+       FROM calibration_reports
+      WHERE network = $1 AND basis = 'window'
+      ORDER BY asset, interval_sec, computed_at DESC`,
     [network()],
   );
-  return rows[0]?.report ?? null;
+  for (const r of rows) out.set(cohortKey({ asset: r.asset, intervalSec: r.interval_sec }), r.report);
+  return out;
 }
 
 export async function GET(): Promise<Response> {

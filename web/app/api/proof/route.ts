@@ -28,11 +28,24 @@ export async function GET(req: Request): Promise<Response> {
   if (!p) return NextResponse.json({ error: "no such portfolio" }, { status: 404 });
   const view = await buildView(p);
 
-  // The counts that must never be conflated. Each one answers a different
-  // question and the labels below are the product's promise about them.
+  // Which agent this deployment runs. Null means the built-in reference model,
+  // which every portfolio predating the agent registry has in fact been running.
+  const [agent] = await query<{ id: string; slug: string; label: string; state: string }>(
+    `SELECT a.id, a.slug, a.label, a.state
+       FROM portfolios p LEFT JOIN agents a ON a.id = p.agent_id
+      WHERE p.id = $1 AND a.id IS NOT NULL`,
+    [id],
+  );
+
+  // The counts that must never be conflated, each scoped to THIS run.
+  //
+  // The shadow subqueries used to have no scope at all: they counted every
+  // decision from every agent and reported the total inside a portfolio-specific
+  // object, so a reader looking at one deployment saw another agent's numbers
+  // attributed to it. Evidence integrity outranks an impressive number.
   const [counts] = await query<{
     attempts: string; submitted: string; confirmed: string; failed: string;
-    settled: string; open_lots: string; closed_lots: string; shadow: string; shadow_settled: string;
+    open_lots: string; closed_lots: string; shadow: string; shadow_settled: string;
   }>(
     `SELECT
        (SELECT count(*) FROM executions WHERE portfolio_id = $1)::text                                AS attempts,
@@ -40,12 +53,18 @@ export async function GET(req: Request): Promise<Response> {
        (SELECT count(*) FROM executions WHERE portfolio_id = $1 AND status = 'confirmed'
           AND tx_hash IS NOT NULL)::text                                                              AS confirmed,
        (SELECT count(*) FROM executions WHERE portfolio_id = $1 AND status = 'failed')::text          AS failed,
-       (SELECT count(*) FROM positions  WHERE portfolio_id = $1 AND status = 'closed')::text          AS settled,
        (SELECT count(*) FROM positions  WHERE portfolio_id = $1 AND status = 'open')::text            AS open_lots,
        (SELECT count(*) FROM positions  WHERE portfolio_id = $1 AND status = 'closed')::text          AS closed_lots,
-       (SELECT count(*) FROM shadow_decisions sd JOIN agents a ON a.id = sd.agent_id)::text           AS shadow,
-       (SELECT count(*) FROM shadow_decisions WHERE settled_at IS NOT NULL)::text                     AS shadow_settled`,
-    [id],
+       -- Scoped to this run's agent, and to this deployment where the shadow
+       -- row recorded one. A row with no portfolio_id belongs to the agent but
+       -- not to a specific deployment, and is counted at the agent level only.
+       (SELECT count(*) FROM shadow_decisions
+          WHERE agent_id = $2::uuid
+            AND (portfolio_id IS NULL OR portfolio_id = $1))::text                                    AS shadow,
+       (SELECT count(*) FROM shadow_decisions
+          WHERE agent_id = $2::uuid AND settled_at IS NOT NULL
+            AND (portfolio_id IS NULL OR portfolio_id = $1))::text                                    AS shadow_settled`,
+    [id, agent?.id ?? null],
   );
 
   const txs = await query<{ tx_hash: string; status: string; action: string; created_at: Date }>(
@@ -56,7 +75,21 @@ export async function GET(req: Request): Promise<Response> {
     [id],
   );
 
+  // Ecosystem-wide totals, kept in their own object and labelled, because they
+  // describe every agent on the deployment rather than this one.
+  const [global] = await query<{ agents: string; shadow: string; settled: string }>(
+    `SELECT (SELECT count(*) FROM agents)::text                                     AS agents,
+            (SELECT count(*) FROM shadow_decisions)::text                           AS shadow,
+            (SELECT count(*) FROM shadow_decisions WHERE settled_at IS NOT NULL)::text AS settled`,
+  );
+
   return NextResponse.json({
+    agent: agent ? { slug: agent.slug, label: agent.label, state: agent.state } : null,
+    global: {
+      agents: Number(global?.agents ?? 0),
+      shadowDecisions: Number(global?.shadow ?? 0),
+      shadowSettled: Number(global?.settled ?? 0),
+    },
     portfolio: {
       id: p.id,
       address: p.address,

@@ -94,7 +94,7 @@ export function evidence(e: EvidenceBundle): string {
 npm run backtest  -- --days 30    # Rivo against five unconstrained baselines
 npm run coherence -- --days 30    # cross-tenor arbitrage bound
 npm run proof     -- --data-dir ./data-live   # the live execution chain
-npm test                          # 705 tests, entirely offline</code></pre>
+npm test                          # 722 tests, entirely offline</code></pre>
     </div>
   </div>`;
 }

@@ -18,13 +18,17 @@ interface Card {
   price: number | null; bid: number | null; ask: number | null;
   spread: number | null; depth: number;
   reference: number | null; gap: number | null;
-  historical: { realized: number; windows: number; lo95: number; hi95: number; thin: boolean } | null;
+  historical: {
+    realized: number; windows: number; lo95: number; hi95: number; thin: boolean;
+    cohortLabel: string; fellBack: boolean;
+  } | null;
   assessment: { code: AssessmentCode; detail: string };
 }
 interface Payload {
   at: number; cards: Card[];
   unpriced: { marketId: string; reason: string }[];
   calibration: { windows: number; from: number; to: number; basis: string } | null;
+  cohorts?: number;
   error?: string;
 }
 
@@ -73,7 +77,7 @@ export default function Markets() {
               <h2>{data.cards.length} live legs</h2>
               <span className="hint">
                 {data.calibration
-                  ? `compared against ${data.calibration.windows.toLocaleString()} settled windows`
+                  ? `${data.calibration.windows.toLocaleString()} settled windows across ${data.cohorts ?? 1} cohorts`
                   : "no calibration computed yet — assessments will say so"}
               </span>
             </div>
@@ -126,11 +130,18 @@ function MarketCard({ c }: { c: Card }) {
         <Row k="Rivo reference" v={pct(c.reference)} />
         <Row k="Spread" v={pct(c.spread, 2)} />
         <Row k="Depth at reference" v={`${c.depth.toFixed(1)} sh`} />
-        <Row
-          k="Sample"
-          v={c.historical ? `${c.historical.windows} windows` : "none"}
-        />
+        <Row k="Sample" v={c.historical ? `${c.historical.windows} windows` : "none"} />
       </div>
+
+      {/* Where the historical number came from. Without this "61%" is a figure
+          with no population attached, and the reader cannot check it. */}
+      {c.historical && (
+        <p className="hint" style={{ marginTop: 0, marginBottom: 8 }}>
+          Compared against <strong>{c.historical.cohortLabel}</strong>
+          {c.historical.fellBack && " — a wider set, because this market's own cohort had too few settled windows"}
+          {c.historical.thin && " · sample below the floor, so no claim is made"}
+        </p>
+      )}
 
       <div
         className={`banner ${tone === "claim" ? "warn" : tone === "caution" ? "bad" : ""}`}

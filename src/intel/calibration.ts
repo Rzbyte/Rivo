@@ -25,6 +25,7 @@
 // resampling windows rather than rows.
 
 import type { Observation } from "../research/dataset.js";
+import { TRADEABLE_CADENCES, matchesCadence } from "../core/venue.js";
 
 /** How an observation was sampled. Reported, never inferred by the reader. */
 export type SamplingBasis =
@@ -230,4 +231,133 @@ export function calibrate(rows: Observation[], o: CalibrationOptions = {}): Cali
     skill: brierBase > 0 ? 1 - brier / brierBase : 0,
     baseRate,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Cohorts
+// ---------------------------------------------------------------------------
+
+/**
+ * Which comparable set a number came from.
+ *
+ * A market card saying "historical realized 61%" is worthless unless the reader
+ * can find out what 61% is the realized rate OF. BTC 15-minute contracts and
+ * ETH daily contracts are different populations, and pooling them to reach a
+ * comfortable sample size answers a question nobody asked.
+ */
+export interface Cohort {
+  asset: string | null;
+  intervalSec: number | null;
+}
+
+export const GLOBAL_COHORT: Cohort = { asset: null, intervalSec: null };
+
+/** Human-readable, and specific enough to be checkable. */
+export function cohortLabel(c: Cohort): string {
+  if (c.asset && c.intervalSec) return `${c.asset} ${tenorWords(c.intervalSec)}`;
+  if (c.asset) return `${c.asset}, all tenors`;
+  if (c.intervalSec) return `all assets, ${tenorWords(c.intervalSec)}`;
+  return "all assets and tenors";
+}
+
+function tenorWords(sec: number): string {
+  if (sec % 86_400 === 0) return `${sec / 86_400}d`;
+  if (sec % 3_600 === 0) return `${Math.round(sec / 3_600)}h`;
+  return `${Math.round(sec / 60)}m`;
+}
+
+/**
+ * The order to try, most specific first.
+ *
+ * Tenor-without-asset sits above global because a 15-minute contract on either
+ * underlying is closer to another 15-minute contract than it is to a daily one:
+ * the thing that moves a calibration curve most is how much can happen before
+ * settlement.
+ */
+export function cohortChain(asset: string, intervalSec: number): Cohort[] {
+  const tenor = canonicalTenor(intervalSec);
+  return [
+    { asset, intervalSec: tenor },
+    { asset, intervalSec: null },
+    { asset: null, intervalSec: tenor },
+    GLOBAL_COHORT,
+  ];
+}
+
+export const sameCohort = (a: Cohort, b: Cohort): boolean =>
+  a.asset === b.asset && a.intervalSec === b.intervalSec;
+
+export interface CohortLookup {
+  /** The bucket that covered the price, or null when none did. */
+  bucket: Bucket | null;
+  /** Which cohort actually answered. Always reported. */
+  cohort: Cohort;
+  /** True when a more specific cohort existed but was too thin to use. */
+  fellBack: boolean;
+}
+
+/**
+ * Find the most specific cohort that can honestly answer for this price.
+ *
+ * Falls back only on sample size, never on convenience, and reports which
+ * cohort answered so the number can be traced. A thin bucket at the bottom of
+ * the chain is returned anyway — marked thin — because "we looked and the
+ * sample is small" is information, and silence is not.
+ */
+export function lookupCohort(
+  reports: Map<string, CalibrationReport>,
+  asset: string,
+  intervalSec: number,
+  price: number,
+): CohortLookup {
+  const chain = cohortChain(asset, intervalSec);
+  let firstFound: CohortLookup | null = null;
+
+  for (const c of chain) {
+    const report = reports.get(cohortKey(c));
+    if (!report) continue;
+    const bucket = report.buckets.find((b) => price >= b.lo && (b.hi === 1 ? price <= b.hi : price < b.hi));
+    if (!bucket) continue;
+    const hit: CohortLookup = { bucket, cohort: c, fellBack: !sameCohort(c, chain[0]!) };
+    if (!bucket.thin) return hit;
+    // Remember the most specific answer we saw, in case nothing thicker exists.
+    firstFound ??= hit;
+  }
+  return firstFound ?? { bucket: null, cohort: chain[0]!, fellBack: false };
+}
+
+/**
+ * The canonical tenor for an observed interval.
+ *
+ * Windows drift: the venue reports 898 and 900, 3598 and 3600, for what is one
+ * series. Keying cohorts on the raw number split "BTC 15m" into a cohort of 298
+ * windows and one of 2, which made every sample look smaller than it is and put
+ * usable buckets below the floor for no reason. `matchesCadence` already
+ * describes the tolerance the rest of the engine uses.
+ */
+export function canonicalTenor(sec: number): number {
+  for (const c of TRADEABLE_CADENCES) if (matchesCadence(sec, c)) return c;
+  return sec;
+}
+
+/** Stable key for a cohort, for maps and for the database. */
+export const cohortKey = (c: Cohort): string => `${c.asset ?? "*"}:${c.intervalSec ?? "*"}`;
+
+/** Split rows into the cohort they belong to, plus every parent cohort. */
+export function cohortsOf(rows: Observation[]): Map<string, { cohort: Cohort; rows: Observation[] }> {
+  const out = new Map<string, { cohort: Cohort; rows: Observation[] }>();
+  const add = (c: Cohort, r: Observation): void => {
+    const k = cohortKey(c);
+    const e = out.get(k);
+    if (e) e.rows.push(r);
+    else out.set(k, { cohort: c, rows: [r] });
+  };
+  for (const r of rows) {
+    const tenor = canonicalTenor(r.intervalSec);
+    add({ asset: r.asset, intervalSec: tenor }, r);
+    add({ asset: r.asset, intervalSec: null }, r);
+    add({ asset: null, intervalSec: tenor }, r);
+    add(GLOBAL_COHORT, r);
+  }
+  return out;
 }

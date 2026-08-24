@@ -11,7 +11,7 @@ import { writeFileSync, readFileSync, existsSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { Indexer } from "../core/indexer.js";
 import { buildObservations, type Observation } from "../research/dataset.js";
-import { calibrate, type CalibrationReport } from "../intel/calibration.js";
+import { calibrate, cohortsOf, cohortKey, cohortLabel, GLOBAL_COHORT, type CalibrationReport } from "../intel/calibration.js";
 import { network } from "../core/config.js";
 
 const arg = (flag: string, fallback?: string): string | undefined => {
@@ -86,15 +86,43 @@ async function main(): Promise<void> {
   console.log("facts. Both are here because hiding one of them is how a calibration claim gets");
   console.log("its confidence from correlation.");
 
+  // Per-cohort reports. A market card saying "historical realized 61%" is
+  // worthless unless the reader can find out what 61% is the realized rate OF,
+  // and BTC 15-minute contracts are a different population from ETH daily ones.
+  const cohorts = cohortsOf(executable);
+  console.log("");
+  console.log("BY COHORT  ·  most specific first, and every one carries its own sample");
+  console.log("-".repeat(96));
+  console.log(`  ${"cohort".padEnd(26)} ${"windows".padStart(8)} ${"buckets".padStart(8)} ${"usable".padStart(7)} ${"brier".padStart(8)} ${"skill".padStart(8)}`);
+  const byCohort = new Map<string, CalibrationReport>();
+  for (const [key, { cohort, rows: cr }] of [...cohorts].sort()) {
+    const rep = calibrate(cr, { basis: "window" });
+    byCohort.set(key, rep);
+    const usable = rep.buckets.filter((b) => !b.thin).length;
+    console.log(
+      `  ${cohortLabel(cohort).padEnd(26)} ${String(rep.windows).padStart(8)} ${String(rep.buckets.length).padStart(8)} ` +
+        `${String(usable).padStart(7)} ${rep.brier.toFixed(4).padStart(8)} ${pct(rep.skill).padStart(8)}`,
+    );
+  }
+  console.log("");
+  console.log("A cohort with no usable buckets is not a failure — it is the honest answer for a");
+  console.log("population this venue has not settled enough of yet. Lookups fall back to a wider");
+  console.log("cohort and say so, rather than quoting a number from four windows.");
+
   if (has("--store")) {
     const { query, closeDb } = await import("../db/pool.js");
-    await query(
-      `INSERT INTO calibration_reports
-         (network, asset, interval_sec, basis, observations, windows, period_from, period_to, brier, skill, report)
-       VALUES ($1, NULL, NULL, 'window', $2, $3, to_timestamp($4), to_timestamp($5), $6, $7, $8)`,
-      [network(), windowBasis.n, windowBasis.windows, windowBasis.from, windowBasis.to, windowBasis.brier, windowBasis.skill, JSON.stringify(windowBasis)],
-    );
-    console.log("\nstored to calibration_reports");
+    let stored = 0;
+    for (const [key, { cohort }] of cohorts) {
+      const rep = byCohort.get(key)!;
+      await query(
+        `INSERT INTO calibration_reports
+           (network, asset, interval_sec, basis, observations, windows, period_from, period_to, brier, skill, report)
+         VALUES ($1, $2, $3, 'window', $4, $5, to_timestamp($6), to_timestamp($7), $8, $9, $10)`,
+        [network(), cohort.asset, cohort.intervalSec, rep.n, rep.windows, rep.from, rep.to, rep.brier, rep.skill, JSON.stringify(rep)],
+      );
+      stored++;
+    }
+    console.log(`\nstored ${stored} cohort report(s) to calibration_reports`);
     await closeDb();
   }
 

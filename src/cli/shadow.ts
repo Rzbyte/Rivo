@@ -23,6 +23,16 @@ const has = (f: string): boolean => process.argv.includes(f);
 
 interface AgentRow { id: string; slug: string; label: string; kind: string; endpoint: string | null; state: string }
 
+/**
+ * The deployment a shadow decision belongs to.
+ *
+ * Populated once per run from the portfolios table, so evidence can be scoped
+ * to a deployment rather than only to an agent. Null is a supported answer: an
+ * agent with no deployment is being shadowed on its own.
+ */
+const deployments = new Map<string, string | null>();
+const deploymentFor = (agentId: string): string | null => deployments.get(agentId) ?? null;
+
 /** Collateral one agent may ask for on one leg. Rivo's number, not theirs. */
 const MAX_NOTIONAL = Number(arg("--max-notional", "5"));
 
@@ -52,6 +62,7 @@ async function decideOnce(idx: Indexer, agents: AgentRow[], out: (s: string) => 
 
       await recordShadow({
         agentId: a.id,
+        portfolioId: deploymentFor(a.id),
         marketId: o.marketId, asset: o.asset, leg: o.leg as Leg,
         intervalSec: o.intervalSec, expiry: o.expiry,
         marketPrice: o.ask ?? o.mid ?? 0,
@@ -114,6 +125,14 @@ async function main(): Promise<void> {
   for (const a of agents) console.log(`  ${a.slug.padEnd(14)} ${a.label}  [${a.state}]${a.kind === "http" ? "  http" : ""}`);
   console.log(`  max notional per leg  ${MAX_NOTIONAL}`);
   console.log("");
+
+  for (const a of agents) {
+    const [row] = await query<{ id: string }>(
+      `SELECT id FROM portfolios WHERE agent_id = $1 ORDER BY created_at LIMIT 1`,
+      [a.id],
+    );
+    deployments.set(a.id, row?.id ?? null);
+  }
 
   const idx = new Indexer();
   let pass = 0;

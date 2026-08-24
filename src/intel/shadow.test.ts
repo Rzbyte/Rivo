@@ -2,7 +2,7 @@
 // quotes a hypothetical result as a real one.
 
 import { describe, expect, it, beforeAll, afterAll, beforeEach } from "vitest";
-import { haveDatabase, truncateAll, withSchema } from "../db/testing.js";
+import { haveDatabase, seedPortfolio, truncateAll, withSchema } from "../db/testing.js";
 import { query } from "../db/pool.js";
 import { payout, hypotheticalPnl, recordShadow, pendingShadow, resolveShadow, shadowSummary } from "./shadow.js";
 
@@ -129,6 +129,47 @@ describe.skipIf(!haveDatabase())("the shadow ledger", () => {
     // Only the sized one counts as an entry; the SKIP has no result.
     expect(s.entered).toBe(1);
     expect(s.hypotheticalPnl).toBeCloseTo(6, 6);
+  });
+
+  it("never attributes one agent's decisions to another", async () => {
+    // The bug this guards: the proof endpoint counted every shadow decision
+    // from every agent and reported the total inside a portfolio-specific
+    // object, so a reader looking at one deployment saw another agent's numbers
+    // attributed to it. An impressive statistic that is wrong is worse than a
+    // small one that is right.
+    const [other] = await query<{ id: string }>(
+      `INSERT INTO agents (slug, label, kind, state) VALUES ('o','O','builtin','SHADOW_ONLY') RETURNING id`,
+    );
+    await decide();
+    await decide({ agentId: other!.id });
+    await decide({ agentId: other!.id });
+
+    expect((await shadowSummary(agentId)).decisions).toBe(1);
+    expect((await shadowSummary(other!.id)).decisions).toBe(2);
+  });
+
+  it("separates two deployments of the same agent", async () => {
+    // An agent can run in a shadow deployment and a testnet deployment at once.
+    // Reporting both under either is the same class of error one level down.
+    const mk = async (): Promise<string> => {
+      const { userId, walletId } = await seedPortfolio();
+      const [row] = await query<{ id: string }>(
+        `INSERT INTO portfolios (user_id, wallet_id, network, capital, profile, mode, state, agent_id)
+         VALUES ($1, $2, 'testnet', 50, 'balanced', 'shadow', 'running', $3) RETURNING id`,
+        [userId, walletId, agentId],
+      );
+      return row!.id;
+    };
+    const a = await mk();
+    const b = await mk();
+    await decide({ portfolioId: a });
+    await decide({ portfolioId: a });
+    await decide({ portfolioId: b });
+
+    expect((await shadowSummary(agentId, a)).decisions).toBe(2);
+    expect((await shadowSummary(agentId, b)).decisions).toBe(1);
+    // Unscoped still sees everything the agent did, which is the other true answer.
+    expect((await shadowSummary(agentId)).decisions).toBe(3);
   });
 
   it("keeps outcome and settled_at together or not at all", async () => {

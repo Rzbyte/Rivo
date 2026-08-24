@@ -21,6 +21,15 @@ import type { Leg } from "../engine/book.js";
 
 export interface ShadowDecision {
   agentId: string;
+  /**
+   * The deployment this decision belongs to, when there is one.
+   *
+   * An agent can run in more than one place at once — a shadow deployment and an
+   * experimental testnet deployment — and the Proof surface has to be able to
+   * say which run produced which evidence. Null means the agent was asked
+   * outside any deployment, which is a real case and not a missing value.
+   */
+  portfolioId?: string | null;
   marketId: string;
   asset: Asset;
   leg: Leg;
@@ -43,12 +52,12 @@ export interface ShadowDecision {
 export async function recordShadow(d: ShadowDecision): Promise<void> {
   await query(
     `INSERT INTO shadow_decisions
-       (agent_id, market_id, asset, leg, interval_sec, expiry,
+       (agent_id, portfolio_id, market_id, asset, leg, interval_sec, expiry,
         market_price, agent_price, confidence, action, reason,
         hypothetical_size, hypothetical_entry)
-     VALUES ($1,$2,$3,$4,$5, to_timestamp($6), $7,$8,$9,$10,$11,$12,$13)`,
+     VALUES ($1,$2,$3,$4,$5,$6, to_timestamp($7), $8,$9,$10,$11,$12,$13,$14)`,
     [
-      d.agentId, d.marketId, d.asset, d.leg, d.intervalSec, d.expiry,
+      d.agentId, d.portfolioId ?? null, d.marketId, d.asset, d.leg, d.intervalSec, d.expiry,
       d.marketPrice, d.agentPrice, d.confidence, d.action, d.reason,
       d.hypotheticalSize, d.hypotheticalEntry,
     ],
@@ -136,8 +145,14 @@ export interface ShadowSummary {
   hitRate: number | null;
 }
 
-/** What an agent's shadow record adds up to. Every number is hypothetical. */
-export async function shadowSummary(agentId: string): Promise<ShadowSummary> {
+/**
+ * What an agent's shadow record adds up to. Every number is hypothetical.
+ *
+ * `portfolioId` narrows it to one deployment. Without that narrowing an agent
+ * running in two places reports both under either, which is the shape of the
+ * bug this parameter exists to prevent.
+ */
+export async function shadowSummary(agentId: string, portfolioId?: string | null): Promise<ShadowSummary> {
   const [r] = await query<{
     decisions: string; settled: string; entered: string; pnl: string | null; hits: string | null;
   }>(
@@ -149,8 +164,9 @@ export async function shadowSummary(agentId: string): Promise<ShadowSummary> {
             avg(outcome::numeric) FILTER (WHERE settled_at IS NOT NULL
                               AND hypothetical_entry IS NOT NULL)::text               AS hits
        FROM shadow_decisions
-      WHERE agent_id = $1`,
-    [agentId],
+      WHERE agent_id = $1
+        AND ($2::uuid IS NULL OR portfolio_id = $2::uuid)`,
+    [agentId, portfolioId ?? null],
   );
   return {
     decisions: Number(r?.decisions ?? 0),

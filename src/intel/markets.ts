@@ -15,7 +15,7 @@ import type { Opportunity } from "../engine/opportunity.js";
 import type { Asset } from "../core/config.js";
 import type { Leg } from "../engine/book.js";
 import { assess, type Assessment } from "./assessment.js";
-import type { CalibrationReport } from "./calibration.js";
+import { lookupCohort, cohortLabel, type CalibrationReport, type Cohort } from "./calibration.js";
 
 export interface MarketCard {
   marketId: string;
@@ -45,7 +45,13 @@ export interface MarketCard {
    * How often comparable contracts settled true, and on how many independent
    * settled windows. Null when no bucket covers this price.
    */
-  historical: { realized: number; windows: number; lo95: number; hi95: number; thin: boolean } | null;
+  historical: {
+    realized: number; windows: number; lo95: number; hi95: number; thin: boolean;
+    /** Which comparable set produced this number, and how it is described. */
+    cohort: Cohort; cohortLabel: string;
+    /** True when a more specific cohort existed but had too few windows to use. */
+    fellBack: boolean;
+  } | null;
 
   assessment: Assessment;
 }
@@ -55,15 +61,32 @@ export interface MarketsView {
   cards: MarketCard[];
   /** Windows the engine could not price, and why. Shown rather than dropped. */
   unpriced: { marketId: string; reason: string }[];
-  /** Where the historical comparison came from. Null when none was supplied. */
+  /** The global cohort's provenance. Null when nothing has been computed. */
   calibration: { windows: number; from: number; to: number; basis: string } | null;
+  /** How many cohorts were available to fall back through. */
+  cohorts: number;
 }
 
-/** The historical bucket covering `price`, if the report has one. */
-function bucketFor(report: CalibrationReport | null, price: number): MarketCard["historical"] {
-  if (!report) return null;
-  const b = report.buckets.find((x) => price >= x.lo && (x.hi === 1 ? price <= x.hi : price < x.hi));
-  return b ? { realized: b.realized, windows: b.windows, lo95: b.lo95, hi95: b.hi95, thin: b.thin } : null;
+/**
+ * The most specific comparable set that can honestly answer for this price.
+ *
+ * "Historical realized 61%" is worthless unless the reader can find out what 61%
+ * is the realized rate OF, so the cohort travels with the number and the card
+ * says when it had to widen.
+ */
+function historicalFor(
+  reports: Map<string, CalibrationReport>,
+  asset: string,
+  intervalSec: number,
+  price: number,
+): MarketCard["historical"] {
+  const hit = lookupCohort(reports, asset, intervalSec, price);
+  if (!hit.bucket) return null;
+  const b = hit.bucket;
+  return {
+    realized: b.realized, windows: b.windows, lo95: b.lo95, hi95: b.hi95, thin: b.thin,
+    cohort: hit.cohort, cohortLabel: cohortLabel(hit.cohort), fellBack: hit.fellBack,
+  };
 }
 
 /**
@@ -74,10 +97,15 @@ function bucketFor(report: CalibrationReport | null, price: number): MarketCard[
  * page load's. A null report is a supported state: every card then says
  * INSUFFICIENT_SAMPLE, which is true.
  */
-export function marketsView(snap: Snapshot, calibration: CalibrationReport | null, now = snap.at): MarketsView {
+export function marketsView(
+  snap: Snapshot,
+  /** Every stored cohort, keyed by `cohortKey`. Empty is a supported state. */
+  calibration: Map<string, CalibrationReport>,
+  now = snap.at,
+): MarketsView {
   const cards = snap.opportunities.map((o: Opportunity): MarketCard => {
     const price = o.ask;
-    const historical = price === null ? null : bucketFor(calibration, price);
+    const historical = price === null ? null : historicalFor(calibration, o.asset, o.intervalSec, price);
     const spread = o.bid !== null && o.ask !== null ? o.ask - o.bid : null;
     const reference = Number.isFinite(o.fair) ? o.fair : null;
     return {
@@ -116,8 +144,10 @@ export function marketsView(snap: Snapshot, calibration: CalibrationReport | nul
     at: now,
     cards: cards.sort((a, b) => a.secondsLeft - b.secondsLeft),
     unpriced: snap.unpriced.map((u) => ({ marketId: u.marketId, reason: u.reason })),
-    calibration: calibration
-      ? { windows: calibration.windows, from: calibration.from, to: calibration.to, basis: calibration.basis }
-      : null,
+    calibration: (() => {
+      const g = calibration.get("*:*");
+      return g ? { windows: g.windows, from: g.from, to: g.to, basis: g.basis } : null;
+    })(),
+    cohorts: calibration.size,
   };
 }
