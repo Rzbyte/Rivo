@@ -1,20 +1,20 @@
 {
-  "generatedAt": "2026-08-24T18:15:08.370Z",
+  "generatedAt": "2026-08-24T20:04:30.856Z",
   "about": "The repository at the moment it was frozen for submission, plus what the production deployment answered when asked. Every field is re-derivable; none is a credential.",
   "commit": {
-    "sha": "aebc196c7825b6d945b5ca5e89e8bde628a98aa3",
-    "shortSha": "aebc196",
+    "sha": "c946ed07d0eabead1cc23c087caaca8d2f9c83ba",
+    "shortSha": "c946ed0",
     "branch": "main",
-    "subject": "Say, everywhere, that the trial needs no account",
-    "committedAt": "2026-08-25T01:14:41+07:00",
+    "subject": "The settlement had no provenance, and the oracle publishes all of it",
+    "committedAt": "2026-08-25T03:02:13+07:00",
     "clean": true
   },
   "verification": {
     "tests": {
-      "passed": 858,
+      "passed": 865,
       "failed": 0,
       "skipped": 0,
-      "files": 58,
+      "files": 59,
       "note": "optional kit integrations excluded, as in CI"
     },
     "typecheck": "PASS",
@@ -54,18 +54,18 @@
     },
     "workers": {
       "live": 1,
-      "lastHeartbeatAt": "2026-08-24T18:14:55.542Z",
-      "lastShadowDecisionAt": "2026-08-24T18:14:44.990Z"
+      "lastHeartbeatAt": "2026-08-24T20:04:21.513Z",
+      "lastShadowDecisionAt": "2026-08-24T20:04:26.496Z"
     },
     "calibration": {
-      "windows": 834,
-      "brier": 0.16135801,
-      "skill": 0.35383964,
+      "windows": 853,
+      "brier": 0.16105858,
+      "skill": 0.35511956,
       "servedFromArtefact": false
     },
     "shadow": {
-      "decisions": 9414,
-      "settled": 6270
+      "decisions": 10381,
+      "settled": 7082
     },
     "demoProof": {
       "published": true,
