@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-08-24T16:49:51.818Z",
+  "generatedAt": "2026-08-24T17:13:51.309Z",
   "about": "The repository at the moment it was frozen for submission, plus what the production deployment answered when asked. Every field is re-derivable; none is a credential.",
   "commit": {
-    "sha": "44e40ac0e430308d05aa3ef75a1c67d93ed2c9de",
-    "shortSha": "44e40ac",
+    "sha": "506bb755748f902b31059f5ed9a51e3c4b60ac56",
+    "shortSha": "506bb75",
     "branch": "main",
-    "subject": "Every tab a judge opened showed a blank document icon",
-    "committedAt": "2026-08-24T23:47:32+07:00",
+    "subject": "PENDING was true when I wrote it and false by the time anybody read it",
+    "committedAt": "2026-08-25T00:11:27+07:00",
     "clean": true
   },
   "verification": {
     "tests": {
-      "passed": 848,
+      "passed": 849,
       "failed": 0,
       "skipped": 0,
       "files": 57,
@@ -54,8 +54,8 @@
     },
     "workers": {
       "live": 1,
-      "lastHeartbeatAt": "2026-08-24T16:49:42.266Z",
-      "lastShadowDecisionAt": "2026-08-24T16:48:33.761Z"
+      "lastHeartbeatAt": "2026-08-24T17:13:42.604Z",
+      "lastShadowDecisionAt": "2026-08-24T17:13:10.247Z"
     },
     "calibration": {
       "windows": 834,
@@ -64,8 +64,8 @@
       "servedFromArtefact": false
     },
     "shadow": {
-      "decisions": 8627,
-      "settled": 5855
+      "decisions": 8846,
+      "settled": 6026
     },
     "demoProof": {
       "published": true,
@@ -78,7 +78,7 @@
     "txHash": "0x48cbabda4ad7a9f0f9196949278a0ec5fb09097d16a7a893ce592b66a18e8b91",
     "receiptStatus": "CONFIRMED",
     "blockNumber": 469486171,
-    "settlementStatus": "PENDING",
+    "settlementStatus": "SETTLED",
     "artefact": "docs/evidence/final-proof.json"
   }
 }
