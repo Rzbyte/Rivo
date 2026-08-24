@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-08-24T16:20:55.742Z",
+  "generatedAt": "2026-08-24T16:21:31.721Z",
   "about": "The repository at the moment it was frozen for submission, plus what the production deployment answered when asked. Every field is re-derivable; none is a credential.",
   "commit": {
-    "sha": "e0ff718d04c37399f5eefe29a9d7ef403d8c591b",
-    "shortSha": "e0ff718",
+    "sha": "81b897323380628abc6c8d6dac0efd5fa2903ac8",
+    "shortSha": "81b8973",
     "branch": "main",
-    "subject": "Refresh the release artefact against the frozen commit",
-    "committedAt": "2026-08-24T22:55:32+07:00",
-    "clean": false
+    "subject": "Sixteen transactions, not a hundred and six",
+    "committedAt": "2026-08-24T23:21:18+07:00",
+    "clean": true
   },
   "verification": {
     "tests": {
@@ -54,7 +54,7 @@
     },
     "workers": {
       "live": 1,
-      "lastHeartbeatAt": "2026-08-24T16:20:49.409Z",
+      "lastHeartbeatAt": "2026-08-24T16:21:27.039Z",
       "lastShadowDecisionAt": "2026-08-24T16:20:44.039Z"
     },
     "calibration": {
