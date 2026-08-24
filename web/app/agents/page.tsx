@@ -14,6 +14,7 @@
 import { useLive, ago } from "@/lib/live";
 import { Nav } from "@/components/Nav";
 import { ConnectAgent } from "@/components/ConnectAgent";
+import { TryAgent } from "@/components/TryAgent";
 import { Reveal } from "@/components/Reveal";
 
 interface Agent {
@@ -214,7 +215,25 @@ export default function Agents() {
             and settlement. Your agent never holds a key and never submits a transaction.
           </p>
 
-          <ConnectAgent onConnected={() => location.reload()} />
+          {/* The trial comes FIRST. Registering is the commitment; trying is
+              the thing that earns it, and putting the commitment first is how
+              the capability ended up invisible to everyone without an account. */}
+          <div className="sec-head" style={{ marginTop: 30 }}>
+            <h2>Try your agent now</h2>
+            <span className="hint">one live window · no account · nothing stored</span>
+          </div>
+          <TryAgent />
+
+          {/* Behind a disclosure, and that is the right order rather than a
+              space saving. Trying is what earns the commitment; putting the
+              registration form open on the page is what made the capability
+              look like paperwork to everybody who had not tried it yet. */}
+          <Reveal
+            title="Connect it for real"
+            hint="runs against every live window, and resolves against real settlements"
+          >
+            <ConnectAgent onConnected={() => location.reload()} />
+          </Reveal>
 
           <div style={{ marginTop: 16 }}>
           <Reveal title="The contract" hint="what Rivo POSTs, and what it expects back">

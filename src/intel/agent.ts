@@ -84,7 +84,16 @@ export function parseDecision(raw: unknown, limits: EventContext["limits"]): Age
   const o = raw as Record<string, unknown>;
 
   const action = o.action === "ENTER" ? "ENTER" : o.action === "SKIP" ? "SKIP" : null;
-  if (action === null) return skip(`agent returned an unknown action: ${JSON.stringify(o.action)}`);
+  if (action === null) {
+    // Truncated. This echoes a field from somebody else's response, and the
+    // trial endpoint is unauthenticated — an untruncated echo would let a
+    // caller push arbitrary bytes back through Rivo, which is the one way this
+    // path could be turned into a content relay.
+    // `?? null` because JSON.stringify(undefined) returns undefined, not a
+    // string, and .slice() on that throws — inside the one function whose
+    // contract is that it never does, on the path from an untrusted response.
+    return skip(`agent returned an unknown action: ${JSON.stringify(o.action ?? null).slice(0, 80)}`);
+  }
 
   const probability = clamp01(num(o.probability));
   const confidence = clamp01(num(o.confidence));
