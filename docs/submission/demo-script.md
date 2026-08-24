@@ -40,6 +40,10 @@ Price band 20–25% · 41 settled windows · 95% CI 4.9%–26.8%
 Measured 2026-07-22 → 2026-08-24
 ```
 
+*(Rehearsed 2026-08-24: a BTC UP 15m card at 0.339 answered from* `all assets, 15m` *— 39 windows,
+CI 23.1%–53.8%, fallback shown. Pick a card whose own cohort answered if one is available: a
+`fellBack` card is honest but takes a sentence to explain.)*
+
 > "Rivo answers it against contracts that have already settled. This band was quoted at twenty-two
 > percent on average and settled true fourteen-point-six percent of the time, over forty-one
 > independent windows, with the interval shown.
@@ -52,6 +56,8 @@ Then `/calibration` for the headline:
 ```
 834 settled windows · Brier 0.1614 against 0.2497 for the base rate · 35.4% skill
 ```
+
+*(Rehearsed 2026-08-24. The worker recomputes every few hours and the window count only grows.)*
 
 > "Across the whole venue: thirty-five percent better than always quoting the base rate. DreamDEX
 > prices carry real information — and parts of the book are systematically off."
@@ -100,6 +106,8 @@ Runtime RUNNING · 1 worker · last decision seconds ago
 
 > "That is a real worker, not this browser. Eight thousand decisions, five thousand of them already
 > resolved against the venue's own settlement."
+
+*(Rehearsed 2026-08-24: 8,132 decisions, 5,022 settled, 1 live worker.)*
 
 Open **"What the pre-execution pipeline decided"**:
 
@@ -175,6 +183,20 @@ If time allows, one line on `/evidence`:
 - Do not claim profitability. Rivo's own strategy is REJECTED and that is the point being made.
 - Do not call anything "AI-powered". The model is a diffusion-based forecaster with a published AUC.
 - Do not linger on the block explorer.
+
+## Known blocker before recording
+
+`/proof` currently shows an empty state on production because `RIVO_DEMO_PORTFOLIO_ID` is not set on
+the deployment. Everything behind it exists — the run, the transactions, the reconciliation — and
+`/evidence` carries the same order. Two options:
+
+- **Set it** (Vercel → Settings → Environment Variables → `RIVO_DEMO_PORTFOLIO_ID` =
+  `5b35e672-963b-4af1-9076-539708692ec1`, then redeploy) and record Scene 5 on `/proof`.
+- **Or record Scene 5 on `/evidence`**, which reads the same artefact with no database and no
+  configuration, and shows the same tx, receipt and PENDING settlement.
+
+The script above assumes the first. If you take the second, say "this page needs no database, which
+is why it keeps answering when everything else cannot" — it is a strength, not a workaround.
 
 ## If something is not answering
 

@@ -48,8 +48,9 @@ market-specific.
 
 CALIBRATION
 
-Measured over 834 settled windows: Brier 0.1614 against 0.2497 for always quoting the base rate — a
-skill score of 35.4%. DreamDEX prices carry real information. Windows are the unit rather than fills,
+Measured over 834 settled windows as of 2026-08-24: Brier 0.1614 against 0.2497 for always quoting
+the base rate — a skill score of 35.4%. The worker recomputes it as more contracts settle, so the
+live figure grows. DreamDEX prices carry real information. Windows are the unit rather than fills,
 because forty rows from one settled contract are forty copies of one coin flip.
 
 AGENT VALIDATION
@@ -100,8 +101,8 @@ Live markets, order books and implied probabilities for all eight windows the ve
 {BTC, ETH} × {15m, 1h, 4h, 1d}, sixteen legs — read from the Somnia Markets indexer.
 
 HISTORICAL FILL AND SETTLEMENT DATA
-Calibration is computed from contracts that have already settled: 834 settled windows drawn from a
-month of the venue's own fills and oracle answers. Retired 60s and 300s series are excluded because
+Calibration is computed from contracts that have already settled: 834 settled windows as of
+2026-08-24, drawn from a month of the venue's own fills and oracle answers. Retired 60s and 300s series are excluded because
 they are not the product.
 
 SDK EXECUTION
