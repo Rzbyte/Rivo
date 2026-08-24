@@ -16,9 +16,12 @@ agent and prove it on the testnet.
 
 > **Understand the market. Validate the agent. Prove it on DreamDEX.**
 
+**Live: [rivo-autopilot.vercel.app](https://rivo-autopilot.vercel.app/)** — one deployment, five
+sections, four of which open without a wallet or an account.
+
 ## What Rivo is
 
-Four surfaces, and the first three need no wallet at all.
+Five surfaces, and four of them need no wallet at all.
 
 ### 1 · Markets
 
@@ -33,9 +36,16 @@ caveat about the data outranks a claim about the price.
 
 ### 2 · Calibration — is 67% actually 67%?
 
-Measured against **737 settled windows**: Brier **0.1647** against **0.2498** for always quoting the
-base rate, a skill score of **34.1%**. DreamDEX prices carry real information, and the middle of the
-book is mostly honest (65–70% settled 64.5%). Parts of it are not (50–55% settled 39.0%).
+Measured against **737 settled windows** as of 2026-08-24: Brier **0.1647** against
+**0.2498** for always quoting the base rate, a skill score of **34.1%**.
+DreamDEX prices carry real information, and the middle of the book is mostly honest (65–70% settled
+64.5%). Parts of it are not (50–55% settled 39.0%).
+
+Those are the figures in [`docs/evidence/calibration-report.json`](docs/evidence/calibration-report.json),
+and they are a snapshot on purpose — the worker recomputes this every few hours as more contracts
+settle, so [the live page](https://rivo-autopilot.vercel.app/calibration) reports a larger sample than
+this file does. A README that quietly tracked a moving number would be the one document nobody could
+check against anything.
 
 Windows are the unit, not fills — forty rows from one settled contract are forty copies of one coin
 flip. Intervals come from resampling windows. Cohorts run BTC 15m → BTC all tenors → all assets 15m →
@@ -59,6 +69,18 @@ the real settlement when the contract closes. Only then, on an approved testnet,
 become a real DreamDEX transaction — with the hash, the receipt and the reconciliation inspectable.
 
 Counted separately and never merged: `HYPOTHETICAL`, `SUBMITTED`, `CONFIRMED`, `SETTLED`, `FAILED`.
+
+### 5 · Evidence — five questions, and two answers are no
+
+Every study behind the four sections above, read from the JSON artefact each one wrote. Does it run
+on-chain? Does the model know anything? Does the portfolio layer matter? **Would providing liquidity
+work instead — no**, measured live with zero shares paired off against real adverse selection. **Is
+there a model-free arbitrage across tenors — no**, real and violated 719 times, and a median of two
+shares deep.
+
+Anyone can publish the result that flattered them. Publishing the refusals with the arithmetic
+attached is the only cheap way to tell the difference, and this page needs no database to do it — so
+it keeps answering when everything else on this deployment cannot.
 
 ### The loop
 
@@ -171,7 +193,7 @@ otherwise have hit ourselves.
 npm test
 ```
 
-**808 tests** across the things that either move money or produce a published number: the
+**811 tests** across the things that either move money or produce a published number: the
 dual-crossing-path book, the fair-value model and volatility estimator, the scoring rules behind
 every figure in [EVIDENCE.md](docs/EVIDENCE.md), the capital allocator, the position manager, settlement, and
 on-chain reconciliation.
@@ -426,7 +448,7 @@ src/
   web/         the original cockpit server + static snapshot export
   public/      the public pricing page — browser bundle, shares the runtime's math
   cli/         start · worker · web · report · calibrate · scan · allocate · backtest · … · agent
-  *.test.ts    808 tests, colocated with what they cover
+  *.test.ts    811 tests, colocated with what they cover
 web/
   app/         Next.js — landing, the product, and the control-plane API
   components/  the dashboard, built around decisions rather than fills
@@ -594,7 +616,7 @@ validates against the real thing.
 | `npm run privy:check` | is this deployment's Privy set up? authenticates for real, lists what is missing |
 | `npm run agent -- new \| status \| fund \| sweep` | the wallet Rivo signs with, and what it may lose |
 | `npm run probe:operator` | can EC be traded non-custodially? measured, not assumed |
-| `npm test` · `npm run typecheck` | 808 tests · strict TypeScript across engine, page and web app |
+| `npm test` · `npm run typecheck` | 811 tests · strict TypeScript across engine, page and web app |
 | `npm run doctor` | can Rivo trade right now — signer, gas, collateral, venue, kit |
 | `npm run faucet` | mint testnet tUSDC — a direct `faucet(uint256)` call, no kit needed |
 | `npm run check:kit` · `npm run link:kit` | verify / install the optional bot kit |

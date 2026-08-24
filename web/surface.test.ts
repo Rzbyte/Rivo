@@ -54,6 +54,51 @@ describe("one web surface", () => {
     expect(readme).toContain("rivo-autopilot.vercel.app");
   });
 
+  it("counts the same sections the nav does", () => {
+    // The nav gained /evidence and the README kept saying "four surfaces", which
+    // is the drift a reader notices before anybody else does: the document
+    // introducing the product disagreed with the product about how many parts it
+    // has. Derived from the nav rather than from a number typed twice.
+    const nav = read("web/components/Nav.tsx");
+    const block = nav.slice(nav.indexOf("const SECTIONS"), nav.indexOf("] as const"));
+    const count = (block.match(/\["\//g) ?? []).length;
+    expect(count, "no sections found — did SECTIONS move?").toBeGreaterThan(3);
+    const words = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight"];
+    const readme = read("README.md");
+    // Case-insensitive: it opens a sentence, so it is capitalised there.
+    expect(readme.toLowerCase(), `the nav has ${count} sections`).toContain(`${words[count]} surfaces`);
+    // Every one of them has a numbered heading of its own.
+    for (let i = 1; i <= count; i++) expect(readme, `section ${i}`).toMatch(new RegExp(`^### ${i} · `, "m"));
+  });
+
+  it("quotes calibration figures that match the artefact they came from", () => {
+    // The headline calibration result is recomputed by the worker every few
+    // hours, so the README quotes a stored snapshot and says so. What it must
+    // not do is drift from the file it claims to be quoting.
+    const cal = JSON.parse(read("docs/evidence/calibration-report.json")) as {
+      generatedAt: string;
+      window: { windows: number; brier: number; brierBase: number; skill: number };
+    };
+    const w = cal.window;
+    const section = read("README.md");
+    const body = section.slice(section.indexOf("### 2 · Calibration"), section.indexOf("### 3 · Agents"));
+    expect(body, "window count").toContain(w.windows.toLocaleString("en-US"));
+    expect(body, "brier").toContain(w.brier.toFixed(4));
+    expect(body, "base rate brier").toContain(w.brierBase.toFixed(4));
+    expect(body, "skill").toContain(`${(w.skill * 100).toFixed(1)}%`);
+    expect(body, "the date the snapshot was taken").toContain(cal.generatedAt.slice(0, 10));
+    // And it has to say the live figure moves, or the snapshot reads as a claim
+    // about today.
+    expect(body).toMatch(/snapshot|recomputes/);
+  });
+
+  it("puts the live address where somebody opening the repo will see it", () => {
+    // It was at line 274. A judge should not have to scroll past the
+    // architecture to find out where the thing runs.
+    const head = read("README.md").split("\n").slice(0, 22).join("\n");
+    expect(head, "no live URL in the first 22 lines").toContain("rivo-autopilot.vercel.app");
+  });
+
   it("keeps the browser bundle, which was never the problem", () => {
     // The contradiction was a second published identity, not the code. This
     // stays built and tested: an engine that runs in a browser with no backend
