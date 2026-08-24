@@ -43,6 +43,59 @@ function subject(state: RivoState): (HeldPosition | ClosedPosition) | null {
 }
 
 /**
+ * What the venue says happened, and whether Rivo's record agrees.
+ *
+ * `finalized` is the only authority on whether a contract resolved. Reading
+ * settlement from our own positions table instead was a real defect: that table
+ * is exactly as current as the last reconciliation, and a STOPPED deployment is
+ * never reconciled — so a contract that finalised on 24 August still read `open`
+ * locally and this artefact reported PENDING indefinitely.
+ *
+ * That is the mirror of the error this file is most careful about. Asserting a
+ * settlement early is the worst thing it could do; asserting PENDING after the
+ * world has already answered is the same failure pointing the other way.
+ *
+ * `voided` is a third state and neither SETTLED nor PENDING — a voided window
+ * paid nobody, and calling that a loss would be a small lie about a real outcome.
+ */
+function settlementOf(
+  chain: { finalized: boolean; voided: boolean; winningOutcome: number | null } | null,
+  leg: string,
+  local: { status: string; closed_at: Date | null } | null,
+): Record<string, unknown> {
+  if (!chain || !chain.finalized) {
+    return { result: "PENDING", source: "venue", detail: "the contract has not finalised on-chain yet" };
+  }
+  if (chain.voided) {
+    return { result: "VOIDED", source: "venue", detail: "the window was voided; no side paid out" };
+  }
+  // Outcome 0 is UP on this venue — the same mapping the shadow resolver uses.
+  // A finalised, non-voided window always carries one; if it somehow does not,
+  // that is not a settlement anybody should read a win or a loss out of.
+  if (chain.winningOutcome === null) {
+    return { result: "PENDING", source: "venue", detail: "finalised without a recorded outcome" };
+  }
+  const upWon = chain.winningOutcome === 0;
+  const won = leg.toUpperCase() === "UP" ? upWon : !upWon;
+  return {
+    result: "SETTLED",
+    source: "venue",
+    outcome: upWon ? "UP" : "DOWN",
+    leg,
+    won,
+    detail: won ? "this leg paid out" : "this leg expired worthless",
+    closedAt: local?.closed_at ? Math.floor(new Date(local.closed_at).getTime() / 1000) : null,
+    // Stated rather than hidden. A stopped deployment stops reconciling, so
+    // Rivo's own row can lag the venue indefinitely, and a proof that quietly
+    // used its stale copy would be asserting the wrong thing confidently.
+    rivoRecord:
+      local?.status === "closed"
+        ? "closed — Rivo reconciled it"
+        : "still open — this deployment is stopped and no longer reconciles",
+  };
+}
+
+/**
  * The same walk, sourced from a database deployment rather than a state file.
  *
  * The demo shows ONE run. /proof reads a portfolio row; if this artefact were
@@ -91,6 +144,21 @@ async function fromPortfolio(portfolioId: string, out: string, net: "testnet" | 
 
   const receipts = new RpcReceiptReader(defaultRpcUrl(net));
   const receipt = e ? await receipts.receipt(e.tx_hash) : null;
+
+  // ASK THE CHAIN, not only our own table.
+  //
+  // The positions table is exactly as current as the last reconciliation, and a
+  // STOPPED deployment is never reconciled — so a contract that settled two
+  // days ago still reads `open` locally and the artefact reported PENDING
+  // forever. That is the mirror of the error this file is most careful about:
+  // asserting a settlement early is the worst thing it could do, and asserting
+  // PENDING after the world has answered is the same failure pointing the other
+  // way. Both are the artefact disagreeing with reality.
+  //
+  // So settlement comes from the venue's own finalisation, and where Rivo's
+  // record has not caught up that gap is REPORTED rather than smoothed over.
+  const outcomes = e ? await new Indexer().outcomes([e.market_id]) : new Map();
+  const settled = e ? (outcomes.get(e.market_id.toLowerCase()) ?? outcomes.get(e.market_id) ?? null) : null;
 
   // Did the position that order opened resolve?
   const [pos] = e
@@ -226,16 +294,7 @@ async function fromPortfolio(portfolioId: string, out: string, net: "testnet" | 
           },
           ledger: { result: "RECORDED", executionId: e.id, detail: "written before signing, so a crash leaves a record rather than a gap" },
           reconciliation: { result: "RECONCILED", detail: "position matched against what the chain reports the wallet holds" },
-          settlement:
-            pos?.status === "closed"
-              ? {
-                  result: "SETTLED",
-                  exit: pos.exit ?? "resolved",
-                  proceeds: null,
-                  pnl: null,
-                  closedAt: pos.closed_at ? Math.floor(new Date(pos.closed_at).getTime() / 1000) : null,
-                }
-              : { result: "PENDING", detail: "the contract has not settled yet" },
+          settlement: settlementOf(settled, e.leg, pos ?? null),
         }
       : null,
     note: e ? null : "This run has no confirmed transaction. Saying so is the artefact.",

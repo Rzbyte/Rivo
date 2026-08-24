@@ -106,15 +106,22 @@ reconciliation adoptions that resolved against chain state rather than being sen
 counts only the 16 — this repository has a name for the alternative ("208 positions but only 10
 transaction hashes") and tests written specifically to stop one number being presented as the other.
 
-### 9 · Why is settlement PENDING?
+### 9 · What is the difference between CONFIRMED and SETTLED?
 
-Because that contract has not closed yet, and saying so is the point.
+`CONFIRMED` means Somnia accepted the transaction. `SETTLED` means the Event Contract expired and the
+venue finalised an outcome. They are different facts about different moments and the Proof page never
+merges them.
 
-`CONFIRMED` means the chain accepted the order. `SETTLED` means the contract expired and the position
-resolved. They are different facts and the Proof page never merges them. When that window closes the
-same reconciler that closes real positions will write the outcome, and the label will change.
+The demo order is both: confirmed in block 469486171, and since settled — the venue finalised that
+window **UP**, and the position was an UP leg, so it paid out.
 
-Asserting a settlement early would be the single most damaging thing this project could do to itself.
+Settlement is read from **the venue**, not from Rivo's own positions table. That distinction is not
+pedantry, it is a defect this project shipped and fixed: the table is exactly as current as the last
+reconciliation, and a stopped deployment is never reconciled, so a contract that finalised days
+earlier still read `open` locally and the page reported PENDING indefinitely. Asserting a settlement
+early would be the single most damaging thing this project could do; asserting PENDING after the
+world has already answered is the same failure pointing the other way. The artefact now carries both
+the venue's answer and whether Rivo's own record has caught up.
 
 ### 10 · Can external agents use Rivo?
 

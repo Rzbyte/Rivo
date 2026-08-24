@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-24T16:19:16.129Z",
+  "generatedAt": "2026-08-24T17:07:44.656Z",
   "about": "One order from one deployment, walked end to end. The same run /proof shows, so the product page and this file cannot disagree. Fields that have not happened yet say PENDING.",
   "run": {
     "id": "5b35e672-963b-4af1-9076-539708692ec1",
@@ -102,8 +102,14 @@
       "detail": "position matched against what the chain reports the wallet holds"
     },
     "settlement": {
-      "result": "PENDING",
-      "detail": "the contract has not settled yet"
+      "result": "SETTLED",
+      "source": "venue",
+      "outcome": "UP",
+      "leg": "UP",
+      "won": true,
+      "detail": "this leg paid out",
+      "closedAt": null,
+      "rivoRecord": "still open — this deployment is stopped and no longer reconciles"
     }
   },
   "note": null,

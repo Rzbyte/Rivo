@@ -24,7 +24,10 @@ interface Run {
   asset: string; leg: string; intervalSec: number; action: string;
   submittedAt: string; txHash: string; blockNumber: string | null;
   filled: number | null; avgPrice: number | null;
-  settlement: { status: string; exit: string | null; closedAt: string | null } | null;
+  settlement: {
+    status: string; source?: string; outcome?: string; won?: boolean;
+    closedAt?: string | null; rivoRecord?: string; detail?: string;
+  } | null;
 }
 
 interface Payload {
@@ -271,11 +274,15 @@ function RunWalkthrough({ run, network }: { run: Run; network: string }) {
     ["Reconciled", "RECONCILED", "Position matched against what the chain says it holds", ""],
     [
       "Settlement",
-      run.settlement?.status === "closed" ? "SETTLED" : "PENDING",
-      run.settlement?.status === "closed"
-        ? `Closed — ${run.settlement.exit ?? "resolved"}`
-        : "Open, waiting on the contract to expire",
-      "",
+      run.settlement?.status ?? "PENDING",
+      run.settlement?.status === "SETTLED"
+        ? `Settled ${run.settlement.outcome} — this ${run.leg} leg ${run.settlement.won ? "paid out" : "expired worthless"}`
+        : (run.settlement?.detail ?? "Open, waiting on the contract to expire"),
+      // Where the answer came from, and whether our own row has caught up. A
+      // stopped deployment stops reconciling, and a page that quietly preferred
+      // its own stale copy is how PENDING got asserted after the venue had
+      // already answered.
+      run.settlement?.source ? `from the ${run.settlement.source}${run.settlement.rivoRecord ? ` · Rivo record: ${run.settlement.rivoRecord}` : ""}` : "",
     ],
   ];
 

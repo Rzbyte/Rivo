@@ -9,8 +9,47 @@ import { NextResponse } from "next/server";
 import { query, configured } from "@rivo/db/pool.js";
 import { portfolioById } from "@rivo/db/portfolios.js";
 import { buildView } from "@rivo/db/view.js";
+import { Indexer } from "@rivo/core/indexer.js";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * The venue's answer, with Rivo's own record beside it rather than instead of it.
+ *
+ * Three states, and VOIDED is genuinely a third: a voided window paid nobody,
+ * so calling it a loss would be a small lie about a real outcome.
+ */
+function settlementView(
+  chain: { finalized: boolean; voided: boolean; winningOutcome: number | null } | null,
+  leg: string,
+  local: { status: string; exit: string | null; closed_at: Date | null } | null,
+): Record<string, unknown> {
+  if (!chain || !chain.finalized) {
+    return { status: "PENDING", source: "venue", detail: "the contract has not finalised on-chain yet" };
+  }
+  if (chain.voided) {
+    return { status: "VOIDED", source: "venue", detail: "the window was voided; no side paid out" };
+  }
+  // Outcome 0 is UP, the same mapping the shadow resolver uses. A finalised,
+  // non-voided window always carries one; without it there is no win or loss to
+  // report and PENDING is the only honest answer.
+  if (chain.winningOutcome === null) {
+    return { status: "PENDING", source: "venue", detail: "finalised without a recorded outcome" };
+  }
+  const upWon = chain.winningOutcome === 0;
+  const won = leg.toUpperCase() === "UP" ? upWon : !upWon;
+  return {
+    status: "SETTLED",
+    source: "venue",
+    outcome: upWon ? "UP" : "DOWN",
+    won,
+    closedAt: local?.closed_at ?? null,
+    // A stopped deployment stops reconciling, so this can lag the venue. Said
+    // out loud, because a page quietly preferring its own stale copy is how the
+    // wrong thing gets asserted confidently.
+    rivoRecord: local?.status === "closed" ? "closed" : "still open — this deployment no longer reconciles",
+  };
+}
 
 export async function GET(req: Request): Promise<Response> {
   if (!configured()) return NextResponse.json({ error: "no database configured" }, { status: 503 });
@@ -126,6 +165,22 @@ export async function GET(req: Request): Promise<Response> {
     [id],
   );
 
+  // Whether the contract this order bought has FINALISED — asked of the venue,
+  // not of our own table.
+  //
+  // `positions` is exactly as current as the last reconciliation, and a stopped
+  // deployment is never reconciled. So a window that settled on the venue still
+  // read `open` here and the page reported PENDING indefinitely. Asserting a
+  // settlement early is the worst thing this endpoint could do; asserting
+  // PENDING after the world has answered is the same failure the other way
+  // round, and it is the one that had actually shipped.
+  const finalised = latest
+    ? await new Indexer()
+        .outcomes([latest.market_id])
+        .then((m) => m.get(latest.market_id.toLowerCase()) ?? m.get(latest.market_id) ?? null)
+        .catch(() => null)
+    : null;
+
   // Whether the position that order opened has since resolved.
   const [outcome] = latest
     ? await query<{ status: string; exit: string | null; closed_at: Date | null }>(
@@ -146,9 +201,7 @@ export async function GET(req: Request): Promise<Response> {
           blockNumber: latest.block_number,
           filled: latest.filled_qty === null ? null : Number(latest.filled_qty),
           avgPrice: latest.filled_price === null ? null : Number(latest.filled_price),
-          settlement: outcome
-            ? { status: outcome.status, exit: outcome.exit, closedAt: outcome.closed_at }
-            : null,
+          settlement: settlementView(finalised, latest.leg, outcome ?? null),
         }
       : null,
     global: {

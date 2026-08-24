@@ -75,13 +75,36 @@ d("the final proof artefact", () => {
     expect(p.order.venue.result).toBe("NORMALISED");
   });
 
+  it("takes settlement from the venue, never from our own row", () => {
+    // The defect this replaced: settlement read the positions table, which is
+    // exactly as current as the last reconciliation. A STOPPED deployment is
+    // never reconciled, so a contract that finalised days earlier still read
+    // `open` locally and the artefact reported PENDING indefinitely.
+    //
+    // Asserting a settlement early is the worst thing this file could do.
+    // Asserting PENDING after the world has answered is the same failure
+    // pointing the other way, and it is the one that shipped.
+    const p = proof();
+    if (!p.order) return;
+    const s = p.order.settlement as Record<string, unknown>;
+    expect(s.source, "settlement did not name where it came from").toBe("venue");
+    if (s.result === "SETTLED") {
+      // A settled window has a side and a verdict for this leg.
+      expect(["UP", "DOWN"]).toContain(s.outcome);
+      expect(typeof s.won).toBe("boolean");
+      // And it says whether our own record caught up, rather than implying it did.
+      expect(typeof s.rivoRecord).toBe("string");
+    }
+  });
+
   it("never claims a settlement that has not happened", () => {
     // PENDING is a correct answer and the one this must give while a contract
     // is still open. Asserting SETTLED early is the single most damaging thing
     // this file could do.
     const p = proof();
     if (!p.order) return;
-    expect(["SETTLED", "PENDING"]).toContain(p.order.settlement.result);
+    // VOIDED is genuinely a third state: nobody was paid, so it is neither.
+    expect(["SETTLED", "PENDING", "VOIDED"]).toContain(p.order.settlement.result);
   });
 
   it("carries a transaction hash with a receipt actually read back", () => {

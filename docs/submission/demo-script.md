@@ -143,8 +143,10 @@ SETTLEMENT          PENDING
 > "A real Somnia transaction, and the receipt was read back from the chain rather than assumed from
 > the send — that is why there is a block number.
 >
-> Settlement says PENDING because that contract is still open. It will say SETTLED when it closes,
-> and not before."
+> And the last line is the loop closing. That contract has since expired, the venue finalised it UP,
+> and this leg paid out. Settlement is read from the venue rather than from our own table — which
+> matters, because this deployment is stopped and its own record still says open. The page shows both
+> and says which one is the authority."
 
 Open the explorer link for **three seconds only**. Do not narrate the explorer.
 
@@ -196,7 +198,7 @@ All six scenes answer on production. `RIVO_DEMO_PORTFOLIO_ID` is set, so `/proof
 | 3 · Agents | Rivo V1 · AUC **0.8158** · ROS **−6.49%** · `REJECTED` · 5 folds |
 | 4 · Shadow | RUNNING · 1 worker · 8,399 decisions · 5,807 settled · pipeline 472 SKIP / 58 EXECUTE |
 | 5 · Proof | run `5b35e672` · **16 confirmed** · 144 attempts · 38 failed · 6 open / 86 closed lots · **shadow 0** |
-| 6 · Evidence | onChain 16 · ledgerRows 106 · CONFIRMED block 469486171 · settlement PENDING |
+| 6 · Evidence | onChain 16 · ledgerRows 106 · CONFIRMED block 469486171 · **settlement SETTLED, UP, paid out** |
 
 Two things worth pointing at if a judge is paying attention:
 
