@@ -13,6 +13,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { execSync } from "node:child_process";
 
 const read = (p: string): string => readFileSync(resolve(p), "utf8");
 
@@ -72,6 +73,17 @@ describe("the shipped identity", () => {
         expect(src, `${file} still carries "${phrase}"`).not.toContain(phrase);
       }
     }
+  });
+
+  it("defines the title exactly once", () => {
+    // The stale title survived a pivot because the landing page overrode it and
+    // looked correct, while every other route inherited the fallback and did
+    // not. Two definitions that agree today is how the first one got stale.
+    const owners = execSync("git ls-files web/app", { encoding: "utf8" })
+      .split("\n")
+      .filter((f) => f.endsWith(".tsx") && /export const metadata/.test(read(f)));
+    expect(owners.length, "found no metadata at all — did the glob stop matching?").toBeGreaterThan(0);
+    expect(owners, "more than one file declares page metadata").toEqual(["web/app/layout.tsx"]);
   });
 
   it("carries the same identity into a link preview", () => {

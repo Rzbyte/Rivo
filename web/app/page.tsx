@@ -11,12 +11,6 @@
 import Link from "next/link";
 import { Nav } from "@/components/Nav";
 
-export const metadata = {
-  title: "Rivo — Event Intelligence & Agent Validation for DreamDEX",
-  description:
-    "Understand DreamDEX probabilities. Test agents before they trade. Live Event Contract intelligence, economic validation, shadow testing and verifiable DreamDEX testnet execution.",
-};
-
 export default function Landing() {
   return (
     <>

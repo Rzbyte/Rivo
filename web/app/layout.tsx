@@ -16,14 +16,22 @@ import { Providers } from "./providers";
  * The one piece of copy most readers see before any other.
  *
  * This said "autonomous portfolio manager" and pitched setting a budget once —
- * the product Rivo stopped being. Every page body had moved to intelligence and
- * validation; the tab title, the search result and the link preview had not, so
- * the first thing a judge read was the old product and the second was a
- * different one. Pinned by web/identity.test.ts, because the failure mode here
- * is silence: nothing renders a <title> wrongly, it just says the wrong thing.
+ * the product Rivo stopped being.
+ *
+ * The landing page had its own correct title and hid the problem: `/` looked
+ * right, and every other route — /markets, /calibration, /agents, /proof —
+ * inherited this fallback and advertised the old product. The pages carrying
+ * the actual argument were the ones getting it wrong, and the one page anybody
+ * checked was the one page that was fine.
+ *
+ * So the title is defined ONCE, here, and the landing page no longer overrides
+ * it. Two definitions that agree today is how the first one got stale.
+ *
+ * Pinned by web/identity.test.ts, because the failure mode is silence: nothing
+ * renders a <title> wrongly, it just says the wrong thing.
  */
 export const metadata: Metadata = {
-  title: "Rivo — Event intelligence and agent validation for DreamDEX",
+  title: "Rivo — Event Intelligence & Agent Validation for DreamDEX",
   description:
     "DreamDEX says BTC UP 15m is 67%. Rivo measures whether contracts quoted at 67% actually settled true 67% of the time — and tests an agent against live markets before it trades.",
   // Shared into a Discord or a group chat, a submission is a link preview
@@ -31,7 +39,7 @@ export const metadata: Metadata = {
   // else, which is the one context where the old identity would have survived
   // the fix.
   openGraph: {
-    title: "Rivo — Event intelligence and agent validation for DreamDEX",
+    title: "Rivo — Event Intelligence & Agent Validation for DreamDEX",
     description:
       "Understand the market. Validate the agent. Prove it on DreamDEX. Calibration measured over settled windows, and an execution gate that reads the economics rather than the accuracy.",
     type: "website",
