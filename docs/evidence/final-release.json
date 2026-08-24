@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-08-24T16:25:57.707Z",
+  "generatedAt": "2026-08-24T16:37:35.688Z",
   "about": "The repository at the moment it was frozen for submission, plus what the production deployment answered when asked. Every field is re-derivable; none is a credential.",
   "commit": {
-    "sha": "083b4fffa7b23c0c0acbbe3f7f9046ca5cae1904",
-    "shortSha": "083b4ff",
+    "sha": "93e637be6d1cf5c045e1589756853208159c7ea2",
+    "shortSha": "93e637b",
     "branch": "main",
-    "subject": "Six scenes, rehearsed on production rather than assumed",
-    "committedAt": "2026-08-24T23:25:40+07:00",
+    "subject": "The methodology document disagreed with the product it documents",
+    "committedAt": "2026-08-24T23:37:14+07:00",
     "clean": true
   },
   "verification": {
@@ -54,8 +54,8 @@
     },
     "workers": {
       "live": 1,
-      "lastHeartbeatAt": "2026-08-24T16:25:52.855Z",
-      "lastShadowDecisionAt": "2026-08-24T16:25:22.303Z"
+      "lastHeartbeatAt": "2026-08-24T16:37:31.690Z",
+      "lastShadowDecisionAt": "2026-08-24T16:36:11.300Z"
     },
     "calibration": {
       "windows": 834,
@@ -64,8 +64,8 @@
       "servedFromArtefact": false
     },
     "shadow": {
-      "decisions": 8411,
-      "settled": 5807
+      "decisions": 8511,
+      "settled": 5831
     },
     "demoProof": {
       "published": true,
