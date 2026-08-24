@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-08-24T16:21:31.721Z",
+  "generatedAt": "2026-08-24T16:25:57.707Z",
   "about": "The repository at the moment it was frozen for submission, plus what the production deployment answered when asked. Every field is re-derivable; none is a credential.",
   "commit": {
-    "sha": "81b897323380628abc6c8d6dac0efd5fa2903ac8",
-    "shortSha": "81b8973",
+    "sha": "083b4fffa7b23c0c0acbbe3f7f9046ca5cae1904",
+    "shortSha": "083b4ff",
     "branch": "main",
-    "subject": "Sixteen transactions, not a hundred and six",
-    "committedAt": "2026-08-24T23:21:18+07:00",
+    "subject": "Six scenes, rehearsed on production rather than assumed",
+    "committedAt": "2026-08-24T23:25:40+07:00",
     "clean": true
   },
   "verification": {
@@ -54,8 +54,8 @@
     },
     "workers": {
       "live": 1,
-      "lastHeartbeatAt": "2026-08-24T16:21:27.039Z",
-      "lastShadowDecisionAt": "2026-08-24T16:20:44.039Z"
+      "lastHeartbeatAt": "2026-08-24T16:25:52.855Z",
+      "lastShadowDecisionAt": "2026-08-24T16:25:22.303Z"
     },
     "calibration": {
       "windows": 834,
@@ -64,7 +64,7 @@
       "servedFromArtefact": false
     },
     "shadow": {
-      "decisions": 8367,
+      "decisions": 8411,
       "settled": 5807
     },
     "demoProof": {
