@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import { useLive, ago } from "@/lib/live";
 import { Nav } from "@/components/Nav";
 import { ConnectAgent } from "@/components/ConnectAgent";
+import { Reveal } from "@/components/Reveal";
 
 interface Agent {
   slug: string; label: string; kind: string; hasEndpoint: boolean;
@@ -95,11 +96,8 @@ export default function Agents() {
 
         {production && (
           <>
-            <div className="sec-head">
-              <h2>Fold by fold</h2>
-              <span className="hint">walk-forward · never a random split</span>
-            </div>
-            <div className="panel">
+            <Reveal title="Fold by fold" hint="walk-forward · never a random split">
+              <div className="panel">
               <div className="scroll">
                 <table>
                   <thead>
@@ -134,13 +132,11 @@ export default function Agents() {
                 t = {production.all.tStat.toFixed(2)} on a bootstrap that resamples settled windows ·
                 max drawdown {production.all.maxDrawdown.toFixed(2)} · hit rate {(production.all.winRate * 100).toFixed(1)}%
               </p>
-            </div>
+              </div>
+            </Reveal>
 
-            <div className="sec-head">
-              <h2>Does a bigger claimed edge pay better?</h2>
-              <span className="hint">the diagnostic that decided this</span>
-            </div>
-            <div className="panel">
+            <Reveal title="Claimed edge against realised" hint="the diagnostic that decided this">
+              <div className="panel">
               <div className="scroll">
                 <table>
                   <thead>
@@ -167,30 +163,23 @@ export default function Agents() {
                 There is no monotone relationship. Claiming more edge did not earn more, which is what
                 separates a forecast that is right from a trade that is profitable.
               </p>
-            </div>
+              </div>
+            </Reveal>
 
             {production.gate && production.gate.failures.length > 0 && (
-              <>
-                <div className="sec-head">
-                  <h2>Why the gate refused it</h2>
-                </div>
-                <div className="panel">
-                  <ul style={{ margin: 0, paddingLeft: 18, color: "var(--muted)", fontSize: 13.5 }}>
-                    {production.gate.failures.map((f) => <li key={f} style={{ marginBottom: 6 }}>{f}</li>)}
-                  </ul>
-                </div>
-              </>
+              <Reveal title="Why the gate refused it" hint={`${production.gate.failures.length} criteria not met`}>
+                <ul style={{ margin: 0, paddingLeft: 18, color: "var(--muted)", fontSize: 13.5 }}>
+                  {production.gate.failures.map((f) => <li key={f} style={{ marginBottom: 6 }}>{f}</li>)}
+                </ul>
+              </Reveal>
             )}
           </>
         )}
 
         {data && data.agents.length > 1 && (
           <>
-            <div className="sec-head">
-              <h2>Connected agents</h2>
-              <span className="hint">{data.agents.length - 1} beside Rivo&rsquo;s own</span>
-            </div>
-            <div className="panel">
+            <Reveal title="Connected agents" hint={`${data.agents.length - 1} beside Rivo's own`}>
+              <div className="panel">
               <div className="scroll">
                 <table>
                   <thead>
@@ -208,7 +197,8 @@ export default function Agents() {
                   </tbody>
                 </table>
               </div>
-            </div>
+              </div>
+            </Reveal>
           </>
         )}
 
@@ -227,7 +217,8 @@ export default function Agents() {
 
           <ConnectAgent onConnected={() => location.reload()} />
 
-          <p className="label" style={{ marginTop: 18, marginBottom: 6 }}>The contract</p>
+          <div style={{ marginTop: 16 }}>
+          <Reveal title="The contract" hint="what Rivo POSTs, and what it expects back">
           <pre className="mono" style={{ fontSize: 12, overflowX: "auto", background: "var(--panel-2)", padding: 12, borderRadius: "var(--r)", margin: 0 }}>
 {`POST  your-endpoint
 {
@@ -247,6 +238,8 @@ export default function Agents() {
   "reason":      "short text"
 }`}
           </pre>
+          </Reveal>
+          </div>
           <p className="hint" style={{ marginTop: 12, marginBottom: 0 }}>
             Every decision runs in Live Shadow first. No agent reaches a testnet transaction without
             passing the same gate Rivo V1 failed.
@@ -321,6 +314,7 @@ function LiveShadow() {
         </div>
       </section>
 
+      <Reveal title="Recent decisions" hint={`${d.decisions.length} shown · every one hypothetical`}>
       <div className="panel">
         <div className="scroll">
           <table>
@@ -362,6 +356,7 @@ function LiveShadow() {
           </table>
         </div>
       </div>
+      </Reveal>
     </>
   );
 }

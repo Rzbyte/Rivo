@@ -144,6 +144,59 @@ describe("the product surfaces on a phone", () => {
   });
 });
 
+describe("a page states its answer before its working", () => {
+  const read = (p: string): string => readFileSync(resolve(p), "utf8");
+
+  /** Blocks that occupy the column on first sight, before anything is opened. */
+  const stacked = (page: string): number => {
+    const src = read(`web/app/${page}/page.tsx`);
+    // Anything inside a Reveal is one row until a reader asks for it.
+    const withoutReveals = src.replace(/<Reveal[\s\S]*?<\/Reveal>/g, "<Reveal/>");
+    return (withoutReveals.match(/className="sec-head"/g) ?? []).length
+      + (withoutReveals.match(/className="panel/g) ?? []).length;
+  };
+
+  it("keeps the Agents page from being an endless column", () => {
+    // It reached twenty-six stacked blocks — seven headings, thirteen panels,
+    // four tables — because every section this product grew was appended and
+    // nobody decided what belongs on first sight.
+    expect(stacked("agents")).toBeLessThanOrEqual(12);
+  });
+
+  it("keeps Proof and Calibration to a readable column too", () => {
+    expect(stacked("proof")).toBeLessThanOrEqual(10);
+    expect(stacked("calibration")).toBeLessThanOrEqual(6);
+  });
+
+  it("hides nothing — the working is one click away, not gone", () => {
+    // A judge checking the arithmetic must still reach the fold table, the edge
+    // buckets, the gate's reasons and the methodology.
+    const agents = read("web/app/agents/page.tsx");
+    for (const t of ["Fold by fold", "Claimed edge against realised", "Why the gate refused it"]) {
+      expect(agents, t).toContain(t);
+    }
+    expect(read("web/app/calibration/page.tsx")).toContain("How this is measured");
+    expect(read("web/app/proof/page.tsx")).toContain("Every transaction");
+  });
+
+  it("leaves the thesis on the page rather than behind a control", () => {
+    // The verdict, the loop and the live comparison are the argument. Only the
+    // working folds.
+    const proof = read("web/app/proof/page.tsx");
+    const loop = proof.slice(proof.indexOf("<h2>The loop</h2>"));
+    expect(loop).not.toMatch(/^[\s\S]{0,200}<Reveal/);
+    expect(read("web/app/agents/page.tsx")).toMatch(/Economic quality[\s\S]{0,400}Verdict/);
+  });
+
+  it("gives a disclosure a label worth pressing", () => {
+    // A row that says only "details" is a row nobody opens.
+    const css = read("web/app/globals.css");
+    expect(css).toMatch(/\.reveal > summary::before/);
+    expect(css).toMatch(/\.reveal\[open\] > summary::before[^}]*rotate/);
+    expect(read("web/components/Reveal.tsx")).toMatch(/hint\?: string/);
+  });
+});
+
 describe("touch", () => {
   const coarse = mediaBlocks(/pointer:\s*coarse/).join("\n");
 

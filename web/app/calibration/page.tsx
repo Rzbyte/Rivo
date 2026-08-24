@@ -9,6 +9,7 @@
 
 import { useLive, ago } from "@/lib/live";
 import { Nav } from "@/components/Nav";
+import { Reveal } from "@/components/Reveal";
 
 interface Bucket {
   lo: number; hi: number; n: number; windows: number;
@@ -119,10 +120,7 @@ export default function Calibration() {
               </p>
             </div>
 
-            <div className="sec-head">
-              <h2>How this is measured</h2>
-            </div>
-            <div className="panel">
+            <Reveal title="How this is measured" hint="sampling, clustering, intervals, exclusions">
               <div className="defs">
                 <Def t="One observation" d={`One settled contract, sampled at a moment a trade actually happened. ${r.windows.toLocaleString()} of them.`} />
                 <Def
@@ -141,7 +139,7 @@ export default function Calibration() {
               <p className="hint" style={{ marginTop: 14, marginBottom: 0 }}>
                 Historical calibration describes what has happened. It does not predict what will.
               </p>
-            </div>
+            </Reveal>
           </>
         )}
       </main>

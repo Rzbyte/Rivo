@@ -247,6 +247,33 @@ input, select {
 .tally .v { display: block; font-family: var(--mono); font-size: 24px; font-weight: 500; letter-spacing: -.03em; font-variant-numeric: tabular-nums; line-height: 1.1; }
 .tally .k { display: block; margin-top: 5px; font-size: 12px; color: var(--muted); line-height: 1.4; }
 
+/* --- reveal --------------------------------------------------------------
+   A row that opens, styled as a ruled line rather than a card — so a column of
+   them reads as a contents list and not as more panels to scroll past. The
+   marker is a rotating chevron because a reader needs to know the row does
+   something before they press it. */
+.reveal { border-top: 1px solid var(--line); }
+.reveal:last-of-type { border-bottom: 1px solid var(--line); }
+.reveal > summary {
+  list-style: none; cursor: pointer;
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  padding: 13px 2px;
+}
+.reveal > summary::-webkit-details-marker { display: none; }
+.reveal > summary::before {
+  content: "›"; font-family: var(--mono); color: var(--faint);
+  transition: transform 140ms ease; display: inline-block; flex: none;
+}
+.reveal[open] > summary::before { transform: rotate(90deg); }
+.reveal > summary .t {
+  font-family: var(--mono); font-size: 12px; font-weight: 640;
+  text-transform: uppercase; letter-spacing: .1em; color: var(--ink);
+}
+.reveal > summary .h { font-size: 12.5px; color: var(--faint); }
+.reveal > summary:hover .t { color: var(--accent); }
+.reveal-body { padding: 2px 0 18px; }
+.reveal-body > .panel { border: none; padding: 0; background: none; }
+
 /* --- the comparison ------------------------------------------------------
    One market card exists to answer one question: what is being asked, against
    what comparable contracts actually did. That pair was six equal-weight rows

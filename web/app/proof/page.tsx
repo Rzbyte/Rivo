@@ -18,6 +18,7 @@
 
 import { useLive, ago } from "@/lib/live";
 import { Nav } from "@/components/Nav";
+import { Reveal } from "@/components/Reveal";
 
 interface Run {
   asset: string; leg: string; intervalSec: number; action: string;
@@ -112,10 +113,7 @@ export default function Proof() {
 
             {d.transactions && d.transactions.length > 0 && (
               <>
-                <div className="sec-head">
-                  <h2>Transactions on Somnia</h2>
-                  <span className="hint">{d.counts.submitted} submitted · {d.counts.confirmed} confirmed</span>
-                </div>
+                <Reveal title="Every transaction" hint={`${d.counts.submitted} submitted · ${d.counts.confirmed} confirmed`}>
                 <div className="panel">
                   <div className="scroll">
                     <table>
@@ -141,15 +139,13 @@ export default function Proof() {
                     </table>
                   </div>
                 </div>
+                </Reveal>
               </>
             )}
 
             {d.global && (
               <>
-                <div className="sec-head">
-                  <h2>Global</h2>
-                  <span className="hint">every agent on this deployment, not this one</span>
-                </div>
+                <Reveal title="Global" hint="every agent on this deployment, not this one">
                 <div className="panel">
                   <div className="grid cols-3">
                     <Field k="Agents registered" v={String(d.global.agents)} />
@@ -157,10 +153,11 @@ export default function Proof() {
                     <Field k="Resolved against settlement" v={d.global.shadowSettled.toLocaleString()} />
                   </div>
                   <p className="hint" style={{ marginTop: 10, marginBottom: 0 }}>
-                    Kept in its own section on purpose. Everything above this line belongs to the run named
-                    at the top; nothing here does.
+                    Kept apart on purpose. Everything outside this row belongs to the run named at the
+                    top; nothing inside it does.
                   </p>
                 </div>
+                </Reveal>
               </>
             )}
 
