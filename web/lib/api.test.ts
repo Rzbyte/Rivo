@@ -249,6 +249,24 @@ describe.skipIf(!haveDatabase())("the API's ownership boundary", () => {
     expect((await res.json()).error).toMatch(/failed out-of-sample economic validation/i);
   });
 
+  it("never returns a connected agent's bearer token", async () => {
+    // A builder's token is theirs. It is sent to their own endpoint and stored
+    // server-side; a secret that reaches the browser is a secret that has been
+    // published, and the read path must not be one line away from leaking it.
+    await query(
+      `INSERT INTO agents (slug, label, kind, endpoint, auth_header, state)
+       VALUES ('t','T','http','https://example.com/d','Bearer super-secret-token','SHADOW_ONLY')`,
+    );
+    const { GET } = await import("../app/api/agents/route");
+    const res = await GET();
+    const text = await res.text();
+    expect(text).not.toContain("super-secret-token");
+    expect(text).not.toContain("auth_header");
+    // And the endpoint itself is the owner's infrastructure, not the public's.
+    expect(text).not.toContain("https://example.com/d");
+    expect(JSON.parse(text).agents[0].hasEndpoint).toBe(true);
+  });
+
   it("switches Autopilot off without needing anything from the browser", async () => {
     // The asymmetry that matters: turning it ON requires a consent step that can
     // fail, and turning it OFF must not depend on anything succeeding.

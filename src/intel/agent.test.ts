@@ -119,6 +119,37 @@ describe("asking a remote agent", () => {
     expect((await askAgent("https://a.test", ctx(), { fetchImpl: f })).action).toBe("SKIP");
   });
 
+  it("refuses to follow a redirect", async () => {
+    // The endpoint was vetted before it was stored. A 302 discards that: a
+    // target that resolves publicly and then redirects to cloud metadata
+    // defeats every pre-flight check, because the second request is one the
+    // checker never saw.
+    const f = vi.fn(async () => new Response(null, { status: 302, headers: { location: "http://169.254.169.254/" } }));
+    const d = await askAgent("https://a.test", ctx(), { fetchImpl: f as unknown as typeof fetch });
+    expect(d.action).toBe("SKIP");
+    expect(d.reason).toMatch(/redirect/i);
+  });
+
+  it("asks fetch not to follow redirects in the first place", async () => {
+    const seen: RequestInit[] = [];
+    const f = vi.fn(async (_u: unknown, init?: RequestInit) => {
+      seen.push(init!);
+      return new Response(JSON.stringify({ action: "SKIP" }), { status: 200 });
+    });
+    await askAgent("https://a.test", ctx(), { fetchImpl: f as unknown as typeof fetch });
+    expect(seen[0]!.redirect).toBe("manual");
+  });
+
+  it("sends caller-supplied headers without exposing them anywhere else", async () => {
+    const seen: RequestInit[] = [];
+    const f = vi.fn(async (_u: unknown, init?: RequestInit) => {
+      seen.push(init!);
+      return new Response(JSON.stringify({ action: "SKIP" }), { status: 200 });
+    });
+    await askAgent("https://a.test", ctx(), { fetchImpl: f as unknown as typeof fetch, headers: { authorization: "Bearer t" } });
+    expect((seen[0]!.headers as Record<string, string>).authorization).toBe("Bearer t");
+  });
+
   it("still caps a hostile endpoint at the limit", async () => {
     // The one that matters: an endpoint that has decided to help itself.
     const f = ok({ action: "ENTER", notional: 1e9, probability: 1, confidence: 99 });

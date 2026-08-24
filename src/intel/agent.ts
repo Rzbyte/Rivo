@@ -104,6 +104,13 @@ export function parseDecision(raw: unknown, limits: EventContext["limits"]): Age
 
 export interface AskOptions {
   timeoutMs?: number;
+  /**
+   * Extra headers, for an endpoint that needs a bearer token.
+   *
+   * Supplied by the caller from server-side storage. The browser never sees
+   * one — a secret that reaches the client is a secret that is published.
+   */
+  headers?: Record<string, string>;
   /** Injected in tests. Defaults to global fetch. */
   fetchImpl?: typeof fetch;
 }
@@ -120,10 +127,19 @@ export async function askAgent(endpoint: string, ctx: EventContext, o: AskOption
   try {
     const res = await f(endpoint, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...(o.headers ?? {}) },
       body: JSON.stringify(ctx),
       signal: timeoutSignal(o.timeoutMs ?? 4_000),
+      // Never follow a redirect.
+      //
+      // The endpoint was vetted before it was stored — scheme, literal address,
+      // and the addresses its hostname resolves to. A 302 discards all of that:
+      // a target that resolves publicly and then redirects to 169.254.169.254
+      // defeats any amount of pre-flight checking, because the second request is
+      // one the checker never saw.
+      redirect: "manual",
     });
+    if (res.status >= 300 && res.status < 400) return skip("agent redirected, which Rivo does not follow");
     if (!res.ok) return skip(`agent returned HTTP ${res.status}`);
     return parseDecision(await res.json(), ctx.limits);
   } catch (e) {

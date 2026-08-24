@@ -13,6 +13,7 @@
 
 import { useEffect, useState } from "react";
 import { Nav } from "@/components/Nav";
+import { ConnectAgent } from "@/components/ConnectAgent";
 
 interface Agent {
   slug: string; label: string; kind: string; hasEndpoint: boolean;
@@ -183,6 +184,34 @@ export default function Agents() {
           </>
         )}
 
+        {data && data.agents.length > 1 && (
+          <>
+            <div className="sec-head">
+              <h2>Connected agents</h2>
+              <span className="hint">{data.agents.length - 1} beside Rivo&rsquo;s own</span>
+            </div>
+            <div className="panel">
+              <div className="scroll">
+                <table>
+                  <thead>
+                    <tr><th>Agent</th><th>Kind</th><th>State</th><th>Evidence</th></tr>
+                  </thead>
+                  <tbody>
+                    {data.agents.map((a) => (
+                      <tr key={a.slug}>
+                        <td><strong>{a.label}</strong></td>
+                        <td className="mono">{a.kind}{a.kind === "http" && a.hasEndpoint ? " · endpoint set" : ""}</td>
+                        <td className={STATE_TONE[a.state]}>{a.state}</td>
+                        <td className="faint" style={{ fontSize: 12.5 }}>{a.evidence ?? "not yet validated"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
+
         <LiveShadow />
 
         <div className="sec-head">
@@ -195,6 +224,10 @@ export default function Agents() {
             dangerous on its own side — validation, risk limits, the wallet, the ledger, reconciliation
             and settlement. Your agent never holds a key and never submits a transaction.
           </p>
+
+          <ConnectAgent onConnected={() => location.reload()} />
+
+          <p className="label" style={{ marginTop: 18, marginBottom: 6 }}>The contract</p>
           <pre className="mono" style={{ fontSize: 12, overflowX: "auto", background: "var(--panel-2)", padding: 12, borderRadius: "var(--r)", margin: 0 }}>
 {`POST  your-endpoint
 {
