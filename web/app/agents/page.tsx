@@ -194,15 +194,15 @@ export default function Agents() {
               <div className="scroll">
                 <table>
                   <thead>
-                    <tr><th>Agent</th><th>Kind</th><th>State</th><th>Evidence</th></tr>
+                    <tr><th>Agent</th><th className="hide-sm">Kind</th><th>State</th><th className="hide-sm">Evidence</th></tr>
                   </thead>
                   <tbody>
                     {data.agents.map((a) => (
                       <tr key={a.slug}>
                         <td><strong>{a.label}</strong></td>
-                        <td className="mono">{a.kind}{a.kind === "http" && a.hasEndpoint ? " · endpoint set" : ""}</td>
+                        <td className="mono hide-sm">{a.kind}{a.kind === "http" && a.hasEndpoint ? " · endpoint set" : ""}</td>
                         <td className={STATE_TONE[a.state]}>{a.state}</td>
-                        <td className="faint" style={{ fontSize: 12.5 }}>{a.evidence ?? "not yet validated"}</td>
+                        <td className="faint hide-sm" style={{ fontSize: 12.5 }}>{a.evidence ?? "not yet validated"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -327,7 +327,7 @@ function LiveShadow() {
             <thead>
               <tr>
                 <th>Market</th><th className="n">Venue</th><th className="n">Agent</th>
-                <th>Decision</th><th>Status</th><th className="n">Hypothetical</th>
+                <th>Decision</th><th className="hide-sm">Status</th><th className="n">Hypothetical</th>
               </tr>
             </thead>
             <tbody>
@@ -338,9 +338,9 @@ function LiveShadow() {
                   <td className="n">{r.agentPrice === null ? "—" : `${(r.agentPrice * 100).toFixed(1)}%`}</td>
                   <td>
                     <strong className={r.action === "ENTER" ? "pos" : ""}>{r.action}</strong>
-                    {r.reason && <span className="faint" style={{ fontSize: 12 }}> — {r.reason}</span>}
+                    {r.reason && <span className="faint hide-sm" style={{ fontSize: 12 }}> — {r.reason}</span>}
                   </td>
-                  <td className="mono" style={{ fontSize: 11.5 }}>
+                  <td className="mono hide-sm" style={{ fontSize: 11.5 }}>
                     {r.settledAt ? (
                       <span className={r.outcome === 1 ? "pos" : "neg"}>SETTLED {r.outcome === 1 ? "TRUE" : "FALSE"}</span>
                     ) : (

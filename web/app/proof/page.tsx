@@ -121,13 +121,13 @@ export default function Proof() {
                     <table>
                       <thead>
                         <tr>
-                          <th>When</th><th>Action</th><th>Status</th><th>Transaction</th>
+                          <th className="hide-sm">When</th><th>Action</th><th>Status</th><th>Transaction</th>
                         </tr>
                       </thead>
                       <tbody>
                         {d.transactions.map((t) => (
                           <tr key={t.hash}>
-                            <td className="mono" style={{ fontSize: 12 }}>{new Date(t.at).toISOString().slice(5, 16).replace("T", " ")}</td>
+                            <td className="mono hide-sm" style={{ fontSize: 12 }}>{new Date(t.at).toISOString().slice(5, 16).replace("T", " ")}</td>
                             <td className="mono">{t.action}</td>
                             <td className={t.status === "confirmed" ? "pos" : t.status === "failed" ? "neg" : ""}>{t.status.toUpperCase()}</td>
                             <td className="mono" style={{ fontSize: 12 }}>

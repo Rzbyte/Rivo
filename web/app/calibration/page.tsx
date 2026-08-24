@@ -81,11 +81,11 @@ export default function Calibration() {
                   <thead>
                     <tr>
                       <th>Quoted</th>
-                      <th className="n">Windows</th>
+                      <th className="n">n</th>
                       <th className="n">Settled true</th>
-                      <th>95% interval</th>
+                      <th className="hide-sm">95% interval</th>
                       <th className="n">Gap</th>
-                      <th style={{ width: "24%" }}>Quoted vs settled</th>
+                      <th style={{ width: "26%" }}>Quoted vs settled</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -96,7 +96,7 @@ export default function Calibration() {
                         </td>
                         <td className="n">{b.windows}</td>
                         <td className="n">{b.thin ? <span className="faint">{pct(b.realized)}</span> : pct(b.realized)}</td>
-                        <td className="mono faint" style={{ fontSize: 12 }}>
+                        <td className="mono faint hide-sm" style={{ fontSize: 12 }}>
                           {pct(b.lo95, 0)} – {pct(b.hi95, 0)}
                         </td>
                         <td className={`n ${b.thin ? "faint" : Math.abs(b.gap) <= 0.03 ? "" : b.gap > 0 ? "pos" : "neg"}`}>

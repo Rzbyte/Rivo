@@ -247,6 +247,63 @@ input, select {
 .tally .v { display: block; font-family: var(--mono); font-size: 24px; font-weight: 500; letter-spacing: -.03em; font-variant-numeric: tabular-nums; line-height: 1.1; }
 .tally .k { display: block; margin-top: 5px; font-size: 12px; color: var(--muted); line-height: 1.4; }
 
+/* --- the comparison ------------------------------------------------------
+   One market card exists to answer one question: what is being asked, against
+   what comparable contracts actually did. That pair was six equal-weight rows
+   deep in a list, which is a table of contents rather than an answer — so it
+   comes first, at a size you read rather than parse, with the gap between them
+   drawn as well as printed.
+
+   Drawn matters here. "67% asked, 64.5% settled" is two numbers a reader has to
+   subtract; a bar with two marks on one scale is a distance they can see. */
+.compare { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; align-items: baseline; }
+.compare .big {
+  font-family: var(--mono); font-size: 26px; font-weight: 500;
+  font-variant-numeric: tabular-nums; letter-spacing: -.03em; line-height: 1.1;
+}
+.compare .vs { font-size: 12.5px; color: var(--muted); }
+.compare .gap {
+  font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums;
+  justify-self: end; align-self: center;
+}
+
+/* Two marks on one 0–100% scale: what was asked, and what happened. A bar per
+   number would invite comparing cards; this compares the pair, which is the
+   only comparison the card is about. */
+.scale { position: relative; height: 14px; margin-top: 8px; }
+.scale .rule { position: absolute; left: 0; right: 0; top: 6px; height: 2px; background: var(--line); }
+.scale .asked {
+  position: absolute; top: 1px; width: 2px; height: 12px;
+  background: var(--faint); transform: translateX(-1px);
+}
+.scale .settled {
+  position: absolute; top: 3px; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent); transform: translateX(-4px);
+}
+.scale .settled.thin { background: var(--line-2); }
+.scale .span { position: absolute; top: 6px; height: 2px; background: var(--accent-soft); }
+
+/* Supporting numbers, compact. They matter and they are not the headline, so
+   they read as one line of instrument markings rather than as six rows. */
+.kv { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 10px; }
+.kv > div { display: flex; gap: 6px; align-items: baseline; font-size: 12.5px; }
+.kv .k { font-family: var(--mono); font-size: 10.5px; letter-spacing: .09em;
+         text-transform: uppercase; color: var(--faint); }
+.kv .v { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--muted); }
+
+/* A badge that says the state in colour as well as in words, so a screen of
+   cards is scannable without reading any of them. */
+.verdict {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--mono); font-size: 10.5px; font-weight: 640;
+  letter-spacing: .1em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: var(--r);
+  border: 1px solid var(--line-2); background: var(--panel-2); color: var(--muted);
+}
+.verdict.claim { border-color: color-mix(in srgb, var(--warn) 45%, var(--line-2)); background: var(--warn-soft); color: var(--warn); }
+.verdict.caution { border-color: color-mix(in srgb, var(--neg) 40%, var(--line-2)); background: var(--neg-soft); color: var(--neg); }
+.verdict.good { border-color: color-mix(in srgb, var(--pos) 45%, var(--line-2)); background: var(--pos-soft); color: var(--pos); }
+
 /* --- explainer flow ------------------------------------------------------
    A numbered sequence, and the numbers are load-bearing: this is one pass of
    the engine in the order it actually runs, so a reader who skips step four
@@ -491,7 +548,20 @@ header.top .wrap { display: flex; align-items: center; justify-content: space-be
   .brand { font-size: 15.5px; }
 
   table { font-size: 12.5px; }
-  th, td { padding-right: 12px; }
+  th, td { padding-right: 10px; }
+
+  /* Columns that are detail rather than answer.
+     A dense table on a phone can scroll sideways, and then the comparison the
+     table exists to show is the part that scrolled off. Dropping the supporting
+     columns keeps the answer on screen; the full figures stay in the artefact
+     and in the desktop view. */
+  .hide-sm { display: none; }
+
+  /* The comparison headline stays legible without pushing a card past the
+     screen edge. */
+  .compare .big { font-size: 22px; }
+  .kv { gap: 4px 12px; }
+  .kv > div { font-size: 12px; }
 
   .steps li { padding-right: 10px; font-size: 11.5px; }
 }

@@ -140,54 +140,78 @@ export default function Markets() {
 }
 
 function MarketCard({ c, now }: { c: Card; now: number }) {
-  const tone = ASSESSMENT_TONE[c.assessment.code];
-  // Counted from the absolute expiry, not from the payload's snapshot.
+  const code = c.assessment.code;
+  const tone = ASSESSMENT_TONE[code];
   const left = c.expiry - now;
+  const h = c.historical;
+  const gap = c.price !== null && h ? h.realized - c.price : null;
+
   return (
     <div className="panel">
-      <div className="spread" style={{ marginBottom: 10 }}>
-        <div>
-          <strong className="mono" style={{ fontSize: 14 }}>
-            {c.asset} {c.leg} · {tenorLabel(c.intervalSec)}
-          </strong>
-        </div>
-        <span className="mono faint" style={{ fontSize: 12 }}>{countdown(left)} left</span>
+      <div className="spread" style={{ marginBottom: 12 }}>
+        <strong className="mono" style={{ fontSize: 14, letterSpacing: ".01em" }}>
+          {c.asset} {c.leg} · {tenorLabel(c.intervalSec)}
+        </strong>
+        <span className="mono faint" style={{ fontSize: 12, whiteSpace: "nowrap" }}>{countdown(left)} left</span>
       </div>
 
-      <div className="grid cols-2" style={{ gap: 8, marginBottom: 10 }}>
-        <Row k="DreamDEX asks" v={pct(c.price)} strong />
-        <Row k="Settled true" v={c.historical ? pct(c.historical.realized) : "—"} />
-        <Row k="Rivo reference" v={pct(c.reference)} />
-        <Row k="Spread" v={pct(c.spread, 2)} />
-        <Row k="Depth at reference" v={`${c.depth.toFixed(1)} sh`} />
-        <Row k="Sample" v={c.historical ? `${c.historical.windows} windows` : "none"} />
+      {/* The one comparison the card exists to make, at a size you read rather
+          than parse. Everything below it is supporting detail. */}
+      <div className="compare">
+        <span className="big">{pct(c.price)}</span>
+        <span className={`gap ${gap === null ? "faint" : Math.abs(gap) <= 0.03 ? "muted" : gap > 0 ? "pos" : "neg"}`}>
+          {gap === null ? "—" : `${gap >= 0 ? "+" : ""}${(gap * 100).toFixed(1)}%`}
+        </span>
+        <span className="vs" style={{ gridColumn: "1 / -1" }}>
+          asked by DreamDEX{h ? ` · comparable contracts settled true ${pct(h.realized)}` : " · nothing comparable has settled yet"}
+        </span>
       </div>
 
-      {/* Where the historical number came from. Without this "61%" is a figure
+      {c.price !== null && h && <Scale asked={c.price} settled={h.realized} thin={h.thin} />}
+
+      <div className="kv">
+        <div><span className="k">Rivo</span><span className="v">{pct(c.reference)}</span></div>
+        <div><span className="k">Spread</span><span className="v">{pct(c.spread, 2)}</span></div>
+        <div><span className="k">Depth</span><span className="v">{c.depth.toFixed(1)} sh</span></div>
+        <div><span className="k">Sample</span><span className="v">{h ? `${h.windows}w` : "none"}</span></div>
+      </div>
+
+      <div className="row" style={{ marginTop: 12, gap: 8 }}>
+        <span className={`verdict ${tone === "claim" ? "claim" : tone === "caution" ? "caution" : code === "WELL_CALIBRATED" ? "good" : ""}`}>
+          {ASSESSMENT_LABEL[code]}
+        </span>
+      </div>
+      <p className="hint" style={{ marginTop: 8, marginBottom: 0 }}>{c.assessment.detail}</p>
+
+      {/* Where the historical number came from. Without this "64.5%" is a figure
           with no population attached, and the reader cannot check it. */}
-      {c.historical && (
-        <p className="hint" style={{ marginTop: 0, marginBottom: 8 }}>
-          Compared against <strong>{c.historical.cohortLabel}</strong>
-          {c.historical.fellBack && " — a wider set, because this market's own cohort had too few settled windows"}
-          {c.historical.thin && " · sample below the floor, so no claim is made"}
+      {h && (
+        <p className="hint" style={{ marginTop: 6, marginBottom: 0 }}>
+          Compared against <strong>{h.cohortLabel}</strong>
+          {h.fellBack && " — a wider set, because this market's own cohort had too few settled windows"}
         </p>
       )}
-
-      <div
-        className={`banner ${tone === "claim" ? "warn" : tone === "caution" ? "bad" : ""}`}
-        style={{ marginBottom: 0, fontSize: 12.5 }}
-      >
-        <strong>{ASSESSMENT_LABEL[c.assessment.code]}.</strong> {c.assessment.detail}
-      </div>
     </div>
   );
 }
 
-function Row({ k, v, strong = false }: { k: string; v: string; strong?: boolean }) {
+/**
+ * Asked and settled on one 0–100% scale.
+ *
+ * A bar per number would invite comparing one card against the next; this
+ * compares the pair, which is the only comparison the card is about. The band
+ * between them is the gap made visible — two numbers a reader would otherwise
+ * have to subtract.
+ */
+function Scale({ asked, settled, thin }: { asked: number; settled: number; thin: boolean }) {
+  const lo = Math.min(asked, settled) * 100;
+  const hi = Math.max(asked, settled) * 100;
   return (
-    <div className="spread" style={{ fontSize: 13 }}>
-      <span className="label" style={{ letterSpacing: ".06em" }}>{k}</span>
-      <span className="mono" style={{ fontWeight: strong ? 640 : 400 }}>{v}</span>
+    <div className="scale" aria-hidden="true">
+      <span className="rule" />
+      <span className="span" style={{ left: `${lo}%`, width: `${hi - lo}%` }} />
+      <span className="asked" style={{ left: `${asked * 100}%` }} title={`asked ${(asked * 100).toFixed(1)}%`} />
+      <span className={`settled ${thin ? "thin" : ""}`} style={{ left: `${settled * 100}%` }} title={`settled ${(settled * 100).toFixed(1)}%`} />
     </div>
   );
 }

@@ -95,6 +95,55 @@ describe("small screens", () => {
   });
 });
 
+describe("the product surfaces on a phone", () => {
+  const read = (p: string): string => readFileSync(resolve(p), "utf8");
+  const PAGES = ["markets", "calibration", "agents", "proof"] as const;
+
+  it("puts every wide table in its own scroll container", () => {
+    // The page body must never scroll sideways. A table that does it inside its
+    // own box is fine; a table that does it to the document is not.
+    for (const page of PAGES) {
+      const src = read(`web/app/${page}/page.tsx`);
+      const tables = (src.match(/<table>/g) ?? []).length;
+      const scrolls = (src.match(/className="scroll"/g) ?? []).length;
+      expect(scrolls, `${page}: ${tables} table(s), ${scrolls} scroll container(s)`).toBeGreaterThanOrEqual(tables);
+    }
+  });
+
+  it("drops supporting columns rather than scrolling the answer off screen", () => {
+    // A dense table on a phone can scroll — and then the comparison the table
+    // exists to show is the part that scrolled away.
+    expect(CSS).toMatch(/@media[^{]*max-width[\s\S]*?\.hide-sm\s*\{[^}]*display:\s*none/);
+    for (const page of ["calibration", "agents", "proof"] as const) {
+      expect(read(`web/app/${page}/page.tsx`), page).toMatch(/hide-sm/);
+    }
+  });
+
+  it("leads a market card with its one comparison, not a list of six equals", () => {
+    // The card answers one question: what is asked, against what comparable
+    // contracts actually did. Six equal-weight rows is a table of contents.
+    const src = read("web/app/markets/page.tsx");
+    expect(src).toMatch(/className="compare"/);
+    expect(src).toMatch(/className="big"/);
+    // And the gap is drawn as well as printed — a distance a reader can see
+    // rather than a subtraction they have to do.
+    expect(src).toMatch(/className="scale"/);
+    expect(CSS).toMatch(/\.scale \.span\s*\{/);
+  });
+
+  it("encodes assessment state in form, not only in words", () => {
+    // A screen of cards has to be scannable without reading any of them.
+    expect(CSS).toMatch(/\.verdict\.claim\s*\{/);
+    expect(CSS).toMatch(/\.verdict\.caution\s*\{/);
+    expect(read("web/app/markets/page.tsx")).toMatch(/className=\{`verdict/);
+  });
+
+  it("shrinks the comparison headline before it reaches the screen edge", () => {
+    const narrow = mediaBlocks(/max-width/).join("\n");
+    expect(narrow).toMatch(/\.compare \.big\s*\{[^}]*font-size/);
+  });
+});
+
 describe("touch", () => {
   const coarse = mediaBlocks(/pointer:\s*coarse/).join("\n");
 
