@@ -12,10 +12,30 @@ import { Providers } from "./providers";
  * The system mono is also the one face guaranteed to have real tabular figures
  * on every platform, which matters more here than a typeface with a name does.
  */
+/**
+ * The one piece of copy most readers see before any other.
+ *
+ * This said "autonomous portfolio manager" and pitched setting a budget once —
+ * the product Rivo stopped being. Every page body had moved to intelligence and
+ * validation; the tab title, the search result and the link preview had not, so
+ * the first thing a judge read was the old product and the second was a
+ * different one. Pinned by web/identity.test.ts, because the failure mode here
+ * is silence: nothing renders a <title> wrongly, it just says the wrong thing.
+ */
 export const metadata: Metadata = {
-  title: "Rivo — autonomous portfolio manager for DreamDEX Event Contracts",
+  title: "Rivo — Event intelligence and agent validation for DreamDEX",
   description:
-    "Set a budget and a risk profile once. Rivo prices every live Event Contract window, sizes the whole term structure as one exposure, and manages it while you are offline.",
+    "DreamDEX says BTC UP 15m is 67%. Rivo measures whether contracts quoted at 67% actually settled true 67% of the time — and tests an agent against live markets before it trades.",
+  // Shared into a Discord or a group chat, a submission is a link preview
+  // before it is a page. Without these it inherits the title above and nothing
+  // else, which is the one context where the old identity would have survived
+  // the fix.
+  openGraph: {
+    title: "Rivo — Event intelligence and agent validation for DreamDEX",
+    description:
+      "Understand the market. Validate the agent. Prove it on DreamDEX. Calibration measured over settled windows, and an execution gate that reads the economics rather than the accuracy.",
+    type: "website",
+  },
 };
 
 /**
