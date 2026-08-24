@@ -1,20 +1,20 @@
 {
-  "generatedAt": "2026-08-24T17:13:51.309Z",
+  "generatedAt": "2026-08-24T18:15:08.370Z",
   "about": "The repository at the moment it was frozen for submission, plus what the production deployment answered when asked. Every field is re-derivable; none is a credential.",
   "commit": {
-    "sha": "506bb755748f902b31059f5ed9a51e3c4b60ac56",
-    "shortSha": "506bb75",
+    "sha": "aebc196c7825b6d945b5ca5e89e8bde628a98aa3",
+    "shortSha": "aebc196",
     "branch": "main",
-    "subject": "PENDING was true when I wrote it and false by the time anybody read it",
-    "committedAt": "2026-08-25T00:11:27+07:00",
+    "subject": "Say, everywhere, that the trial needs no account",
+    "committedAt": "2026-08-25T01:14:41+07:00",
     "clean": true
   },
   "verification": {
     "tests": {
-      "passed": 849,
+      "passed": 858,
       "failed": 0,
       "skipped": 0,
-      "files": 57,
+      "files": 58,
       "note": "optional kit integrations excluded, as in CI"
     },
     "typecheck": "PASS",
@@ -54,8 +54,8 @@
     },
     "workers": {
       "live": 1,
-      "lastHeartbeatAt": "2026-08-24T17:13:42.604Z",
-      "lastShadowDecisionAt": "2026-08-24T17:13:10.247Z"
+      "lastHeartbeatAt": "2026-08-24T18:14:55.542Z",
+      "lastShadowDecisionAt": "2026-08-24T18:14:44.990Z"
     },
     "calibration": {
       "windows": 834,
@@ -64,8 +64,8 @@
       "servedFromArtefact": false
     },
     "shadow": {
-      "decisions": 8846,
-      "settled": 6026
+      "decisions": 9414,
+      "settled": 6270
     },
     "demoProof": {
       "published": true,
