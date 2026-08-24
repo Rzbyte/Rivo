@@ -90,13 +90,24 @@ export async function GET(req: Request): Promise<Response> {
   // Picking the most recent confirmed transaction rather than the most recent
   // attempt: a run that ends at "submitted" is a story without a last page.
   const [latest] = await query<{
-    tx_hash: string; status: string; action: string; leg: string; asset: string;
-    interval_sec: number; market_id: string; created_at: Date;
-    filled_qty: string | null; avg_price: string | null; block_number: string | null;
+    tx_hash: string; status: string; action: string; leg: string;
+    market_id: string; created_at: Date;
+    filled_qty: string | null; filled_price: string | null; block_number: string | null;
+    asset: string | null; interval_sec: number | null;
   }>(
-    `SELECT e.tx_hash, e.status, e.action, e.leg, e.asset, e.interval_sec, e.market_id,
-            e.created_at, e.filled_qty::text, e.avg_price::text, e.block_number::text
+    // `executions` records the order, not the market's shape: asset and tenor
+    // live on the position it opened. Joining rather than assuming — the first
+    // version of this selected e.asset and e.interval_sec, which do not exist,
+    // and the endpoint answered 500 on a portfolio whose data was perfect.
+    `SELECT e.tx_hash, e.status, e.action, e.leg, e.market_id, e.created_at,
+            e.filled_qty::text, e.filled_price::text, e.block_number::text,
+            p.asset, p.interval_sec
        FROM executions e
+       LEFT JOIN LATERAL (
+         SELECT asset, interval_sec FROM positions
+          WHERE portfolio_id = e.portfolio_id AND market_id = e.market_id
+          LIMIT 1
+       ) p ON true
       WHERE e.portfolio_id = $1 AND e.tx_hash IS NOT NULL AND e.status = 'confirmed'
       ORDER BY e.created_at DESC LIMIT 1`,
     [id],
@@ -115,13 +126,13 @@ export async function GET(req: Request): Promise<Response> {
   return NextResponse.json({
     run: latest
       ? {
-          asset: latest.asset, leg: latest.leg, intervalSec: latest.interval_sec,
+          asset: latest.asset ?? "—", leg: latest.leg, intervalSec: latest.interval_sec ?? 0,
           action: latest.action,
           submittedAt: latest.created_at,
           txHash: latest.tx_hash,
           blockNumber: latest.block_number,
           filled: latest.filled_qty === null ? null : Number(latest.filled_qty),
-          avgPrice: latest.avg_price === null ? null : Number(latest.avg_price),
+          avgPrice: latest.filled_price === null ? null : Number(latest.filled_price),
           settlement: outcome
             ? { status: outcome.status, exit: outcome.exit, closedAt: outcome.closed_at }
             : null,
