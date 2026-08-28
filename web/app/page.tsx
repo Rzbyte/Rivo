@@ -7,9 +7,25 @@
 // The previous version opened on "Set a budget and a risk profile once" — a
 // consumer fund-manager pitch for a product whose own research says its strategy
 // should not receive capital. Those two things cannot both be on the same site.
+//
+// The version after that opened on the rejection: "Rivo found this out about
+// itself… so Rivo V1 is marked REJECTED". True, and the strongest thing in the
+// project, and the wrong first paragraph — it asked a reader to work out why a
+// tool that refuses to trade is worth their time, in the ten seconds before they
+// close the tab. The finding is not softened here, it is MOVED: what Rivo is for
+// comes first, and the self-rejection follows as the evidence that the apparatus
+// is real. A validator that never rejects anything is a rubber stamp.
+//
+// The numbers are imported rather than typed. They were string literals, on the
+// one page that reads no data, so nothing could have caught them drifting from
+// the verdict /agents shows — and `landing.test.ts` now fails if they come back.
 
 import Link from "next/link";
 import { Nav } from "@/components/Nav";
+import { PRODUCTION_STRATEGY } from "@rivo/research/gating.js";
+import { BASELINES } from "@rivo/intel/baselines.js";
+
+const pct = (x: number) => `${x >= 0 ? "+" : "−"}${Math.abs(x * 100).toFixed(2)}%`;
 
 export default function Landing() {
   return (
@@ -17,17 +33,22 @@ export default function Landing() {
       <Nav />
       <main className="wrap" style={{ paddingTop: 40, paddingBottom: 72 }}>
         <span className="label">DreamDEX Event Contracts · Somnia</span>
-        <h1 style={{ maxWidth: "17ch", marginTop: 10 }}>
-          Understand DreamDEX probabilities. Test agents before they trade.
+        <h1 style={{ maxWidth: "18ch", marginTop: 10 }}>
+          Event Contracts you can check before you trade them.
         </h1>
         <p className="lede">
-          Live Event Contract intelligence, economic validation, shadow testing, and verifiable DreamDEX
-          testnet execution. Nothing here needs a wallet to read.
+          A price on a binary contract is a forecast, and a forecast nobody has scored is an opinion
+          with a number on it. Rivo scores them — against contracts that have already settled, with the
+          sample size attached to every claim — and tests whether an agent&rsquo;s edge survives the
+          spread before any capital moves. Nothing here needs a wallet to read.
         </p>
 
         <div className="row" style={{ marginTop: 24, marginBottom: 8 }}>
           <Link className="btn primary big" href="/markets">Explore Markets</Link>
           <Link className="btn big" href="/agents">Test an Agent</Link>
+          {/* Thirty seconds, no account, no reading. It existed for exactly this
+              reader and was reachable only by typing the URL. */}
+          <Link className="btn big" href="/demo">Watch one run</Link>
         </div>
 
         {/* The two problems, stated once each. Both are things this project
@@ -56,15 +77,19 @@ export default function Landing() {
           <div className="panel">
             <h3>Prediction accuracy is not economic edge</h3>
             <p style={{ maxWidth: "56ch" }}>
-              Rivo found this out about itself. Its own model separates up from down well — AUC 0.8158,
-              measured — and trading it lost money out of sample at −6.49% return on stake.
+              A model can predict well and still trade badly — being right about direction is not the
+              same as being right by more than the spread you cross. So {BASELINES.length + 1} strategies
+              now run against live Event Contracts, deciding but never spending, each resolved against
+              the venue&rsquo;s own settlement.
             </p>
             <p style={{ maxWidth: "56ch", marginBottom: 0 }}>
-              So Rivo V1 is marked <strong>REJECTED</strong>, and the execution path enforces that rather
-              than displaying it. A model can predict well and still trade badly.
+              Rivo&rsquo;s own model is one of them, and it is the one that failed: AUC{" "}
+              {PRODUCTION_STRATEGY.auc}, {pct(PRODUCTION_STRATEGY.returnOnStake)} return on stake out of
+              sample. It is marked <strong>{PRODUCTION_STRATEGY.state}</strong>, and the execution path
+              enforces that rather than displaying it.
             </p>
             <div className="row" style={{ marginTop: 14 }}>
-              <Link className="btn" href="/agents">See the verdict</Link>
+              <Link className="btn" href="/agents">See what cleared the spread</Link>
             </div>
           </div>
         </div>
@@ -87,7 +112,9 @@ export default function Landing() {
               <span className="n">Validate</span>
               <p>
                 An agent is replayed against settled history with walk-forward validation, and judged on
-                realised economics rather than accuracy. The verdict is a state the execution path reads.
+                realised economics rather than accuracy — with the sample size and the interval attached,
+                and no verdict at all until there is enough of both. The result is a state the execution
+                path reads.
               </p>
             </li>
             <li>
@@ -152,6 +179,7 @@ export default function Landing() {
         <p className="hint" style={{ marginBottom: 0 }}>
           Built on the official DreamDEX bot kit and the Somnia indexer.{" "}
           <a href="https://github.com/Rzbyte/Rivo">Source</a> ·{" "}
+          <Link href="/demo">Live run</Link> ·{" "}
           <Link href="/app">Deployment console</Link>
         </p>
       </footer>
