@@ -19,12 +19,38 @@ import { ARTEFACTS, artefact } from "./lib/evidence";
 
 const read = (p: string): string => readFileSync(resolve(p), "utf8");
 
+/**
+ * Source with its comments removed, because a mention is not a read.
+ *
+ * The detector below looks for the shape of opening an artefact, and it used to
+ * look at the whole file — so a route that merely NAMED docs/evidence in a
+ * comment was demanded to appear in the tracing config, which would have traced
+ * files it never opens. /api/breadth tripped exactly that by explaining, in
+ * prose, that it and the dated artefact must not disagree.
+ *
+ * Deliberately conservative: block comments, and whole lines that are comments.
+ * A trailing `// docs/evidence` after code survives and still counts, which is
+ * the safe direction to be wrong in — this guard exists because a route that
+ * opened an artefact and was not traced answered `research: null` in production
+ * with nothing red anywhere, and a false positive costs a sentence while a false
+ * negative costs the working behind a verdict.
+ *
+ * Whole-line only also keeps `https://` inside a string literal intact, which a
+ * naive strip of everything after `//` would not.
+ */
+const withoutComments = (src: string): string =>
+  src
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .split("\n")
+    .filter((l) => !l.trim().startsWith("//"))
+    .join("\n");
+
 /** Routes whose source opens an evidence artefact, by import or through the reader. */
 const routesReadingEvidence = (): string[] =>
   execSync("git ls-files web/app/api", { encoding: "utf8" })
     .split("\n")
     .filter((f) => f.endsWith("route.ts") && existsSync(resolve(f)))
-    .filter((f) => /@\/lib\/evidence|docs\/evidence/.test(read(f)))
+    .filter((f) => /@\/lib\/evidence|docs\/evidence/.test(withoutComments(read(f))))
     .map((f) => f.replace(/^web\/app(\/api\/.*)\/route\.ts$/, "$1"));
 
 describe("evidence artefacts", () => {
@@ -51,6 +77,24 @@ describe("evidence artefacts", () => {
         .toContain(`"${route}"`);
     }
     expect(traced).toMatch(/docs\/evidence/);
+  });
+
+  it("counts a read and not a mention", () => {
+    // The three shapes that are real, and the one that is not. Without the
+    // last case this detector demands tracing for any route that so much as
+    // names the directory in prose.
+    expect(withoutComments(`import { artefact } from "@/lib/evidence";`)).toMatch(/@\/lib\/evidence/);
+    expect(withoutComments(`const p = "docs/evidence/alpha-research.json";`)).toMatch(/docs\/evidence/);
+    expect(withoutComments(`const u = "https://x/docs/evidence";`)).toMatch(/docs\/evidence/);
+    expect(withoutComments(`// the artefact in docs/evidence cannot disagree`)).not.toMatch(/docs\/evidence/);
+    expect(withoutComments(`/* docs/evidence */`)).not.toMatch(/docs\/evidence/);
+  });
+
+  it("still catches the route the guard was written for", () => {
+    // /api/agents opens docs/evidence/alpha-research.json as a path literal.
+    // If comment-stripping ever swallowed that, this whole file would pass
+    // while guarding nothing.
+    expect(routesReadingEvidence()).toContain("/api/agents");
   });
 
   it("keeps the held-out sample size attached to the held-out numbers", () => {
