@@ -7,12 +7,22 @@ import { existsSync, readFileSync } from "node:fs";
  * because the worker and the CLI read the same file — there is one deployment's
  * worth of configuration and it belongs in one place.
  *
- * `instrumentation.ts` covers the server at runtime, but it is too late for the
- * BROWSER: `NEXT_PUBLIC_*` values are substituted into the client bundle while
- * this config is being evaluated. Without this, the failure is the nastiest
- * shape available — the server believed Privy was configured and rendered a
- * sign-in, while the client bundle had an empty app id baked in, so the page
- * fell back to "not configured" the moment it hydrated.
+ * This is the ONLY place it is loaded, and it has to be: `NEXT_PUBLIC_*` values
+ * are substituted into the client bundle while this config is being evaluated,
+ * so anything running later is too late for the BROWSER. Without this, the
+ * failure is the nastiest shape available — the server believed Privy was
+ * configured and rendered a sign-in, while the client bundle had an empty app id
+ * baked in, so the page fell back to "not configured" the moment it hydrated.
+ *
+ * There used to be a second loader, `instrumentation.ts`, doing the same job one
+ * step later. It was redundant — this runs first and covers the server process
+ * as well — and it cost more than it did: Next compiles instrumentation for
+ * every runtime it might register in, so `import("@rivo/core/env.js")` dragged
+ * `node:fs` into a compilation that cannot resolve it. In the production build
+ * that pass is dropped and nothing shows. Under `next dev --webpack` it is not,
+ * and EVERY route answered 500 with a bundler error — including routes that
+ * never open a file, and including the whole app, which is what README §11 tells
+ * a reader to run. Deleting it fixes `npm run dev:web` and leaves one loader.
  *
  * Never overwrites. On Vercel the platform has already set these and there is no
  * `.env` in the deployment at all, so this does nothing there.
