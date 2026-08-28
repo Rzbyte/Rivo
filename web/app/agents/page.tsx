@@ -16,12 +16,17 @@ import { Nav } from "@/components/Nav";
 import { ConnectAgent } from "@/components/ConnectAgent";
 import { TryAgent } from "@/components/TryAgent";
 import { Reveal } from "@/components/Reveal";
+import { Breadth } from "@/components/Breadth";
 
 interface Agent {
   slug: string; label: string; kind: string; hasEndpoint: boolean;
   state: "UNVALIDATED" | "SHADOW_ONLY" | "VALIDATED" | "REJECTED";
   evidence: string | null;
-  summary: { auc?: number; returnOnStake?: number; tStat?: number; note?: string };
+  summary: {
+    auc?: number; returnOnStake?: number; tStat?: number; note?: string;
+    /** Set on Rivo's own reference strategies. They have their own section. */
+    baseline?: boolean; question?: string;
+  };
 }
 interface Fold { fold: number; all: { returnOnStake: number; windows: number; trades: number } }
 interface Result {
@@ -45,6 +50,10 @@ export default function Agents() {
   const { data } = useLive<Payload>("/api/agents", 30_000);
 
   const rivo = data?.agents.find((a) => a.slug === "rivo-v1") ?? null;
+  // Everything that is neither Rivo's own model nor one of its baselines: an
+  // agent a stranger connected. Each of the three has its own section, because
+  // one table holding all of them would assert they are the same kind of thing.
+  const connected = data?.agents.filter((a) => a.slug !== "rivo-v1" && a.summary?.baseline !== true) ?? [];
   const production = data?.research?.results.find((r) => r.strategy.includes("0.03")) ?? null;
 
   return (
@@ -176,9 +185,15 @@ export default function Agents() {
           </>
         )}
 
-        {data && data.agents.length > 1 && (
+        <Breadth />
+
+        {/* Agents somebody else connected. Rivo's own model has the section
+            above it and the six baselines have their own, so listing all three
+            groups in one table would put a stranger's endpoint beside a
+            reference strategy and call them the same kind of thing. */}
+        {connected.length > 0 && (
           <>
-            <Reveal title="Connected agents" hint={`${data.agents.length - 1} beside Rivo's own`}>
+            <Reveal title="Connected agents" hint={`${connected.length} connected by somebody else`}>
               <div className="panel">
               <div className="scroll">
                 <table>
@@ -186,7 +201,7 @@ export default function Agents() {
                     <tr><th>Agent</th><th className="hide-sm">Kind</th><th>State</th><th className="hide-sm">Evidence</th></tr>
                   </thead>
                   <tbody>
-                    {data.agents.map((a) => (
+                    {connected.map((a) => (
                       <tr key={a.slug}>
                         <td><strong>{a.label}</strong></td>
                         <td className="mono hide-sm">{a.kind}{a.kind === "http" && a.hasEndpoint ? " · endpoint set" : ""}</td>
