@@ -56,6 +56,15 @@ const SITES: { file: string; pattern: RegExp; render: (n: number, files: number)
     pattern: /\["\d{3,4}", "tests, none skipped"\]/g,
     render: (n) => `["${n}", "tests, none skipped"]`,
   },
+  {
+    // The one document meant to be pasted verbatim into a judging form, and the
+    // one this guard did not cover — so it drifted to 847 while every site the
+    // guard did watch stayed correct. A number is only as checked as its least
+    // listed home, and the least listed home is always the one somebody reads.
+    file: "docs/submission/submission-copy.md",
+    pattern: /\b\d{3,4} tests\b/g,
+    render: (n) => `${n} tests`,
+  },
 ];
 
 function runSuite(): { tests: number; files: number; skipped: number; failed: number } {
