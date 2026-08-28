@@ -12,6 +12,9 @@ import { Indexer } from "../core/indexer.js";
 import { profile } from "../portfolio/profiles.js";
 import { cycle, type CycleReport } from "../runtime/loop.js";
 import { hasSigner, makeExecutor } from "../runtime/executor.js";
+import { network } from "../core/config.js";
+import { PRODUCTION_STRATEGY } from "../research/gating.js";
+import { EXPERIMENTAL_NETWORKS, modeIntendsExecution, type ExecutionMode } from "../runtime/permission.js";
 import { acquire, release } from "../runtime/lock.js";
 import { alerterFromEnv } from "../runtime/alert.js";
 import {
@@ -43,6 +46,39 @@ async function main(): Promise<void> {
   // Dry run unless BOTH a real key is present and it is explicitly disabled.
   const wantsLive = (process.env.DRY_RUN ?? "true") === "false" || process.argv.includes("--live");
   const dryRun = !wantsLive || !hasSigner();
+
+  // The mode this process is actually in, declared rather than left to default.
+  //
+  // The fourth instance of the shape permission.ts opens with. `cycle()` takes
+  // an optional `mode` and defaults it to "shadow"; this CLI never passed one.
+  // So `preExecution`'s POLICY stage — which only asks about the strategy's
+  // standing when `modeIntendsExecution(mode)` — skipped that question on every
+  // order, while `makeExecutor(dryRun)` independently handed back a LiveExecutor.
+  // A run started with `--live` therefore placed real orders for a strategy this
+  // repository's own evidence calls REJECTED, and nothing in the path objected.
+  //
+  // Naming the mode is the fix: taking capital-moving action on an unvalidated
+  // strategy is exactly what "experimental_testnet" means, and saying so is what
+  // makes the gate evaluate it.
+  const mode: ExecutionMode = dryRun ? "shadow" : "experimental_testnet";
+
+  // And the bound that mode carries. `executionPermission` refuses
+  // experimental execution off an approved testnet, but it asks about a Privy
+  // delegation this path does not have — the operator's own key IS the
+  // authority here — so the network half is enforced directly against the same
+  // constant rather than by borrowing a verdict about the wrong question.
+  const net = network();
+  if (modeIntendsExecution(mode) && PRODUCTION_STRATEGY.state !== "VALIDATED" && !EXPERIMENTAL_NETWORKS.includes(net)) {
+    console.error(`refusing to run live on ${net}.`);
+    console.error("");
+    console.error(`  strategy   ${PRODUCTION_STRATEGY.id} — ${PRODUCTION_STRATEGY.state}`);
+    console.error(`  evidence   ${PRODUCTION_STRATEGY.evidence}`);
+    console.error("");
+    console.error(`A strategy that has not passed economic validation may trade only on an approved`);
+    console.error(`testnet (${EXPERIMENTAL_NETWORKS.join(", ")}). Drop --live to run it dry here.`);
+    process.exitCode = 1;
+    return;
+  }
 
   // Before anything opens the state file. Two runtimes on one directory both
   // allocate against the same capital and send orders from the same wallet —
@@ -126,7 +162,7 @@ async function main(): Promise<void> {
       // that sleeps forever holding its state file frozen. Measured: a live run
       // hung exactly this way for two hours and looked healthy the whole time.
       const r = await withDeadline(
-        cycle(state, { idx, executor, store, log, profile: prof, out: (l) => console.log(l) }),
+        cycle(state, { idx, executor, store, log, profile: prof, mode, out: (l) => console.log(l) }),
         CYCLE_DEADLINE_MS,
       );
       consecutiveErrors = 0;

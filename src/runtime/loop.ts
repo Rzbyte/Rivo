@@ -126,6 +126,35 @@ export const FAILURE_BACKOFF_CAP_SEC = 3600;
 export const backoffSec = (failures: number): number =>
   Math.min(FAILURE_BACKOFF_CAP_SEC, 60 * 2 ** Math.max(0, failures - 1));
 
+/**
+ * The invariant that makes `intent.maySign` load-bearing rather than decorative.
+ *
+ * `pipeline.test.ts` asserts shadow and execution reach byte-identical intents
+ * except for this one field, and the product page says the same in prose — but
+ * nothing read it. So the safety came entirely from which executor happened to
+ * be constructed upstream, which is one mistake deep: a caller that opened a
+ * live executor while the pipeline believed it was in shadow got real orders and
+ * no objection. `src/cli/run.ts` was that caller for as long as it existed.
+ *
+ * A dry executor on a non-signing path is normal and must stay normal — a dry
+ * run's whole job is to simulate the fill it would have taken. A LIVE executor
+ * on a non-signing path is a wiring bug, and the only safe response to a wiring
+ * bug on the capital path is to stop rather than to trade.
+ */
+export function assertMaySign(
+  executorMode: "dry" | "live",
+  maySign: boolean,
+  mode: ExecutionMode,
+  where: string,
+): void {
+  if (executorMode === "live" && !maySign) {
+    throw new Error(
+      `refusing to sign: mode "${mode}" may not reach a signer, but a live executor was reached for ` +
+        `${where}. This is a wiring bug, not a market condition.`,
+    );
+  }
+}
+
 export async function cycle(state: RivoState, deps: LoopDeps): Promise<CycleReport> {
   const mode: ExecutionMode = deps.mode ?? "shadow";
   const { idx, executor, store, log, profile, out } = deps;
@@ -334,6 +363,17 @@ export async function cycle(state: RivoState, deps: LoopDeps): Promise<CycleRepo
         continue;
       }
 
+      // `maySign` stops being decoration here.
+      //
+      // pipeline.test.ts asserts that shadow and execution reach byte-identical
+      // intents except for this one field, and the product page says the same in
+      // prose — but nothing read it, so the safety came entirely from which
+      // executor happened to be constructed upstream. That is one mistake deep:
+      // a caller that opened a live executor while the pipeline believed it was
+      // in shadow got real orders and no objection, which is exactly what the
+      // CLI did. A signing executor reached on a path that may not sign is a
+      // programming error, and the only safe response to it is to stop.
+      assertMaySign(executor.mode, intent.maySign, mode, `${o.asset} ${o.leg} ${o.marketId}`);
       const res = await executor.buy(
         { marketId: o.marketId, leg: o.leg, size: intent.shares, limitPrice: o.fair },
         snap.books.get(o.marketId),
