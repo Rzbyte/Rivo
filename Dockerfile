@@ -96,9 +96,20 @@ RUN npm run build:public
 RUN mkdir -p /app/data && chown -R node:node /app/data
 USER node
 
-# Where state lives. Declared so that `docker run` without an explicit mount
-# still keeps a portfolio across restarts instead of silently losing it.
-VOLUME ["/app/data"]
+# Where state lives. NOT declared with `VOLUME`.
+#
+# It was, on the argument that `docker run` with no mount should still keep a
+# portfolio across restarts. That argument was weak — a second `docker run` gets
+# a second anonymous volume and the state is gone either way, so the guarantee
+# only ever covered `docker restart`, which the writable layer covers anyway —
+# and it cost something real: Railway refuses to build a Dockerfile containing
+# `VOLUME` ("use Railway Volumes"), and Railway is one of the platforms DEPLOY.md
+# tells people to run the worker on.
+#
+# Persistence comes from an explicit mount, which is how every path that needs it
+# already works: `-v rivo-state:/app/data`, the `state:` volume in compose.yaml,
+# or a platform volume mounted at RIVO_DATA_DIR. The worker keeps its state in
+# PostgreSQL and needs none of this.
 
 # The agent key is mounted read-only at this path; the runtime reads it and
 # never writes it. RIVO_DATA_DIR is honoured by state.ts, so the portfolio lands
