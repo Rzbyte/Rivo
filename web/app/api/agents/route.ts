@@ -12,6 +12,7 @@ import { withUserWrite, badRequest } from "@/lib/auth";
 import { jsonBody } from "@/lib/validate";
 import { verifyEndpointUrl } from "@rivo/intel/endpoint.js";
 import { askAgent } from "@rivo/intel/agent.js";
+import { PRODUCTION_STRATEGY } from "@rivo/research/gating.js";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,36 @@ function study(): unknown | null {
   return null;
 }
 
+/**
+ * Rivo's own model, answered from the constant the execution gate reads.
+ *
+ * The row was seeded by migration 004 with the figures the study had at the
+ * time, `ON CONFLICT DO NOTHING`, so nothing has updated it since and nothing
+ * ever would. When the study was re-run on 2,179 windows instead of 737 and the
+ * return moved from -6.49% to +2.80%, `gating.ts`, the landing page and
+ * ALPHA-RESEARCH.md all moved with it — and this endpoint kept serving -6.49%
+ * from a database row, which is the number the /agents page shows a judge.
+ *
+ * Same failure as the landing page's hand-typed literals, one layer further
+ * back. So the builtin agent's verdict is not read from the row at all: state,
+ * economics and note come from PRODUCTION_STRATEGY, which is also what
+ * `executionPermission()` reads. A page that displayed one verdict while the
+ * gate enforced another would be worse than a page that displayed nothing.
+ */
+function builtinSummary(row: AgentRow): { state: string; summary: Record<string, unknown> } {
+  if (row.kind !== "builtin") return { state: row.state, summary: row.summary };
+  return {
+    state: PRODUCTION_STRATEGY.state,
+    summary: {
+      ...row.summary,
+      auc: PRODUCTION_STRATEGY.auc,
+      returnOnStake: PRODUCTION_STRATEGY.returnOnStake,
+      tStat: PRODUCTION_STRATEGY.tStat,
+      note: PRODUCTION_STRATEGY.note,
+    },
+  };
+}
+
 export async function GET(): Promise<Response> {
   if (!configured()) return NextResponse.json({ agents: [], research: null, note: "no database configured" });
   const rows = await query<AgentRow>(
@@ -43,16 +74,19 @@ export async function GET(): Promise<Response> {
        FROM agents ORDER BY created_at`,
   );
   return NextResponse.json({
-    agents: rows.map((a) => ({
-      slug: a.slug,
-      label: a.label,
-      kind: a.kind,
-      // The endpoint is the owner's infrastructure, not the public's business.
-      hasEndpoint: Boolean(a.endpoint),
-      state: a.state,
-      evidence: a.evidence,
-      summary: a.summary,
-    })),
+    agents: rows.map((a) => {
+      const live = builtinSummary(a);
+      return {
+        slug: a.slug,
+        label: a.label,
+        kind: a.kind,
+        // The endpoint is the owner's infrastructure, not the public's business.
+        hasEndpoint: Boolean(a.endpoint),
+        state: live.state,
+        evidence: a.evidence,
+        summary: live.summary,
+      };
+    }),
     research: study(),
   });
 }

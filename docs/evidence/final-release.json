@@ -1,20 +1,20 @@
 {
-  "generatedAt": "2026-08-24T20:04:30.856Z",
+  "generatedAt": "2026-09-04T21:12:29.281Z",
   "about": "The repository at the moment it was frozen for submission, plus what the production deployment answered when asked. Every field is re-derivable; none is a credential.",
   "commit": {
-    "sha": "c946ed07d0eabead1cc23c087caaca8d2f9c83ba",
-    "shortSha": "c946ed0",
+    "sha": "4962dd93e5c5cf2500c2a50dc13d076cce35cf4d",
+    "shortSha": "4962dd9",
     "branch": "main",
-    "subject": "The settlement had no provenance, and the oracle publishes all of it",
-    "committedAt": "2026-08-25T03:02:13+07:00",
+    "subject": "A calibration pass every three hours stopped the fleet, and the health endpoint said so",
+    "committedAt": "2026-09-05T04:11:30+07:00",
     "clean": true
   },
   "verification": {
     "tests": {
-      "passed": 865,
+      "passed": 930,
       "failed": 0,
       "skipped": 0,
-      "files": 59,
+      "files": 65,
       "note": "optional kit integrations excluded, as in CI"
     },
     "typecheck": "PASS",
@@ -49,23 +49,23 @@
       "database": true,
       "privy": true,
       "schemaCurrent": true,
-      "workers": 1,
+      "workers": 2,
       "note": ""
     },
     "workers": {
-      "live": 1,
-      "lastHeartbeatAt": "2026-08-24T20:04:21.513Z",
-      "lastShadowDecisionAt": "2026-08-24T20:04:26.496Z"
+      "live": 2,
+      "lastHeartbeatAt": "2026-09-04T21:12:16.611Z",
+      "lastShadowDecisionAt": "2026-09-04T21:12:18.566Z"
     },
     "calibration": {
-      "windows": 853,
-      "brier": 0.16105858,
-      "skill": 0.35511956,
+      "windows": 2181,
+      "brier": 0.18200325,
+      "skill": 0.27133978,
       "servedFromArtefact": false
     },
     "shadow": {
-      "decisions": 10381,
-      "settled": 7082
+      "decisions": 614591,
+      "settled": 596037
     },
     "demoProof": {
       "published": true,

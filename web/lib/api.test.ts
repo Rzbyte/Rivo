@@ -22,6 +22,7 @@ vi.mock("@rivo/signing/privy.js", async (importOriginal) => {
 import { haveDatabase, seedPortfolio, truncateAll, withSchema } from "@rivo/db/testing.js";
 import { upsertUser } from "@rivo/db/accounts.js";
 import { query } from "@rivo/db/pool.js";
+import { PRODUCTION_STRATEGY } from "@rivo/research/gating.js";
 import { amount, fraction, isProfile, jsonBody, overrides } from "./validate";
 
 const get = (path: string, token?: string) =>
@@ -265,6 +266,31 @@ describe.skipIf(!haveDatabase())("the API's ownership boundary", () => {
     // And the endpoint itself is the owner's infrastructure, not the public's.
     expect(text).not.toContain("https://example.com/d");
     expect(JSON.parse(text).agents[0].hasEndpoint).toBe(true);
+  });
+
+  it("serves the builtin agent's verdict from the gate, not from its seeded row", async () => {
+    // Migration 004 seeded rivo-v1 with the study's figures at the time and
+    // `ON CONFLICT DO NOTHING`, so the row never moves. When the study was
+    // re-run on 2,179 windows the return went from -6.49% to +2.80% and every
+    // other surface followed; this endpoint kept serving the seeded number,
+    // which is the one the /agents page puts in front of a judge.
+    await query(
+      `INSERT INTO agents (slug, label, kind, state, evidence, summary)
+       VALUES ('rivo-v1','Rivo V1','builtin','REJECTED','docs/ALPHA-RESEARCH.md',
+               jsonb_build_object('auc', 0.1, 'returnOnStake', -0.99, 'tStat', -9, 'note', 'stale'))`,
+    );
+    const { GET } = await import("../app/api/agents/route");
+    const body = (await (await GET()).json()) as {
+      agents: { slug: string; state: string; summary: Record<string, unknown> }[];
+    };
+    const rivo = body.agents.find((a) => a.slug === "rivo-v1");
+    expect(rivo, "no builtin agent in the registry").toBeTruthy();
+    expect(rivo!.summary.returnOnStake).toBe(PRODUCTION_STRATEGY.returnOnStake);
+    expect(rivo!.summary.tStat).toBe(PRODUCTION_STRATEGY.tStat);
+    expect(rivo!.summary.auc).toBe(PRODUCTION_STRATEGY.auc);
+    expect(rivo!.state).toBe(PRODUCTION_STRATEGY.state);
+    // The stale row's numbers must not survive anywhere in the response.
+    expect(JSON.stringify(rivo)).not.toContain("-0.99");
   });
 
   it("switches Autopilot off without needing anything from the browser", async () => {
