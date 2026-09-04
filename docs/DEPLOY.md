@@ -253,6 +253,34 @@ On Render, `render.yaml` at the repository root is a Blueprint: **New → Bluepr
 repository, and it prompts for the secrets rather than reading them from the repo. On Railway or Fly
 it is the same image and the same command, configured in their own dashboard.
 
+**On Railway**, which is where the hosted worker runs today:
+
+```bash
+railway link                       # pick the project, then the service
+railway variables --set "DATABASE_URL=…" --set "VENUE_ID=…" \
+  --set "PRIVY_APP_ID=…" --set "PRIVY_APP_SECRET=…" \
+  --set "PRIVY_AUTHORIZATION_KEY=…" \
+  --set NETWORK=testnet --set PGSSLMODE=no-verify \
+  --set RIVO_ALLOW_PRIVATE_AGENTS=false
+```
+
+Then attach the GitHub repo as the service source and set the start command to the **whole**
+command:
+
+```
+node_modules/.bin/tsx src/cli/worker.ts --interval 45 --concurrency 8
+```
+
+Three things about Railway specifically, each learned by hitting it:
+
+- **The start command replaces `ENTRYPOINT`, not just `CMD`.** Giving it only the arguments
+  (`src/cli/worker.ts …`) fails at container creation with "We don't have permission to execute your
+  start command", because it tries to exec the TypeScript file. Name the interpreter.
+- **A `VOLUME` in the Dockerfile fails the build outright** — "docker VOLUME is not supported, use
+  Railway Volumes". There is no longer one; see the comment where it used to be.
+- **Creating a project needs a paid plan**; creating a *service* inside an existing project does not.
+  On a free account, add the worker as a service to a project that already exists.
+
 The worker serves **`/health`** (is this process up) and **`/ready`** (has it completed a pass in the
 last five minutes) on `$PORT`. Point a platform health check at `/ready` where the platform has one.
 

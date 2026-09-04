@@ -197,6 +197,57 @@ describe.skipIf(!haveDatabase())("the worker", () => {
     expect(bad.health.passes).toBe(1); // the PASS was fine
   });
 
+  it("keeps scheduling while a slow intelligence pass is still running", async () => {
+    // Calibration reads a month of fills across every settled window and takes
+    // minutes. It used to be awaited inside the scheduler pass, which stopped
+    // the pass dead: no heartbeat renewal, no claim, no cycles. The worker
+    // dropped out of liveWorkers() and /api/health said "no worker is running:
+    // portfolios will not trade until one is started" — accurately, for the
+    // length of every calibration refresh.
+    await seedPortfolio();
+    let release!: () => void;
+    const started = new Promise<void>((r) => (release = r));
+    let ticks = 0;
+    let blocking: (() => void) | null = null;
+    const intel = {
+      health: {} as never,
+      tick: async () => {
+        ticks++;
+        release();
+        // Never resolves until the test lets it, which is a calibration pass as
+        // far as the scheduler can tell.
+        await new Promise<void>((r) => (blocking = r));
+      },
+    };
+
+    const cycles: string[] = [];
+    const w = new Worker({
+      maxPasses: 3,
+      idleMs: 1,
+      out: () => {},
+      intel,
+      runCycle: async (portfolio) => {
+        cycles.push(portfolio.id);
+        return { portfolioId: portfolio.id, ok: true };
+      },
+    });
+
+    const run = w.start();
+    await started;
+    await run;
+
+    // The passes happened and the portfolio was run, with the intelligence tick
+    // still in flight throughout.
+    expect(w.health.passes).toBe(3);
+    expect(cycles.length).toBeGreaterThan(0);
+    // And exactly one tick: a pass every interval must not stack a second
+    // calibration on top of one still going.
+    expect(ticks).toBe(1);
+
+    blocking!();
+    await w.shutdown();
+  });
+
   it("reports the venue as unreachable only after a run of failures", async () => {
     // One bad indexer response is not news — the Indexer already retries. Every
     // portfolio failing repeatedly is the venue, and deserves waking somebody.

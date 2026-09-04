@@ -65,7 +65,21 @@ export interface WorkerOptions {
    * not what either is measuring. The deployed worker turns it on.
    */
   intelligence?: boolean;
+  /**
+   * The intelligence half itself, for tests that need to control its timing.
+   *
+   * Same reasoning as `runCycle`: the property worth pinning here — that a slow
+   * background pass cannot stall the scheduler — is a property of this file, and
+   * proving it should not require a live venue and a month of fills.
+   */
+  intel?: IntelligenceLike;
   out?: (line: string) => void;
+}
+
+/** What the scheduler needs from the intelligence half, and nothing more. */
+export interface IntelligenceLike {
+  tick(nowMs?: number): Promise<void>;
+  readonly health: Intelligence["health"];
 }
 
 const DEFAULTS = {
@@ -116,7 +130,7 @@ export const VENUE_DOWN_AFTER = 6;
 
 export class Worker {
   private readonly indexers = new Map<Network, Indexer>();
-  private readonly opts: Required<Omit<WorkerOptions, "out" | "runCycle">> & { out: (l: string) => void };
+  private readonly opts: Required<Omit<WorkerOptions, "out" | "runCycle" | "intel">> & { out: (l: string) => void };
   private stopping = false;
   private alerter: Alerter | null = null;
   private readonly runCycle: typeof runPortfolioCycle;
@@ -143,7 +157,7 @@ export class Worker {
       intelligence: options.intelligence ?? false,
       out: options.out ?? ((l) => console.log(l)),
     };
-    this.intel = this.opts.intelligence ? new Intelligence({ out: this.opts.out }) : null;
+    this.intel = options.intel ?? (this.opts.intelligence ? new Intelligence({ out: this.opts.out }) : null);
   }
 
   /** An Indexer per network, shared across every portfolio on it. */
@@ -225,7 +239,15 @@ export class Worker {
    * Off by default in tests and in `--once` runs, because a pass that reaches
    * the venue and a month of fills is not what those are measuring.
    */
-  private readonly intel: Intelligence | null;
+  private readonly intel: IntelligenceLike | null;
+
+  /**
+   * The intelligence pass currently running, if one is.
+   *
+   * Held so a pass every 45 seconds cannot stack a second shadow or calibration
+   * run on top of one that is still going, and so shutdown can wait for it.
+   */
+  private intelInFlight: Promise<void> | null = null;
 
   /**
    * What the background half is doing, for the health endpoint.
@@ -234,7 +256,7 @@ export class Worker {
    * more useful answer than zeroes: "not my job" and "my job, nothing done" look
    * identical in a counter and mean opposite things to whoever is on call.
    */
-  get intelligenceHealth(): Intelligence["health"] | null {
+  get intelligenceHealth(): IntelligenceLike["health"] | null {
     return this.intel?.health ?? null;
   }
 
@@ -246,11 +268,33 @@ export class Worker {
       await heartbeat(workerId);
       await this.deliverAlerts();
       // The background half of the product loop: shadow decisions, settlement
-      // resolution and calibration refresh. Cheap when nothing is due, and
-      // guarded by an advisory lock so exactly one worker in the fleet does it —
-      // two recording the same decision would double the evidence rather than
-      // deepen it. A failure here is logged and never ends a trading pass.
-      if (this.intel) await this.intel.tick().catch(() => undefined);
+      // resolution and calibration refresh. Guarded by an advisory lock so
+      // exactly one worker in the fleet does it — two recording the same
+      // decision would double the evidence rather than deepen it. A failure here
+      // is logged and never ends a trading pass.
+      //
+      // STARTED, NOT AWAITED, AND THAT IS THE POINT.
+      //
+      // It used to be awaited, on the reasoning that it is cheap when nothing is
+      // due. Calibration is not cheap: it reads a month of fills across every
+      // settled window and takes minutes. Awaiting it stopped the pass dead —
+      // no heartbeat renewal, no `claimDue`, no portfolio cycles — so for the
+      // length of every calibration refresh the worker dropped out of
+      // `liveWorkers()` and the public /api/health said "no worker is running:
+      // portfolios will not trade until one is started". Both halves of that
+      // were true, which is the part that mattered: a background job was
+      // starving the trading loop every three hours, and again on every boot.
+      //
+      // One at a time still: `intelInFlight` is the in-process guard, the
+      // advisory lock is the cross-process one.
+      if (this.intel && !this.intelInFlight) {
+        this.intelInFlight = this.intel
+          .tick()
+          .catch(() => undefined)
+          .finally(() => {
+            this.intelInFlight = null;
+          });
+      }
       const leases = await claimDue(workerId, this.opts.concurrency);
       this.health.holding = leases.length;
       if (leases.length === 0) return false;
@@ -372,6 +416,10 @@ export class Worker {
 
   async shutdown(): Promise<void> {
     this.stop();
+    // A detached intelligence pass still holds the advisory lock and a database
+    // connection. Leaving without it is how a redeploy leaves the next worker
+    // waiting on a lock nobody is holding any more.
+    await this.intelInFlight?.catch(() => undefined);
     if (this.health.workerId) {
       await releaseAll(this.health.workerId).catch(() => undefined);
       await record(null, "worker.stopped", "info", `worker ${this.health.workerId} stopped`, {

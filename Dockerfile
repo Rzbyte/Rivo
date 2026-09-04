@@ -139,5 +139,12 @@ EXPOSE 3000
 # tsx is invoked by path rather than through npx: npx resolves, and on a miss
 # will happily reach out to the registry, which is not something a container
 # holding a trading key should ever do at start-up.
-ENTRYPOINT ["node_modules/.bin/tsx"]
+#
+# The path is ABSOLUTE. It was `node_modules/.bin/tsx`, which Docker resolves
+# against WORKDIR and runs correctly — but a platform that inspects the image's
+# entrypoint before starting it does not necessarily resolve it the same way.
+# Railway's container creation rejected the image with "We don't have permission
+# to execute your start command", which is what a relative entrypoint looks like
+# to something checking `/node_modules/.bin/tsx`.
+ENTRYPOINT ["/app/node_modules/.bin/tsx"]
 CMD ["src/cli/run.ts", "--capital", "25", "--profile", "balanced"]
