@@ -36,18 +36,32 @@ from somewhere other than disagreeing with it. If they settle true 39% of the ti
 systematically mispriced and the number tells you where. Neither fact is visible on the venue, and
 both are computable from settlements the venue already has.
 
-Measured over 843 settled windows: Brier 0.1604 against 0.2497 for always quoting the base rate — a
-skill score of 35.8%. The middle of the book is mostly honest; parts of it are not.
+Measured over 2,179 settled windows, 2026-07-22 → 2026-09-04: Brier 0.1821 against 0.2497 for always
+quoting the base rate — a skill score of 27.1%. The middle of the book is mostly honest; parts of it
+are not. An earlier snapshot at 843 windows said 35.8% — the sample has since more than doubled, and
+the smaller number is the better-evidenced one.
 
 ### 4 · Why is Rivo V1 REJECTED?
 
 Because it forecasts well and trades badly, and the gate reads the second thing.
 
-AUC 0.8158 — it separates up from down. Return on stake −6.49% out of sample, across five
-walk-forward folds over 843 settled windows, replayed against fills that actually executed. Every
-edge band is negative and the losses grow with the claimed edge, which is the winner's curse measured:
-selecting the leg that maximises `model − price` selects for the leg where the model's own error is
-largest.
+AUC 0.8158 — it separates up from down. Return on stake **+2.80%** out of sample, across five
+walk-forward folds over a 2,179-window validation set — the 986 of those windows the rule would have
+traded in — replayed against fills that actually executed. That is not a profit: t = 0.79 on a
+window-clustered bootstrap, and removing the best of the five folds takes it to −0.50%. The gate asks
+for t ≥ 2 and for a result that survives its best fold, and it gets neither.
+
+The edge bands are the second reason. There is no monotone relationship between the edge the model
+claims and what that band actually returns — 0.020–0.030 returns +5.72%, 0.030–0.050 returns −4.87%,
+0.050–0.080 returns +15.14%. A bigger claim does not pay better, which is the mechanism a taker would
+have to rely on to size on the claim.
+
+**This number was −6.49% until 2026-09-04.** The study was written on 737 settled windows; the venue
+has since tripled its settlement rate, and an indexer defect that was hiding the newest windows is
+fixed. The same rule on 2,179 windows is positive and still REJECTED, because `judge()` never read
+the sign — at −6.49% it objected to t = −0.50 and to a result that did not survive its best fold, and
+it objects to exactly those two things now. A gate that had encoded "the backtest is negative" would
+have opened when the sign flipped.
 
 `src/research/gating.ts` holds the state as data, and `mayExecuteLive()` returns true only for
 `VALIDATED`. Nothing about the accuracy can override it.
@@ -191,7 +205,7 @@ sharper. The loop compounds for the venue.
 
 - Live Event Contract intelligence across all eight windows, with cohort, band, sample size, interval
   and date range on every card
-- Calibration over 843 settled windows, recomputed automatically by the worker
+- Calibration over 2,179 settled windows, recomputed automatically by the worker
 - Rivo V1 economic validation with the full walk-forward study readable in the UI
 - External HTTP agent registration, hardened as above
 - Autonomous Shadow in a background worker, with heartbeat, resolving against real settlements

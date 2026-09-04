@@ -148,18 +148,29 @@ export function judge(
 /**
  * The forecast the engine ships, with its standing.
  *
- * Both numbers below are read out of this repository's own artefacts rather
- * than quoted from memory, and they disagree with each other on purpose —
- * which is the entire point of having this record:
+ * Every number below is read out of this repository's own artefacts rather than
+ * quoted from memory:
  *
- *   AUC 0.8158  (docs/evidence/calibration.json) — the forecast discriminates.
- *   ROS -6.49%  (docs/evidence/alpha-research.json) — trading it loses money.
+ *   AUC 0.8158   (docs/evidence/calibration.json)    — the forecast discriminates.
+ *   ROS +2.80%   (docs/evidence/alpha-research.json) — and it proves nothing.
  *
- * A model can be right about direction and still be a losing trade, because
- * being right is not the same as being right by more than the spread you cross
- * to act on it. That gap is why `state` below is REJECTED while the accuracy is
- * genuinely good, and why the execution gate reads THIS field rather than the
- * accuracy.
+ * THE RETURN USED TO BE NEGATIVE, AND THE VERDICT DID NOT MOVE.
+ *
+ * Measured on 737 settled windows to 2026-08-23 this rule returned -6.49% out of
+ * sample, and the record here said so. Re-measured on 2026-09-04 against 2,179
+ * windows — the same walk-forward, the same code, an indexer read that had been
+ * silently truncating the newest settlements — it returns +2.80%. The state is
+ * still REJECTED, for the reason that mattered both times: t = 0.79 on a
+ * window-clustered bootstrap, and removing the best of five folds takes +2.80%
+ * to -0.50%. A number that does not survive its best fold is one period, not a
+ * strategy.
+ *
+ * That is what this field is for. `state` is not shorthand for "the backtest
+ * printed a minus sign" — a gate that meant that would have opened the moment
+ * the sign flipped, on evidence that got better rather than on evidence that got
+ * good. It is the verdict of `judge()`, which asks for significance, breadth
+ * across folds, survivable drawdown and a margin over the base rate, and it
+ * reads THIS field rather than the accuracy above it.
  */
 export const PRODUCTION_STRATEGY = {
   id: "diffusion-taker-v1",
@@ -167,9 +178,14 @@ export const PRODUCTION_STRATEGY = {
   state: "REJECTED" as StrategyState,
   /** Area under the ROC curve, measured. Forecast quality, not economics. */
   auc: 0.8158,
-  /** Out-of-sample return on stake, walk-forward, window-clustered. */
-  returnOnStake: -0.0649,
-  tStat: -0.5,
+  /**
+   * Out-of-sample return on stake, walk-forward, window-clustered.
+   *
+   * Positive and meaningless: see `tStat`, and the best-fold removal recorded in
+   * the artefact's `gate.withoutBestFold`.
+   */
+  returnOnStake: 0.028,
+  tStat: 0.79,
   evidence: "docs/ALPHA-RESEARCH.md",
   /** One sentence, for anywhere this has to be explained without room to argue. */
   note:

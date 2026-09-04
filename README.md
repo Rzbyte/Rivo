@@ -40,10 +40,11 @@ caveat about the data outranks a claim about the price.
 
 ## 3 · Calibration — is 67% actually 67%?
 
-Measured against **843 settled windows** as of 2026-08-24: Brier **0.1604** against
-**0.2497** for always quoting the base rate, a skill score of **35.8%**.
+Measured against **2,179 settled windows** as of 2026-09-04: Brier **0.1821** against
+**0.2497** for always quoting the base rate, a skill score of **27.1%**.
 DreamDEX prices carry real information, and the middle of the book is mostly honest (65–70% settled
-64.5%). Parts of it are not (50–55% settled 41.5%).
+65.0%). Parts of it are not: 45–50% is quoted at 47.3% and settles 55.2%, and 30–35% is quoted at
+32.3% and settles 39.2% — the venue under-prices the side it thinks is losing.
 
 Those are the figures in [`docs/evidence/calibration-report.json`](docs/evidence/calibration-report.json),
 and they are a snapshot on purpose — the worker recomputes this every few hours as more contracts
@@ -51,15 +52,26 @@ settle, so [the live page](https://rivo-autopilot.vercel.app/calibration) report
 this file does. A README that quietly tracked a moving number would be the one document nobody could
 check against anything.
 
+The sample more than doubled between 2026-08-24 and 2026-09-04 and the skill score fell from 35.8%
+to 27.1%. Both figures are honest; the second one is better evidence. Every one of the twenty price
+bands now clears the 30-window floor, where the first measurement had four that did not, and the
+50–55% band that looked badly mispriced at 843 windows (41.5% realized) is at 49.4% over 156 — it
+was a small sample, and it said so at the time.
+
 Windows are the unit, not fills — forty rows from one settled contract are forty copies of one coin
 flip. Intervals come from resampling windows. Cohorts run BTC 15m → BTC all tenors → all assets 15m →
 global, falling back only on sample size. [Methodology](docs/CALIBRATION.md).
 
 ## 4 · Agents — does the model deserve capital?
-Rivo's own model is the first case study and it **failed**: AUC **0.8158**, and **−6.49%** return on
-stake out of sample. Both are true, which is the point.
+Rivo's own model is the first case study and it **failed validation**: AUC **0.8158**, and a return
+on stake of **+2.80%** out of sample that arrives with **t = 0.79** and falls to **−0.50%** once its
+best fold is removed. Good forecast, unproven trade, and the gate reads the second thing.
 
 > **A model can predict well and still trade badly.**
+
+That return used to be −6.49%, measured on 737 settled windows. Re-measured on **2,179**, the same
+rule is positive — and still `REJECTED`, because the objection was never the sign. Better evidence
+is not the same as good evidence. [The re-run](docs/ALPHA-RESEARCH.md).
 
 Connect your own over HTTP. Rivo never runs your code and never trusts your answer — the endpoint is
 vetted against private and link-local ranges, resolved and re-checked, redirects refused, and every
@@ -96,8 +108,9 @@ strategy state  ·  execution mode  ·  network  ·  signer  ·  portfolio risk
 ```
 
 The strategy running today is **Diffusion Taker V1**: AUC **0.8158**, which is genuinely good, and
-**−6.49%** return on stake out of sample, which is why it is **REJECTED** for real capital. Both are
-true. The gate reads the second number rather than the first.
+**+2.80%** return on stake out of sample at **t = 0.79**, which does not survive removing its best
+fold — which is why it is **REJECTED** for real capital. The gate reads significance and breadth,
+not the sign of the return.
 
 It runs under **Experimental Testnet** — testnet only, chosen explicitly, and impossible to activate
 on mainnet. Unknown chain, unknown strategy state and unknown mode all block. Fail closed. Full
@@ -286,7 +299,7 @@ src/
   web/         the original cockpit server + static snapshot export
   public/      the public pricing page — browser bundle, shares the runtime's math
   cli/         start · worker · web · report · calibrate · scan · allocate · backtest · … · agent
-  *.test.ts    926 tests, colocated with what they cover
+  *.test.ts    929 tests, colocated with what they cover
 web/
   app/         Next.js — landing, the product, and the control-plane API
   components/  the dashboard, built around decisions rather than fills
@@ -466,7 +479,7 @@ npm run report                                  # what it did, and why
 | `npm run privy:check` | is this deployment's Privy set up? authenticates for real, lists what is missing |
 | `npm run agent -- new \| status \| fund \| sweep` | the wallet Rivo signs with, and what it may lose |
 | `npm run probe:operator` | can EC be traded non-custodially? measured, not assumed |
-| `npm test` · `npm run typecheck` | 926 tests · strict TypeScript across engine, page and web app |
+| `npm test` · `npm run typecheck` | 929 tests · strict TypeScript across engine, page and web app |
 | `npm run doctor` | can Rivo trade right now — signer, gas, collateral, venue, kit |
 | `npm run faucet` | mint testnet tUSDC — a direct `faucet(uint256)` call, no kit needed |
 | `npm run check:kit` · `npm run link:kit` | verify / install the optional bot kit |
@@ -600,7 +613,7 @@ documented figures drift from the artefacts they claim to quote.
 npm test
 ```
 
-**926 tests** across the things that either move money or produce a published number: the
+**929 tests** across the things that either move money or produce a published number: the
 dual-crossing-path book, the fair-value model and volatility estimator, the scoring rules behind
 every figure in [EVIDENCE.md](docs/EVIDENCE.md), the capital allocator, the position manager, settlement, and
 on-chain reconciliation.

@@ -2,10 +2,16 @@
 
 **The claim:** when DreamDEX quoted a probability, how often did the thing actually happen?
 
-**The result, measured 2026-08-24:** DreamDEX prices carry real information. Brier **0.1604**
-against **0.2497** for always quoting the base rate — a skill score of **35.8%** over **843 settled
-windows**. The middle of the book is mostly honest (65–70% settled 64.5%); parts of it are not
-(30–35% settled 41.7%, 50–55% settled 41.5%).
+**The result, measured 2026-09-04:** DreamDEX prices carry real information. Brier **0.1821**
+against **0.2497** for always quoting the base rate — a skill score of **27.1%** over **2,179 settled
+windows**, 2026-07-22 → 2026-09-04. The middle of the book is mostly honest (65–70% settled 65.0%);
+parts of it are not (30–35% settled 39.2%, 45–50% settled 55.2%). All twenty price bands clear the
+30-window floor, so nothing here is carried by a thin bucket.
+
+**The previous measurement said 35.8% over 843 windows.** It was taken on 2026-08-24 and it was not
+wrong; it was smaller. The re-run is on 2.6× the windows and 44 days instead of 33, and it is the
+figure to trust. Two of the bands the first measurement called badly mispriced — 50–55% at 41.5%,
+30–35% at 41.7% — moved to 49.4% and 39.2% once they had 156 and 148 windows behind them.
 
 Reproduce: `npm run calibration -- --days 90`. Artefact:
 [`evidence/calibration-report.json`](evidence/calibration-report.json).
@@ -66,6 +72,27 @@ A bucket with fewer than **30 settled windows** is marked `thin`, greyed in the 
 It stays visible: a bucket that vanishes reads as no data, and a bucket labelled thin reads as what
 it is.
 
+## Which windows reach the sample
+
+Every finalized binary window on the venue, back to the `--days` bound, and this is a place the
+measurement was quietly wrong until 2026-09-05.
+
+The indexer read paged `expiry: asc` under a 20,000-row ceiling. For the first six weeks that
+ceiling was never reached, so nothing showed. Then the venue's volume tripled — from ~250 finalized
+windows a day in early August to ~830 by the end of it — and the span crossed 20,000 rows. From that
+moment the ascending page stopped at 2026-08-30 and every later settlement fell off the end.
+
+The failure is worth naming because of how it looked from outside: the returned rows were real,
+ordered and internally consistent, the report kept its structure, and the only symptom was a sample
+that stopped advancing while the page above it said the worker recomputes as more contracts settle.
+It cost 40% of the available evidence — 2,065 traded windows returned where 3,458 existed — and the
+loss grew every day.
+
+The read now pages **newest-first**, so the ceiling drops the oldest windows instead. That direction
+is self-describing: every report carries `from` and `to`, so a truncated sample shows up as a period
+that begins later rather than as one that silently stopped. `src/core/indexer.test.ts` holds the
+truncation to that direction.
+
 ## Outcome mapping
 
 From the venue's own finalised markets. `winningOutcome = 0` means UP paid. **Voided markets are
@@ -76,5 +103,5 @@ excluded entirely** — there is no outcome, and recording 0 would say the leg l
 - **It is not a forecast.** It describes contracts that have already settled.
 - **A gap is not a mispricing.** The spread may exceed it, the depth may not be there, and the
   comparable set may be thin. Market assessments are descriptive — never BUY or SELL.
-- **35.8% skill is not profit.** Rivo's own strategy had good discrimination and lost money out of
+- **27.1% skill is not profit.** Rivo's own strategy had good discrimination and lost money out of
   sample; see [ALPHA-RESEARCH.md](ALPHA-RESEARCH.md).

@@ -48,17 +48,25 @@ market-specific.
 
 CALIBRATION
 
-Measured over 843 settled windows as of 2026-08-24: Brier 0.1604 against 0.2497 for always quoting
-the base rate — a skill score of 35.8%. The worker recomputes it as more contracts settle, so the
-live figure grows. DreamDEX prices carry real information. Windows are the unit rather than fills,
+Measured over 2,179 settled windows as of 2026-09-04: Brier 0.1821 against 0.2497 for always quoting
+the base rate — a skill score of 27.1%. The worker recomputes it as more contracts settle, so the
+live figure grows. An earlier snapshot said 35.8% over 843 windows; the sample has since more than
+doubled and every one of the twenty price bands now clears the 30-window floor. DreamDEX prices carry real information. Windows are the unit rather than fills,
 because forty rows from one settled contract are forty copies of one coin flip.
 
 AGENT VALIDATION
 
 Rivo validates agents economically, not by accuracy. Its own model, Rivo V1, has an AUC of 0.8158,
-which is genuinely good, and a −6.49% return on stake out of sample across five walk-forward folds
-over 843 settled windows. Both are true. The strategy state is REJECTED and the execution gate reads
-the second number rather than the first. A model can predict well and still trade badly.
+which is genuinely good, and a return on stake of +2.80% out of sample across five walk-forward
+folds — with a t-statistic of 0.79, and −0.50% once its best fold is removed. The validation set is
+2,179 settled windows, 2026-07-22 → 2026-09-04; the rule would have traded in 986 of them. The
+strategy state is REJECTED, because the gate asks for significance and breadth rather than for a
+positive number. A model can predict well and still trade badly.
+
+That return was −6.49% when the study was first run on 737 windows. The venue has since tripled its
+settlement rate and an indexer defect that was hiding the newest windows is fixed, so the same rule
+now measures positive — and the verdict did not move, because it never depended on the sign. A gate
+that had meant "the backtest is negative" would have opened here.
 
 LIVE SHADOW
 
@@ -101,8 +109,8 @@ Live markets, order books and implied probabilities for all eight windows the ve
 {BTC, ETH} × {15m, 1h, 4h, 1d}, sixteen legs — read from the Somnia Markets indexer.
 
 HISTORICAL FILL AND SETTLEMENT DATA
-Calibration is computed from contracts that have already settled: 843 settled windows as of
-2026-08-24, drawn from a month of the venue's own fills and oracle answers. Retired 60s and 300s series are excluded because
+Calibration is computed from contracts that have already settled: 2,179 settled windows as of
+2026-09-04, drawn from six weeks of the venue's own fills and oracle answers. Retired 60s and 300s series are excluded because
 they are not the product.
 
 SDK EXECUTION
@@ -148,10 +156,13 @@ not possible elsewhere:
 2. ECONOMIC AGENT VALIDATION. An agent can be scored on what its decisions were worth after the
    spread, not on how often it was directionally right — because every decision has a settled answer.
 
-The second is the part that makes this not another bot. Rivo's headline result is a NEGATIVE one
-about its own model, published with the arithmetic: AUC 0.8158 and −6.49% return on stake. The
-measurement apparatus is the product, and an apparatus honest enough to reject its own strategy is the
-only kind worth trusting with somebody else's.
+The second is the part that makes this not another bot. Rivo's headline result is a REFUSAL of its
+own model, published with the arithmetic: AUC 0.8158, +2.80% return on stake at t = 0.79, and a
+REJECTED verdict anyway. The apparatus was tested the hard way — the number it was refusing turned
+positive when the sample tripled, and the refusal held, because it was reading significance rather
+than sign. The measurement apparatus is the product, and an apparatus honest enough to keep
+rejecting its own strategy after the number moved in its favour is the only kind worth trusting with
+somebody else's.
 ```
 
 ## Technical implementation
@@ -182,7 +193,7 @@ SIGNING is non-custodial. Portfolio wallets are Privy TEE wallets; Rivo holds a 
 request signatures and never holds key material. What that right cannot be scoped to on-chain is
 stated plainly rather than claimed.
 
-926 tests, strict TypeScript across engine, browser bundle and web app, integration tests against a
+929 tests, strict TypeScript across engine, browser bundle and web app, integration tests against a
 real PostgreSQL, and a CI job that fails if the database tests silently stop running.
 ```
 

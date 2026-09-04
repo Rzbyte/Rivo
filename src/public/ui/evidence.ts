@@ -94,7 +94,7 @@ export function evidence(e: EvidenceBundle): string {
 npm run backtest  -- --days 30    # Rivo against five unconstrained baselines
 npm run coherence -- --days 30    # cross-tenor arbitrage bound
 npm run proof     -- --data-dir ./data-live   # the live execution chain
-npm test                          # 926 tests, entirely offline</code></pre>
+npm test                          # 929 tests, entirely offline</code></pre>
     </div>
   </div>`;
 }
@@ -174,8 +174,9 @@ function calibrationSection(c: Calibration): string {
   return `
   <div class="banner warn" style="margin-top:34px">
     <strong>Read the next four numbers next to the verdict, not instead of it.</strong>
-    They measure how well the forecast separates up from down, and it does that well. Trading it lost
-    money out of sample &mdash; &minus;6.49% return on stake, walk-forward, window-clustered &mdash; so
+    They measure how well the forecast separates up from down, and it does that well. Trading it does
+    not pay for itself out of sample &mdash; +2.80% return on stake at t = 0.79, walk-forward and
+    window-clustered, and &minus;0.50% once its best fold is removed &mdash; so
     Rivo&rsquo;s own research marks the strategy <strong>REJECTED</strong> for real capital, and the
     execution path enforces that on every network. Being right about direction is not the same as being
     right by more than the spread you cross to act on it.

@@ -72,7 +72,14 @@ describe.skipIf(!haveDatabase())("exactly one worker at a time", () => {
     const other = await secondConnection();
     try {
       const held = await other.query("SELECT pg_try_advisory_lock($1) AS got", [0x52_49_4e_54]);
-      expect(held.rows[0].got).toBe(true);
+      // A live worker on this same database holds this exact lock, so a bare
+      // `toBe(true)` here reports as a broken product when what happened is that
+      // the suite was pointed at a database somebody is already working in.
+      expect(
+        held.rows[0].got,
+        "could not take the intelligence lock: a live worker is already holding it on this database. " +
+          "Stop it, or point DATABASE_URL at a database of your own.",
+      ).toBe(true);
 
       // Due, but not this worker's turn. It must return without doing the work
       // and without blocking — a worker waiting here would stall its portfolios.
@@ -95,7 +102,11 @@ describe.skipIf(!haveDatabase())("exactly one worker at a time", () => {
     const other = await secondConnection();
     try {
       const got = await other.query("SELECT pg_try_advisory_lock($1) AS got", [0x52_49_4e_54]);
-      expect(got.rows[0].got, "the lock must have been released").toBe(true);
+      expect(
+        got.rows[0].got,
+        "the lock must have been released — unless a live worker on this database is holding it, " +
+          "in which case stop it or use a database of your own",
+      ).toBe(true);
       await other.query("SELECT pg_advisory_unlock($1)", [0x52_49_4e_54]);
     } finally {
       await other.end();

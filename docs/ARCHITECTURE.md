@@ -72,7 +72,7 @@ available to the next person who needs a boolean.
 |---|---|
 | Strategy | Diffusion Taker V1 |
 | Forecast quality | **AUC 0.8158** — measured, and genuinely good |
-| Economic validation | **REJECTED** — −6.49% return on stake out of sample, walk-forward |
+| Economic validation | **REJECTED** — +2.80% return on stake out of sample at t = 0.79, walk-forward, and −0.50% without its best fold |
 | Execution eligibility | **Experimental Testnet only** |
 
 Both numbers are true and they point in opposite directions, which is the entire point of having the
@@ -328,7 +328,7 @@ Stated here rather than implied anywhere, because the difference is the whole va
 
 **Verified by running it:**
 
-- 926 tests, including 130+ against a real PostgreSQL — leases, fencing, append-only triggers,
+- 929 tests, including 130+ against a real PostgreSQL — leases, fencing, append-only triggers,
   optimistic concurrency, ownership boundaries, idempotency, crash recovery. Verified against both a
   local server and a managed Supabase instance (PostgreSQL 17.6).
 - The worker managing a portfolio against the **live DreamDEX testnet venue**: market discovery,

@@ -40,7 +40,9 @@ Price band 20–25% · 41 settled windows · 95% CI 4.9%–26.8%
 Measured 2026-07-22 → 2026-08-24
 ```
 
-*(Rehearsed 2026-08-24: a BTC UP 15m card at 0.339 answered from* `all assets, 15m` *— 39 windows,
+*(That is the shape of the row, with the values it carried on 2026-08-24. Every field moves — the
+window count grows and the end date advances — so read the row on the screen and say what it says.
+Rehearsed 2026-08-24: a BTC UP 15m card at 0.339 answered from* `all assets, 15m` *— 39 windows,
 CI 23.1%–53.8%, fallback shown. Pick a card whose own cohort answered if one is available: a
 `fellBack` card is honest but takes a sentence to explain.)*
 
@@ -54,12 +56,14 @@ CI 23.1%–53.8%, fallback shown. Pick a card whose own cohort answered if one i
 Then `/calibration` for the headline:
 
 ```
-843 settled windows · Brier 0.1604 against 0.2497 for the base rate · 35.8% skill
+2,179 settled windows · Brier 0.1821 against 0.2497 for the base rate · 27.1% skill
 ```
 
-*(Rehearsed 2026-08-24. The worker recomputes every few hours and the window count only grows.)*
+*(Re-measured 2026-09-04. The worker recomputes every few hours and the window count only grows —
+it was 843 windows and 35.8% skill on 2026-08-24. Read the live figure off the screen; say the
+number that is on it.)*
 
-> "Across the whole venue: thirty-five percent better than always quoting the base rate. DreamDEX
+> "Across the whole venue: twenty-seven percent better than always quoting the base rate. DreamDEX
 > prices carry real information — and parts of the book are systematically off."
 
 **Do not** open the methodology disclosure unless asked.
@@ -76,16 +80,23 @@ Point at the two stats side by side:
 
 ```
 Forecast quality    AUC 0.8158
-Economic quality    −6.49% return on stake, out of sample
+Economic quality    +2.80% return on stake, out of sample · t = 0.79
 Verdict             REJECTED
 ```
 
-> "It separates up from down well. Trading it — crossing the spread to act on it — lost money out of
-> sample across five walk-forward folds.
+> "It separates up from down well. Trading it — crossing the spread to act on it — returns under
+> three percent across five walk-forward folds, with a t-statistic of nought point seven nine. That
+> is not a profit. It is a number that cannot be told apart from zero, and removing the best of the
+> five folds takes it negative.
 >
 > **A model can predict well and still trade badly.** Being right about direction is not the same as
 > being right by more than the spread you cross. Rivo's gate reads the second number, not the first,
 > and it refuses its own model."
+
+*(Worth saying if a judge asks, and worth not hiding: this number was −6.49% when the study was
+written on 737 settled windows. On 2,179 it is +2.80%. The verdict did not move, because the gate
+tests significance and breadth rather than the sign — a gate that meant "the backtest is negative"
+would have opened here.)*
 
 Open **"Why the gate refused it"** for two seconds. Close it.
 
@@ -104,10 +115,12 @@ Point at the heartbeat:
 Runtime RUNNING · 1 worker · last decision seconds ago
 ```
 
-> "That is a real worker, not this browser. Eight thousand decisions, five thousand of them already
-> resolved against the venue's own settlement."
+> "That is a real worker, not this browser. Six hundred thousand decisions, and nearly all of them
+> already resolved against the venue's own settlement."
 
-*(Rehearsed 2026-08-24: 8,132 decisions, 5,022 settled, 1 live worker.)*
+*(Read from production 2026-09-05: 613,397 decisions, 595,057 settled, 1 live worker. It was 8,132
+on 2026-08-24 — the ledger has grown 75× in twelve days, so say the order of magnitude on the screen
+rather than the one written here.)*
 
 Open **"What the pre-execution pipeline decided"**:
 
@@ -202,17 +215,22 @@ If time allows, one line on `/evidence`:
 - Do not call anything "AI-powered". The model is a diffusion-based forecaster with a published AUC.
 - Do not linger on the block explorer.
 
-## Rehearsed end to end · 2026-08-24
+## Rehearsed end to end · 2026-08-24, figures re-checked 2026-09-05
 
-All six scenes answer on production. `RIVO_DEMO_PORTFOLIO_ID` is set, so `/proof` publishes run
-`5b35e672`. Values as rehearsed:
+All six scenes answered on production when this was rehearsed on 2026-08-24, and every page and API
+still answered 200 on 2026-09-05. `RIVO_DEMO_PORTFOLIO_ID` is set, so `/proof` publishes run
+`5b35e672`.
+
+Two rows moved since the rehearsal and are corrected below — calibration and the Shadow ledger. The
+rest are as rehearsed: scenes 1, 5 and 6 read off live cards and a stored run, so re-read them from
+the screen on the day rather than trusting this table.
 
 | Scene | What it showed |
 |---|---|
 | 1 · Market | BTC DOWN 15m @ 0.043 · `WELL CALIBRATED` · cohort **BTC 15m**, band 0–5%, 30 windows, CI 0.0–10.0%, no fallback |
-| 2 · Calibration | 843 windows · Brier 0.1604 vs 0.2497 · **35.8% skill** |
-| 3 · Agents | Rivo V1 · AUC **0.8158** · ROS **−6.49%** · `REJECTED` · 5 folds |
-| 4 · Shadow | RUNNING · 1 worker · 8,399 decisions · 5,807 settled · pipeline 472 SKIP / 58 EXECUTE |
+| 2 · Calibration | 843 windows · Brier 0.1604 vs 0.2497 · **35.8% skill** — now **2,179 windows · 0.1821 vs 0.2497 · 27.1% skill** (2026-09-04) |
+| 3 · Agents | Rivo V1 · AUC **0.8158** · ROS **−6.49%** · `REJECTED` · 5 folds — re-measured 2026-09-04 on 2,179 windows: ROS **+2.80%**, t **0.79**, still `REJECTED` |
+| 4 · Shadow | RUNNING · 1 worker · 8,399 decisions · 5,807 settled · pipeline 472 SKIP / 58 EXECUTE — now **613,397 decisions · 595,057 settled** (2026-09-05) |
 | 5 · Proof | run `5b35e672` · **16 confirmed** · 144 attempts · 38 failed · 6 open / 86 closed lots · **shadow 0** |
 | 6 · Evidence | onChain 16 · ledgerRows 106 · CONFIRMED block 469486171 · **settlement SETTLED, UP, paid out** |
 

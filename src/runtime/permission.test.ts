@@ -8,6 +8,8 @@
 // the default assertion is DENIAL. A permission that appears where the table
 // does not predict one is the bug this file exists to catch.
 
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   EXECUTION_MODES,
@@ -223,7 +225,25 @@ describe("the production strategy", () => {
     // The brief that asked for this gate quoted an AUC of 0.8305. The measured
     // value in docs/evidence/calibration.json is 0.8158, and the artefact wins.
     expect(PRODUCTION_STRATEGY.auc).toBeCloseTo(0.8158, 4);
-    expect(PRODUCTION_STRATEGY.returnOnStake).toBeLessThan(0);
+
+    // The economics are read back out of the artefact rather than asserted.
+    //
+    // This used to say `toBeLessThan(0)`, which passed for as long as the
+    // backtest printed a minus sign and said nothing about whether the record
+    // still described the study. Re-running the study on 2,179 windows instead
+    // of 737 turned the same rule from -6.49% to +2.80% — better evidence, same
+    // verdict — and an assertion about the sign would have gone green while the
+    // published figure went stale. What has to hold is that this record and
+    // docs/evidence/alpha-research.json are the same measurement.
+    const artefact = JSON.parse(readFileSync(resolve("docs/evidence/alpha-research.json"), "utf8")) as {
+      results: { strategy: string; gate: { state: string }; all: { returnOnStake: number; tStat: number } }[];
+    };
+    const production = artefact.results.find((r) => r.strategy.includes("0.03"));
+    expect(production, "no production rule in the alpha artefact").toBeTruthy();
+    expect(PRODUCTION_STRATEGY.returnOnStake).toBeCloseTo(production!.all.returnOnStake, 3);
+    expect(PRODUCTION_STRATEGY.tStat).toBeCloseTo(production!.all.tStat, 2);
+    // And the artefact's own gate has to agree with the state being published.
+    expect(production!.gate.state).toBe(PRODUCTION_STRATEGY.state);
   });
 
   it("says plainly that accuracy is not permission", () => {

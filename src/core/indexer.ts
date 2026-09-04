@@ -215,9 +215,30 @@ export class Indexer {
    *
    * Scoped to the venue: several operators list markets side by side on one
    * deployment, and mixing them would calibrate against questions Rivo never trades.
+   *
+   * THE PAGE ORDER IS NEWEST-FIRST, AND THAT IS THE WHOLE POINT.
+   *
+   * `limit` is a ceiling on rows, and a ceiling is reached by dropping
+   * something. Paging `expiry: asc` drops the NEWEST windows, which is the one
+   * direction that cannot be allowed: it is invisible in the result — the rows
+   * that come back are real, ordered and internally consistent — and it makes a
+   * calibration sample that silently stops advancing while the document above it
+   * says the worker recomputes as more contracts settle.
+   *
+   * Measured 2026-09-05: the venue crossed 20,000 finalized windows in a 90-day
+   * span, and the ascending page cut the sample off at 2026-08-30 while markets
+   * kept settling through 2026-09-04. 2,065 traded windows came back where 3,458
+   * existed — 40% of the evidence, growing by ~830 windows a day, gone with no
+   * error and no gap in the returned range.
+   *
+   * Descending, the cap drops the OLDEST instead, which the calibration report
+   * already declares: every report carries `from` and `to`, so a truncated
+   * sample shows up as a period that starts later rather than as a period that
+   * silently stopped. Rows are returned oldest-first regardless, because
+   * everything downstream walks them in time order.
    */
   async settledMarkets(opts: { limit?: number; sinceExpiry?: number } = {}): Promise<MarketRow[]> {
-    const want = opts.limit ?? 20_000;
+    const want = opts.limit ?? 60_000;
     const page = 1000;
     const out: MarketRow[] = [];
     for (let offset = 0; out.length < want; offset += page) {
@@ -228,7 +249,7 @@ export class Indexer {
            Market(
              where:{ marketType:{_eq:"BINARY"}, venueId:{_eq:$v},
                      finalized:{_eq:true}, expiry:{_gt:$since} }
-             order_by:{ expiry: asc }, limit:$limit, offset:$offset
+             order_by:{ expiry: desc }, limit:$limit, offset:$offset
            ){ ${MARKET_FIELDS} }
          }`,
         { v: this.venueId, since: opts.sinceExpiry ?? 0, limit: Math.min(page, want - out.length), offset },
@@ -237,7 +258,7 @@ export class Indexer {
       out.push(...rows);
       if (rows.length < page) break;
     }
-    return out;
+    return out.sort((a, b) => a.expiry - b.expiry);
   }
 
   /**
