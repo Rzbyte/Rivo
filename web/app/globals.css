@@ -192,15 +192,64 @@ button:hover:not(:disabled), .btn:hover {
   transform: translateY(-1px);
 }
 button:disabled { opacity: .4; cursor: not-allowed; }
+
+/*
+ * The press state, owned rather than left to the browser.
+ *
+ * On a phone, tapping anything interactive paints WebKit's default
+ * `-webkit-tap-highlight-color` over it — a translucent black rectangle. On a
+ * pale control it is a grey flash; on the dark-green primary it reads as the
+ * button going black, which is what "Next contract turns dark when I tap it"
+ * was. Nothing in the computed styles changes, because the highlight is painted
+ * over the element rather than applied to it — which is why it never showed up
+ * in a headless check and only ever appeared on a real handset.
+ *
+ * So the highlight is turned off and replaced by a press that says the same
+ * thing deliberately: the button settles by a pixel and its shadow tightens.
+ * Fast enough to feel like contact rather than animation, and gone entirely
+ * when the reader has asked for less motion.
+ */
+button, .btn, a, summary, [role="button"] { -webkit-tap-highlight-color: transparent; }
+
+button:active:not(:disabled), .btn:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+button.primary:active:not(:disabled), .btn.primary:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 4px var(--accent-soft);
+  filter: brightness(0.94);
+}
+@media (prefers-reduced-motion: reduce) {
+  button:active:not(:disabled), .btn:active,
+  button.primary:active:not(:disabled), .btn.primary:active { transform: none; }
+}
 button.primary, .btn.primary { 
   background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #000));
   color: var(--accent-ink); 
   border-color: transparent; 
   box-shadow: 0 4px 12px var(--accent-soft);
 }
-button.primary:hover:not(:disabled), .btn.primary:hover { 
+/*
+ * The primary button has to restate its own background on hover.
+ *
+ * `button:hover:not(:disabled)` (0,2,1) outranks `button.primary` (0,1,1), so
+ * hovering the primary replaced its gradient with `--panel-2` — pale cream —
+ * while the label stayed `--accent-ink`, near-white. Measured: background
+ * rgba(235,231,221,0.8) against text rgb(251,249,245). The text disappeared.
+ *
+ * On a phone that state STICKS after a tap, so "Next contract" went blank the
+ * moment it was pressed. Restating the gradient at equal-or-higher specificity
+ * is the fix; the alternative, dropping the background from the generic hover,
+ * would change every other button on the site.
+ */
+button.primary:hover:not(:disabled), .btn.primary:hover {
+  background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 78%, #000));
+  border-color: transparent;
   box-shadow: 0 6px 20px var(--accent-soft), inset 0 0 0 1px rgba(255,255,255,0.2);
-  transform: translateY(-2px);
+}
+@media (prefers-reduced-motion: no-preference) {
+  button.primary:hover:not(:disabled), .btn.primary:hover { transform: translateY(-2px); }
 }
 .btn.big, button.big { padding: 14px 24px; font-size: 13.5px; letter-spacing: .09em; }
 button.danger { color: var(--neg); border-color: color-mix(in srgb, var(--neg) 35%, var(--line-2)); background: transparent; }
