@@ -90,7 +90,7 @@ export function Nav({ right }: { right?: React.ReactNode }) {
       {isOpen && (
         <div className="mobile-overlay animate-fade-in hide-desktop">
           <nav className="mobile-nav">
-            {SECTIONS.map(([href, label, hint]) => (
+            {SECTIONS.map(([href, label]) => (
               <Link
                 key={href}
                 href={href}
@@ -98,12 +98,14 @@ export function Nav({ right }: { right?: React.ReactNode }) {
                 aria-current={path === href || path.startsWith(`${href}/`) ? "page" : undefined}
                 onClick={() => setIsOpen(false)}
               >
+                {/* No hint here, and the reason is in the destinations.
+                    Each one repeated the h1 of the page it points at — "Is this
+                    price fair?" is word for word the heading on /check — so the
+                    menu was explaining a page that introduces itself a second
+                    later in much bigger type. It also broke: "Is the price the
+                    real probability?" ran off the right edge of a 390px screen.
+                    A menu's job is to get you there. */}
                 {label}
-                {/* The desktop nav carries this as a tooltip, which a phone has
-                    no way to show. On a handset there is room for it on the
-                    row, and it is what tells a first-time reader which of six
-                    sections answers the question they arrived with. */}
-                <span className="hint">{hint}</span>
               </Link>
             ))}
             {right && <div className="mobile-nav-right" style={{ marginTop: 24 }} onClick={() => setIsOpen(false)}>{right}</div>}

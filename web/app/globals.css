@@ -660,13 +660,6 @@ tr:last-child td { border-bottom: none; }
   border-bottom: 1px solid var(--line);
   display: flex; align-items: baseline; gap: 10px;
 }
-/* The hint each link carries in the desktop nav, kept rather than dropped:
-   on a handset there is room for it, and it is what tells a first-time reader
-   which of six sections answers their question. */
-.mobile-nav a .hint {
-  font-family: var(--mono); font-size: 11px; letter-spacing: .04em;
-  color: var(--faint); font-weight: 500;
-}
 .mobile-nav a.active { color: var(--ink); }
 .mobile-nav a.active::before {
   content: ""; width: 4px; align-self: stretch; border-radius: 2px;
