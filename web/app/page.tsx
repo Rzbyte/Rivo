@@ -236,7 +236,12 @@ export default function Landing() {
             Kept as a list rather than a sentence because each line refuses a
             different thing, and the fourth one is the reason the badge at the
             top of this page says testnet. */}
-        <div className="banner warn" style={{ maxWidth: "800px", margin: "0 auto" }}>
+        {/* Left edge on the same gutter as the grid above it. Centred at 800px inside
+            a 1100px column it read as a floating inset — every other block on this
+            page starts at the same x, and a rule that only this one breaks looks
+            like a mistake rather than a choice. The measure stays narrow because
+            four short lines set to 1100px is a worse read. */}
+        <div className="banner warn" style={{ maxWidth: "800px" }}>
           <strong>What Rivo does not claim</strong>
           <ul style={{ margin: "10px 0 0", paddingLeft: 20, lineHeight: 1.7 }}>
             <li>That its strategy is profitable — it is REJECTED, and the gate enforces it.</li>

@@ -909,8 +909,24 @@ header.top .wrap {
   box-shadow: 0 24px 48px -12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
   border-color: rgba(255,255,255,0.15);
 }
+/*
+ * Four cards, four columns, two rows, and no hole.
+ *
+ * Auto-placement left the bottom-right cell empty — a measured 260x306px gap at
+ * x=840, y=332. Nothing was wrong with any single card, which is why it read as
+ * "something is off" rather than as a bug: the grid was one card short of the
+ * shape it was asking for.
+ *
+ *   row 1   [ wide, cols 1-2 ] [ card, col 3 ] [ tall, col 4 ]
+ *   row 2   [ wide, cols 1-3 .............. ] [ tall continues ]
+ *
+ * So the tall card is pinned to the last column across both rows, and the
+ * second wide card takes the three columns beside it. Widening a card that
+ * exists closes the hole; inventing a fifth card to fill it would be padding.
+ */
 .bento-wide { grid-column: span 2; }
-.bento-tall { grid-row: span 2; }
+.bento-tall { grid-column: 4; grid-row: 1 / span 2; }
+.bento-wide ~ .bento-wide { grid-column: 1 / span 3; }
 .bento-full { grid-column: span 4; }
 
 
