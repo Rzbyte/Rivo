@@ -925,27 +925,28 @@ header.top .wrap {
  * exists closes the hole; inventing a fifth card to fill it would be padding.
  */
 .bento-wide { grid-column: span 2; }
-.bento-tall { grid-column: 4; grid-row: 1 / span 2; }
-.bento-wide ~ .bento-wide { grid-column: 1 / span 3; }
+.bento-tall { grid-row: span 2; }
 .bento-full { grid-column: span 4; }
 
-
-@media (max-width: 600px) {
-  .hero { padding: 40px 16px 20px; }
-  .bento-grid {
-    grid-template-columns: 1fr;
-    grid-auto-rows: auto;
-    gap: 16px;
-    margin: 20px 0 40px;
-  }
-  .bento-full, .bento-wide, .bento-tall {
-    grid-column: span 1;
-    grid-row: span 1;
-  }
-  .bento-card {
-    padding: 24px 20px;
-  }
+/*
+ * The explicit placement is DESKTOP ONLY, and that scope is the whole point.
+ *
+ * Written unscoped, `.bento-wide ~ .bento-wide { grid-column: 1 / span 3 }` has
+ * more specificity than the `.bento-wide` reset inside the narrow-screen media
+ * queries, so it kept applying at 390px: the grid stayed three columns wide,
+ * two of them collapsed to 13px, and two cards grew to 2,827px tall wrapping
+ * one character per line. The landing page measured 5,826px on a phone.
+ *
+ * A layout rule that only makes sense at one size belongs inside that size's
+ * query, not in the base where a reset has to out-specify it.
+ */
+@media (min-width: 901px) {
+  .bento-tall { grid-column: 4; grid-row: 1 / span 2; }
+  .bento-wide ~ .bento-wide { grid-column: 1 / span 3; }
 }
+
+
+
 
 .bento-card h3 {
   font-family: var(--sans);
@@ -972,14 +973,22 @@ header.top .wrap {
 }
 
 /* Glass Buttons */
+/*
+ * Dark-theme values on a cream ground: 2% white on #f4f1ea is the background,
+ * and an 8%-white border is nothing at all. The secondary action rendered as
+ * bare floating text — a control that does not look like a control, which on
+ * the hero is the difference between an option and an oversight.
+ *
+ * Tokens instead, so it reads as a button in both themes.
+ */
 .btn-glass {
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+  background: var(--panel);
+  border: 1px solid var(--line-2);
+  box-shadow: none;
 }
 .btn-glass:hover {
-  background: rgba(255,255,255,0.05);
-  border-color: rgba(255,255,255,0.2);
+  background: var(--panel-2);
+  border-color: var(--ink);
 }
 
 
@@ -1271,5 +1280,26 @@ header.top .wrap {
   .hero .row .btn { width: 100%; justify-content: center; text-align: center; }
   .hero p.lede { font-size: 16.5px; }
   .hero .badges { gap: 6px; }
+}
+
+/* Narrower than 640px: one column, because two 171px columns at 390px leave
+   131px of text measure once the card padding is taken out. This block has to
+   come AFTER the wider ones — equal specificity, so source order decides, and
+   consolidating the file had left it before the 900px rules that overrode it. */
+@media (max-width: 600px) {
+  .hero { padding: 40px 16px 20px; }
+  .bento-grid {
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
+    gap: 16px;
+    margin: 20px 0 40px;
+  }
+  .bento-full, .bento-wide, .bento-tall {
+    grid-column: span 1;
+    grid-row: span 1;
+  }
+  .bento-card {
+    padding: 24px 20px;
+  }
 }
 
