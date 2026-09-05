@@ -102,6 +102,22 @@ describe("one web surface", () => {
     expect(body).toMatch(/snapshot|recomputes/);
   });
 
+  it("keeps the header's call to action off the pages where it is noise", () => {
+    // Reported by the user: "the Check a price button is still in some navs".
+    // It is deliberate on the five reading surfaces, where the header is the
+    // only place that action exists — and wrong on four others, each for its
+    // own reason. A list is easy to extend and easy to quietly drop, so the
+    // reasons live in the component and the membership lives here.
+    const nav = read("web/components/Nav.tsx");
+    const block = nav.slice(nav.indexOf("CTA_HIDDEN_ON = new Set("), nav.indexOf("]", nav.indexOf("CTA_HIDDEN_ON = new Set(")));
+    for (const route of ["/", "/check", "/app", "/demo"]) {
+      expect(block, `${route} should not offer "Check a price" in the header`).toContain(`"${route}"`);
+    }
+    // And it must disappear while the mobile menu is open: the open menu is the
+    // navigation, and a second control beside the close button competes with it.
+    expect(nav).toMatch(/!CTA_HIDDEN_ON\.has\(path\) && !isOpen/);
+  });
+
   it("puts the live address where somebody opening the repo will see it", () => {
     // It was at line 274. A judge should not have to scroll past the
     // architecture to find out where the thing runs.

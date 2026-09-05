@@ -46,7 +46,7 @@ Both are preserved. Neither result is deleted.
 |---|---|
 | `npm run typecheck` | pass |
 | `npm run build:public` | pass |
-| `npm test` (real PostgreSQL 16) | **944 passed, 0 skipped, 67 files** |
+| `npm test` (real PostgreSQL 16) | **945 passed, 0 skipped, 67 files** |
 | historical backtest evidence | re-read from `backtest.json`, unmodified |
 | checkpoint | git tag `alpha-baseline-v1` |
 
