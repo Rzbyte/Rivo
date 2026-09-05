@@ -43,8 +43,15 @@ export default function Landing() {
           spread before any capital moves. Nothing here needs a wallet to read.
         </p>
 
+        {/* The primary action is the ten-second one.
+            "Explore Markets" led with a table, which asks a reader to already
+            know why a quoted probability is worth interrogating. Check answers
+            that for one contract before asking for any of their patience, and
+            the dense surfaces stay one click behind it for the reader who wants
+            them. */}
         <div className="row" style={{ marginTop: 24, marginBottom: 8 }}>
-          <Link className="btn primary big" href="/markets">Explore Markets</Link>
+          <Link className="btn primary big" href="/check">Check a price</Link>
+          <Link className="btn big" href="/markets">Every live contract</Link>
           <Link className="btn big" href="/agents">Test an Agent</Link>
           {/* Thirty seconds, no account, no reading. It existed for exactly this
               reader and was reachable only by typing the URL. */}

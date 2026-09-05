@@ -1,17 +1,24 @@
 "use client";
 
-// The five things Rivo does, in the order a person needs them.
+// The things Rivo does, in the order a person needs them.
 //
-// UNDERSTAND → VALIDATE → PROVE. Markets and Calibration answer what a
-// probability means; Agents answers whether a model deserves capital; Proof is
-// what actually happened on-chain; Evidence is every study behind those answers,
-// including the two that came back no. Nothing about wallets, funding or workers
-// is here, because none of it is why somebody arrives.
+// CHECK → UNDERSTAND → VALIDATE → PROVE. Check is the ten-second answer for
+// somebody about to accept a price; Markets and Calibration are the same
+// question with the table left open; Agents answers whether a model deserves
+// capital; Proof is what actually happened on-chain; Evidence is every study
+// behind those answers, including the two that came back no. Nothing about
+// wallets, funding or workers is here, because none of it is why somebody
+// arrives.
+//
+// Check goes first on purpose. Every other entry assumes a reader who already
+// knows why a quoted probability is worth interrogating; that one is for the
+// reader who does not yet, and a front door behind four other doors is not one.
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const SECTIONS = [
+  ["/check", "Check", "Is this price fair?"],
   ["/markets", "Markets", "Live Event Contracts"],
   ["/calibration", "Calibration", "Is the price the real probability?"],
   ["/agents", "Agents", "Does the model deserve capital?"],

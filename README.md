@@ -27,7 +27,35 @@ it found its own model wanting, published the evidence, and built a gate that en
 > **A model can predict well and still trade badly.**
 
 
-## 2 · Markets
+## 2 · Check — is this price fair?
+
+The ten-second version of everything below it, for somebody who is about to accept a price rather
+than study one. One live contract, two numbers beside each other — what the book is asking, and how
+often contracts priced like it actually settled true — and one sentence saying which way that cuts.
+
+```
+Will BTC close higher than it opened?          58m left
+
+     The book asks              History settled
+         47%                         55%
+
+  The book is asking too little
+  Prices in this band settled true 55% of the time. You are being asked for 47%.
+
+  [ Show the working ]
+```
+
+**Show the working** unfolds the cohort, the price band, the number of settled contracts behind it,
+the 95% interval and the date range — the same figures [Markets](#3--markets) puts on screen at
+once. Nothing is hidden that a reader could be misled by leaving folded; a caveat outranks a claim,
+so a thin sample, a wide book or missing depth becomes the headline rather than a footnote under one.
+
+**There is no buy button, and that is the design.** A verdict about whether a price band has
+historically paid, sitting next to a control that acts on it, is a recommendation however the copy is
+worded. Rivo does not take a position on the contract in front of you, and it has refused its own
+model the right to.
+
+## 3 · Markets
 
 Every live DreamDEX Event Contract, with implied probability, bid, ask, spread, depth and time to
 expiry — beside how often *comparable* contracts actually settled true. Each card names the cohort
@@ -38,7 +66,7 @@ Assessments are deterministic and descriptive: `WELL CALIBRATED`, `OVERCONFIDENT
 `LARGE DISAGREEMENT`, `LOW LIQUIDITY`, `HIGH SPREAD`, `INSUFFICIENT SAMPLE`. Never BUY or SELL — a
 caveat about the data outranks a claim about the price.
 
-## 3 · Calibration — is 67% actually 67%?
+## 4 · Calibration — is 67% actually 67%?
 
 Measured against **2,179 settled windows** as of 2026-09-04: Brier **0.1821** against
 **0.2497** for always quoting the base rate, a skill score of **27.1%**.
@@ -62,7 +90,7 @@ Windows are the unit, not fills — forty rows from one settled contract are for
 flip. Intervals come from resampling windows. Cohorts run BTC 15m → BTC all tenors → all assets 15m →
 global, falling back only on sample size. [Methodology](docs/CALIBRATION.md).
 
-## 4 · Agents — does the model deserve capital?
+## 5 · Agents — does the model deserve capital?
 Rivo's own model is the first case study and it **failed validation**: AUC **0.8158**, and a return
 on stake of **+2.80%** out of sample that arrives with **t = 0.79** and falls to **−0.50%** once its
 best fold is removed. Good forecast, unproven trade, and the gate reads the second thing.
@@ -77,7 +105,7 @@ Connect your own over HTTP. Rivo never runs your code and never trusts your answ
 vetted against private and link-local ranges, resolved and re-checked, redirects refused, and every
 number you return is clamped to limits Rivo set.
 
-## 5 · Live Shadow
+## 6 · Live Shadow
 
 An agent decides against live DreamDEX contracts on a schedule, in a background worker, and sends
 nothing. It runs **the same pre-execution pipeline as real execution** — market eligibility, the
@@ -98,7 +126,7 @@ field: whether a signature may be requested.
 Every hypothetical resolves against the venue's own settlement when the contract closes. Columns are
 named `hypothetical_*` throughout, so a query has to opt into the lie.
 
-## 6 · Experimental Testnet
+## 7 · Experimental Testnet
 
 Five things must agree before capital moves, and the first four are checked before an executor is
 built:
@@ -116,7 +144,7 @@ It runs under **Experimental Testnet** — testnet only, chosen explicitly, and 
 on mainnet. Unknown chain, unknown strategy state and unknown mode all block. Fail closed. Full
 model: [docs/ARCHITECTURE.md § Execution permission](docs/ARCHITECTURE.md).
 
-## 7 · Proof
+## 8 · Proof
 
 Only on an approved testnet does a decision become a real DreamDEX transaction — with the hash, the
 receipt and the reconciliation all inspectable. One run is walked end to end, stage by stage:
@@ -152,7 +180,7 @@ Evidence belongs to exactly one run. A deployment's counts contain only that dep
 decisions an agent made outside any deployment are shown as **GLOBAL AGENT EVIDENCE** and never
 merged in. `src/intel/scope.test.ts` constructs two agents and two runs and demands they stay apart.
 
-## 8 · Evidence — five questions, and two answers are no
+## 9 · Evidence — five questions, and two answers are no
 
 Every study behind the four sections above, read from the JSON artefact each one wrote. Does it run
 on-chain? Does the model know anything? Does the portfolio layer matter? **Would providing liquidity
@@ -173,7 +201,7 @@ market → prediction → decision → outcome → evidence
 Every settled Event Contract joins the calibration dataset and the agent's record, so the next answer
 rests on one more settled fact than the last. It runs inside the worker, not a terminal window.
 
-## 9 · The honest headline
+## 10 · The honest headline
 
 Two results, and the second one matters as much as the first.
 
@@ -253,7 +281,7 @@ otherwise have hit ourselves.
 
 ---
 
-## 10 · Architecture
+## 11 · Architecture
 
 Four planes, deployed apart because they fail apart:
 
@@ -299,7 +327,7 @@ src/
   web/         the original cockpit server + static snapshot export
   public/      the public pricing page — browser bundle, shares the runtime's math
   cli/         start · worker · web · report · calibrate · scan · allocate · backtest · … · agent
-  *.test.ts    931 tests, colocated with what they cover
+  *.test.ts    937 tests, colocated with what they cover
 web/
   app/         Next.js — landing, the product, and the control-plane API
   components/  the dashboard, built around decisions rather than fills
@@ -432,7 +460,7 @@ And when nothing qualifies, it says so and holds cash:
 
 ---
 
-## 11 · Run locally
+## 12 · Run locally
 
 ```bash
 npm install
@@ -479,7 +507,7 @@ npm run report                                  # what it did, and why
 | `npm run privy:check` | is this deployment's Privy set up? authenticates for real, lists what is missing |
 | `npm run agent -- new \| status \| fund \| sweep` | the wallet Rivo signs with, and what it may lose |
 | `npm run probe:operator` | can EC be traded non-custodially? measured, not assumed |
-| `npm test` · `npm run typecheck` | 931 tests · strict TypeScript across engine, page and web app |
+| `npm test` · `npm run typecheck` | 937 tests · strict TypeScript across engine, page and web app |
 | `npm run doctor` | can Rivo trade right now — signer, gas, collateral, venue, kit |
 | `npm run faucet` | mint testnet tUSDC — a direct `faucet(uint256)` call, no kit needed |
 | `npm run check:kit` · `npm run link:kit` | verify / install the optional bot kit |
@@ -489,7 +517,7 @@ indexers.
 
 ---
 
-## 12 · Deployment
+## 13 · Deployment
 
 Dry run is the default, matching every strategy in the kit. Without a funded key Rivo stays dry
 regardless of the flag, and a placeholder like `0x...` is rejected rather than accepted.
@@ -601,7 +629,7 @@ the cross-tenor coherence bound — is on [/evidence](https://x-rivo.vercel.app/
 
 **Rivo is one deployment: [x-rivo.vercel.app](https://x-rivo.vercel.app/).**
 
-## 13 · Reproducing every number
+## 14 · Reproducing every number
 
 Every number in this document was produced by a command in this repository and written to
 `docs/evidence/` as JSON. Nothing here is typed in by hand, and the tests refuse to let the
@@ -613,7 +641,7 @@ documented figures drift from the artefacts they claim to quote.
 npm test
 ```
 
-**931 tests** across the things that either move money or produce a published number: the
+**937 tests** across the things that either move money or produce a published number: the
 dual-crossing-path book, the fair-value model and volatility estimator, the scoring rules behind
 every figure in [EVIDENCE.md](docs/EVIDENCE.md), the capital allocator, the position manager, settlement, and
 on-chain reconciliation.
