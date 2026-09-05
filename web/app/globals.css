@@ -130,9 +130,7 @@ p  { margin: 0 0 14px; color: var(--muted); }
   box-shadow: 0 12px 32px -10px rgba(0,0,0,0.16);
   border-color: var(--line-2);
 }
-@media (prefers-reduced-motion: no-preference) {
-  .panel:hover { transform: translateY(-2px); }
-}
+
 .panel + .panel { margin-top: 16px; }
 /*
  * ...but never inside a grid, where `gap` already did the job.
@@ -226,14 +224,17 @@ input:focus:not(:focus-visible), select:focus:not(:focus-visible) {
 
 .field { margin-bottom: 16px; }
 .field .label { display: block; margin-bottom: 6px; }
-.hint { font-size: 13px; color: var(--faint); margin-top: 4px; }
-/* A hint is a caption, not a ticker: it wraps rather than running off the
-   screen. Measured 397px wide in a 390px viewport on /markets, so the tail of
-   "prices 2s ago" was simply cut off on a phone. */
-/* As a flex child inside `.sec-head` it also needs permission to shrink —
-   a flex item's default `min-width: auto` is what let it push past the
-   viewport even with wrapping allowed. */
-.hint { overflow-wrap: anywhere; min-width: 0; }
+/*
+ * A hint is a caption, not a ticker.
+ *
+ * It ran 397px wide in a 390px viewport on /markets, cutting off the tail of
+ * "prices 2s ago". Wrapping alone was not enough: as a flex child of
+ * `.sec-head` its default `min-width: auto` outranked the permission to wrap.
+ */
+.hint {
+  font-size: 13px; color: var(--faint); margin-top: 4px;
+  overflow-wrap: anywhere; min-width: 0;
+}
 
 /*
  * Explorer links: a real hit area without a layout change.
@@ -309,9 +310,7 @@ a[href^="https://shannon-explorer"]:focus-visible {
 }
 .inst-live { display: inline-flex; align-items: center; gap: 8px; color: var(--pos); text-shadow: 0 0 8px var(--pos-soft); }
 .inst-live .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor; }
-@media (prefers-reduced-motion: no-preference) {
-  .inst-live .dot { animation: pulse 2.4s ease-in-out infinite; }
-}
+
 @keyframes pulse { 0%, 100% { opacity: 1; box-shadow: 0 0 8px currentColor; } 50% { opacity: .4; box-shadow: none; } }
 
 .inst-body { padding: 8px 14px 16px; }
@@ -546,11 +545,6 @@ tr:last-child td { border-bottom: none; }
 /* --- Mobile Nav Overlay --- */
 .hide-desktop { display: none !important; }
 
-@media (max-width: 720px) {
-  header.top .wrap { display: flex; justify-content: space-between; gap: 12px; }
-  .hide-mobile { display: none !important; }
-  .hide-desktop { display: flex !important; }
-}
 
 .mobile-toggle {
   background: transparent; border: none; color: var(--ink);
@@ -607,9 +601,7 @@ tr:last-child td { border-bottom: none; }
   content: ""; width: 4px; align-self: stretch; border-radius: 2px;
   background: var(--accent); margin-right: 6px;
 }
-@media (prefers-reduced-motion: no-preference) {
-  .mobile-nav a { transition: color .1s ease-out; }
-}
+
 .mobile-nav a:active { color: var(--accent); }
 
 /*
@@ -620,9 +612,7 @@ tr:last-child td { border-bottom: none; }
  * repeats most. 180ms with an ease-out curve reads as "it was already there".
  */
 .mobile-overlay.animate-fade-in { animation-duration: .18s; animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
-@media (prefers-reduced-motion: reduce) {
-  .mobile-overlay.animate-fade-in { animation: none; }
-}
+
 
 /* --- tabs ---------------------------------------------------------------- */
 .tabs {
@@ -687,45 +677,6 @@ header.top .wrap {
 .center { min-height: 75vh; display: grid; place-items: center; }
 .card { width: 100%; max-width: 480px; }
 
-@media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; animation: none !important; }
-}
-
-@media (max-width: 640px) {
-  .wrap { padding: 0 16px; }
-
-  h1 { font-size: 28px; }
-  h2 { font-size: 19px; }
-  .lede { font-size: 16px; }
-
-  .panel { padding: 18px; }
-  .panel + .panel { margin-top: 12px; }
-  .grid { gap: 12px; }
-
-  .cols-2 { grid-template-columns: 1fr; }
-  .cols-3 { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
-  .cols-4 { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
-
-  .stat .value { font-size: 24px; }
-
-  .decision { grid-template-columns: 1fr; gap: 8px; }
-
-  header.top .wrap { height: auto; min-height: 56px; padding-block: 8px; gap: 10px; }
-  header.top .row { flex-wrap: nowrap; gap: 8px; }
-  header.top .pill { font-size: 11.5px; padding: 4px 8px; }
-  .brand { font-size: 17px; }
-
-  table { font-size: 13px; }
-  th, td { padding-right: 12px; }
-
-  .hide-sm { display: none; }
-
-  .compare .big { font-size: 24px; }
-  .kv { gap: 6px 14px; }
-  .kv > div { font-size: 12.5px; }
-
-  .steps li { padding-right: 12px; font-size: 12px; }
-}
 
 @media (pointer: coarse) {
   button, .btn { min-height: 48px; padding-block: 12px; }
@@ -795,7 +746,6 @@ header.top .wrap {
   0% { transform: translateY(0); }
   100% { transform: translateY(-30px); }
 }
-.orb { animation-name: orb-drift; }
 
 /* Floating Animations */
 @keyframes float {
@@ -805,6 +755,16 @@ header.top .wrap {
 .animate-float {
   animation: float 6s ease-in-out infinite alternate;
 }
+/*
+ * The orbs take orb-drift, which moves on Y only.
+ *
+ * They also carry `.animate-float`, whose shorthand sets `animation-name:
+ * float` — and float translates +20px on X, which is what put the right-hand
+ * orb past the viewport edge and made every page scroll sideways. Declared
+ * after the shorthand so it actually wins; a bare `animation-name` earlier in
+ * the file silently lost to it.
+ */
+.orb.orb { animation-name: orb-drift; }
 
 /* Gradient Text Shift (Sophisticated Silver/Emerald) */
 @keyframes gradientShift {
@@ -849,16 +809,13 @@ header.top .wrap {
   margin: 0 0 28px;
   color: var(--muted);
 }
-@media (max-width: 900px) {
-  /* One column, and the sample card follows the words rather than competing
-     with them for a half-width that no longer exists. */
-  .hero { grid-template-columns: minmax(0, 1fr); gap: 32px; padding: 36px 0 8px; }
-  .hero h1 { max-width: 18ch; }
-}
+
 .hero .badges {
   display: flex;
   gap: 12px;
-  justify-content: center;
+  /* Left, with the headline it introduces — the hero is a two-column layout
+     now, not a centred stack. */
+  justify-content: flex-start;
   margin-bottom: 16px;
 }
 .hero .badge {
@@ -935,14 +892,7 @@ header.top .wrap {
 .bento-tall { grid-row: span 2; }
 .bento-full { grid-column: span 4; }
 
-@media (max-width: 900px) {
-  .bento-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .bento-full, .bento-wide, .bento-tall {
-    grid-column: span 2;
-  }
-}
+
 @media (max-width: 600px) {
   .hero { padding: 40px 16px 20px; }
   .bento-grid {
@@ -1093,14 +1043,6 @@ header.top .wrap {
   letter-spacing: -.02em; line-height: 1.25;
 }
 
-@media (max-width: 640px) {
-  /* The card is the product. On a handset it has to be reachable without a
-     scroll, so the introduction gets out of its way — the same words are still
-     under the card, where a reader who wants them will be by then. */
-  .check-intro { display: none; }
-  .check-card { padding: 20px 16px; border-radius: var(--r); }
-  .track { margin: 18px 0 4px; }
-}
 
 /*
  * The hamburger belongs at the edge a thumb reaches, not beside the wordmark.
@@ -1111,15 +1053,6 @@ header.top .wrap {
  * simply the grid still being a grid. Flex with two real children puts it where
  * a thumb already is.
  */
-@media (max-width: 720px) {
-  header.top .wrap {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-  }
-  .mobile-toggle { margin-left: auto; min-width: 44px; min-height: 44px; }
-}
 
 
 /* --- the navbar's right slot --------------------------------------------- */
@@ -1141,20 +1074,13 @@ header.top .wrap {
   text-decoration: none; border: 1px solid transparent;
   display: inline-flex; align-items: center; min-height: 40px;
 }
-@media (prefers-reduced-motion: no-preference) {
-  .nav-cta { transition: background-color .1s ease-out; }
-}
+
 .nav-cta:hover { background: #1f3722; color: var(--accent-ink); }
 .nav-cta:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 /* On the page it points at, the button would be an invitation to stand still. */
 .nav-cta[aria-current="page"] { display: none; }
 
-@media (max-width: 720px) {
-  /* It survives the breakpoint rather than disappearing into the menu: a
-     hamburger alone hides the only action that matters to a new visitor. */
-  .nav-cta { padding: 9px 13px; font-size: 10.5px; letter-spacing: .06em; }
-  .mobile-toggle { margin-left: 0; }
-}
+
 @media (max-width: 360px) {
   /* Below this the wordmark and a 44px menu target already fill the bar. */
   .nav-cta { display: none; }
@@ -1186,12 +1112,6 @@ header.top .wrap {
   letter-spacing: .12em; text-transform: uppercase; color: var(--faint);
   margin-top: 6px; line-height: 1.4;
 }
-@media (max-width: 720px) {
-  /* Two-up rather than four: a 30px figure squeezed into a quarter of 390px
-     stops being the thing you read first, which is its only job. */
-  .proof-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 32px; }
-  .proof-strip > div { padding: 16px 14px; }
-}
 
 
 /* --- the hero's sample card ---------------------------------------------- */
@@ -1206,10 +1126,103 @@ header.top .wrap {
   font-size: clamp(19px, 1.8vw, 25px); font-weight: 680;
   letter-spacing: -.02em; line-height: 1.2; margin-top: 8px;
 }
-.hero .badges { justify-content: flex-start; }
 
+
+/* ==========================================================================
+   Responsive and motion, consolidated.
+
+   These had grown to twenty @media blocks with the same breakpoint written
+   four separate times, so which rule won at 720px depended on where in a
+   1,200-line file it happened to sit. One block per condition, and the
+   cascade becomes readable again.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: no-preference) {
+  .panel:hover { transform: translateY(-2px); }
+  .inst-live .dot { animation: pulse 2.4s ease-in-out infinite; }
+  .mobile-nav a { transition: color .1s ease-out; }
+  .nav-cta { transition: background-color .1s ease-out; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-overlay.animate-fade-in { animation: none; }
+  * { transition: none !important; animation: none !important; }
+}
+
+@media (max-width: 900px) {
+  /* One column, and the sample card follows the words rather than competing
+     with them for a half-width that no longer exists. */
+  .hero { grid-template-columns: minmax(0, 1fr); gap: 32px; padding: 36px 0 8px; }
+  .hero h1 { max-width: 18ch; }
+  .bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .bento-full, .bento-wide, .bento-tall {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 720px) {
+  header.top .wrap { display: flex; justify-content: space-between; gap: 12px; }
+  .hide-mobile { display: none !important; }
+  .hide-desktop { display: flex !important; }
+  header.top .wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .mobile-toggle { margin-left: auto; min-width: 44px; min-height: 44px; }
+  /* It survives the breakpoint rather than disappearing into the menu: a
+     hamburger alone hides the only action that matters to a new visitor. */
+  .nav-cta { padding: 9px 13px; font-size: 10.5px; letter-spacing: .06em; }
+  .mobile-toggle { margin-left: 0; }
+  /* Two-up rather than four: a 30px figure squeezed into a quarter of 390px
+     stops being the thing you read first, which is its only job. */
+  .proof-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 32px; }
+  .proof-strip > div { padding: 16px 14px; }
+}
 
 @media (max-width: 640px) {
+  .wrap { padding: 0 16px; }
+
+  h1 { font-size: 28px; }
+  h2 { font-size: 19px; }
+  .lede { font-size: 16px; }
+
+  .panel { padding: 18px; }
+  .panel + .panel { margin-top: 12px; }
+  .grid { gap: 12px; }
+
+  .cols-2 { grid-template-columns: 1fr; }
+  .cols-3 { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .cols-4 { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+
+  .stat .value { font-size: 24px; }
+
+  .decision { grid-template-columns: 1fr; gap: 8px; }
+
+  header.top .wrap { height: auto; min-height: 56px; padding-block: 8px; gap: 10px; }
+  header.top .row { flex-wrap: nowrap; gap: 8px; }
+  header.top .pill { font-size: 11.5px; padding: 4px 8px; }
+  .brand { font-size: 17px; }
+
+  table { font-size: 13px; }
+  th, td { padding-right: 12px; }
+
+  .hide-sm { display: none; }
+
+  .compare .big { font-size: 24px; }
+  .kv { gap: 6px 14px; }
+  .kv > div { font-size: 12.5px; }
+
+  .steps li { padding-right: 12px; font-size: 12px; }
+  /* The card is the product. On a handset it has to be reachable without a
+     scroll, so the introduction gets out of its way — the same words are still
+     under the card, where a reader who wants them will be by then. */
+  .check-intro { display: none; }
+  .check-card { padding: 20px 16px; border-radius: var(--r); }
+  .track { margin: 18px 0 4px; }
   /*
    * Hero actions stack full-width.
    *
@@ -1223,3 +1236,4 @@ header.top .wrap {
   .hero p.lede { font-size: 16.5px; }
   .hero .badges { gap: 6px; }
 }
+
