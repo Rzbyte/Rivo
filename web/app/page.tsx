@@ -31,10 +31,10 @@ export default function Landing() {
   return (
     <>
       <Nav />
-      <main className="wrap" style={{ paddingTop: 40, paddingBottom: 72 }}>
+      <main className="wrap animate-fade-in" style={{ paddingTop: 40, paddingBottom: 72 }}>
         <span className="label">DreamDEX Event Contracts · Somnia</span>
         <h1 style={{ maxWidth: "18ch", marginTop: 10 }}>
-          Event Contracts you can check before you trade them.
+          <span style={{ background: "linear-gradient(135deg, var(--ink) 20%, var(--accent) 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Event Contracts</span> you can check before you trade them.
         </h1>
         <p className="lede">
           A price on a binary contract is a forecast, and a forecast nobody has scored is an opinion

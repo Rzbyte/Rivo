@@ -36,7 +36,7 @@ async function probe(base: string, path: string): Promise<{ status: number; body
 }
 
 async function main(): Promise<void> {
-  const base = arg("--url", "https://rivo-autopilot.vercel.app");
+  const base = arg("--url", "https://x-rivo.vercel.app");
   const out = arg("--out", "docs/evidence/final-release.json");
 
   const counts = existsSync("/tmp/rel.json")

@@ -1,6 +1,6 @@
 // Register the six baseline strategies, so the breadth study has subjects.
 //
-//   npx tsx scripts/seed-agents.ts --base https://rivo-autopilot.vercel.app
+//   npx tsx scripts/seed-agents.ts --base https://x-rivo.vercel.app
 //   npx tsx scripts/seed-agents.ts --base http://localhost:3000 --allow-private
 //
 // They are registered as `kind: 'http'` against their PUBLIC URLs, not as
@@ -59,7 +59,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  const base = arg("--base", process.env.RIVO_PUBLIC_URL ?? "https://rivo-autopilot.vercel.app").replace(/\/$/, "");
+  const base = arg("--base", process.env.RIVO_PUBLIC_URL ?? "https://x-rivo.vercel.app").replace(/\/$/, "");
   const allowPrivate = process.argv.includes("--allow-private");
 
   await migrate();

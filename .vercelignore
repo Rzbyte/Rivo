@@ -1,0 +1,7 @@
+.rivo
+data/
+data*/
+node_modules
+tmp
+.design
+*.log

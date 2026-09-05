@@ -7,7 +7,7 @@ Contract probabilities into measurable intelligence, validates whether autonomou
 economic edge, and lets builders prove them through live shadow testing and verifiable DreamDEX
 testnet execution.
 
-**Live: [rivo-autopilot.vercel.app](https://rivo-autopilot.vercel.app/)** — five sections, four of
+**Live: [x-rivo.vercel.app](https://x-rivo.vercel.app/)** — five sections, four of
 which open with no wallet and no account.
 
 ---
@@ -48,7 +48,7 @@ DreamDEX prices carry real information, and the middle of the book is mostly hon
 
 Those are the figures in [`docs/evidence/calibration-report.json`](docs/evidence/calibration-report.json),
 and they are a snapshot on purpose — the worker recomputes this every few hours as more contracts
-settle, so [the live page](https://rivo-autopilot.vercel.app/calibration) reports a larger sample than
+settle, so [the live page](https://x-rivo.vercel.app/calibration) reports a larger sample than
 this file does. A README that quietly tracked a moving number would be the one document nobody could
 check against anything.
 
@@ -597,9 +597,9 @@ the shipped bundle in a DOM, so that property is tested rather than claimed.
 It is a portability proof, not a second product. It was once published at its own address and served
 as a second Rivo with its own identity; that address is retired, because two surfaces disagreeing
 about what one product is helped nobody. Every study that lived only there — the live maker run and
-the cross-tenor coherence bound — is on [/evidence](https://rivo-autopilot.vercel.app/evidence).
+the cross-tenor coherence bound — is on [/evidence](https://x-rivo.vercel.app/evidence).
 
-**Rivo is one deployment: [rivo-autopilot.vercel.app](https://rivo-autopilot.vercel.app/).**
+**Rivo is one deployment: [x-rivo.vercel.app](https://x-rivo.vercel.app/).**
 
 ## 13 · Reproducing every number
 

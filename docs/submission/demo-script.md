@@ -1,6 +1,6 @@
 # Rivo — three-minute demo script
 
-**Recorded against production:** https://rivo-autopilot.vercel.app
+**Recorded against production:** https://x-rivo.vercel.app
 
 Spoken content runs ~2:40, leaving room for navigation. Numbers below were the live production
 values at the time of writing; **re-read them from the screen when you record** — the worker keeps
@@ -118,9 +118,9 @@ Runtime RUNNING · 1 worker · last decision seconds ago
 > "That is a real worker, not this browser. Six hundred thousand decisions, and nearly all of them
 > already resolved against the venue's own settlement."
 
-*(Read from production 2026-09-05: 613,397 decisions, 595,057 settled, 1 live worker. It was 8,132
-on 2026-08-24 — the ledger has grown 75× in twelve days, so say the order of magnitude on the screen
-rather than the one written here.)*
+*(Read from production 2026-09-05: 622,600 decisions, 598,791 settled, 1 live worker. It was 8,132
+on 2026-08-24 — the ledger has grown 75× in twelve days and adds thousands an hour, so say the order
+of magnitude on the screen rather than the one written here.)*
 
 Open **"What the pre-execution pipeline decided"**:
 
@@ -230,7 +230,7 @@ the screen on the day rather than trusting this table.
 | 1 · Market | BTC DOWN 15m @ 0.043 · `WELL CALIBRATED` · cohort **BTC 15m**, band 0–5%, 30 windows, CI 0.0–10.0%, no fallback |
 | 2 · Calibration | 843 windows · Brier 0.1604 vs 0.2497 · **35.8% skill** — now **2,179 windows · 0.1821 vs 0.2497 · 27.1% skill** (2026-09-04) |
 | 3 · Agents | Rivo V1 · AUC **0.8158** · ROS **−6.49%** · `REJECTED` · 5 folds — re-measured 2026-09-04 on 2,179 windows: ROS **+2.80%**, t **0.79**, still `REJECTED` |
-| 4 · Shadow | RUNNING · 1 worker · 8,399 decisions · 5,807 settled · pipeline 472 SKIP / 58 EXECUTE — now **613,397 decisions · 595,057 settled** (2026-09-05) |
+| 4 · Shadow | RUNNING · 1 worker · 8,399 decisions · 5,807 settled · pipeline 472 SKIP / 58 EXECUTE — now **622,600 decisions · 598,791 settled** (2026-09-05) |
 | 5 · Proof | run `5b35e672` · **16 confirmed** · 144 attempts · 38 failed · 6 open / 86 closed lots · **shadow 0** |
 | 6 · Evidence | onChain 16 · ledgerRows 106 · CONFIRMED block 469486171 · **settlement SETTLED, UP, paid out** |
 

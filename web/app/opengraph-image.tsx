@@ -53,12 +53,13 @@ export default function Image() {
               than one child that does not declare a display mode, and a line
               break counts as a child. */}
           <div style={{ display: "flex", flexDirection: "column", fontSize: 62, fontWeight: 700, color: "#1c1c18", lineHeight: 1.14 }}>
-            <div style={{ display: "flex" }}>Understand the market.</div>
-            <div style={{ display: "flex" }}>Validate the agent.</div>
-            <div style={{ display: "flex" }}>Prove it on DreamDEX.</div>
+            <div style={{ display: "flex" }}>Event Contracts</div>
+            <div style={{ display: "flex" }}>you can check</div>
+            <div style={{ display: "flex" }}>before you trade them.</div>
           </div>
           <div style={{ display: "flex", fontSize: 27, color: "#55564d", maxWidth: 900, lineHeight: 1.4 }}>
-            Event intelligence and agent validation for DreamDEX Event Contracts.
+            A forecast nobody has scored is an opinion with a number on it. 2,179 settled windows say
+            how often DreamDEX&rsquo;s were right.
           </div>
         </div>
 

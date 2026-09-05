@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-09-04T21:19:26.119Z",
+  "generatedAt": "2026-09-05T00:08:18.802Z",
   "about": "The repository at the moment it was frozen for submission, plus what the production deployment answered when asked. Every field is re-derivable; none is a credential.",
   "commit": {
-    "sha": "4d3c7e8254226ef5280998829d6c52f7654632cd",
-    "shortSha": "4d3c7e8",
+    "sha": "327d477089d0b86683829ef80282866a018f4c39",
+    "shortSha": "327d477",
     "branch": "main",
-    "subject": "The verdict a judge reads came from a migration, and migrations do not re-run",
-    "committedAt": "2026-09-05T04:15:54+07:00",
-    "clean": true
+    "subject": "Refresh the release artefact against the frozen commit",
+    "committedAt": "2026-09-05T04:19:32+07:00",
+    "clean": false
   },
   "verification": {
     "tests": {
@@ -25,7 +25,7 @@
     "secretScan": "no .env, .pem or .key tracked; the signing key appears in no tracked file"
   },
   "production": {
-    "url": "https://rivo-autopilot.vercel.app",
+    "url": "https://x-rivo.vercel.app",
     "pages": {
       "/": 200,
       "/markets": 200,
@@ -54,18 +54,18 @@
     },
     "workers": {
       "live": 1,
-      "lastHeartbeatAt": "2026-09-04T21:19:15.899Z",
-      "lastShadowDecisionAt": "2026-09-04T21:19:06.451Z"
+      "lastHeartbeatAt": "2026-09-05T00:08:04.942Z",
+      "lastShadowDecisionAt": "2026-09-05T00:08:10.033Z"
     },
     "calibration": {
       "windows": 2181,
-      "brier": 0.18210133,
-      "skill": 0.27073229,
+      "brier": 0.1820047,
+      "skill": 0.2712935,
       "servedFromArtefact": false
     },
     "shadow": {
-      "decisions": 614942,
-      "settled": 596037
+      "decisions": 622706,
+      "settled": 599011
     },
     "demoProof": {
       "published": true,

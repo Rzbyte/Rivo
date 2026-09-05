@@ -33,7 +33,7 @@ import { Providers } from "./providers";
 export const metadata: Metadata = {
   // Without this, Next resolves the social card against localhost at build time
   // and the shared preview points nowhere.
-  metadataBase: new URL("https://rivo-autopilot.vercel.app"),
+  metadataBase: new URL("https://x-rivo.vercel.app"),
   title: "Rivo — Event Intelligence & Agent Validation for DreamDEX",
   description:
     "DreamDEX says BTC UP 15m is 67%. Rivo measures whether contracts quoted at 67% actually settled true 67% of the time — and tests an agent against live markets before it trades.",
@@ -43,8 +43,11 @@ export const metadata: Metadata = {
   // the fix.
   openGraph: {
     title: "Rivo — Event Intelligence & Agent Validation for DreamDEX",
+    // The same claim the landing page opens with, rather than the retired
+    // three-verb tagline. A submission is a link preview before it is a page,
+    // and this was the last place the old identity was still speaking.
     description:
-      "Understand the market. Validate the agent. Prove it on DreamDEX. Calibration measured over settled windows, and an execution gate that reads the economics rather than the accuracy.",
+      "Event Contracts you can check before you trade them. A price on a binary contract is a forecast, and a forecast nobody has scored is an opinion with a number on it — so Rivo scores them against contracts that have already settled.",
     type: "website",
   },
 };

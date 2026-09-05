@@ -7,7 +7,7 @@
     "type": "git",
     "url": "https://github.com/Rzbyte/Rivo.git"
   },
-  "homepage": "https://rivo-autopilot.vercel.app",
+  "homepage": "https://x-rivo.vercel.app",
   "private": true,
   "type": "module",
   "engines": {

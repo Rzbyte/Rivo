@@ -10,7 +10,7 @@ Everything a judge, an operator or a future maintainer needs at the point this w
 | [../evidence/final-release.json](../evidence/final-release.json) | commit, test counts, build state, and what production answered when asked |
 | [../evidence/final-proof.json](../evidence/final-proof.json) | one order walked end to end, from the same run `/proof` publishes |
 
-**Live:** https://rivo-autopilot.vercel.app
+**Live:** https://x-rivo.vercel.app
 
 ## Regenerating the evidence
 

@@ -30,20 +30,50 @@ function contrast(a: string, b: string): number {
 }
 
 /**
+ * Flatten `rgba(r,g,b,a)` onto an opaque backdrop, and return a hex.
+ *
+ * The redesign made the surfaces translucent — `--panel` is
+ * `rgba(251,249,245,0.7)` over `--bg`, not a colour of its own. Every contrast
+ * check below then read `undefined` and crashed, and twenty-five assertions
+ * about legibility stopped being assertions about anything.
+ *
+ * The fix is not to drop them. What a reader's eye receives from text on a 70%
+ * panel is the composite, so the composite is what has to clear 4.5:1 — the
+ * arithmetic is `a * fg + (1 - a) * bg` per channel, which is what a browser
+ * does when it paints one over the other.
+ */
+function over(value: string, backdrop: string): string {
+  const rgba = value.match(/rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:[,\s/]+([\d.]+))?\s*\)/i);
+  if (!rgba) return value;
+  const a = rgba[4] === undefined ? 1 : Number(rgba[4]);
+  const b = backdrop.replace("#", "");
+  const mix = (i: number): number => {
+    const fg = Number(rgba[i + 1]);
+    const bg = Number.parseInt(b.slice(i * 2, i * 2 + 2), 16);
+    return Math.round(a * fg + (1 - a) * bg);
+  };
+  return `#${[0, 1, 2].map((i) => mix(i).toString(16).padStart(2, "0")).join("")}`;
+}
+
+/**
  * Pull the tokens out of one theme's block.
  *
  * Light is defined on bare `:root`; dark is redefined under
  * `:root[data-theme="dark"]`, so slicing at that selector separates them without
- * needing a CSS parser.
+ * needing a CSS parser. Translucent tokens are composited over `--bg` first, so
+ * every value that comes back is the opaque colour the eye actually receives.
  */
 function tokens(theme: "light" | "dark"): Record<string, string> {
   const darkAt = CSS.indexOf(':root[data-theme="dark"]');
   expect(darkAt).toBeGreaterThan(0);
   const block = theme === "light" ? CSS.slice(0, CSS.indexOf("@media (prefers-color-scheme: dark)")) : CSS.slice(darkAt);
-  const out: Record<string, string> = {};
-  for (const [, name, value] of block.matchAll(/--([a-z0-9-]+):\s*(#[0-9a-f]{6})/gi)) {
-    if (!(name! in out)) out[name!] = value!.toLowerCase();
+  const raw: Record<string, string> = {};
+  for (const [, name, value] of block.matchAll(/--([a-z0-9-]+):\s*(#[0-9a-f]{6}|rgba?\([^)]*\))/gi)) {
+    if (!(name! in raw)) raw[name!] = value!.trim().toLowerCase();
   }
+  const bg = raw.bg ?? "#000000";
+  const out: Record<string, string> = {};
+  for (const [name, value] of Object.entries(raw)) out[name] = over(value, bg);
   return out;
 }
 

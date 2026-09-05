@@ -1,48 +1,40 @@
 /*
- * Rivo, on the web.
- *
- * The palette is the one from the existing cockpit (public/index.html), token
- * for token, because they are the same product and a user who sees both should
- * not wonder. It is also the one with a contrast test: every foreground here is
- * checked against every surface, in both themes, by web/theme.test.ts — the same
- * arithmetic that caught `--faint` sitting at 3.02:1 while setting 10.5px labels.
- *
- * Dark is the default and light is honoured when the system asks for it. There
- * is no theme switch, deliberately: one fewer control on a page whose job is to
- * make a portfolio legible.
+ * Rivo, on the web. (Premium Redesign)
  */
 
 :root {
-  --bg: #f4f1ea;        --panel: #fbf9f5;     --panel-2: #ebe7dd;
+  --bg: #f4f1ea;        --panel: rgba(251, 249, 245, 0.7);     --panel-2: rgba(235, 231, 221, 0.8);
   --ink: #14140f;       --muted: #605d54;     --faint: #6b675b;
-  --line: #ddd8cc;      --line-2: #c6c0b0;
-  --accent: #2f5233;    --accent-ink: #fbf9f5; --accent-soft: #e3ebe0;
+  --line: rgba(0,0,0,0.08); --line-2: rgba(0,0,0,0.15);
+  --accent: #2f5233;    --accent-ink: #fbf9f5; --accent-soft: rgba(47, 82, 51, 0.1);
   --pos: #2c6b3c;       --neg: #9d3423;       --warn: #7d5714;
   --pos-soft: #e4efe6;  --neg-soft: #f6e6e2;  --warn-soft: #f5ecd9;
   --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
   --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
-  --r: 3px;
-  --shadow: none;
+  --r: 8px; /* Softer radius */
+  --shadow: 0 4px 24px -4px rgba(0,0,0,0.05);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #12120f;      --panel: #1a1a15;     --panel-2: #24241d;
+    --bg: #0a0a0c;      --panel: rgba(20, 20, 24, 0.45);     --panel-2: rgba(30, 30, 35, 0.5);
     --ink: #ece9df;     --muted: #a09c8f;     --faint: #8e8b7f;
-    --line: #2c2c24;    --line-2: #403f34;
-    --accent: #a8cf9a;  --accent-ink: #12120f; --accent-soft: #1d2419;
-    --pos: #8cc79a;     --neg: #e08b76;       --warn: #d8ad5f;
-    --pos-soft: #172519; --neg-soft: #2a1714; --warn-soft: #241d0f;
+    --line: rgba(255,255,255,0.10);    --line-2: rgba(255,255,255,0.16);
+    --accent: #78d785;  --accent-ink: #0a0a0c; --accent-soft: rgba(120, 215, 133, 0.15);
+    --pos: #8cc79a;     --neg: #e86a58;       --warn: #e6b863;
+    --pos-soft: rgba(140, 199, 154, 0.15); --neg-soft: rgba(232, 106, 88, 0.15); --warn-soft: rgba(230, 184, 99, 0.15);
+    --shadow: 0 8px 32px -4px rgba(0,0,0,0.4);
   }
 }
 
 :root[data-theme="dark"] {
-  --bg: #12120f;        --panel: #1a1a15;     --panel-2: #24241d;
+  --bg: #0a0a0c;        --panel: rgba(20, 20, 24, 0.45);     --panel-2: rgba(30, 30, 35, 0.5);
   --ink: #ece9df;       --muted: #a09c8f;     --faint: #8e8b7f;
-  --line: #2c2c24;      --line-2: #403f34;
-  --accent: #a8cf9a;    --accent-ink: #12120f; --accent-soft: #1d2419;
-  --pos: #8cc79a;       --neg: #e08b76;       --warn: #d8ad5f;
-  --pos-soft: #172519;  --neg-soft: #2a1714;  --warn-soft: #241d0f;
+  --line: rgba(255,255,255,0.10);      --line-2: rgba(255,255,255,0.16);
+  --accent: #78d785;    --accent-ink: #0a0a0c; --accent-soft: rgba(120, 215, 133, 0.15);
+  --pos: #8cc79a;       --neg: #e86a58;       --warn: #e6b863;
+  --pos-soft: rgba(140, 199, 154, 0.15);  --neg-soft: rgba(232, 106, 88, 0.15);  --warn-soft: rgba(230, 184, 99, 0.15);
+  --shadow: 0 8px 32px -4px rgba(0,0,0,0.4);
 }
 
 * { box-sizing: border-box; }
@@ -50,23 +42,30 @@
 html, body {
   margin: 0;
   padding: 0;
-  /* iOS enlarges text when a page rotates to landscape, which silently breaks
-     every size relationship on the page. Opting out is not a zoom lock — pinch
-     still works. */
   -webkit-text-size-adjust: 100%;
   background: var(--bg);
   color: var(--ink);
   font-family: var(--sans);
   font-size: 15px;
-  line-height: 1.55;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
 
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; }
+/* Add subtle background glow */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 50%;
+  width: 100vw; height: 100vh;
+  transform: translateX(-50%);
+  background: radial-gradient(circle at top, rgba(120, 215, 133, 0.04) 0%, transparent 60%);
+  z-index: -1;
+  pointer-events: none;
+}
 
-/* Focus is never removed, only restyled. A keyboard user who cannot see where
-   they are is a keyboard user who cannot use the product. */
+a { color: var(--accent); text-decoration: none; transition: color 0.2s ease, text-shadow 0.2s ease; }
+a:hover { color: color-mix(in srgb, var(--accent) 80%, white); text-shadow: 0 0 12px var(--accent-soft); }
+
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -74,25 +73,20 @@ a:hover { text-decoration: underline; }
 
 .wrap { max-width: 1140px; margin: 0 auto; padding: 0 20px; }
 
-/* --- type ----------------------------------------------------------------
-   Lifted from the cockpit at rzbyte.github.io/Rivo, which is the same product
-   and had the better setting. Two voices and a rule for which is which: prose
-   is sans, and ANYTHING THAT NAMES A MEASUREMENT is mono — a heading over a
-   number is a label for that number, not a sentence about it. */
 h1, h2, h3 { margin: 0 0 12px; line-height: 1.15; letter-spacing: -.02em; font-weight: 640; }
-h1 { font-size: clamp(30px, 5.4vw, 52px); letter-spacing: -.035em; font-weight: 680; max-width: 20ch; text-wrap: balance; }
-h2 { font-size: 19px; letter-spacing: -.015em; }
+h1 { font-size: clamp(32px, 5.5vw, 56px); letter-spacing: -.04em; font-weight: 700; max-width: 20ch; text-wrap: balance; }
+h2 { font-size: 21px; letter-spacing: -.02em; }
 h3 {
   font-family: var(--mono); font-size: 12px; font-weight: 640;
-  text-transform: uppercase; letter-spacing: .1em; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .12em; color: var(--muted);
   margin-bottom: 8px;
 }
-p  { margin: 0 0 12px; color: var(--muted); }
-.lede { font-size: 17px; color: var(--muted); max-width: 62ch; }
+p  { margin: 0 0 14px; color: var(--muted); }
+.lede { font-size: 18px; color: var(--muted); max-width: 64ch; line-height: 1.65; }
 
 .label {
-  font-size: 10.5px; letter-spacing: 0.09em; text-transform: uppercase;
-  color: var(--faint); font-weight: 600;
+  font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--accent); font-weight: 700; opacity: 0.9;
 }
 .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .num  { font-family: var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
@@ -107,78 +101,114 @@ p  { margin: 0 0 12px; color: var(--muted); }
   background: var(--panel);
   border: 1px solid var(--line-2);
   border-radius: var(--r);
-  box-shadow: none;
-  padding: 18px 20px;
+  box-shadow: var(--shadow);
+  padding: 24px 24px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease, border-color 0.25s ease;
 }
-.panel + .panel { margin-top: 14px; }
-.grid { display: grid; gap: 14px; }
-.cols-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
-.cols-3 { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
-.cols-4 { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
-.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.panel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px -8px rgba(0,0,0,0.5);
+  border-color: rgba(255,255,255,0.2);
+}
+.panel + .panel { margin-top: 16px; }
+.grid { display: grid; gap: 16px; }
+.cols-2 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.cols-3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.cols-4 { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+.row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .spread { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 
 /* --- controls ------------------------------------------------------------ */
 button, .btn {
-  font-family: var(--mono); font-size: 12.5px; font-weight: 600;
-  text-transform: uppercase; letter-spacing: .07em;
-  display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
-  padding: 8px 14px;
+  font-family: var(--mono); font-size: 13px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .08em;
+  display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
+  padding: 10px 16px;
   border-radius: var(--r);
   border: 1px solid var(--line-2);
-  background: transparent;
+  background: rgba(255,255,255,0.03);
   color: var(--ink);
   cursor: pointer;
   text-decoration: none;
-  transition: background .12s, border-color .12s, opacity .12s;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  backdrop-filter: blur(8px);
 }
-button:hover:not(:disabled), .btn:hover { background: var(--panel-2); border-color: var(--faint); }
+button:hover:not(:disabled), .btn:hover { 
+  background: var(--panel-2); 
+  border-color: rgba(255,255,255,0.3);
+  transform: translateY(-1px);
+}
 button:disabled { opacity: .4; cursor: not-allowed; }
-button.primary, .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-button.primary:hover:not(:disabled), .btn.primary:hover { background: var(--accent); border-color: var(--accent); filter: brightness(1.1); }
-.btn.big, button.big { padding: 12px 20px; font-size: 13px; letter-spacing: .08em; }
+button.primary, .btn.primary { 
+  background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #000));
+  color: var(--accent-ink); 
+  border-color: transparent; 
+  box-shadow: 0 4px 12px var(--accent-soft);
+}
+button.primary:hover:not(:disabled), .btn.primary:hover { 
+  box-shadow: 0 6px 20px var(--accent-soft), inset 0 0 0 1px rgba(255,255,255,0.2);
+  transform: translateY(-2px);
+}
+.btn.big, button.big { padding: 14px 24px; font-size: 13.5px; letter-spacing: .09em; }
 button.danger { color: var(--neg); border-color: color-mix(in srgb, var(--neg) 35%, var(--line-2)); background: transparent; }
-button.danger:hover:not(:disabled) { background: var(--neg-soft); }
+button.danger:hover:not(:disabled) { background: var(--neg-soft); border-color: var(--neg); }
 button.link {
   background: none; border: none; padding: 0; color: var(--accent);
   text-transform: none; letter-spacing: 0; font-family: var(--sans); font-size: inherit;
   font-weight: 500; text-decoration: underline; text-underline-offset: 3px;
+  backdrop-filter: none; box-shadow: none;
 }
-button.link:hover { background: none; border-color: transparent; }
+button.link:hover { background: none; border-color: transparent; transform: none; text-shadow: 0 0 8px var(--accent-soft); }
 
 input, select {
   font: inherit; font-family: var(--mono);
-  padding: 8px 10px;
+  padding: 10px 12px;
   border-radius: var(--r);
   border: 1px solid var(--line-2);
-  background: var(--bg);
+  background: rgba(0,0,0,0.2);
   color: var(--ink);
   width: 100%;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+/*
+ * The glow is the decoration; the outline is the thing a keyboard user needs.
+ *
+ * This was `outline: none` with only the box-shadow left. Two problems: the ring
+ * is `--accent-soft`, which is 10% alpha in light mode and close to invisible,
+ * and Windows high-contrast mode drops box-shadow entirely — so the one user who
+ * most needs to see focus is the one it disappears for. `:focus-visible` keeps
+ * the mouse click from drawing a ring nobody asked for.
+ */
+input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+input:focus:not(:focus-visible), select:focus:not(:focus-visible) {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-.field { margin-bottom: 14px; }
-.field .label { display: block; margin-bottom: 5px; }
-.hint { font-size: 12.5px; color: var(--faint); margin-top: 4px; }
+.field { margin-bottom: 16px; }
+.field .label { display: block; margin-bottom: 6px; }
+.hint { font-size: 13px; color: var(--faint); margin-top: 4px; }
 
-/* --- section heads -------------------------------------------------------
-   The tick rule is the one ornament in this design, and it means something: an
-   instrument scale, ruled off to the right of every section title. It is what
-   makes a page of panels read as a single measured surface rather than as a
-   pile of cards. Lifted from the cockpit, where it already earned its place. */
-.sec-head { display: flex; align-items: baseline; gap: 12px; margin: 34px 0 12px; flex-wrap: wrap; }
-.sec-head h2, .sec-head h3 { flex: none; margin: 0; }
+/* --- section heads ------------------------------------------------------- */
+.sec-head { display: flex; align-items: baseline; gap: 12px; margin: 40px 0 16px; flex-wrap: wrap; }
+.sec-head h2, .sec-head h3 { flex: none; margin: 0; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
 .sec-head::after {
   content: ""; flex: 1 1 60px; min-width: 40px; height: 7px; align-self: center;
   background-image: repeating-linear-gradient(to right, var(--line-2) 0 1px, transparent 1px 7px);
   background-position: 0 bottom; background-repeat: repeat-x; background-size: auto 7px;
   border-bottom: 1px solid var(--line);
+  opacity: 0.6;
 }
 .sec-head .hint { order: 3; flex: none; margin: 0; font-family: var(--mono); font-size: 12px; color: var(--faint); }
 
-/* --- the mark ------------------------------------------------------------
-   Two rows of four: BTC and ETH across 15m, 1h, 4h and 1d. That is the whole
-   venue, drawn as one element with two gradients and no asset to load — the
-   logo is a diagram of what the product manages. */
+/* --- the mark ------------------------------------------------------------ */
 .brand-dot {
   width: 18px; height: 8px; flex: none; color: var(--accent);
   background-image:
@@ -187,291 +217,257 @@ input, select {
   background-size: 18px 3px, 18px 3px;
   background-position: 0 0, 0 5px;
   background-repeat: no-repeat;
+  filter: drop-shadow(0 0 6px var(--accent));
 }
 
-/* --- the instrument ------------------------------------------------------
-   A landing page made of prose panels reads as documentation, whatever the
-   prose says. This is the product itself, on the page: a real cycle out of the
-   live decision log, in the same components the dashboard uses, showing the
-   refusal that is the whole argument. Nothing on it is invented.
-
-   It is the one place the page shows rather than tells, so everything around it
-   stays plain. */
-.hero-grid { display: grid; gap: 26px; align-items: start; }
+/* --- the instrument ------------------------------------------------------ */
+.hero-grid { display: grid; gap: 32px; align-items: start; }
 @media (min-width: 900px) {
-  .hero-grid { grid-template-columns: 1.05fr .95fr; gap: 40px; align-items: center; }
+  .hero-grid { grid-template-columns: 1.1fr .9fr; gap: 48px; align-items: center; }
 }
 
 .inst {
-  border: 1px solid var(--line-2); border-radius: var(--r);
+  border: 1px solid rgba(255,255,255,0.1); border-radius: var(--r);
   background: var(--panel); overflow: hidden;
+  box-shadow: 0 16px 48px -12px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.05);
+  backdrop-filter: blur(20px);
 }
 .inst-top {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  padding: 9px 13px; border-bottom: 1px solid var(--line-2); background: var(--panel-2);
-  font-family: var(--mono); font-size: 10.5px; font-weight: 600;
-  text-transform: uppercase; letter-spacing: .11em; color: var(--faint);
+  padding: 10px 14px; border-bottom: 1px solid var(--line-2); background: rgba(0,0,0,0.2);
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .12em; color: var(--faint);
 }
-.inst-live { display: inline-flex; align-items: center; gap: 6px; color: var(--pos); }
-.inst-live .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.inst-live { display: inline-flex; align-items: center; gap: 8px; color: var(--pos); text-shadow: 0 0 8px var(--pos-soft); }
+.inst-live .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor; }
 @media (prefers-reduced-motion: no-preference) {
   .inst-live .dot { animation: pulse 2.4s ease-in-out infinite; }
 }
-@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+@keyframes pulse { 0%, 100% { opacity: 1; box-shadow: 0 0 8px currentColor; } 50% { opacity: .4; box-shadow: none; } }
 
-.inst-body { padding: 4px 13px 12px; }
-.inst-row { padding: 11px 0; border-bottom: 1px solid var(--line); }
+.inst-body { padding: 8px 14px 16px; }
+.inst-row { padding: 12px 0; border-bottom: 1px solid var(--line); }
 .inst-row:last-child { border-bottom: none; }
 .inst-mkt {
   display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
-  font-family: var(--mono); font-size: 12.5px; font-variant-numeric: tabular-nums;
+  font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums;
 }
 .inst-mkt b { font-weight: 640; letter-spacing: .02em; }
-.inst-mkt .px { color: var(--faint); font-size: 11.5px; }
+.inst-mkt .px { color: var(--faint); font-size: 12px; }
 .inst-why {
-  margin-top: 6px; padding: 5px 9px; border-left: 2px solid var(--warn);
+  margin-top: 8px; padding: 6px 10px; border-left: 2px solid var(--warn);
   background: var(--warn-soft); color: var(--warn);
-  font-family: var(--mono); font-size: 11px; line-height: 1.45;
+  font-family: var(--mono); font-size: 11.5px; line-height: 1.5;
+  border-radius: 0 4px 4px 0;
 }
 .inst-foot {
-  padding: 9px 13px; border-top: 1px solid var(--line-2); background: var(--panel-2);
-  font-family: var(--mono); font-size: 11px; color: var(--faint);
+  padding: 10px 14px; border-top: 1px solid var(--line-2); background: rgba(0,0,0,0.2);
+  font-family: var(--mono); font-size: 11.5px; color: var(--faint);
   display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;
 }
 
-/* Measured totals, ruled off. Numbers this page is entitled to claim because
-   they came out of the running system, not out of a deck. */
-.tally { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 0; border-top: 1px solid var(--line-2); border-bottom: 1px solid var(--line-2); }
-.tally > div { padding: 16px 18px 15px; border-right: 1px solid var(--line); }
+.tally { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0; border-top: 1px solid var(--line-2); border-bottom: 1px solid var(--line-2); background: rgba(0,0,0,0.1); backdrop-filter: blur(8px); }
+.tally > div { padding: 20px 20px; border-right: 1px solid var(--line); }
 .tally > div:last-child { border-right: none; }
-.tally .v { display: block; font-family: var(--mono); font-size: 24px; font-weight: 500; letter-spacing: -.03em; font-variant-numeric: tabular-nums; line-height: 1.1; }
-.tally .k { display: block; margin-top: 5px; font-size: 12px; color: var(--muted); line-height: 1.4; }
+.tally .v { display: block; font-family: var(--mono); font-size: 28px; font-weight: 500; letter-spacing: -.03em; font-variant-numeric: tabular-nums; line-height: 1.1; color: var(--ink); text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+.tally .k { display: block; margin-top: 6px; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
 
-/* --- reveal --------------------------------------------------------------
-   A row that opens, styled as a ruled line rather than a card — so a column of
-   them reads as a contents list and not as more panels to scroll past. The
-   marker is a rotating chevron because a reader needs to know the row does
-   something before they press it. */
-.reveal { border-top: 1px solid var(--line); }
+/* --- reveal -------------------------------------------------------------- */
+.reveal { border-top: 1px solid var(--line); transition: background 0.2s; }
+.reveal:hover { background: rgba(255,255,255,0.02); }
 .reveal:last-of-type { border-bottom: 1px solid var(--line); }
 .reveal > summary {
   list-style: none; cursor: pointer;
-  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
-  padding: 13px 2px;
+  display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  padding: 16px 4px;
 }
 .reveal > summary::-webkit-details-marker { display: none; }
 .reveal > summary::before {
   content: "›"; font-family: var(--mono); color: var(--faint);
-  transition: transform 140ms ease; display: inline-block; flex: none;
+  transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1); display: inline-block; flex: none; font-size: 16px;
 }
-.reveal[open] > summary::before { transform: rotate(90deg); }
+.reveal[open] > summary::before { transform: rotate(90deg); color: var(--accent); }
 .reveal > summary .t {
-  font-family: var(--mono); font-size: 12px; font-weight: 640;
-  text-transform: uppercase; letter-spacing: .1em; color: var(--ink);
+  font-family: var(--mono); font-size: 12.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .12em; color: var(--ink);
+  transition: color 0.2s;
 }
-.reveal > summary .h { font-size: 12.5px; color: var(--faint); }
-.reveal > summary:hover .t { color: var(--accent); }
-.reveal-body { padding: 2px 0 18px; }
-.reveal-body > .panel { border: none; padding: 0; background: none; }
+.reveal > summary .h { font-size: 13px; color: var(--faint); }
+.reveal > summary:hover .t { color: var(--accent); text-shadow: 0 0 10px var(--accent-soft); }
+.reveal-body { padding: 4px 0 20px; }
+.reveal-body > .panel { border: none; padding: 0; background: none; box-shadow: none; backdrop-filter: none; }
+.reveal-body > .panel:hover { transform: none; }
 
-/* --- the comparison ------------------------------------------------------
-   One market card exists to answer one question: what is being asked, against
-   what comparable contracts actually did. That pair was six equal-weight rows
-   deep in a list, which is a table of contents rather than an answer — so it
-   comes first, at a size you read rather than parse, with the gap between them
-   drawn as well as printed.
-
-   Drawn matters here. "67% asked, 64.5% settled" is two numbers a reader has to
-   subtract; a bar with two marks on one scale is a distance they can see. */
-.compare { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; align-items: baseline; }
+/* --- the comparison ------------------------------------------------------ */
+.compare { display: grid; grid-template-columns: 1fr auto; gap: 4px 14px; align-items: baseline; }
 .compare .big {
-  font-family: var(--mono); font-size: 26px; font-weight: 500;
+  font-family: var(--mono); font-size: 28px; font-weight: 500;
   font-variant-numeric: tabular-nums; letter-spacing: -.03em; line-height: 1.1;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.4);
 }
-.compare .vs { font-size: 12.5px; color: var(--muted); }
+.compare .vs { font-size: 13px; color: var(--muted); }
 .compare .gap {
-  font-family: var(--mono); font-size: 13px; font-variant-numeric: tabular-nums;
+  font-family: var(--mono); font-size: 14px; font-variant-numeric: tabular-nums;
   justify-self: end; align-self: center;
 }
 
-/* Two marks on one 0–100% scale: what was asked, and what happened. A bar per
-   number would invite comparing cards; this compares the pair, which is the
-   only comparison the card is about. */
-.scale { position: relative; height: 14px; margin-top: 8px; }
-.scale .rule { position: absolute; left: 0; right: 0; top: 6px; height: 2px; background: var(--line); }
+.scale { position: relative; height: 16px; margin-top: 10px; }
+.scale .rule { position: absolute; left: 0; right: 0; top: 7px; height: 2px; background: var(--line); border-radius: 2px; }
 .scale .asked {
-  position: absolute; top: 1px; width: 2px; height: 12px;
-  background: var(--faint); transform: translateX(-1px);
+  position: absolute; top: 2px; width: 2px; height: 12px;
+  background: var(--faint); transform: translateX(-1px); border-radius: 1px;
 }
 .scale .settled {
-  position: absolute; top: 3px; width: 8px; height: 8px; border-radius: 50%;
-  background: var(--accent); transform: translateX(-4px);
+  position: absolute; top: 3px; width: 10px; height: 10px; border-radius: 50%;
+  background: var(--accent); transform: translateX(-5px);
+  box-shadow: 0 0 10px var(--accent);
 }
-.scale .settled.thin { background: var(--line-2); }
-.scale .span { position: absolute; top: 6px; height: 2px; background: var(--accent-soft); }
+.scale .settled.thin { background: var(--line-2); box-shadow: none; }
+.scale .span { position: absolute; top: 7px; height: 2px; background: var(--accent); opacity: 0.5; }
 
-/* Supporting numbers, compact. They matter and they are not the headline, so
-   they read as one line of instrument markings rather than as six rows. */
-.kv { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 10px; }
-.kv > div { display: flex; gap: 6px; align-items: baseline; font-size: 12.5px; }
-.kv .k { font-family: var(--mono); font-size: 10.5px; letter-spacing: .09em;
+.kv { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 12px; }
+.kv > div { display: flex; gap: 8px; align-items: baseline; font-size: 13px; }
+.kv .k { font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
          text-transform: uppercase; color: var(--faint); }
 .kv .v { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--muted); }
 
-/* A badge that says the state in colour as well as in words, so a screen of
-   cards is scannable without reading any of them. */
 .verdict {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-family: var(--mono); font-size: 10.5px; font-weight: 640;
-  letter-spacing: .1em; text-transform: uppercase;
-  padding: 3px 8px; border-radius: var(--r);
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 4px;
   border: 1px solid var(--line-2); background: var(--panel-2); color: var(--muted);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
 }
-.verdict.claim { border-color: color-mix(in srgb, var(--warn) 45%, var(--line-2)); background: var(--warn-soft); color: var(--warn); }
-.verdict.caution { border-color: color-mix(in srgb, var(--neg) 40%, var(--line-2)); background: var(--neg-soft); color: var(--neg); }
-.verdict.good { border-color: color-mix(in srgb, var(--pos) 45%, var(--line-2)); background: var(--pos-soft); color: var(--pos); }
+.verdict.claim { border-color: var(--warn); background: var(--warn-soft); color: var(--warn); text-shadow: 0 0 8px var(--warn-soft); }
+.verdict.caution { border-color: var(--neg); background: var(--neg-soft); color: var(--neg); text-shadow: 0 0 8px var(--neg-soft); }
+.verdict.good { border-color: var(--pos); background: var(--pos-soft); color: var(--pos); text-shadow: 0 0 8px var(--pos-soft); }
 
-/* --- explainer flow ------------------------------------------------------
-   A numbered sequence, and the numbers are load-bearing: this is one pass of
-   the engine in the order it actually runs, so a reader who skips step four
-   has skipped the risk check. Numbering anything that is NOT a sequence is
-   decoration; numbering this one is information.
-
-   Ruled rather than boxed. Seven cards in a grid would read as seven products;
-   seven ruled rows read as one process. */
+/* --- explainer flow ------------------------------------------------------ */
 .flow { list-style: none; margin: 0; padding: 0; counter-reset: step; }
 .flow li {
-  display: grid; grid-template-columns: 2.4rem 1fr; gap: 4px 14px;
-  padding: 14px 0; border-bottom: 1px solid var(--line);
+  display: grid; grid-template-columns: 2.8rem 1fr; gap: 4px 16px;
+  padding: 18px 0; border-bottom: 1px solid var(--line);
+  transition: background 0.2s, padding-left 0.2s;
 }
+.flow li:hover { background: rgba(255,255,255,0.02); padding-left: 8px; border-radius: 4px; }
 .flow li:last-child { border-bottom: none; }
 .flow li::before {
   counter-increment: step; content: counter(step, decimal-leading-zero);
-  font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: .08em;
-  color: var(--faint); padding-top: 3px;
+  font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: .1em;
+  color: var(--accent); opacity: 0.8; padding-top: 3px;
+  text-shadow: 0 0 10px var(--accent-soft);
 }
 .flow .n {
-  font-family: var(--mono); font-size: 12px; font-weight: 640;
-  text-transform: uppercase; letter-spacing: .1em; color: var(--ink);
+  font-family: var(--mono); font-size: 13px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .12em; color: var(--ink);
 }
-.flow p { grid-column: 2; margin: 0; font-size: 13.5px; }
+.flow p { grid-column: 2; margin: 0; font-size: 14.5px; color: var(--muted); line-height: 1.6; }
 
-/* Two columns of ruled definition pairs — a term and what it means, for a
-   reader who has never traded an event contract. */
 .defs { display: grid; gap: 0; }
-.defs > div { padding: 12px 0; border-bottom: 1px solid var(--line); }
+.defs > div { padding: 14px 0; border-bottom: 1px solid var(--line); transition: background 0.2s, padding-left 0.2s; }
+.defs > div:hover { background: rgba(255,255,255,0.02); padding-left: 8px; border-radius: 4px; }
 .defs > div:last-child { border-bottom: none; }
 .defs dt, .defs .t {
-  font-family: var(--mono); font-size: 12px; font-weight: 640;
-  text-transform: uppercase; letter-spacing: .09em; color: var(--ink); margin-bottom: 4px;
+  font-family: var(--mono); font-size: 13px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .1em; color: var(--ink); margin-bottom: 6px;
 }
-.defs dd, .defs .d { margin: 0; font-size: 13.5px; color: var(--muted); }
+.defs dd, .defs .d { margin: 0; font-size: 14px; color: var(--muted); line-height: 1.6; }
 
 /* --- pills --------------------------------------------------------------- */
 .pill {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-size: 11.5px; font-weight: 620; letter-spacing: 0.02em;
-  padding: 3px 9px; border-radius: 999px;
-  border: 1px solid var(--line-2); background: var(--panel-2); color: var(--muted);
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12px; font-weight: 640; letter-spacing: 0.03em;
+  padding: 4px 12px; border-radius: 999px;
+  border: 1px solid var(--line-2); background: rgba(0,0,0,0.2); color: var(--muted);
+  backdrop-filter: blur(4px);
 }
-.pill.live { background: var(--pos-soft); border-color: var(--pos); color: var(--pos); }
+.pill.live { background: var(--pos-soft); border-color: var(--pos); color: var(--pos); box-shadow: 0 0 10px var(--pos-soft); }
 .pill.shadow { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); }
 .pill.stopped { background: var(--neg-soft); border-color: var(--neg); color: var(--neg); }
 .pill.fault { background: var(--neg-soft); border-color: var(--neg); color: var(--neg); }
-.dot { width: 7px; height: 7px; border-radius: 999px; background: currentColor; }
 
 /* --- stats --------------------------------------------------------------- */
-/* Each on its own line.
-   These were inline spans, so a value and its note rendered welded together —
-   "50.0050.00 committed", "0.0000at least 10 needed". Every stat on the page
-   read as one run-on string, which is most of why the dashboard felt crowded:
-   not too much information, just no space between any of it. */
 .stat .label { display: block; }
 .stat .value {
   display: block;
-  font-family: var(--mono); font-size: 27px; font-weight: 500;
+  font-family: var(--mono); font-size: 32px; font-weight: 500;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -.03em; line-height: 1.15; margin-top: 5px;
+  letter-spacing: -.03em; line-height: 1.15; margin-top: 8px;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.4);
 }
-.stat .sub { display: block; font-size: 12px; color: var(--muted); margin-top: 3px; line-height: 1.45; }
+.stat .sub { display: block; font-size: 13px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
 
-/* A disclosure that does not shout. The teaching text behind these is worth
-   having and not worth re-reading, so the control stays quiet until wanted. */
 details > summary::-webkit-details-marker { display: none; }
 details > summary:hover { color: var(--ink); }
 
 /* --- meters -------------------------------------------------------------- */
-.meter { height: 5px; background: var(--panel-2); border-radius: 999px; overflow: hidden; margin-top: 5px; }
-.meter > span { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
-.meter > span.hot { background: var(--warn); }
-.meter > span.over { background: var(--neg); }
+.meter { height: 6px; background: rgba(255,255,255,0.05); border-radius: 999px; overflow: hidden; margin-top: 6px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.3); }
+.meter > span { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), #7bc08b); border-radius: 999px; box-shadow: 0 0 8px var(--accent); }
+.meter > span.hot { background: linear-gradient(90deg, var(--warn), #f5d17a); box-shadow: 0 0 8px var(--warn); }
+.meter > span.over { background: linear-gradient(90deg, var(--neg), #f08a78); box-shadow: 0 0 8px var(--neg); }
 
 /* --- tables -------------------------------------------------------------- */
 .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 th {
-  text-align: left; padding: 7px 10px 7px 0;
-  font-size: 10.5px; letter-spacing: 0.09em; text-transform: uppercase;
-  color: var(--faint); font-weight: 600; border-bottom: 1px solid var(--line);
+  text-align: left; padding: 10px 12px 10px 0;
+  font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--faint); font-weight: 700; border-bottom: 1px solid var(--line);
   white-space: nowrap;
 }
-td { padding: 8px 10px 8px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+td { padding: 12px 12px 12px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
 td.n, th.n { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; padding-right: 0; }
+tr { transition: background 0.15s; }
+tr:hover td { background: rgba(255,255,255,0.015); }
 tr:last-child td { border-bottom: none; }
 
 /* --- decisions ----------------------------------------------------------- */
 .decision {
-  display: grid; grid-template-columns: 1fr auto; gap: 4px 14px;
-  padding: 11px 0; border-bottom: 1px solid var(--line);
+  display: grid; grid-template-columns: 1fr auto; gap: 6px 16px;
+  padding: 14px 0; border-bottom: 1px solid var(--line);
 }
 .decision:last-child { border-bottom: none; }
 .decision .why {
-  grid-column: 1 / -1; font-size: 12.5px; color: var(--muted);
-  padding: 6px 10px; border-radius: var(--r);
-  border-left: 2px solid var(--line-2); background: var(--panel-2);
+  grid-column: 1 / -1; font-size: 13px; color: var(--muted);
+  padding: 8px 12px; border-radius: 4px;
+  border-left: 3px solid var(--line-2); background: rgba(255,255,255,0.02);
 }
-.decision.taken .why { border-left-color: var(--pos); background: var(--pos-soft); color: var(--pos); }
+.decision.taken .why { border-left-color: var(--pos); background: var(--pos-soft); color: var(--pos); box-shadow: 0 0 10px var(--pos-soft); }
 .decision.refused .why { border-left-color: var(--warn); }
 
 .banner {
-  padding: 12px 14px; border-radius: var(--r); font-size: 13.5px;
+  padding: 14px 18px; border-radius: var(--r); font-size: 14px;
   border: 1px solid var(--line-2); background: var(--panel-2); color: var(--muted);
-  margin-bottom: 14px;
+  margin-bottom: 16px; backdrop-filter: blur(8px);
 }
-.banner.bad { border-color: var(--neg); background: var(--neg-soft); color: var(--neg); }
-.banner.warn { border-color: var(--warn); background: var(--warn-soft); color: var(--warn); }
-.banner.good { border-color: var(--pos); background: var(--pos-soft); color: var(--pos); }
+.banner.bad { border-color: var(--neg); background: var(--neg-soft); color: var(--neg); box-shadow: 0 0 12px var(--neg-soft); }
+.banner.warn { border-color: var(--warn); background: var(--warn-soft); color: var(--warn); box-shadow: 0 0 12px var(--warn-soft); }
+.banner.good { border-color: var(--pos); background: var(--pos-soft); color: var(--pos); box-shadow: 0 0 12px var(--pos-soft); }
 
-/* --- section nav ---------------------------------------------------------
-   Lifted from the cockpit, where the current page is underscored like a tab on
-   a ledger rather than filled in. A filled pill makes the nav the loudest thing
-   on a page whose job is to show what is underneath it. */
-.nav-links { display: flex; gap: 0; flex-wrap: wrap; margin-left: 8px; }
+/* --- section nav --------------------------------------------------------- */
+.nav-links { display: flex; gap: 0; flex-wrap: wrap; margin-left: 12px; }
 .nav-links a {
-  font-family: var(--mono); font-size: 12px; font-weight: 600;
-  text-transform: uppercase; letter-spacing: .08em; white-space: nowrap;
-  color: var(--muted); text-decoration: none;
-  padding: 6px 2px; margin: 0 12px;
+  font-family: var(--mono); font-size: 12.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .1em; white-space: nowrap;
+  color: var(--faint); text-decoration: none;
+  padding: 8px 4px; margin: 0 14px;
   border-bottom: 2px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
 }
 .nav-links a:hover { color: var(--ink); }
-.nav-links a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+.nav-links a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); text-shadow: 0 0 8px rgba(255,255,255,0.2); }
 .nav-right { margin-left: auto; }
 
 @media (max-width: 720px) {
-  header.top .wrap { flex-wrap: wrap; row-gap: 6px; }
-  .nav-links { order: 3; width: 100%; margin-left: 0; overflow-x: auto; scrollbar-width: none; }
+  header.top .wrap { flex-wrap: wrap; row-gap: 8px; }
+  .nav-links { order: 3; width: 100%; margin-left: 0; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
   .nav-links::-webkit-scrollbar { display: none; }
-  .nav-links a { margin: 0 14px 0 0; }
+  .nav-links a { margin: 0 16px 0 0; }
   .nav-right { margin-left: auto; }
 }
 
 /* --- tabs ---------------------------------------------------------------- */
-/* A strip that scrolls sideways rather than wrapping.
-   Four tabs with counts wrap to two rows below about 420px, which moves every
-   panel under them down the page and makes the row read as two groups of two.
-   Scrolling keeps them one object; the scrollbar is hidden because a strip of
-   four is obviously a strip of four. */
 .tabs {
   display: flex; gap: 0;
   overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
@@ -481,138 +477,104 @@ tr:last-child td { border-bottom: none; }
 .tabs button {
   flex: 0 0 auto;
   background: none; border: none; border-bottom: 2px solid transparent; border-radius: 0;
-  padding: 7px 2px; margin: 0 14px 0 0;
-  color: var(--muted);
-  font-family: var(--mono); font-size: 12px; font-weight: 600;
-  text-transform: uppercase; letter-spacing: .08em;
+  padding: 10px 4px; margin: 0 18px 0 0;
+  color: var(--faint);
+  font-family: var(--mono); font-size: 12.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .1em;
 }
-.tabs button:hover { background: none; color: var(--ink); border-bottom-color: var(--line-2); }
-/* The current tab is underscored like a tab on a ledger, not filled in. A
-   filled pill makes the selected tab the loudest thing on a page whose job is
-   to show what is underneath it. */
+.tabs button:hover { background: none; color: var(--ink); border-bottom-color: var(--line-2); transform: none; box-shadow: none; }
 .tabs button.primary {
-  background: none; color: var(--ink); border-bottom-color: var(--accent); filter: none;
+  background: none; color: var(--ink); border-bottom-color: var(--accent); filter: none; box-shadow: none; text-shadow: 0 0 8px rgba(255,255,255,0.2);
 }
 
 /* --- shell --------------------------------------------------------------- */
 header.top {
   border-bottom: 1px solid var(--line);
-  background: var(--panel);
-  position: sticky; top: 0; z-index: 10;
+  background: rgba(10, 10, 12, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  position: sticky; top: 0; z-index: 50;
+  box-shadow: 0 4px 24px -4px rgba(0,0,0,0.3);
 }
-header.top .wrap { display: flex; align-items: center; justify-content: space-between; height: 56px; gap: 14px; }
+header.top .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 16px; }
 .brand {
-  display: inline-flex; align-items: center; gap: 9px;
-  font-weight: 680; letter-spacing: -.04em; font-size: 19px; color: var(--ink);
+  display: inline-flex; align-items: center; gap: 10px;
+  font-weight: 700; letter-spacing: -.03em; font-size: 20px; color: var(--ink);
+  text-shadow: 0 2px 12px rgba(0,0,0,0.5);
 }
-.brand:hover { text-decoration: none; }
+.brand:hover { text-decoration: none; color: white; }
 
-.steps { display: flex; gap: 0; margin: 0 0 20px; padding: 0; list-style: none; flex-wrap: wrap; }
+.steps { display: flex; gap: 0; margin: 0 0 24px; padding: 0; list-style: none; flex-wrap: wrap; }
 .steps li {
-  font-size: 12px; color: var(--faint); padding: 6px 14px 6px 0; display: flex; align-items: center; gap: 7px;
+  font-size: 12.5px; color: var(--faint); padding: 8px 16px 8px 0; display: flex; align-items: center; gap: 8px;
 }
 .steps li .n {
-  width: 19px; height: 19px; border-radius: 999px; display: grid; place-items: center;
-  border: 1px solid var(--line-2); font-size: 10.5px; font-weight: 660;
+  width: 22px; height: 22px; border-radius: 999px; display: grid; place-items: center;
+  border: 1px solid var(--line-2); font-size: 11px; font-weight: 700;
 }
-.steps li.done { color: var(--pos); }
-.steps li.done .n { border-color: var(--pos); background: var(--pos-soft); }
-.steps li.now { color: var(--ink); font-weight: 600; }
-.steps li.now .n { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+.steps li.done { color: var(--pos); text-shadow: 0 0 8px var(--pos-soft); }
+.steps li.done .n { border-color: var(--pos); background: var(--pos-soft); box-shadow: 0 0 8px var(--pos-soft); }
+.steps li.now { color: var(--ink); font-weight: 700; }
+.steps li.now .n { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); box-shadow: 0 0 10px var(--accent); }
 
-.center { min-height: 72vh; display: grid; place-items: center; }
-.card { width: 100%; max-width: 440px; }
+.center { min-height: 75vh; display: grid; place-items: center; }
+.card { width: 100%; max-width: 480px; }
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
 
-/* --- small screens ------------------------------------------------------- */
-/*
- * There were none of these until now, and no viewport tag either, so a phone
- * rendered the dashboard at 980px and scaled it down to about a third of legible
- * size. Adding the tag is what makes these rules fire at all; see layout.tsx.
- *
- * The breakpoint is 640px because that is where `.cols-2` — minmax(300px) plus
- * two 20px gutters and a 14px gap — stops fitting two columns honestly and
- * starts producing one column with the wrong padding.
- */
 @media (max-width: 640px) {
-  .wrap { padding: 0 14px; }
+  .wrap { padding: 0 16px; }
 
-  h1 { font-size: 24px; }
-  h2 { font-size: 17px; }
-  .lede { font-size: 15.5px; }
+  h1 { font-size: 28px; }
+  h2 { font-size: 19px; }
+  .lede { font-size: 16px; }
 
-  .panel { padding: 14px; }
-  .panel + .panel { margin-top: 10px; }
-  .grid { gap: 10px; }
+  .panel { padding: 18px; }
+  .panel + .panel { margin-top: 12px; }
+  .grid { gap: 12px; }
 
-  /* One column. `auto-fit` would give one anyway at this width, but it would
-     keep reserving the 300px track first and overflow the parent by the
-     difference on the narrowest handsets. */
   .cols-2 { grid-template-columns: 1fr; }
-  .cols-3 { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
-  .cols-4 { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+  .cols-3 { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .cols-4 { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
 
-  /* 22px monospace digits are what push the stat cards past the screen edge. */
-  .stat .value { font-size: 19px; }
+  .stat .value { font-size: 24px; }
 
-  /* The market line and its prices are a two-column grid that cannot hold both
-     on a handset; the prices drop under the market rather than shrinking to
-     illegibility. */
-  .decision { grid-template-columns: 1fr; gap: 6px; }
+  .decision { grid-template-columns: 1fr; gap: 8px; }
 
-  /* The header carried a fixed 56px height around a `.row` that wraps, so on a
-     320px screen the address and the sign-out control wrapped to a second line
-     and were clipped by the header itself — present in the DOM, invisible on the
-     device. Nothing in it is droppable: the network pill is the difference
-     between testnet and real money. So it stops wrapping, shrinks, and the
-     height becomes a floor rather than a ceiling. */
-  header.top .wrap { height: auto; min-height: 52px; padding-block: 7px; gap: 8px; }
-  header.top .row { flex-wrap: nowrap; gap: 6px; }
-  header.top .pill { font-size: 11px; padding: 3px 7px; }
-  .brand { font-size: 15.5px; }
+  header.top .wrap { height: auto; min-height: 56px; padding-block: 8px; gap: 10px; }
+  header.top .row { flex-wrap: nowrap; gap: 8px; }
+  header.top .pill { font-size: 11.5px; padding: 4px 8px; }
+  .brand { font-size: 17px; }
 
-  table { font-size: 12.5px; }
-  th, td { padding-right: 10px; }
+  table { font-size: 13px; }
+  th, td { padding-right: 12px; }
 
-  /* Columns that are detail rather than answer.
-     A dense table on a phone can scroll sideways, and then the comparison the
-     table exists to show is the part that scrolled off. Dropping the supporting
-     columns keeps the answer on screen; the full figures stay in the artefact
-     and in the desktop view. */
   .hide-sm { display: none; }
 
-  /* The comparison headline stays legible without pushing a card past the
-     screen edge. */
-  .compare .big { font-size: 22px; }
-  .kv { gap: 4px 12px; }
-  .kv > div { font-size: 12px; }
+  .compare .big { font-size: 24px; }
+  .kv { gap: 6px 14px; }
+  .kv > div { font-size: 12.5px; }
 
-  .steps li { padding-right: 10px; font-size: 11.5px; }
+  .steps li { padding-right: 12px; font-size: 12px; }
 }
 
-/*
- * Touch targets and the iOS focus zoom. Not inside the width query on purpose:
- * a coarse pointer is the condition, and a tablet in landscape is wider than
- * 640px and still a finger.
- */
 @media (pointer: coarse) {
-  button, .btn { min-height: 44px; padding-block: 11px; }
-  /* Tabs and inline links are chips inside prose, not primary actions; 44px
-     each would turn the tab strip into a toolbar taller than the panel. */
-  .tabs button { min-height: 38px; }
+  button, .btn { min-height: 48px; padding-block: 12px; }
+  .tabs button { min-height: 42px; }
   button.link { min-height: 0; padding-block: 0; }
 
-  /* Safari zooms the whole page when a focused input is under 16px, and does
-     not zoom back out. Every field here inherited the 15px body size, so the
-     first tap on the budget box left the page enlarged and scrolling sideways
-     — which reads as a broken layout rather than as a zoom. */
   input, select, textarea { font-size: 16px; }
 }
 
-/* A caveat inside running text. Used where a calibration number had to widen
-   its cohort to answer: the fallback is not an error, but it changes what the
-   number is the rate OF, so it must not read like the rest of the sentence. */
-.warn-text { color: var(--warn); }
+.warn-text { color: var(--warn); text-shadow: 0 0 8px var(--warn-soft); }
+
+/* Utility animation classes */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}

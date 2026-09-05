@@ -157,7 +157,7 @@ Yes, over HTTP, with no code uploaded and nothing of yours running here — **an
 without an account**. Paste an endpoint into `/agents`, or:
 
 ```bash
-curl -X POST https://rivo-autopilot.vercel.app/api/try-agent \
+curl -X POST https://x-rivo.vercel.app/api/try-agent \
   -H "content-type: application/json" \
   -d '{"endpoint":"https://your-agent.example/decide"}'
 ```

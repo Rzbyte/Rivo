@@ -51,7 +51,7 @@ describe("one web surface", () => {
     // resolves, and a dead link in the first document a judge opens is worse
     // than no link.
     expect(readme, "README still links the retired Pages address").not.toContain("rzbyte.github.io");
-    expect(readme).toContain("rivo-autopilot.vercel.app");
+    expect(readme).toContain("x-rivo.vercel.app");
   });
 
   it("counts the same sections the nav does", () => {
@@ -106,7 +106,7 @@ describe("one web surface", () => {
     // It was at line 274. A judge should not have to scroll past the
     // architecture to find out where the thing runs.
     const head = read("README.md").split("\n").slice(0, 22).join("\n");
-    expect(head, "no live URL in the first 22 lines").toContain("rivo-autopilot.vercel.app");
+    expect(head, "no live URL in the first 22 lines").toContain("x-rivo.vercel.app");
   });
 
   it("keeps the browser bundle, which was never the problem", () => {

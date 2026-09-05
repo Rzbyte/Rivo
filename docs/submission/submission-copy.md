@@ -225,7 +225,7 @@ likely to be worth their spread.
 
 ```
 GitHub       https://github.com/Rzbyte/Rivo
-Live demo    https://rivo-autopilot.vercel.app
+Live demo    https://x-rivo.vercel.app
 Demo video   [placeholder — paste the URL after upload]
 ```
 
