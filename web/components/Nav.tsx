@@ -64,13 +64,16 @@ export function Nav({ right }: { right?: React.ReactNode }) {
           {/* The right slot. Empty, it made a centred nav read as off-centre;
               filled with the primary action, the header balances and the one
               thing a first-time visitor should do follows them across the site. */}
-          <Link
-            className="nav-cta"
-            href="/check"
-            aria-current={path === "/check" ? "page" : undefined}
-          >
-            Check a price
-          </Link>
+          {/* Not on the landing page, and not on the page it points at.
+              The hero already carries this action a few hundred pixels below,
+              and two identical buttons in one viewport is one too many — the
+              second reads as clutter rather than as emphasis. Everywhere else
+              it is the only one, which is the whole reason the slot exists. */}
+          {path !== "/" && path !== "/check" && (
+            <Link className="nav-cta" href="/check">
+              Check a price
+            </Link>
+          )}
 
           <button 
             className="mobile-toggle hide-desktop" 

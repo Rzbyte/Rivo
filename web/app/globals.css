@@ -39,7 +39,17 @@
 
 * { box-sizing: border-box; }
 
-html { overflow-x: clip; }
+/*
+ * No `overflow-x` on the root, and that is deliberate.
+ *
+ * Clipping here made the root a scroll container, which changes the containing
+ * block for `position: sticky` — so the header stopped sticking and scrolled
+ * away with the page: measured top=-400 at scroll 400. It was belt-and-braces
+ * against the orbs overflowing, and the braces are no longer needed: the orbs
+ * drift on Y only and resolve their insets against a positioned `body`, so
+ * nothing reaches the edge to clip. Overflow measures 0px at 390 and 1280
+ * without it.
+ */
 /*
  * `body` is the orbs' containing block on purpose.
  *
@@ -61,7 +71,18 @@ html, body {
   font-size: 15px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+  /*
+   * `overflow-x: hidden` used to live here, and it is why the header did not
+   * stick: an overflow other than `visible` on the root or body makes that
+   * element the scroll container, and `position: sticky` then resolves against
+   * it instead of the viewport. Measured on the landing page — header top=-400
+   * at scroll 400, scrolling away with the content.
+   *
+   * It was guarding against a decorative orb that used to overflow. That is
+   * fixed at the source now (Y-only drift, insets against a positioned body),
+   * so the guard costs a working header and buys nothing: overflow measures 0px
+   * at 390 and 1280 without it.
+   */
 }
 
 /* Add subtle background glow */
@@ -1077,8 +1098,7 @@ header.top .wrap {
 
 .nav-cta:hover { background: #1f3722; color: var(--accent-ink); }
 .nav-cta:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-/* On the page it points at, the button would be an invitation to stand still. */
-.nav-cta[aria-current="page"] { display: none; }
+
 
 
 @media (max-width: 360px) {
