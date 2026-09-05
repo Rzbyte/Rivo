@@ -120,12 +120,31 @@ p  { margin: 0 0 14px; color: var(--muted); }
   -webkit-backdrop-filter: blur(16px);
   transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease, border-color 0.25s ease;
 }
+/*
+ * A white border and a 50%-black shadow are dark-mode values. On the cream
+ * ground the border vanished and the shadow read as a smudge, so the hover
+ * state looked like a rendering fault rather than a response. Tokens both, and
+ * the lift only where motion is welcome.
+ */
 .panel:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px -8px rgba(0,0,0,0.5);
-  border-color: rgba(255,255,255,0.2);
+  box-shadow: 0 12px 32px -10px rgba(0,0,0,0.16);
+  border-color: var(--line-2);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .panel:hover { transform: translateY(-2px); }
 }
 .panel + .panel { margin-top: 16px; }
+/*
+ * ...but never inside a grid, where `gap` already did the job.
+ *
+ * Measured on /markets: card one at top=434 h=505, cards two and three at
+ * top=450 h=489. Every panel after the first was taking a 16px top margin ON
+ * TOP of the grid's 16px gap, so the first card in every row sat a gap higher
+ * than its siblings and the row never lined up. It reads as carelessness and it
+ * was one adjacent-sibling selector written for stacked panels leaking into
+ * every card grid on the site — markets, agents, evidence, calibration.
+ */
+.grid > .panel + .panel { margin-top: 0; }
 .grid { display: grid; gap: 16px; }
 .cols-2 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
 .cols-3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
@@ -208,16 +227,53 @@ input:focus:not(:focus-visible), select:focus:not(:focus-visible) {
 .field { margin-bottom: 16px; }
 .field .label { display: block; margin-bottom: 6px; }
 .hint { font-size: 13px; color: var(--faint); margin-top: 4px; }
+/* A hint is a caption, not a ticker: it wraps rather than running off the
+   screen. Measured 397px wide in a 390px viewport on /markets, so the tail of
+   "prices 2s ago" was simply cut off on a phone. */
+/* As a flex child inside `.sec-head` it also needs permission to shrink —
+   a flex item's default `min-width: auto` is what let it push past the
+   viewport even with wrapping allowed. */
+.hint { overflow-wrap: anywhere; min-width: 0; }
+
+/*
+ * Explorer links: a real hit area without a layout change.
+ *
+ * Seventeen of them on /proof measured 14-15px tall — inline anchors inside a
+ * sentence or a table cell, and on a phone essentially untappable. They are
+ * also the most important links on the page: the on-chain evidence a judge
+ * clicks. Padding expands the touch target and an equal negative margin gives
+ * the space back to the layout, so the line box is unchanged and the tappable
+ * box clears 40px.
+ */
+a[href^="https://shannon-explorer"] {
+  padding: 13px 4px;
+  margin: -13px -4px;
+  display: inline-block;
+  overflow-wrap: anywhere;
+}
+a[href^="https://shannon-explorer"]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-radius: 3px;
+}
 
 /* --- section heads ------------------------------------------------------- */
 .sec-head { display: flex; align-items: baseline; gap: 12px; margin: 40px 0 16px; flex-wrap: wrap; }
 .sec-head h2, .sec-head h3 { flex: none; margin: 0; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+/*
+ * The ruler between a heading and its figures — kept, because a product whose
+ * subject is measurement should carry one, and sharpened because at 0.6 opacity
+ * over cream it read as a rendering artefact rather than as a scale: ticks a
+ * pixel wide every 7px, too faint to resolve and too dense to count.
+ *
+ * Fewer, firmer ticks on a hairline baseline. Same device, legible as intent.
+ */
 .sec-head::after {
-  content: ""; flex: 1 1 60px; min-width: 40px; height: 7px; align-self: center;
-  background-image: repeating-linear-gradient(to right, var(--line-2) 0 1px, transparent 1px 7px);
-  background-position: 0 bottom; background-repeat: repeat-x; background-size: auto 7px;
-  border-bottom: 1px solid var(--line);
-  opacity: 0.6;
+  content: ""; flex: 1 1 60px; min-width: 40px; height: 9px; align-self: center;
+  background-image: repeating-linear-gradient(to right, var(--line-2) 0 1px, transparent 1px 12px);
+  background-position: 0 bottom; background-repeat: repeat-x; background-size: auto 5px;
+  border-bottom: 1px solid var(--line-2);
+  opacity: .85;
 }
 .sec-head .hint { order: 3; flex: none; margin: 0; font-family: var(--mono); font-size: 12px; color: var(--faint); }
 
@@ -340,13 +396,15 @@ input:focus:not(:focus-visible), select:focus:not(:focus-visible) {
 
 .kv { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 12px; }
 .kv > div { display: flex; gap: 8px; align-items: baseline; font-size: 13px; }
-.kv .k { font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
+/* 11px mono, uppercase, letter-spaced, on 48 labels per page: below the
+   floor where a caption stops being readable and becomes texture. */
+.kv .k { font-family: var(--mono); font-size: 12px; letter-spacing: .08em;
          text-transform: uppercase; color: var(--faint); }
 .kv .v { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--muted); }
 
 .verdict {
   display: inline-flex; align-items: center; gap: 8px;
-  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  font-family: var(--mono); font-size: 11.5px; font-weight: 700;
   letter-spacing: .12em; text-transform: uppercase;
   padding: 4px 10px; border-radius: 4px;
   border: 1px solid var(--line-2); background: var(--panel-2); color: var(--muted);
