@@ -49,6 +49,7 @@ html, body {
   font-size: 15px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 /* Add subtle background glow */
@@ -446,57 +447,153 @@ tr:last-child td { border-bottom: none; }
 .banner.good { border-color: var(--pos); background: var(--pos-soft); color: var(--pos); box-shadow: 0 0 12px var(--pos-soft); }
 
 /* --- section nav --------------------------------------------------------- */
-.nav-links { display: flex; gap: 0; flex-wrap: wrap; margin-left: 12px; }
+.nav-links {
+  justify-self: center; margin-left: 0;
+  display: inline-flex; gap: 4px; flex-wrap: wrap;
+  background: rgba(0,0,0,0.3); padding: 4px; border-radius: 999px;
+  border: 1px solid var(--line-2);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+}
 .nav-links a {
-  font-family: var(--mono); font-size: 12.5px; font-weight: 700;
+  font-family: var(--mono); font-size: 11.5px; font-weight: 700;
   text-transform: uppercase; letter-spacing: .1em; white-space: nowrap;
   color: var(--faint); text-decoration: none;
-  padding: 8px 4px; margin: 0 14px;
-  border-bottom: 2px solid transparent;
-  transition: color 0.2s, border-color 0.2s;
+  padding: 8px 16px; margin: 0;
+  border-radius: 999px;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  border: 1px solid transparent;
 }
-.nav-links a:hover { color: var(--ink); }
-.nav-links a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); text-shadow: 0 0 8px rgba(255,255,255,0.2); }
-.nav-right { margin-left: auto; }
+.nav-links a:hover { color: var(--ink); background: rgba(255,255,255,0.05); }
+.nav-links a[aria-current="page"] {
+  color: var(--ink);
+  background: var(--panel-2);
+  border-color: rgba(255,255,255,0.1);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  text-shadow: none;
+}
+.nav-right { justify-self: end; margin-left: 0; }
+
+/* --- Mobile Nav Overlay --- */
+.hide-desktop { display: none !important; }
 
 @media (max-width: 720px) {
-  header.top .wrap { flex-wrap: wrap; row-gap: 8px; }
-  .nav-links { order: 3; width: 100%; margin-left: 0; overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
-  .nav-links::-webkit-scrollbar { display: none; }
-  .nav-links a { margin: 0 16px 0 0; }
-  .nav-right { margin-left: auto; }
+  header.top .wrap { display: flex; justify-content: space-between; gap: 12px; }
+  .hide-mobile { display: none !important; }
+  .hide-desktop { display: flex !important; }
+}
+
+.mobile-toggle {
+  background: transparent; border: none; color: var(--ink);
+  padding: 8px; cursor: pointer; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s; margin-left: auto;
+}
+.mobile-toggle:hover { background: rgba(255,255,255,0.05); }
+
+/*
+ * The menu paints the THEME's surface, not a dark one.
+ *
+ * It hardcoded `rgba(10,10,12,0.85)` — a dark sheet — while the text kept using
+ * `--ink`, which in the light theme is nearly black. The current item rendered
+ * black on charcoal: measured under 1.5:1, which is not "low contrast", it is
+ * invisible. In dark mode the same rule happened to work, which is why it
+ * survived: it was only ever wrong in the theme most people are in.
+ *
+ * Using the theme's own background keeps every token doing its job in both.
+ */
+.mobile-overlay {
+  position: fixed;
+  top: 64px;
+  left: 0; right: 0; bottom: 0;
+  background: var(--bg);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 20px;
+  overscroll-behavior: contain;
+}
+.mobile-nav { display: flex; flex-direction: column; }
+.mobile-nav a {
+  font-size: 26px;
+  font-family: var(--sans);
+  font-weight: 680;
+  letter-spacing: -0.02em;
+  color: var(--muted);
+  text-decoration: none;
+  /* 40px minimum touch target, and then some — this is the whole row. */
+  padding: 18px 4px;
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: baseline; gap: 10px;
+}
+/* The hint each link carries in the desktop nav, kept rather than dropped:
+   on a handset there is room for it, and it is what tells a first-time reader
+   which of six sections answers their question. */
+.mobile-nav a .hint {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .04em;
+  color: var(--faint); font-weight: 500;
+}
+.mobile-nav a.active { color: var(--ink); }
+.mobile-nav a.active::before {
+  content: ""; width: 4px; align-self: stretch; border-radius: 2px;
+  background: var(--accent); margin-right: 6px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .mobile-nav a { transition: color .1s ease-out; }
+}
+.mobile-nav a:active { color: var(--accent); }
+
+/*
+ * A menu is not an entrance, it is a response to a tap.
+ *
+ * It inherited the page's 600ms `fadeInUp`, which is more than twice the tier
+ * for an element entering and reads as lag on the one interaction a person
+ * repeats most. 180ms with an ease-out curve reads as "it was already there".
+ */
+.mobile-overlay.animate-fade-in { animation-duration: .18s; animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+@media (prefers-reduced-motion: reduce) {
+  .mobile-overlay.animate-fade-in { animation: none; }
 }
 
 /* --- tabs ---------------------------------------------------------------- */
 .tabs {
-  display: flex; gap: 0;
+  display: inline-flex; gap: 4px;
   overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
-  border-bottom: 1px solid var(--line);
+  background: rgba(0,0,0,0.15); padding: 4px; border-radius: 12px;
+  border: 1px solid var(--line-2); margin-bottom: 16px;
 }
 .tabs::-webkit-scrollbar { display: none; }
 .tabs button {
   flex: 0 0 auto;
-  background: none; border: none; border-bottom: 2px solid transparent; border-radius: 0;
-  padding: 10px 4px; margin: 0 18px 0 0;
-  color: var(--faint);
-  font-family: var(--mono); font-size: 12.5px; font-weight: 700;
+  background: transparent; border: 1px solid transparent; border-radius: 8px;
+  padding: 8px 16px; margin: 0;
+  color: var(--muted);
+  font-family: var(--mono); font-size: 12px; font-weight: 700;
   text-transform: uppercase; letter-spacing: .1em;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.tabs button:hover { background: none; color: var(--ink); border-bottom-color: var(--line-2); transform: none; box-shadow: none; }
+.tabs button:hover { background: rgba(255,255,255,0.05); color: var(--ink); transform: none; box-shadow: none; }
 .tabs button.primary {
-  background: none; color: var(--ink); border-bottom-color: var(--accent); filter: none; box-shadow: none; text-shadow: 0 0 8px rgba(255,255,255,0.2);
+  background: var(--panel); color: var(--ink);
+  border-color: rgba(255,255,255,0.1); box-shadow: 0 2px 8px rgba(0,0,0,0.3); text-shadow: none;
 }
 
 /* --- shell --------------------------------------------------------------- */
+.app { min-height: 100vh; display: flex; flex-direction: column; }
 header.top {
   border-bottom: 1px solid var(--line);
   background: rgba(10, 10, 12, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   position: sticky; top: 0; z-index: 50;
   box-shadow: 0 4px 24px -4px rgba(0,0,0,0.3);
 }
-header.top .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 16px; }
+header.top .wrap { 
+  display: grid; 
+  grid-template-columns: 1fr auto 1fr; 
+  align-items: center; 
+  height: 64px; 
+  gap: 16px; 
+}
 .brand {
   display: inline-flex; align-items: center; gap: 10px;
   font-weight: 700; letter-spacing: -.03em; font-size: 20px; color: var(--ink);
@@ -577,4 +674,338 @@ header.top .wrap { display: flex; align-items: center; justify-content: space-be
 }
 .animate-fade-in {
   animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+/* --- EXTREME WEB3 UI ADDITIONS --- */
+
+/* Glowing Ambient Lights (Toned down for professional look) */
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  z-index: -1;
+  opacity: 0.08;
+  animation: float 15s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+.orb.one {
+  width: 300px; height: 300px;
+  background: var(--accent);
+  top: 5%; left: 0%;
+}
+.orb.two {
+  width: 300px; height: 300px;
+  background: var(--pos);
+  bottom: 0%; right: 0%;
+  animation-delay: -5s;
+}
+
+/* Floating Animations */
+@keyframes float {
+  0% { transform: translateY(0px) translateX(0px); }
+  100% { transform: translateY(-30px) translateX(20px); }
+}
+.animate-float {
+  animation: float 6s ease-in-out infinite alternate;
+}
+
+/* Gradient Text Shift (Sophisticated Silver/Emerald) */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.text-gradient {
+  background: linear-gradient(135deg, var(--ink) 30%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Hero Section */
+.hero {
+  position: relative;
+  text-align: center;
+  padding: 100px 20px 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+.hero h1 {
+  font-size: clamp(28px, 8vw, 56px);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  max-width: 16ch;
+  margin: 0 auto;
+}
+.hero p.lede {
+  font-size: clamp(16px, 2vw, 20px);
+  max-width: 60ch;
+  margin: 0 auto;
+  color: var(--muted);
+}
+.hero .badges {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.hero .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--line-2);
+  color: var(--faint);
+  backdrop-filter: blur(10px);
+}
+.hero .badge.pulse {
+  border-color: rgba(120, 215, 133, 0.4);
+  color: var(--pos);
+  box-shadow: 0 0 16px rgba(120, 215, 133, 0.1);
+}
+.hero .badge.pulse::before {
+  content: "";
+  display: block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--pos);
+  animation: pulse 2s infinite;
+}
+
+/* Bento Box Grid */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: minmax(280px, auto);
+  gap: 20px;
+  margin: 40px 0 80px;
+}
+.bento-card {
+  background: var(--panel);
+  border: 1px solid var(--line-2);
+  border-radius: 24px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 8px 32px -4px rgba(0,0,0,0.2);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+.bento-card::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,255,255,0.06), transparent 40%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.bento-card:hover::after {
+  opacity: 1;
+}
+.bento-card:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 24px 48px -12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.15);
+}
+.bento-wide { grid-column: span 2; }
+.bento-tall { grid-row: span 2; }
+.bento-full { grid-column: span 4; }
+
+@media (max-width: 900px) {
+  .bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .bento-full, .bento-wide, .bento-tall {
+    grid-column: span 2;
+  }
+}
+@media (max-width: 600px) {
+  .hero { padding: 40px 16px 20px; }
+  .bento-grid {
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
+    gap: 16px;
+    margin: 20px 0 40px;
+  }
+  .bento-full, .bento-wide, .bento-tall {
+    grid-column: span 1;
+    grid-row: span 1;
+  }
+  .bento-card {
+    padding: 24px 20px;
+  }
+}
+
+.bento-card h3 {
+  font-family: var(--sans);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-bottom: 12px;
+  text-transform: none;
+}
+.bento-card p {
+  font-size: 15px;
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 40ch;
+}
+.bento-card .bento-icon {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 16px;
+  color: var(--accent);
+  opacity: 1;
+  display: block;
+}
+
+/* Glass Buttons */
+.btn-glass {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.btn-glass:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.2);
+}
+
+
+/* --- the check surface --------------------------------------------------- */
+
+/*
+ * The probability track: the product's entire thesis as one picture.
+ *
+ * Two numbers side by side make a reader do the subtraction. A shared 0–100
+ * scale with both markers on it makes the gap a THING — you see that the book
+ * sits left of where the outcomes landed before you have read either number.
+ * That is the whole claim, and nobody else at this venue can draw it, because
+ * nobody else has the second marker.
+ *
+ * The scale is always 0–100 and never zoomed to the data. A track that rescaled
+ * itself would make a two-point gap and a twenty-point gap look identical,
+ * which is the classic way a chart lies while every number on it stays true.
+ */
+.track {
+  position: relative;
+  height: 44px;
+  margin: 22px 0 6px;
+}
+.track-rail {
+  position: absolute; left: 0; right: 0; top: 19px; height: 6px;
+  border-radius: 999px;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+}
+/* The span between the two markers — the disagreement, drawn. */
+.track-gap {
+  position: absolute; top: 17px; height: 10px;
+  border-radius: 999px;
+  background: var(--accent);
+  opacity: .55;
+}
+.track-mark {
+  position: absolute; top: 8px;
+  width: 3px; height: 28px; border-radius: 2px;
+  transform: translateX(-1.5px);
+}
+.track-mark.book { background: var(--ink); }
+.track-mark.hist { background: var(--accent); }
+.track-ends {
+  position: absolute; left: 0; right: 0; top: 0;
+  display: flex; justify-content: space-between;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em;
+  color: var(--faint);
+}
+
+/* The two readouts. `.figure` is the number, `.figure-label` names it. */
+.figures { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.figure-label {
+  font-family: var(--mono); font-size: 10.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .12em; color: var(--faint);
+  display: flex; align-items: center; gap: 6px;
+}
+.figure-label::before {
+  content: ""; width: 8px; height: 8px; border-radius: 2px; flex: none;
+}
+.figure-label.book::before { background: var(--ink); }
+.figure-label.hist::before { background: var(--accent); }
+.figure {
+  font-family: var(--mono); font-weight: 700;
+  font-size: clamp(30px, 9vw, 40px); line-height: 1.05;
+  letter-spacing: -.03em; font-variant-numeric: tabular-nums;
+  margin-top: 4px;
+}
+.figure.hist { color: var(--accent); }
+
+/*
+ * When the verdict is a caveat, the numbers stop being the headline.
+ *
+ * They were rendered at full weight underneath "Almost nothing is on offer",
+ * so the largest thing on the page was a comparison the sentence below it had
+ * just said did not apply. A reader takes the biggest number and leaves. This
+ * demotes the figures rather than hiding them — the data is still true and
+ * still there, it simply stops outranking the reason it cannot be used.
+ */
+.check-card.is-caveat .figure { font-size: clamp(22px, 6vw, 27px); color: var(--muted); }
+.check-card.is-caveat .figure.hist { color: var(--muted); }
+.check-card.is-caveat .track { opacity: .4; }
+.check-card.is-caveat .check-verdict-headline { font-size: clamp(20px, 5.5vw, 24px); }
+
+.check-card {
+  padding: 26px 24px;
+  border: 1px solid var(--line-2);
+  border-radius: calc(var(--r) * 1.75);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+.check-verdict {
+  margin-top: 22px; padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+.check-verdict-headline {
+  font-size: clamp(19px, 5vw, 22px); font-weight: 680;
+  letter-spacing: -.02em; line-height: 1.25;
+}
+
+@media (max-width: 640px) {
+  /* The card is the product. On a handset it has to be reachable without a
+     scroll, so the introduction gets out of its way — the same words are still
+     under the card, where a reader who wants them will be by then. */
+  .check-intro { display: none; }
+  .check-card { padding: 20px 16px; border-radius: var(--r); }
+  .track { margin: 18px 0 4px; }
+}
+
+/*
+ * The hamburger belongs at the edge a thumb reaches, not beside the wordmark.
+ *
+ * The header stayed a three-column grid on small screens — brand, the hidden
+ * desktop nav, and the toggle — and `space-between` put the toggle in the
+ * MIDDLE column, 173px into a 390px viewport. It looked deliberate and was
+ * simply the grid still being a grid. Flex with two real children puts it where
+ * a thumb already is.
+ */
+@media (max-width: 720px) {
+  header.top .wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .mobile-toggle { margin-left: auto; min-width: 44px; min-height: 44px; }
 }

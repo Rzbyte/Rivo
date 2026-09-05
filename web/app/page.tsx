@@ -25,169 +25,136 @@ import { Nav } from "@/components/Nav";
 import { PRODUCTION_STRATEGY } from "@rivo/research/gating.js";
 import { BASELINES } from "@rivo/intel/baselines.js";
 
-const pct = (x: number) => `${x >= 0 ? "+" : "−"}${Math.abs(x * 100).toFixed(2)}%`;
+
 
 export default function Landing() {
   return (
     <>
       <Nav />
-      <main className="wrap animate-fade-in" style={{ paddingTop: 40, paddingBottom: 72 }}>
-        <span className="label">DreamDEX Event Contracts · Somnia</span>
-        <h1 style={{ maxWidth: "18ch", marginTop: 10 }}>
-          <span style={{ background: "linear-gradient(135deg, var(--ink) 20%, var(--accent) 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Event Contracts</span> you can check before you trade them.
-        </h1>
-        <p className="lede">
-          A price on a binary contract is a forecast, and a forecast nobody has scored is an opinion
-          with a number on it. Rivo scores them — against contracts that have already settled, with the
-          sample size attached to every claim — and tests whether an agent&rsquo;s edge survives the
-          spread before any capital moves. Nothing here needs a wallet to read.
-        </p>
+      {/* Background Orbs */}
+      <div className="orb one"></div>
+      <div className="orb two animate-float"></div>
 
-        {/* The primary action is the ten-second one.
-            "Explore Markets" led with a table, which asks a reader to already
-            know why a quoted probability is worth interrogating. Check answers
-            that for one contract before asking for any of their patience, and
-            the dense surfaces stay one click behind it for the reader who wants
-            them. */}
-        <div className="row" style={{ marginTop: 24, marginBottom: 8 }}>
-          <Link className="btn primary big" href="/check">Check a price</Link>
-          <Link className="btn big" href="/markets">Every live contract</Link>
-          <Link className="btn big" href="/agents">Test an Agent</Link>
-          {/* Thirty seconds, no account, no reading. It existed for exactly this
-              reader and was reachable only by typing the URL. */}
-          <Link className="btn big" href="/demo">Watch one run</Link>
-        </div>
+      <main className="wrap animate-fade-in" style={{ paddingBottom: 72 }}>
+        
+        {/* Extreme Hero Section */}
+        <section className="hero">
+          <div className="badges">
+            {/* Somnia Shannon, chain 50312. The execution mode is
+                `experimental_testnet` and the gate refuses mainnet outright for
+                a REJECTED strategy — so a mainnet badge would be claiming the
+                one thing the code below it exists to prevent. */}
+            <span className="badge pulse">
+              <span className="dot"></span> LIVE ON SOMNIA TESTNET
+            </span>
+            <span className="badge">DREAMDEX INTEGRATED</span>
+          </div>
+          
+          <h1 className="text-gradient">
+            Event Contracts, <br /> Proven Before Trading.
+          </h1>
+          
+          <p className="lede" style={{ maxWidth: "600px" }}>
+            Rivo scores DreamDEX&rsquo;s own Event Contract prices against contracts that have already
+            settled, and tests whether an agent&rsquo;s edge survives the spread before any capital
+            moves. Nothing here needs a wallet to read.
+          </p>
 
-        {/* The two problems, stated once each. Both are things this project
-            actually measured rather than positions it decided to hold. */}
-        <div className="sec-head">
-          <h2>Two problems, both measurable</h2>
-        </div>
+          <div className="row" style={{ marginTop: 32 }}>
+            <Link className="btn primary big" href="/check">Check an Asset</Link>
+            <Link className="btn btn-glass big" href="/markets">Explore Live Markets</Link>
+          </div>
+        </section>
 
-        <div className="grid cols-2">
-          <div className="panel">
-            <h3>A probability is not self-explanatory</h3>
-            <p style={{ maxWidth: "56ch" }}>
-              DreamDEX may say BTC UP 15m is 67%. Nothing on the venue tells you whether contracts that
-              quoted 67% went on to settle true about 67% of the time — which is the only question that
-              number raises.
-            </p>
-            <p style={{ maxWidth: "56ch", marginBottom: 0 }}>
-              Rivo measures it against contracts that have already settled, with the sample size attached
-              to every claim.
-            </p>
-            <div className="row" style={{ marginTop: 14 }}>
-              <Link className="btn" href="/calibration">See the calibration</Link>
+        {/* Bento Box Grid */}
+        <section className="bento-grid">
+          
+          <div className="bento-card bento-wide">
+            <div>
+              <svg className="bento-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+              <h3>Forecast vs Reality</h3>
+              <p>
+                A probability is just an opinion until scored. We measure every claim against historically settled contracts with hard data.
+              </p>
+            </div>
+            <div className="row" style={{ marginTop: 24 }}>
+              <Link className="btn btn-glass" href="/calibration">View Calibration Data</Link>
             </div>
           </div>
 
-          <div className="panel">
-            <h3>Prediction accuracy is not economic edge</h3>
-            <p style={{ maxWidth: "56ch" }}>
-              A model can predict well and still trade badly — being right about direction is not the
-              same as being right by more than the spread you cross. So {BASELINES.length + 1} strategies
-              now run against live Event Contracts, deciding but never spending, each resolved against
-              the venue&rsquo;s own settlement.
-            </p>
-            <p style={{ maxWidth: "56ch", marginBottom: 0 }}>
-              Rivo&rsquo;s own model is one of them, and it is the one that failed: AUC{" "}
-              {PRODUCTION_STRATEGY.auc}, {pct(PRODUCTION_STRATEGY.returnOnStake)} return on stake out of
-              sample. It is marked <strong>{PRODUCTION_STRATEGY.state}</strong>, and the execution path
-              enforces that rather than displaying it.
-            </p>
-            <div className="row" style={{ marginTop: 14 }}>
-              <Link className="btn" href="/agents">See what cleared the spread</Link>
-            </div>
-          </div>
-        </div>
-
-        <div className="sec-head">
-          <h2>Understand, validate, prove</h2>
-          <span className="hint">and every outcome feeds the next answer</span>
-        </div>
-
-        <div className="panel">
-          <ol className="flow">
-            <li>
-              <span className="n">Understand</span>
-              <p>
-                Live Event Contracts with implied probability, spread, depth and time to expiry — beside
-                how often comparable contracts actually settled true.
-              </p>
-            </li>
-            <li>
-              <span className="n">Validate</span>
-              <p>
-                An agent is replayed against settled history with walk-forward validation, and judged on
-                realised economics rather than accuracy — with the sample size and the interval attached,
-                and no verdict at all until there is enough of both. The result is a state the execution
-                path reads.
-              </p>
-            </li>
-            <li>
-              <span className="n">Shadow</span>
-              <p>
-                It then runs against live markets deciding but not spending. Each decision is recorded and
-                resolved against the real settlement when the contract closes.
-              </p>
-            </li>
-            <li>
-              <span className="n">Prove</span>
-              <p>
-                Only then, and only on an approved testnet, does a decision become a real DreamDEX
-                transaction — with the hash, the receipt and the reconciliation all inspectable.
-              </p>
-            </li>
-            <li>
-              <span className="n">Evidence</span>
-              <p>
-                Every settled contract joins the calibration dataset and the agent&rsquo;s record, so the
-                next answer rests on one more settled fact than the last.
-              </p>
-            </li>
-          </ol>
-        </div>
-
-        <div className="sec-head">
-          <h2>What Rivo does not claim</h2>
-        </div>
-        <div className="panel">
-          <div className="defs">
+          <div className="bento-card bento-tall">
             <div>
-              <div className="t">That its strategy is profitable</div>
-              <div className="d">It is not, and the evidence saying so is published rather than buried.</div>
-            </div>
-            <div>
-              <div className="t">That calibration predicts the future</div>
-              <div className="d">It describes what has already settled. Nothing more is claimed from it.</div>
-            </div>
-            <div>
-              <div className="t">That a disagreement is a mispricing</div>
-              <div className="d">
-                A gap between the market and a model is a thing to understand before it is a thing to
-                trade. Market intelligence here is descriptive — never BUY or SELL.
+              <svg className="bento-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+              <h3>Execution Engine</h3>
+              <p>
+                {BASELINES.length + 1} distinct strategies shadow the live market, calculating the spread cross before making a decision. 
+              </p>
+              {/* Both numbers, from the constant the execution gate reads.
+                  Rivo&rsquo;s own model is the first thing this apparatus was
+                  pointed at, and it failed — a validator that never rejects
+                  anything is a rubber stamp. */}
+              <div className="verdict caution" style={{ marginTop: 16 }}>
+                AUC {PRODUCTION_STRATEGY.auc} · ROS{" "}
+                {`${PRODUCTION_STRATEGY.returnOnStake >= 0 ? "+" : ""}${(PRODUCTION_STRATEGY.returnOnStake * 100).toFixed(2)}%`}{" "}
+                — {PRODUCTION_STRATEGY.state}
               </div>
+              <p className="hint" style={{ marginTop: 10, marginBottom: 0 }}>
+                Rivo&rsquo;s own model failed its economic validation, and the gate enforces that
+                rather than displaying it.
+              </p>
             </div>
-            <div>
-              <div className="t">That testnet results mean mainnet results</div>
-              <div className="d">
-                An economically rejected strategy cannot reach real capital on any network, and the gate
-                enforces it in code.
-              </div>
+            <div className="row" style={{ marginTop: 24 }}>
+              <Link className="btn primary" href="/agents" style={{ width: "100%", justifyContent: "center" }}>
+                Analyze Agents
+              </Link>
             </div>
           </div>
+
+          <div className="bento-card">
+            <div>
+              <svg className="bento-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+              <h3>Capital Safe</h3>
+              <p>
+                A strategy&rsquo;s verdict is computed before an executor is built, so a rejected one cannot reach a signer on any network.
+              </p>
+            </div>
+          </div>
+
+          <div className="bento-card bento-wide">
+            <div>
+              <svg className="bento-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+              <h3>On-Chain Evidence</h3>
+              <p>
+                Every decision and execution is written to an append-only ledger before it is signed, so a crash leaves a record rather than a gap.
+              </p>
+            </div>
+            <div className="row" style={{ marginTop: 24 }}>
+              <Link className="btn btn-glass" href="/demo">Watch Live Run</Link>
+            </div>
+          </div>
+
+        </section>
+
+        {/* Transparency Banner */}
+        {/* What Rivo does not claim.
+            Kept as a list rather than a sentence because each line refuses a
+            different thing, and the fourth one is the reason the badge at the
+            top of this page says testnet. */}
+        <div className="banner warn" style={{ maxWidth: "800px", margin: "0 auto" }}>
+          <strong>What Rivo does not claim</strong>
+          <ul style={{ margin: "10px 0 0", paddingLeft: 20, lineHeight: 1.7 }}>
+            <li>That its strategy is profitable — it is REJECTED, and the gate enforces it.</li>
+            <li>That calibration predicts the future. It describes contracts that already settled.</li>
+            <li>That a disagreement is a mispricing. The spread and the depth may eat it.</li>
+            <li>That testnet results mean mainnet results.</li>
+          </ul>
         </div>
       </main>
 
-      <footer className="wrap" style={{ paddingBottom: 44, paddingTop: 18, borderTop: "1px solid var(--line)" }}>
-        <p className="muted" style={{ marginBottom: 6 }}>
-          <strong>Understand the market. Validate the agent. Prove it on DreamDEX.</strong>
-        </p>
+      <footer className="wrap" style={{ paddingBottom: 44, paddingTop: 40, borderTop: "1px solid rgba(255,255,255,0.1)", textAlign: "center" }}>
         <p className="hint" style={{ marginBottom: 0 }}>
-          Built on the official DreamDEX bot kit and the Somnia indexer.{" "}
-          <a href="https://github.com/Rzbyte/Rivo">Source</a> ·{" "}
-          <Link href="/demo">Live run</Link> ·{" "}
-          <Link href="/app">Deployment console</Link>
+          Powered by Somnia Indexer & DreamDEX. <br/>
+          <a href="https://github.com/Rzbyte/Rivo">Source</a> · <Link href="/demo">Demo</Link>
         </p>
       </footer>
     </>

@@ -135,7 +135,7 @@ export default function Check() {
       <main className="wrap" style={{ paddingTop: 28, paddingBottom: 72, maxWidth: 720 }}>
         <span className="label">Check a price</span>
         <h1 style={{ marginTop: 8, maxWidth: "20ch" }}>Is this price fair?</h1>
-        <p className="lede" style={{ maxWidth: "56ch" }}>
+        <p className="lede check-intro" style={{ maxWidth: "56ch" }}>
           One live DreamDEX contract at a time, next to how often contracts priced like it actually
           settled true. No wallet, no account, and nothing here tells you what to do.
         </p>
@@ -148,16 +148,7 @@ export default function Check() {
         )}
 
         {card && v && (
-          <section
-            style={{
-              marginTop: 28,
-              padding: "28px 24px",
-              border: "1px solid var(--line-2)",
-              borderRadius: "calc(var(--r) * 1.5)",
-              background: "var(--panel)",
-              boxShadow: "var(--shadow)",
-            }}
-          >
+          <section className={`check-card${v.tone === "caveat" ? " is-caveat" : ""}`} style={{ marginTop: 24 }}>
             <div className="row" style={{ justifyContent: "space-between", alignItems: "baseline" }}>
               <span className="label">
                 {card.asset} · {tenorLabel(card.intervalSec)}
@@ -169,41 +160,46 @@ export default function Check() {
 
             <h2 style={{ marginTop: 10, fontSize: 26, lineHeight: 1.25 }}>{question(card)}</h2>
 
-            {/* The two numbers the whole page exists to put beside each other. */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 12,
-                marginTop: 24,
-                textAlign: "center",
-              }}
-            >
+            {/* The two numbers, and then the same two numbers on one scale.
+                Side by side they ask a reader to subtract; on a shared 0–100
+                track the gap is a thing you see before you have read either. */}
+            <div className="figures" style={{ marginTop: 20 }}>
               <div>
-                <div className="label">The book asks</div>
-                <div className="mono" style={{ fontSize: 44, fontWeight: 700, lineHeight: 1.1 }}>
-                  {pct(card.price)}
-                </div>
+                <div className="figure-label book">The book asks</div>
+                <div className="figure">{pct(card.price)}</div>
               </div>
               <div>
-                <div className="label">History settled</div>
-                <div
-                  className="mono"
-                  style={{ fontSize: 44, fontWeight: 700, lineHeight: 1.1, color: TONE_COLOR[v.tone] }}
-                >
-                  {card.historical ? pct(card.historical.realized) : "—"}
-                </div>
+                <div className="figure-label hist">History settled</div>
+                <div className="figure hist">{card.historical ? pct(card.historical.realized) : "—"}</div>
               </div>
             </div>
 
-            <div
-              style={{
-                marginTop: 24,
-                paddingTop: 20,
-                borderTop: "1px solid var(--line)",
-              }}
-            >
-              <div style={{ fontSize: 20, fontWeight: 650, color: TONE_COLOR[v.tone] }}>{v.headline}</div>
+            {card.price !== null && card.historical && (
+              <div
+                className="track"
+                role="img"
+                aria-label={`On a nought to one hundred percent scale, the book asks ${pct(card.price)} and comparable contracts settled ${pct(card.historical.realized)}.`}
+              >
+                <div className="track-ends" aria-hidden="true">
+                  <span>0%</span>
+                  <span>100%</span>
+                </div>
+                <div className="track-rail" aria-hidden="true" />
+                <div
+                  className="track-gap"
+                  aria-hidden="true"
+                  style={{
+                    left: `${Math.min(card.price, card.historical.realized) * 100}%`,
+                    width: `${Math.abs(card.historical.realized - card.price) * 100}%`,
+                  }}
+                />
+                <div className="track-mark book" aria-hidden="true" style={{ left: `${card.price * 100}%` }} />
+                <div className="track-mark hist" aria-hidden="true" style={{ left: `${card.historical.realized * 100}%` }} />
+              </div>
+            )}
+
+            <div className="check-verdict">
+              <div className="check-verdict-headline" style={{ color: TONE_COLOR[v.tone] }}>{v.headline}</div>
               <p className="muted" style={{ marginTop: 8, marginBottom: 0 }}>
                 {v.detail}
               </p>
@@ -279,16 +275,18 @@ export default function Check() {
         )}
 
         {n > 1 && (
-          <div className="row" style={{ marginTop: 20, justifyContent: "space-between" }}>
-            <button type="button" className="btn" onClick={() => move(-1)}>
-              ← Previous
-            </button>
-            <span className="faint mono" style={{ fontSize: 13 }}>
-              {Math.min(i, n - 1) + 1} of {n} open
-            </span>
-            <button type="button" className="btn primary" onClick={() => move(1)}>
-              Next contract →
-            </button>
+          <div style={{ marginTop: 18 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 10 }}>
+              <button type="button" className="btn" onClick={() => move(-1)} aria-label="Previous contract">
+                ←
+              </button>
+              <button type="button" className="btn primary" onClick={() => move(1)}>
+                Next contract →
+              </button>
+            </div>
+            <p className="faint mono" style={{ fontSize: 12.5, marginTop: 10, textAlign: "center" }}>
+              {Math.min(i, n - 1) + 1} of {n} open · arrow keys work
+            </p>
           </div>
         )}
 
