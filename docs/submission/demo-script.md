@@ -14,17 +14,40 @@ Have these tabs open before you start, in order:
 
 ---
 
-## Scene 1 — The market · 0:00–0:20
+## Scene 1 — The question · 0:00–0:20
 
-**Screen:** `/markets`, one live BTC or ETH card.
+**Screen:** `/check`. One live contract, nothing else on screen.
 
-> "This is a live DreamDEX Event Contract. BTC, fifteen minutes, and the venue says the probability
-> is this number.
+```
+Will BTC close higher than it opened?              58m left
+
+     The book asks              History settled
+         47%                         55%
+
+  The book is asking too little
+  Contracts priced in this band settled true 55% of the time,
+  and you are being asked for 47%.
+```
+
+> "This is a live DreamDEX Event Contract, and the venue is asking forty-seven percent.
 >
-> That number is a price. Nothing on the venue tells you whether it is *calibrated* — whether
-> contracts quoted at sixty-seven percent actually settle true about sixty-seven percent of the time."
+> Nothing on the venue tells you whether that number has ever meant anything. Rivo does: contracts
+> priced in this band settled true fifty-five percent of the time. You are being asked for less than
+> this side has been worth."
 
-Point at one card. Do not scroll the list.
+**Say the differentiator here, once, and never again.** Several projects in this hackathon score
+forecasters. This one scores the venue:
+
+> "Other tools score the forecaster. This scores the market itself — against every contract DreamDEX
+> has already settled."
+
+Then tap **Show the working** for two seconds and let it close. That is the whole argument in one
+gesture: the cohort, the sample size, the interval and the date range were there the entire time,
+folded rather than dropped.
+
+*(If the card in front of you says WELL CALIBRATED, use it — "the price is honest" is a finding too,
+and a tool that only ever finds problems is a tool nobody should trust. Do not hunt for a dramatic
+card; the point is that the number is attached to a sample either way.)*
 
 ---
 
@@ -203,8 +226,23 @@ If time allows, one line on `/evidence`:
 > "Every settled Event Contract creates new evidence, and every agent has to prove itself before
 > deployment.
 >
-> Understand the market. Validate the agent. Prove it on DreamDEX."
+> Event Contracts you can check before you trade them."
 
+**Where this goes next — say it, the rubric asks for it:**
+
+> "And the constraint here is not a better model. It is sample size.
+>
+> Rivo's own study says it takes about five thousand six hundred settled windows to resolve an edge
+> the size we are looking for. When that study was written this venue had produced nine hundred and
+> eighty-five. Today it is two thousand one hundred and seventy-nine, and it is adding around eight
+> hundred a day.
+>
+> So the answer this product cannot give yet is weeks away rather than years — and it gets there by
+> the venue doing what it already does. That is the whole roadmap: keep measuring, and let the
+> evidence arrive."
+
+*(Twenty seconds. It answers "future vision" without promising a feature, and every number in it is
+in the repository.)*
 ---
 
 ## What not to say

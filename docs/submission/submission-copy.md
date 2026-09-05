@@ -14,17 +14,20 @@ Rivo
 ## Tagline
 
 ```
-Understand the market. Validate the agent. Prove it on DreamDEX.
+Event Contracts you can check before you trade them.
 ```
 
 ## Short description
 
 ```
-Rivo is the event intelligence and agent validation layer for DreamDEX Event Contracts. It measures
-whether the venue's quoted probabilities are calibrated against contracts that have already settled,
-measures whether an agent has economic edge rather than just forecast accuracy, runs agents in live
-Shadow against real markets without sending anything, and proves the ones that qualify through real
-DreamDEX testnet transactions on Somnia. Its own model is the first case study — and it failed.
+Event Contracts you can check before you trade them. Rivo takes a live DreamDEX price and puts it
+next to how often contracts priced like it actually settled true — 2,179 settled windows, with the
+sample size attached to every claim. Other tools score the forecaster; this one scores the venue.
+
+It also answers the second question a builder has: whether an agent's edge survives the spread. Rivo
+validates agents economically rather than by accuracy, runs them in live Shadow against real markets
+without sending anything, and proves the ones that qualify through real DreamDEX testnet
+transactions on Somnia. Its own model is the first case study — and it is REJECTED.
 ```
 
 ## Long description
@@ -36,6 +39,20 @@ DreamDEX may say BTC UP 15m is 67%. Nothing on the venue tells you whether contr
 went on to settle true about 67% of the time — which is the only question that number raises. And a
 model that forecasts well can still lose money when you cross the spread to act on it. Those are two
 different measurements, and a builder deploying an agent needs both before capital moves.
+
+CHECK — THE TEN-SECOND ANSWER
+
+One live contract, two numbers beside each other: what the book is asking, and how often contracts
+priced like it actually settled true. One sentence says which way that cuts. "Show the working"
+unfolds the cohort, the price band, the settled-window count, the 95% interval and the date range —
+folded rather than dropped, because a reader who wants the table has four other surfaces and a
+reader who wants an answer had none. A caveat outranks a claim: a thin sample, a wide book or
+missing depth becomes the headline rather than a footnote under one.
+
+There is no buy button, and that is the design. A verdict about whether a price band has
+historically paid, sitting next to a control that acts on it, is a recommendation however the copy
+is worded. The refusal is structural — the page cannot import a signer, a wallet or a portfolio
+route, and a test asserts it.
 
 EVENT INTELLIGENCE
 
@@ -146,6 +163,15 @@ read back from api.infra.testnet.somnia.network rather than assumed from a succe
 ```
 Rivo exploits something specific to Event Contracts: they settle, and settlement is ground truth.
 
+AND IT POINTS THAT AT THE VENUE, NOT AT THE USER.
+
+Scoring a forecaster against outcomes is a known idea and other entries do it well. Scoring the
+MARKET is the different one: taking DreamDEX's own quoted probability as the forecast under test,
+across every contract it has already settled, bucketed into twenty price bands with a cohort and a
+sample size on each. The answer — Brier 0.1821 against 0.2497 for the base rate, a skill score of
+27.1% over 2,179 settled windows — is a fact about the venue that the venue does not publish, and it
+is measured on real settlements rather than on a simulation.
+
 A perpetuals dashboard cannot tell you whether its numbers were right. A binary contract that expires
 can — the market said 67%, and the world then said yes or no. That makes two things possible that are
 not possible elsewhere:
@@ -219,6 +245,28 @@ and see a verdict that reads the economics rather than the accuracy.
 The loop compounds for the venue rather than for Rivo. Every settled contract makes the calibration
 dataset better, which makes the next validation sharper, which makes the agents that pass it more
 likely to be worth their spread.
+
+AND ONE CONTRIBUTION IS ALREADY DELIVERED.
+
+Building this deep against the venue surfaced eleven defects in the SDK, the indexer and the
+contracts, each written up with a reproduction for the people who maintain them
+(docs/SDK-FEEDBACK.md). Three that cost a builder real time:
+
+  * The oracle's `numericValue` scale is inconsistent and undeclared — opening references arrive at
+    1e2 and settlement answers at 1e4, with no field saying which. Read it wrong and every
+    probability is 100x off, silently.
+  * `ec-core` has no allowance handling, so a fresh wallet's first order always reverts. Nothing in
+    the kit or the SDK does the approval, and the failure does not name itself.
+  * Down-leg liquidity comes from resting BUY_YES orders — buying Up and buying Down mints a pair —
+    so a depth model that counts only SELL_YES under-fills the DOWN side, and the docs do not say so.
+
+A twelfth was found on 2026-09-05 and is Rivo's own: the indexer read paged ascending under a
+20,000-row ceiling, so once the venue crossed it the newest settlements silently fell out of every
+query. It cost 40% of the available evidence for five days without an error. Fixed, tested, and
+written up — because the same product that publishes its model's failure does not get to quietly fix
+its own data bug.
+
+That is ecosystem impact that has already happened, rather than adoption that is promised.
 ```
 
 ## Links
