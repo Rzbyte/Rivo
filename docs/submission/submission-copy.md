@@ -193,7 +193,7 @@ SIGNING is non-custodial. Portfolio wallets are Privy TEE wallets; Rivo holds a 
 request signatures and never holds key material. What that right cannot be scoped to on-chain is
 stated plainly rather than claimed.
 
-937 tests, strict TypeScript across engine, browser bundle and web app, integration tests against a
+944 tests, strict TypeScript across engine, browser bundle and web app, integration tests against a
 real PostgreSQL, and a CI job that fails if the database tests silently stop running.
 ```
 

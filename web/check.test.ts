@@ -18,8 +18,13 @@ describe("the check surface", () => {
     // A code with no branch falls through to the default, which says "This
     // price is honest" — the one wrong answer that reads like a right one. A
     // new code added to the engine has to fail here rather than ship as praise.
+    //
+    // The logic itself lives in web/lib/verdict.ts and is exercised on its
+    // behaviour there; this only holds the coverage, which a source read can
+    // check without rendering anything.
+    const logic = readFileSync(resolve("web/lib/verdict.ts"), "utf8");
     for (const code of Object.keys(ASSESSMENT_LABEL) as AssessmentCode[]) {
-      expect(SOURCE, `no branch for ${code}`).toContain(`case "${code}"`);
+      expect(logic, `no branch for ${code}`).toContain(`case "${code}"`);
     }
   });
 
@@ -46,7 +51,10 @@ describe("the check surface", () => {
     // product exists to catch, and it would be the more embarrassing one for
     // happening inside it. Same endpoint, same assessment, folded differently.
     expect(SOURCE).toContain('useLive<Payload>("/api/markets"');
-    expect(SOURCE).toContain("c.assessment.code");
+    // And the verdict is derived from the engine's own assessment rather than
+    // recomputed here, so the two surfaces cannot drift into two opinions.
+    const logic = readFileSync(resolve("web/lib/verdict.ts"), "utf8");
+    expect(logic).toContain("c.assessment.code");
   });
 
   it("keeps the sample size one tap away rather than absent", () => {

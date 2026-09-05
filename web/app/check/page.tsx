@@ -27,7 +27,8 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useLive } from "@/lib/live";
 import { Nav } from "@/components/Nav";
-import { RULES, type AssessmentCode } from "@rivo/intel/assessment.js";
+import { type AssessmentCode } from "@rivo/intel/assessment.js";
+import { verdict, type Verdict } from "@/lib/verdict";
 import { tenorLabel } from "@rivo/core/venue.js";
 
 interface Card {
@@ -87,81 +88,6 @@ function countdown(s: number): string {
 function question(c: Card): string {
   const direction = c.leg === "UP" ? "higher" : "lower";
   return `Will ${c.asset} close ${direction} than it opened?`;
-}
-
-interface Verdict {
-  /** The line in the largest type on the page. */
-  headline: string;
-  /** One sentence under it. Never an instruction. */
-  detail: string;
-  tone: "good" | "under" | "over" | "caveat";
-}
-
-/**
- * The verdict, derived from the same assessment the dense surface renders.
- *
- * The mapping is deliberately one-to-one with `AssessmentCode` rather than a
- * second opinion computed here — two surfaces that describe the same contract
- * differently is exactly the failure this product was built to catch, and it
- * would be the more embarrassing one for happening inside it.
- *
- * A caveat outranks a claim. If the sample is thin, the book is wide or the
- * depth is not there, that is the answer — the calibration comparison is not
- * shown as the headline underneath a warning, because a reader takes the
- * biggest number on the screen and leaves.
- */
-function verdict(c: Card): Verdict {
-  const h = c.historical;
-  const quoted = c.price;
-
-  switch (c.assessment.code) {
-    case "INSUFFICIENT_SAMPLE":
-      return {
-        headline: "Not enough history to say",
-        detail:
-          h === null
-            ? "No comparable contract has settled at this price yet. The honest answer is that nobody knows."
-            : `Only ${h.windows} comparable ${h.windows === 1 ? "contract has" : "contracts have"} settled at this price — under the ${RULES.minWindows} this product requires before it will call anything.`,
-        tone: "caveat",
-      };
-    case "LOW_LIQUIDITY":
-      return {
-        headline: "Almost nothing is on offer",
-        detail: `${c.depth.toFixed(0)} shares are available at this price. Whether it is fair matters less than whether you could get filled.`,
-        tone: "caveat",
-      };
-    case "HIGH_SPREAD":
-      return {
-        headline: "The spread costs more than the edge",
-        detail: `Buying and selling back immediately would cost ${pct(c.spread, 1)}. That gap is the dominant fact about this price, whatever the history says.`,
-        tone: "caveat",
-      };
-    case "LARGE_DISAGREEMENT":
-      return {
-        headline: "Rivo's model disagrees sharply",
-        detail: `The book asks ${pct(quoted)} and Rivo's own model says ${pct(c.reference)}. A disagreement this size is worth knowing about — and Rivo's model is one this product has already refused to trade.`,
-        tone: "caveat",
-      };
-    case "OVERCONFIDENT":
-      return {
-        headline: "The book is asking too much",
-        detail: `Prices in this band settled true ${pct(h?.realized ?? null)} of the time. You are being asked for ${pct(quoted)}.`,
-        tone: "over",
-      };
-    case "UNDERCONFIDENT":
-      return {
-        headline: "The book is asking too little",
-        detail: `Prices in this band settled true ${pct(h?.realized ?? null)} of the time. You are being asked for ${pct(quoted)}.`,
-        tone: "under",
-      };
-    case "WELL_CALIBRATED":
-    default:
-      return {
-        headline: "This price is honest",
-        detail: `Contracts priced near ${pct(quoted)} settled true ${pct(h?.realized ?? null)} of the time. The price is doing its job.`,
-        tone: "good",
-      };
-  }
 }
 
 const TONE_COLOR: Record<Verdict["tone"], string> = {
