@@ -85,7 +85,24 @@ export function db(): Pool {
   pool = new Pool({
     connectionString: url,
     ssl: ssl(),
-    max: Number(process.env.DATABASE_POOL_MAX ?? 10),
+    // The default is per-PROCESS, and the budget is per-DATABASE.
+    //
+    // A managed pooler in session mode caps total clients — Supabase's is 15 —
+    // and every plane holds its own pool against that one number. Ten was fine
+    // while a laptop was the only consumer. It stopped being fine the moment a
+    // container and a serverless fleet shared the database: one worker at 10
+    // plus two warm Vercel lambdas at 10 is 30 against a cap of 15, and what
+    // that looks like from outside is `/api/health` reporting "the database did
+    // not answer" while the database is perfectly healthy.
+    //
+    // Measured 2026-09-05: EMAXCONNSESSION, and the public health endpoint said
+    // `workers: 0` on a fleet where the worker was running normally.
+    //
+    // So the default is now sized to where the process runs. A serverless
+    // instance is many short-lived processes and needs almost nothing each; a
+    // worker is one long-lived process doing real concurrency. DEPLOY.md § 3
+    // has the arithmetic; this is it applied rather than described.
+    max: Number(process.env.DATABASE_POOL_MAX ?? (process.env.VERCEL ? 2 : 5)),
     // A query that hangs holds a lease open, and a lease held open blocks the
     // portfolio's next cycle. Better to fail the cycle and retry than to stall
     // the fleet behind one bad connection.
