@@ -346,7 +346,17 @@ a[href^="https://shannon-explorer"]:focus-visible {
   border-bottom: 1px solid var(--line-2);
   opacity: .85;
 }
-.sec-head .hint { order: 3; flex: none; margin: 0; font-family: var(--mono); font-size: 12px; color: var(--faint); }
+/*
+ * `flex: none` on a caption is a promise never to shrink, and it kept that
+ * promise off the edge of the screen: "2,195 settled windows across 15 cohorts ·
+ * prices 2s ago" measured 413px in a 390px viewport on /markets. `min-width: 0`
+ * could not save it, because `flex: 0 0 auto` refuses to shrink whatever the
+ * minimum says.
+ */
+.sec-head .hint {
+  order: 3; flex: 1 1 auto; min-width: 0; margin: 0;
+  font-family: var(--mono); font-size: 12px; color: var(--faint);
+}
 
 /* --- the mark ------------------------------------------------------------ */
 .brand-dot {
@@ -548,7 +558,26 @@ details > summary:hover { color: var(--ink); }
 .meter > span.over { background: linear-gradient(90deg, var(--neg), #f08a78); box-shadow: 0 0 8px var(--neg); }
 
 /* --- tables -------------------------------------------------------------- */
-.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+/*
+ * A scroll container that cannot be narrower than its content is not a scroll
+ * container.
+ *
+ * `overflow-x: auto` alone does not stop a wide table pushing the page: as a
+ * flex or grid item the box takes `min-width: auto`, which resolves to the
+ * content's own width. Measured at 390px: /evidence 127px of horizontal
+ * overflow, /agents 75px, both from tables that were supposed to scroll inside
+ * their own box.
+ *
+ * It was invisible for the life of the project because `overflow-x: hidden` on
+ * the body clipped it — the same rule that stopped the header sticking. Removing
+ * that guard did not create these; it stopped hiding them.
+ */
+.scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  min-width: 0;
+  max-width: 100%;
+}
 table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 th {
   text-align: left; padding: 10px 12px 10px 0;
