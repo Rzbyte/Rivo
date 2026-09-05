@@ -171,10 +171,19 @@ async function main(): Promise<void> {
   console.log(`\nOPERATOR PROBE — is a non-custodial Event Contract bot possible?`);
   console.log(`  network ${net}   owner ${owner}\n`);
 
-  // A window with enough life left that it cannot expire mid-probe.
+  // A window with enough life left that it cannot expire mid-probe, and the
+  // NEAREST such window rather than the furthest.
+  //
+  // This sorted descending and took the longest-dated window, which is the one
+  // least likely to be trading: a 1d contract listed hours ahead has no book, so
+  // the valid `placeBinaryOrder` baseline reverted too and the probe could not
+  // separate "the on-behalf path is gated" from "nothing works here". It
+  // reported INCONCLUSIVE on 2026-09-05 for exactly that reason. The `> now +
+  // 900` filter already guarantees the window outlives the probe; among those,
+  // the soonest to expire is the one with a live book.
   const idx = new Indexer();
   const now = Math.floor(Date.now() / 1000);
-  const live = (await idx.liveMarkets()).filter((m) => m.expiry > now + 900).sort((a, b) => b.expiry - a.expiry);
+  const live = (await idx.liveMarkets()).filter((m) => m.expiry > now + 900).sort((a, b) => a.expiry - b.expiry);
   const market = live[0];
   if (!market) {
     console.log("  no window with >15 minutes of life — the venue is between series. Try again shortly.");
@@ -229,15 +238,31 @@ async function main(): Promise<void> {
     ["binarySettlement", "0xbF4a49e0Dfd092e5FBE8E5761064C49533e6Ed23"],
     ["the pool itself", pool],
   ];
+  // ---- name the selectors
+  //
+  // A page of raw 4-byte hex is not evidence anybody can check. These are the
+  // pool's own custom errors, decoded against the ABI the SDK already ships in
+  // `contractErrorsAbi` — which is the point of SDK-FEEDBACK #4: the names exist
+  // and simply never reach a caller.
+  const ERROR_NAMES: Record<string, string> = {
+    "0x3fb0ba2e": "OnlyApprovedContracts()",
+    "0xfb8f41b2": "ERC20InsufficientAllowance(address,uint256,uint256)",
+    "0xaf608abb": "InvalidPrice(uint256,uint256)",
+    "0xeaa68ceb": "QuantityBelowMinimum(uint256,uint256)",
+    "0x7cf05fcb": "PostOnlyWouldCross()",
+    "0x3154078e": "OrderAlreadyExpired()",
+  };
+  const named = (sel?: string | null): string => (sel ? (ERROR_NAMES[sel] ? `${sel} ${ERROR_NAMES[sel]}` : sel) : "?");
+
   console.log();
   const onBehalf: Record<string, CallResult> = {};
   for (const [label, from] of callers) {
     const r = await call(rpcUrl, from, pool, encodePlace({ ...valid, owner }));
     onBehalf[label] = r;
-    console.log(`    placeBinaryOrderFor from ${label.padEnd(22)} ${r.ok ? "OK" : `revert ${r.error ?? "?"}`}`);
+    console.log(`    placeBinaryOrderFor from ${label.padEnd(22)} ${r.ok ? "OK" : `revert ${named(r.error)}`}`);
   }
   const cancelFor = await call(rpcUrl, owner, pool, SELECTORS.cancelOrderFor + addr(owner) + word(1));
-  console.log(`    cancelOrderFor      from ${"the owner itself".padEnd(22)} ${cancelFor.ok ? "OK" : `revert ${cancelFor.error ?? "?"}`}`);
+  console.log(`    cancelOrderFor      from ${"the owner itself".padEnd(22)} ${cancelFor.ok ? "OK" : `revert ${named(cancelFor.error)}`}`);
 
   // ---- the reading
   const paramErrors = Object.entries(baseline).filter(([, r]) => !r.ok).map(([, r]) => r.error);
@@ -246,11 +271,32 @@ async function main(): Promise<void> {
   const singleForError = forErrors.size === 1 ? [...forErrors][0]! : null;
   const anyForSucceeded = [...Object.values(onBehalf), cancelFor].some((r) => r.ok);
 
+  // A blocked baseline does not blind the probe.
+  //
+  // This used to demand `placeBinaryOrder — valid` succeed before it would read
+  // anything, and on 2026-09-05 that produced INCONCLUSIVE for a reason with
+  // nothing to do with the question: the owner held no allowance to that
+  // window's pool, so the baseline reverted ERC20InsufficientAllowance. The
+  // on-behalf answer was unchanged and unambiguous underneath it.
+  //
+  // What actually carries the finding is the CONTRAST: the pool answers wrong
+  // parameters with several different named errors, and answers every on-behalf
+  // call — from every caller, including the owner itself — with one and the same
+  // error. That contrast holds whether or not the baseline can pay.
+  const baselineOk = baseline["placeBinaryOrder — valid"]?.ok === true;
+  const baselineBlockedOnCollateral =
+    !baselineOk && baseline["placeBinaryOrder — valid"]?.error === "0xfb8f41b2";
+
   const verdict = anyForSucceeded
     ? "POSSIBLE — an on-behalf call succeeded; a non-custodial authority can be built on it."
-    : singleForError && distinctParamErrors >= 3 && baseline["placeBinaryOrder — valid"]?.ok
-      ? `DISABLED — every on-behalf call returns ${singleForError}, from every caller including the owner, while parameter errors are ${distinctParamErrors} distinct selectors. Compiled in, switched off.`
-      : "INCONCLUSIVE — the baseline did not separate cleanly; re-run against a livelier window.";
+    : singleForError && distinctParamErrors >= 3
+      ? `DISABLED — every on-behalf call returns ${named(singleForError)}, from every caller including the owner, while parameter errors are ${distinctParamErrors} distinct selectors. Compiled in, switched off.` +
+        (baselineOk
+          ? ""
+          : baselineBlockedOnCollateral
+            ? " (The valid-order baseline reverted ERC20InsufficientAllowance — this wallet has no allowance to this window's pool yet. That gates the baseline, not the on-behalf path: the pool still distinguishes parameter faults by name while answering every on-behalf caller alike.)"
+            : ` (The valid-order baseline reverted ${named(baseline["placeBinaryOrder — valid"]?.error)}; the on-behalf contrast below stands on its own.)`)
+      : "INCONCLUSIVE — the pool did not distinguish parameter faults, so nothing can be concluded about the on-behalf path. Re-run against a livelier window.";
 
   console.log(`\n  VERDICT  ${verdict}\n`);
 
@@ -272,8 +318,10 @@ async function main(): Promise<void> {
     onBehalf: Object.fromEntries(
       [...Object.entries(onBehalf), ["cancelOrderFor from the owner itself", cancelFor] as [string, CallResult]].map(([k, v]) => [k, v.ok ? "ok" : v.error]),
     ),
+    errorNames: ERROR_NAMES,
     distinctParameterErrors: distinctParamErrors,
     sharedOnBehalfError: singleForError,
+    sharedOnBehalfErrorName: singleForError ? (ERROR_NAMES[singleForError] ?? null) : null,
     verdict,
     reproduce: "npm run probe:operator -- --owner <any funded venue address>",
   };

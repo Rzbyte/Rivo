@@ -248,17 +248,24 @@ likely to be worth their spread.
 
 AND ONE CONTRIBUTION IS ALREADY DELIVERED.
 
-Building this deep against the venue surfaced eleven defects in the SDK, the indexer and the
+Building this deep against the venue surfaced fifteen findings in the SDK, the indexer and the
 contracts, each written up with a reproduction for the people who maintain them
 (docs/SDK-FEEDBACK.md). Three that cost a builder real time:
 
   * The oracle's `numericValue` scale is inconsistent and undeclared — opening references arrive at
     1e2 and settlement answers at 1e4, with no field saying which. Read it wrong and every
-    probability is 100x off, silently.
-  * `ec-core` has no allowance handling, so a fresh wallet's first order always reverts. Nothing in
-    the kit or the SDK does the approval, and the failure does not name itself.
+    probability is 100x off, silently. Both scales were still live in one query on 2026-09-05.
+  * The on-chain permission that would make non-custodial Event Contract bots possible is deployed
+    and switched off. It has a name — `OnlyApprovedContracts()` — and it is an allowlist with
+    nothing on it. One flag away from changing what can be built here.
   * Down-leg liquidity comes from resting BUY_YES orders — buying Up and buying Down mints a pair —
     so a depth model that counts only SELL_YES under-fills the DOWN side, and the docs do not say so.
+    Measured 641 BUY_YES against 354 SELL_YES resting.
+
+Thirteen of the fifteen stand after a full re-check against markets-sdk 0.29.0 on 2026-09-05. Two
+we withdrew, and one we rewrote, because they were our own measurement error rather than a venue
+defect — the scoreboard is §16 of that document. A findings list nobody re-checks is an anecdote,
+and withdrawing in public is the part that makes the other thirteen worth reading.
 
 A twelfth was found on 2026-09-05 and is Rivo's own: the indexer read paged ascending under a
 20,000-row ceiling, so once the venue crossed it the newest settlements silently fell out of every

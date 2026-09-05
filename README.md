@@ -245,39 +245,49 @@ alternative explanations we eliminated first: **[docs/EVIDENCE.md](docs/EVIDENCE
 
 ## What we measured about this venue
 
-Rivo is the only thing here that had to *measure* DreamDEX rather than assume it, and four of those
-measurements are findings about the venue itself rather than about Rivo. Every one is reproducible
-against public endpoints, most without a key.
+Rivo is the only thing here that had to *measure* DreamDEX rather than assume it, and several of
+those measurements are findings about the venue itself rather than about Rivo. Every one is
+reproducible against public endpoints, most without a key.
 
-**The non-custodial entrypoint is deployed and switched off.** The BinaryPool running right now
-contains `placeBinaryOrderFor` and `cancelOrderFor`. Both revert with one selector — `0x3fb0ba2e` —
-from every caller we could try, the owner acting for itself included, while each parameter mistake
-returns a selector of its own. Compiled in, disabled. **Enabling it is the single change that would
-let any Event Contract bot on this venue be non-custodial**, which is the difference between a
-product and a script. One minute, no key, no gas:
+**The non-custodial entrypoint is deployed and switched off, and the gate has a name.** The
+BinaryPool running right now contains `placeBinaryOrderFor` and `cancelOrderFor`. Both revert with
+one selector from every caller we could try — the owner acting for itself included — while each
+parameter mistake returns a selector of its own. That selector decodes, against the SDK's own error
+ABI, as **`OnlyApprovedContracts()`**: an allowlist with nothing on it. **Enabling it is the single
+change that would let any Event Contract bot on this venue be non-custodial**, which is the
+difference between a product and a script. One minute, no key, no gas:
 
 ```bash
 npm run probe:operator
 ```
 
-**`OutcomeBalance` is wrong about what a wallet owns, in both directions, and does not converge.**
-Two of five rows on one wallet, checked against the outcome-token contract: two settled positions
-whose tokens were burned still had rows hours later. A bot reading that table sees assets that do
-not exist — and the opposite case, a fill not yet indexed, is the one that already cost ~400
-collateral in re-minted maker inventory.
-
 **The oracle's `numericValue` scale is inconsistent and undeclared.** Opening references at 1e2,
 settlement answers at 1e4, no field saying which. Read one at the other's scale and every
-probability comes out at the boundary, looking perfectly plausible.
+probability comes out at the boundary, looking perfectly plausible. Both scales were still arriving
+in one query on 2026-09-05.
 
-**A fresh wallet's first Event Contract order always reverts.** `ec-core` has no allowance handling
-where the spot path does, and the error names nothing: `placeBinaryOrder reverted: for an unknown
-reason`. A developer following the documentation exactly cannot place their first order.
+**`clobStatus` is not a live filter, and paging on it returns nothing at all.** The indexer leaves
+settled windows flagged `Trading`: 500 rows carried that flag on 2026-09-05 and not one of them was
+unexpired. Order ascending with a limit, filter by expiry client-side, and you get zero markets
+forever with nothing in the log to say why. Push the expiry bound server-side.
 
-**Fourteen findings in total, each with its method and a way to check it:
+**A named revert does not survive the trip to the caller.** The pool answers a bad order with a
+custom error — `QuantityBelowMinimum`, `ERC20InsufficientAllowance`, `OnlyApprovedContracts` — and
+the SDK ships a decoder for exactly those. What arrives is viem's verdict from two layers below:
+`reverted: for an unknown reason`. The name exists at every layer and reaches nobody.
+
+**Fifteen findings in total, each with its method and a way to check it:
 [docs/SDK-FEEDBACK.md](docs/SDK-FEEDBACK.md).** Written for the people who maintain this venue, not
 as a complaint — the kit is genuinely good, and `ec-core` absorbs sixteen sharp edges we would
 otherwise have hit ourselves.
+
+**Thirteen of the fifteen survived a full re-check against markets-sdk 0.29.0 on 2026-09-05. Two we
+withdrew and one we rewrote, in public, because they were our own measurement error and not a venue
+defect.** One of them we had ranked highest on the list. The re-check is §16 of that document, with
+the method and a row per finding. A findings list nobody re-checks is an anecdote, and being able
+to say which of your own claims did not survive is the only thing that makes the other thirteen
+worth a maintainer's time — which is the same reason section 9 above publishes the two studies that
+came back no.
 
 ---
 
@@ -716,8 +726,9 @@ than add three more features to Rivo. That is the work we would like to keep doi
   needed from it, and the measurement that decided the shape of the answer
 - **[docs/DEPLOY.md](docs/DEPLOY.md)** — the three planes, and why the worker cannot be serverless
 - **[docs/SECURITY.md](docs/SECURITY.md)** — threat model, what is enforced by what, and six known gaps
-- **[docs/SDK-FEEDBACK.md](docs/SDK-FEEDBACK.md)** — findings from building against the SDK and indexer, including the
-  on-chain measurement that the Event Contract operator entrypoints exist and are disabled
+- **[docs/SDK-FEEDBACK.md](docs/SDK-FEEDBACK.md)** — fifteen findings from building against the SDK
+  and indexer, including the on-chain measurement that the Event Contract operator entrypoints exist
+  and are disabled, and a §16 re-check against markets-sdk 0.29.0 that withdraws two of our own
 - **[docs/submission/](docs/submission/)** — the 3-minute demo script rehearsed against production, the final submission copy, and thirteen judge questions each answered against this repository
 - **[DISCLAIMER.md](DISCLAIMER.md)** — read before running anything with money
 - [docs/evidence/](docs/evidence/) — saved outputs and a dashboard snapshot

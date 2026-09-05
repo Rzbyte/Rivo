@@ -1,14 +1,14 @@
 {
-  "generatedAt": "2026-08-21T19:40:17.987Z",
+  "generatedAt": "2026-09-05T13:34:24.515Z",
   "network": "testnet",
   "question": "Can an Event Contract order be placed by one key on another account's behalf?",
   "method": "Differential eth_call. A valid order via placeBinaryOrder establishes that args, market and caller are good; the same args via placeBinaryOrderFor isolate the on-behalf path; breaking one parameter at a time establishes that the pool distinguishes failures rather than answering everything alike.",
   "market": {
-    "marketId": "0x00000000000000000000000000000000000000000000000000000000000051d3",
-    "asset": "BTC",
-    "intervalSec": 86400,
-    "expiry": 1787356800,
-    "pool": "0xc3e2b06a7a9e35170785a01595a09e4aed8a78df"
+    "marketId": "0x0000000000000000000000000000000000000000000000000000000000014337",
+    "asset": "ETH",
+    "intervalSec": 3600,
+    "expiry": 1788616800,
+    "pool": "0xea877224a68a5e4061dfcbe48b31c1d625d913a6"
   },
   "deployment": {
     "beacon": "0x85c01b5ef4f4ed59cac69749565e309f01b14dbc",
@@ -51,9 +51,9 @@
     }
   },
   "baseline": {
-    "placeBinaryOrder — valid": "ok",
+    "placeBinaryOrder — valid": "0xfb8f41b2",
     "placeBinaryOrder — price = 0": "0xaf608abb",
-    "placeBinaryOrder — price >= 1": "0x6e4ba61d",
+    "placeBinaryOrder — price >= 1": "0x7cf05fcb",
     "placeBinaryOrder — quantity = 0": "0xeaa68ceb",
     "placeBinaryOrder — expiry = 0": "0x3154078e"
   },
@@ -67,8 +67,17 @@
     "the pool itself": "0x3fb0ba2e",
     "cancelOrderFor from the owner itself": "0x3fb0ba2e"
   },
-  "distinctParameterErrors": 4,
+  "errorNames": {
+    "0x3fb0ba2e": "OnlyApprovedContracts()",
+    "0xfb8f41b2": "ERC20InsufficientAllowance(address,uint256,uint256)",
+    "0xaf608abb": "InvalidPrice(uint256,uint256)",
+    "0xeaa68ceb": "QuantityBelowMinimum(uint256,uint256)",
+    "0x7cf05fcb": "PostOnlyWouldCross()",
+    "0x3154078e": "OrderAlreadyExpired()"
+  },
+  "distinctParameterErrors": 5,
   "sharedOnBehalfError": "0x3fb0ba2e",
-  "verdict": "DISABLED — every on-behalf call returns 0x3fb0ba2e, from every caller including the owner, while parameter errors are 4 distinct selectors. Compiled in, switched off.",
+  "sharedOnBehalfErrorName": "OnlyApprovedContracts()",
+  "verdict": "DISABLED — every on-behalf call returns 0x3fb0ba2e OnlyApprovedContracts(), from every caller including the owner, while parameter errors are 5 distinct selectors. Compiled in, switched off. (The valid-order baseline reverted ERC20InsufficientAllowance — this wallet has no allowance to this window's pool yet. That gates the baseline, not the on-behalf path: the pool still distinguishes parameter faults by name while answering every on-behalf caller alike.)",
   "reproduce": "npm run probe:operator -- --owner <any funded venue address>"
 }

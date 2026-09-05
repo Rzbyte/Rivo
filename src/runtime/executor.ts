@@ -292,9 +292,14 @@ export class LiveExecutor implements Executor {
     }
 
     // The pool escrows the collateral, so it has to be allowed to pull it.
-    // Neither ec-core nor the SDK does this for event contracts — the spot path
-    // does, and its absence here is why a fresh wallet gets
-    // `placeBinaryOrder reverted: for an unknown reason`, which names nothing.
+    //
+    // The SDK DOES do this — `orders.js::placeOrder` auto-approves the pool
+    // unless `autoApprove: false`, and ec-core never passes it. An earlier
+    // version of this comment said otherwise and was wrong; see
+    // src/runtime/allowance.ts for the measurement that settled it. We approve
+    // anyway, ahead of the SDK, because a per-user TEE wallet's approval is
+    // something the ledger should be able to point at, and because a second
+    // approval costs one cached read.
     if (side === "buy" && onchain.pool) {
       // Approve the pool inline when it cannot yet pull collateral.
       //
@@ -346,10 +351,11 @@ export class LiveExecutor implements Executor {
     // ec-core configures testnet `lot: 1` raw unit — "measured — the venue
     // accepted orders down to 1 raw unit" — but that is not what the venue does
     // now. Measured 2026-08-20 on one market at one price: sizes of 1, 2, 3, 5
-    // and 8 all filled, 3.71 filled, and 9.749193184999303 reverted with
-    // `placeBinaryOrder reverted: for an unknown reason`. The common factor is
-    // raw units: 3.71 is exactly 3,710,000 while 9.749193… floors to 9,749,193,
-    // which is a multiple of nothing.
+    // and 8 all filled, 3.71 filled, and 9.749193184999303 reverted. The common
+    // factor is raw units: 3.71 is exactly 3,710,000 while 9.749193… floors to
+    // 9,749,193, which is a multiple of nothing. The pool names this one —
+    // `QuantityBelowMinimum(uint256,uint256)`, selector 0xeaa68ceb — but the
+    // name never reached us, which is SDK-FEEDBACK #4.
     //
     // Fractional-Kelly sizing produces the latter constantly, so this is not an
     // edge case for Rivo — it is every order. Rounding DOWN to a hundredth of a
@@ -385,9 +391,11 @@ export class LiveExecutor implements Executor {
       };
     } catch (e) {
       // An error that does not say what it was trying to do is most of a wasted
-      // afternoon. The SDK's message is `placeBinaryOrder reverted: for an
-      // unknown reason` and names nothing — not the market, not the side, not
-      // the price. Attach it here so a log line is actionable on its own.
+      // afternoon. What arrives here names neither the market, the side nor the
+      // price — and when the pool DID name the fault, the name did not survive
+      // the trip (SDK-FEEDBACK #4: `ContractRevertError.errorName` carries it,
+      // and nothing in the chain of callers prints it). Attach the context here
+      // so a log line is actionable on its own.
       const detail =
         `${side} ${outcome} ${size} @ ${price} on pool ${String(onchain.pool ?? "?").slice(0, 10)}… ` +
         `(market ${req.marketId.slice(-10)})`;

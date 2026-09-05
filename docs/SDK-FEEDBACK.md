@@ -1,23 +1,35 @@
 # SDK & documentation feedback
 
-Findings from building [Rivo](../README.md) against `@somnia-chain/markets-sdk` 0.25.0,
+Findings from building [Rivo](../README.md) against `@somnia-chain/markets-sdk`,
 `@dreamdex-bot-kit/ec-core`, and the Somnia Markets indexer, over roughly a week in
 August 2026 on the DreamDEX testnet venue
 (`0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c`).
 
-**Fifteen findings.** Every one is reproducible; where a snippet is given it runs against public
-endpoints with no key. Ordered roughly by how much time each cost us.
+**Written against markets-sdk 0.25.0. Every finding below was re-checked against 0.29.0 and the
+current kit `main` on 2026-09-05** — see [§16](#16-what-the-re-check-changed) for the method and
+the full scoreboard.
 
-Five of them (#4–#8) came out of taking Rivo live rather than reading the docs — they are the
-things that only appear once a real wallet sends a real order. Three are worth pulling out:
+**Fifteen findings, of which thirteen stand and two we withdraw.** Every one is reproducible;
+where a snippet is given it runs against public endpoints with no key. Ordered roughly by how much
+time each cost us.
 
-- **#4 — a developer who follows your documentation exactly cannot place their first Event
-  Contract order, and the error names nothing.** The one we would fix first, because it is the
-  difference between a new builder shipping and concluding the venue is broken.
-- **#8 — `OutcomeBalance` is wrong about what a wallet owns, in both directions, and does not
-  converge.** Two of five rows on one wallet. A bot cannot guess at its own holdings.
+**We withdraw #8 and #11, and we rewrote #4.** All three were things we believed on 2026-08-22 and
+cannot reproduce now. Two were our own measurement error rather than a venue defect, and saying so
+is the whole point of publishing a list like this — a finding nobody re-checks is an anecdote.
+The corrections are in place, in each section, with the numbers that produced them.
+
+Three worth pulling out:
+
+- **#4 — the SDK's own auto-approve block is one `switch` short of a named error, and everything
+  downstream of it reports "for an unknown reason" — a verdict from viem, two layers below the
+  decoder that could have named the fault.** Not the allowance itself: the SDK grants that
+  correctly, and we were wrong to say otherwise.
 - **#9 — the on-chain permission that would make non-custodial Event Contract bots possible is
-  already deployed and switched off.** One flag away from changing what can be built here.
+  already deployed and switched off.** It has a name, and the name is `OnlyApprovedContracts()`.
+  One flag away from changing what can be built here.
+- **#1 — the oracle's `numericValue` carries no scale, and the scale differs by question type.**
+  Still true, and still silent: both 1e2 and 1e4 rows were live in the same query on 2026-09-05.
+  Every consumer has to price against that reference and there is no correct way to do it.
 
 And one that arrived last, from building the product rather than the bot:
 
@@ -129,49 +141,117 @@ already in the indexer; the `Fill` table has everything needed including `makerS
 
 ---
 
-## 4. `ec-core` has no allowance handling, so a fresh wallet's first order always reverts
+## 4. The SDK's auto-approve block turns any bad argument into a `TypeError` from a transitive dependency
 
-**Severity: highest on this list. It blocks every new event-contract developer, silently.**
+**Severity: high — it is the first thing a new Event Contract developer hits, and what they see
+names nothing.**
 
-The pool that escrows collateral needs an ERC-20 allowance. The **spot** half of the kit grants one
-before every order — `packages/core/src/execute.ts` calls
-`ensureAllowance(ctx, inputToken, p.pool, requiredAmount)`. The **event-contract** half has no
-equivalent:
+**This section replaces an earlier one that was wrong, and the correction matters more than the
+finding.** We originally reported that `ec-core` has no allowance handling and that a fresh
+wallet's first Event Contract order therefore always reverts. The first half is literally true and
+irrelevant; the second half is false. **The SDK grants the allowance itself, on the binary path, by
+default.**
 
-```bash
-grep -rn "approve\|allowance" packages/ec-core/src/   # → no results
-grep -rn "approve\|allowance" node_modules/@somnia-chain/markets-sdk/dist/   # → no results
+`orders.js::placeOrder` — the function that ends in `placeBinaryOrder` — opens with:
+
+```js
+// Escrow pulls from msg.sender via the pool, so authorize the POOL:
+// buys need a collateral ERC-20 allowance; sells need a one-time operator
+// grant on the outcome-token singleton (covers all markets + both sides).
+if (p.autoApprove !== false) {
+    const e = w.escrow(p, await w.tokens(p));
+    if (e.kind === "erc20") await w.approveIfNeeded(e.token, p.pool, e.amount, gas);
+    else                    await w.ensureOperator(e.outcomeToken, p.pool, gas);
+}
 ```
 
-So a wallet that follows the documentation, funds itself from the faucet, and places its first
-Event Contract order gets:
+`ec-core` never passes `autoApprove`, so it is on. Measured end to end on 2026-09-05, one wallet
+with no allowance to the pool, one `ec-core.placeLimit`:
 
 ```
-@somnia-chain/markets-sdk: placeBinaryOrder reverted: for an unknown reason.
+allowance(owner -> pool) BEFORE : 0
+allowance(owner -> pool) AFTER  : 115792089237316195423570985008687907853269984665640564039457584007913129639935
 ```
 
-which names nothing. Not the missing allowance, not the pool, not the token. We lost hours to it,
-and the only reason we found it was by comparing two wallets on-chain: ours held **zero** allowance
-to every candidate spender, while a wallet that had successfully traded held an **unlimited**
-allowance to the **pool address** specifically — not to `binaryModule`, not to `marketsCore`.
+That is `maxUint256`, granted to the pool, by the SDK, with no allowance code in `ec-core` at all.
+Our original evidence — "a wallet that had successfully traded held an unlimited allowance to the
+pool address specifically" — was the SDK working correctly, and we read it as the SDK failing.
 
-**Reproduce** — pick any wallet from a recent binary `Fill` and compare:
+**The real defect is next to it, and it is what actually cost us the hours.** `escrow()` is a
+four-case `switch` with no `default`:
 
-```bash
-# allowance(owner, spender) on tUSDC 0x70a86D8842FB63C4Ad2b7cdddF530eBf1BB25d8E
-cast call $TUSDC "allowance(address,address)" $WALLET $POOL --rpc-url https://api.infra.testnet.somnia.network
+```js
+function escrow(p, { outcomeToken, yesId, noId, collateral }) {
+    switch (p.side) {
+        case "BUY_YES":  return { kind: "erc20",   token: collateral, amount: … };
+        case "BUY_NO":   return { kind: "erc20",   token: collateral, amount: … };
+        case "SELL_YES": return { kind: "erc6909", outcomeToken, id: yesId, amount: p.quantity };
+        case "SELL_NO":  return { kind: "erc6909", outcomeToken, id: noId,  amount: p.quantity };
+    }
+}
 ```
 
-**Suggested fix:** call `ensureAllowance` from `ec-core`'s `placeLimit` exactly as the spot path
-does, or fail early with a message that names the missing approval. This is the difference between
-a developer's first order working and a developer concluding the venue is broken.
+Any other `side` returns `undefined`, and the caller immediately reads `e.kind`. `ec-core` forwards
+`SIDES[\`${outcome}-${side}\`]` without validating it, so a leg string the map does not contain
+becomes, verbatim:
+
+```
+TypeError: Cannot read properties of undefined (reading 'kind')
+    at Module.placeOrder (@somnia-chain/markets-sdk/dist/orders.js:457:15)
+    at async Module.placeLimit (@dreamdex-bot-kit/ec-core/src/orders.ts:128:15)
+```
+
+A developer sees a `TypeError` from inside a transitive dependency they did not know they had,
+pointing at a line about approvals, for what is a one-word argument mistake at their own call site.
+We reproduced this on 2026-09-05 by passing `side: "BUY"` where `ec-core` wants `"buy"`.
+
+**And the reverts really do arrive unnamed — but the chain names them.** The pool's custom errors
+decode cleanly against the SDK's own `contractErrorsAbi`:
+
+| selector | error |
+|---|---|
+| `0xfb8f41b2` | `ERC20InsufficientAllowance(address,uint256,uint256)` |
+| `0x3fb0ba2e` | `OnlyApprovedContracts()` |
+| `0xaf608abb` | `InvalidPrice(uint256,uint256)` |
+| `0xeaa68ceb` | `QuantityBelowMinimum(uint256,uint256)` |
+| `0x7cf05fcb` | `PostOnlyWouldCross()` |
+| `0x3154078e` | `OrderAlreadyExpired()` |
+
+`ContractRevertError` already carries `errorName` and `args`, and `revert.js` already decodes
+against that ABI — both present in 0.25.0. **So the name exists at every layer and still does not
+reach the caller**, and the reason is worth naming precisely: the message we actually got,
+
+```
+@somnia-chain/markets-sdk: placeBinaryOrder reverted: for an unknown reason
+```
+
+is assembled around `viem/_esm/errors/node.js:8` —
+
+```js
+super(`Execution reverted ${reason ? `with reason: ${reason}` : "for an unknown reason"}.`, …)
+```
+
+— which is the layer *below* the SDK reporting that it found no plain `require` string. A custom
+error is not a `require` string, so viem correctly says it has no reason, and that verdict is what
+propagates. The SDK's own decode, which would have said `QuantityBelowMinimum` or
+`ERC20InsufficientAllowance`, never gets a turn on this path. Nothing here is anyone lying; it is a
+named error, a decoder that can name it, and a wrapper that answers first.
+
+**Suggested fix, in order of value:**
+
+1. Give `escrow()` a `default` that throws `new SomniaMarketsError(\`unknown side ${p.side}\`)`.
+   One line, and it converts the worst error message in the kit into the clearest.
+2. Have `ec-core::placeLimit` validate `outcome`/`side` against `SIDES` before forwarding, and say
+   what it got.
+3. Surface `errorName` in whatever the kit's examples print when a write fails. The decode is
+   already done; it just is not shown.
 
 **A second-order hazard worth documenting alongside it.** We first tried approving inline, then
-concluded it raced the SDK's nonce and moved it out of the loop. That conclusion was wrong — the
-reverts were finding #5 below, present in both runs we compared. Measured properly, an inline
-approval that waits for its receipt does **not** race the SDK: an approval fired mid-cycle between
-two orders, and the order immediately after it filled. Recording the correction because the kit's
-own nonce warning makes the wrong conclusion very easy to reach.
+concluded it raced the SDK's nonce and moved it out of the loop. That conclusion was also wrong —
+the reverts were finding #5 below, present in both runs we compared. Measured properly, an inline
+approval that waits for its receipt does **not** race the SDK. Recording it because the kit's own
+nonce warning makes the wrong conclusion very easy to reach, and because it is the second time on
+this list that we misattributed finding #5 to something else.
 
 ---
 
@@ -214,9 +294,12 @@ read-only next to a `.env` containing exactly that key.
 
 Our runtime reported `no funded PRIVATE_KEY — staying dry` while sitting beside a populated `.env`.
 
-**Suggested fix:** export `loadEnv` from the package index (it is already exported from
-`config.ts` but is easy to miss), or note in the getting-started page that consumers must load
-`.env` themselves before branching on its contents.
+**Suggested fix — and our original suggestion was already done before we wrote it.** We asked for
+`loadEnv` to be exported from the package index. It is, at `packages/ec-core/src/index.ts:16`, and
+has been since 2026-08-07. What remains is documentation, not code: the getting-started page should
+say that a consumer branching on `process.env` must call `loadEnv()` itself first, because
+`createExchange()` calling it internally is too late to help anyone deciding whether to open a
+signer at all.
 
 ---
 
@@ -249,52 +332,45 @@ checked (`assertFunded` already reads the native balance and throws a good messa
 
 ---
 
-## 8. `OutcomeBalance` disagrees with the chain in BOTH directions, and does not converge
+## 8. WITHDRAWN — `OutcomeBalance` agrees with the chain; our reader was reading a recycled pool
 
-**Severity: high — it is wrong about what a wallet owns, which is the one thing a bot cannot guess.**
+**Withdrawn 2026-09-05. This was our measurement error, not a venue defect.**
 
-We first filed this as ordinary indexer lag. It is not. Re-measured against the outcome-token
-contract itself on 2026-08-22, one wallet, one read:
+We reported that `OutcomeBalance` disagreed with the outcome-token contract in both directions and
+did not converge, on the strength of two rows out of five on one wallet reading `0.3100` and
+`0.7900` against an on-chain `0.0000`, both on **Finalized** windows.
 
-| market | leg | `OutcomeBalance` | ERC-6909 `balanceOf` | window |
-|---|---|---|---|---|
-| …5d4e | UP | 0.3100 | **0.0000** | Finalized |
-| …5dc1 | DOWN | 0.7900 | **0.0000** | Finalized |
-| …5dc2 | DOWN | 0.0700 | 0.0700 | Finalized |
-| …5deb | DOWN | 0.3800 | 0.3800 | Finalized |
-| …5de8 | DOWN | 0.3100 | 0.3100 | Trading |
+Re-measured against the ERC-6909 singleton `0xB52c5934113Af5c0Bb20eb3C72290C8215f755b9`, using the
+`tokenId` carried on the indexer row itself:
 
-**Two of five rows were wrong, and they were wrong in the direction nobody plans for.** Lag means
-the table is *behind* — a fill or a mint that has not appeared yet. That is the case we had already
-hit and reported: a maker re-reads its inventory, sees zero, mints again. Measured then at **40
-complete sets bought to support 16 orders**, roughly 400 collateral spent re-acquiring inventory it
-already held.
+```
+80 rows on one wallet:  agree 80,  indexer overstates 0,  indexer understates 0
+```
 
-These two rows are the opposite. The positions settled, the tokens were burned on-chain, and the
-row stayed. It is still there hours later, so this is not a few seconds of catch-up — it does not
-converge. A bot reading that table sees an asset that does not exist, and any sensible thing it
-does next is wrong: our runtime reported them as unclaimed payouts on **every single cycle**, and
-a market still listed as Trading would instead have had a phantom position adopted into the
-portfolio, with phantom value credited to the ledger.
+**The original method is the bug, and this document already described it.** We read balances via
+`getBinaryPoolParams()` → `yesId`/`noId` → `balanceOf`. Pools are recycled: when a window ends its
+pool is handed to the next one and those ids move with it, so a finished window's pool answers for
+somebody else's token — a confident zero. That is exactly the trap written up in the original
+version of this section, under "A trap for anyone who does what we did", and we then filed its
+output as evidence against the indexer. Every one of the 80 rows on this wallet belongs to a window
+whose pool has since rolled, which is why the effect was easy to reproduce and easy to misread.
 
-Both directions are the same underlying problem: `OutcomeBalance` is a derived copy being used as
-the record of ownership. Ours is now read from the pool's own ERC-6909 singleton
-(`getBinaryPoolParams()` → `outcomeToken`, `yesId`/`noId`, then `balanceOf(owner, id)`) and the
-indexer is treated as a hint. That works, and it is three calls where one indexed read should do.
+**Reading by the row's own `tokenId` sidesteps recycling entirely** and needs no pool call:
 
-**A trap for anyone who does what we did.** Reading the balance off the pool instead is correct
-only for the window the pool is *currently* serving. Pools are recycled — a finished window's pool
-is handed to the next one and `yesId`/`noId` move with it — so asking a rolled pool about a
-finished window returns a confident **zero** for a token id belonging to somebody else's window.
-Measured: four finalised windows whose pools had rolled (`marketNonce` 29, 29, 33, 48) each read
-zero for shares the wallet genuinely still held. `getBinaryPoolParams().market` is the guard —
-compare it against the market you meant before trusting the answer. Worth a line in the docs
-beside the pool-recycling gotcha, because the failure is silent and the wrong answer is the one
-that authorises deleting a position.
+```
+balanceOf(owner, OutcomeBalance.tokenId)   on the singleton
+```
 
-**What would help:** treat a burn on settlement as an event that zeroes the row, the same way a
-mint creates it; and document, beside the mint-a-pair recipe, that this table must not be used as
-the authority on holdings by anything that spends money on the answer.
+**What survives.** Nothing about the indexer here — but the recycling hazard is real and belongs in
+the docs beside the pool-recycling gotcha, because the failure is silent and the wrong answer is
+the one that authorises deleting a position. Rivo keeps its guard (`getBinaryPoolParams().market`
+compared against the market you meant) for that reason; it is what makes a pool read safe, and it
+is the reason our live runtime was never actually wrong about a holding.
+
+The earlier lag observation — a maker re-reading inventory, seeing zero and re-minting, measured at
+40 complete sets bought to support 16 orders — was a different measurement and is not withdrawn.
+It is ordinary indexer lag, and the fix is the same: read holdings from the chain before spending
+money on the answer.
 
 ---
 
@@ -308,7 +384,10 @@ supports it: `Pool.place` detects `ctx.owner` and routes through `placeOrderFor`
 "placeOrderFor\|OWNER_ADDRESS" packages/ec-core/src/` returns nothing.
 
 That grep turned out to understate the situation, in an interesting direction. **The deployed
-BinaryPool has the on-behalf entrypoints.** They are simply switched off.
+BinaryPool has the on-behalf entrypoints.** They are simply switched off — and the gate has a name.
+Every on-behalf call, from every caller we tried including the pool itself, reverts `0x3fb0ba2e`,
+which decodes against the SDK's own `contractErrorsAbi` as **`OnlyApprovedContracts()`**. It is an
+allowlist, and nothing is on it.
 
 Reproduce it with `npm run probe:operator` in the Rivo repo (about a minute, zero gas, no key
 required — it is all `eth_call`). Saved output: [`docs/evidence/operator-probe.json`](evidence/operator-probe.json).
@@ -398,7 +477,15 @@ buy  DOWN  crosses resting BUY_YES  at p   ->  you pay 1 - p
 ```
 
 A depth model that counts only `SELL_YES` underestimates Down-side size — and on this venue Down
-is usually the *deeper* side. Measured 2026-08-19: **26 `BUY_YES` resting vs 10 `SELL_YES`.**
+is usually the *deeper* side. Measured 2026-08-19: **26 `BUY_YES` resting vs 10 `SELL_YES`**;
+re-measured 2026-09-05 across 1,000 open orders: **641 `BUY_YES` vs 354 `SELL_YES`**. The ratio has
+held for three weeks.
+
+**One correction to our own model.** The two crossing paths above are not the whole book: `Fill`
+carries native NO-side makers as well. Over 600 recent binary fills the maker sides were
+`BUY_YES` 261, `SELL_YES` 199, **`BUY_NO` 133, `SELL_NO` 7**. So a complete depth model has four
+resting sides to resolve, not two, and roughly a quarter of maker flow is on the legs our original
+description left out.
 
 The failure is quiet: orders just fill smaller than the sizer asked for, which reads as bad
 liquidity rather than a modelling error.
@@ -408,18 +495,28 @@ liquidity rather than a modelling error.
 
 ---
 
-## 11. The `Series` table is empty
+## 11. WITHDRAWN — the `Series` table is populated
 
-**Severity: low, but it forces guesswork.**
+**Withdrawn 2026-09-05.** The exact query in the original version of this section now returns rows:
 
 ```bash
 curl -s -X POST https://dev.smk.somnia.host/v1/graphql -H 'content-type: application/json' \
  -d '{"query":"{ Series(limit:40){ seriesId intervalSec asset } }"}'
-# -> {"data":{"Series":[]}}
 ```
 
-So there is no authoritative list of which cadences a venue runs, and consumers must infer the
-grid from `intervalSec` on live rows. That matters because of finding #7.
+```
+(1, 900s, BTC)   (1, 300s, SOL)   (2, 300s, SOMI)   (305, 300s, SOMI)
+(1, 3888000s, BTC)   (2, 3888000s, ETH)
+```
+
+It was empty when we measured in August. Either it was backfilled since, or our query hit it before
+it was populated; we cannot tell which from here, and the honest thing is to say so rather than
+leave a claim standing that a reader can disprove in one command.
+
+**One thing does survive, and it now has better evidence.** `Series` still does not cover the venue
+Rivo trades: there is no row for the 3600s or 14400s cadences that are demonstrably live, so it is
+not yet the authoritative list of what a venue runs, and consumers still infer the grid from
+`intervalSec` on live rows. That is what makes #12 a problem rather than a curiosity.
 
 ---
 
@@ -565,6 +662,52 @@ the key, and that is the half a hosted product cannot compromise on.
 
 Verified rather than asserted: `npm run check:kit` in the Rivo repo builds an exchange with no
 signer, binds a throwaway viem account, and checks the exchange reports it as its wallet.
+
+---
+
+## 16. What the re-check changed
+
+**Method.** On 2026-09-05 every finding above was re-run against `@somnia-chain/markets-sdk` 0.29.0
+(published 2026-09-01; the document was originally written against 0.25.0, published 2026-08-07)
+and against `dreamdex-bot-kit` `main`. Static claims were checked by diffing the two published
+tarballs; live claims were re-queried against the public indexer and the testnet RPC; the two
+claims that need a wallet were re-run with a funded testnet key.
+
+| # | claim | 2026-09-05 |
+|---|---|---|
+| 1 | oracle `numericValue` scale undeclared | **stands** — 1e2 and 1e4 rows in the same query |
+| 2 | `clobStatus` is not a live filter | **stands, worse** — 500 rows flagged `Trading`, 0 unexpired |
+| 3 | `packages/backtest` has no EC support | **stands** — `BOT_IDS` still lists no `ec-*` |
+| 4 | first-order failure | **rewritten** — the SDK does approve; the defect is the missing `default` |
+| 5 | venue lot coarser than configured | **stands** — `config.ts` still `lot: 1` with the same note |
+| 6 | `loadEnv()` runs too late | **stands; suggestion was already shipped** 2026-08-07 |
+| 7 | `faucet()` unreachable for a taker | **stands** — direct `faucet(uint256)` simulates fine, still undocumented |
+| 8 | `OutcomeBalance` disagrees with chain | **withdrawn** — 80/80 rows agree |
+| 9 | on-behalf entrypoints disabled | **stands, now named** — `OnlyApprovedContracts()` |
+| 10 | down-leg depth is resting `BUY_YES` | **stands, extended** — NO-side makers are a quarter of flow |
+| 11 | `Series` is empty | **withdrawn** — it returns rows |
+| 12 | retired series indistinguishable | **stands** — 61 distinct `intervalSec`, 57 off-grid |
+| 13 | testnet 6dp vs mainnet 18dp | **stands** — and `fillPrice` identity holds on 600/600 binary fills |
+| 14 | `DreamDexRest` unbounded `fetch` | **stands** — `rest.ts:139` still has no `AbortSignal` |
+| 15 | `createExchange` hides the signer | **stands** — still `{ withSigner?: boolean }` only |
+
+**What moved upstream in between.** `ec-core` was bumped to markets-sdk `^0.28.1`, `activeMarkets`
+gained a `scope` override, and the post-only comment was corrected to say it reverts
+(`PostOnlyWouldCross`) rather than resting nothing — which matches what we measured independently.
+None of the fifteen findings above were addressed by those commits.
+
+**Reproducing #13's price identity**, since it is the one claim in this document that is a pure
+data assertion:
+
+```graphql
+Fill(limit: 600, order_by: {timestamp: desc}, where: {market: {marketType: {_eq: "BINARY"}}}) {
+  fillPrice quantity quoteQuantity makerSide
+}
+```
+
+`quoteQuantity / quantity == fillPrice / 1e6` on every row, across all four maker sides. Note the
+1e6: the `Fill` table mixes binary rows with spot and perp rows that use 1e18, so a consumer that
+picks one divisor for the table gets the other market types wrong by a factor of 10¹².
 
 ---
 

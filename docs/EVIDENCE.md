@@ -511,7 +511,9 @@ Both error directions cost something, and neither is theoretical:
 - **Stale low** — a fill lands before its row appears. Past the two-minute grace window that
   becomes a DROP, and Rivo forgets a position it owns and is free to buy a second copy. This is
   the same lag that had already cost ~400 collateral in re-minted maker inventory
-  ([SDK-FEEDBACK §8](SDK-FEEDBACK.md)).
+  ([SDK-FEEDBACK §8](SDK-FEEDBACK.md) — the lag is real; the stronger claim in that section, that
+  the table also overstates holdings, was withdrawn on 2026-09-05 after 80/80 rows agreed with the
+  chain when read by the row's own `tokenId`).
 - **Stale high** — a position settles, its tokens are burned, the row lingers. Those two zero rows
   above are exactly the holdings the runtime had been reporting as unclaimed payouts on *every
   cycle*. There were no unclaimed payouts. On a window still listed as Trading the same row would

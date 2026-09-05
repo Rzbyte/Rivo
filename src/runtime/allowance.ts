@@ -1,17 +1,28 @@
 // ERC-20 approval for the pool that escrows collateral.
 //
-// This module exists because of a gap the kit has on one side and not the other.
-// `packages/core/src/execute.ts` — the SPOT path — calls
-// `ensureAllowance(ctx, inputToken, p.pool, amount)` before every order.
-// `packages/ec-core` has no equivalent anywhere: `grep -rn "approve\|allowance"`
-// over it returns nothing. Neither does `@somnia-chain/markets-sdk`.
+// THIS MODULE IS BELT AND BRACES, AND THE COMMENT THAT USED TO BE HERE WAS WRONG.
 //
-// So an event-contract order from a fresh wallet reverts with
-// `placeBinaryOrder reverted: for an unknown reason`, which names nothing and
-// suggests nothing. Confirmed by comparing two wallets: ours had 0 allowance to
-// every candidate spender, while a wallet that had successfully traded held an
-// UNLIMITED allowance to the POOL address specifically — not to the binary
-// module, not to markets-core.
+// It said `@somnia-chain/markets-sdk` has no approval handling, so a fresh
+// wallet's first Event Contract order always reverts. That is false, and it was
+// false when it was written. `orders.js::placeOrder` — the binary path — opens
+// with an `autoApprove` block that calls `approveIfNeeded(escrow.token, pool,
+// amount, gas)` for a buy and `ensureOperator` for a sell. `ec-core` never
+// passes `autoApprove`, so it is on. Measured end to end on 2026-09-05: a wallet
+// holding zero allowance to the pool, one `ec-core.placeLimit`, and the
+// allowance afterwards is `maxUint256` to the pool — granted by the SDK, with no
+// allowance code of ours involved.
+//
+// The evidence that convinced us otherwise was a working wallet holding an
+// unlimited allowance to the POOL specifically. That was the SDK doing its job,
+// and we read it as the SDK failing. The reverts we were actually chasing were
+// the venue's lot constraint (SDK-FEEDBACK #5).
+//
+// So why keep it? Because approving is idempotent and cheap, and because the
+// gate it guards is not the SDK's behaviour but ours: Rivo's per-user wallets
+// sign through a TEE, and an explicit, auditable approval we issue ourselves is
+// a thing the ledger can point at. It runs before the SDK would, finds the
+// allowance already sufficient on the second and every later order, and costs
+// one cached read.
 //
 // Pools are recycled across successive windows rather than deployed per window,
 // so the set of addresses needing approval is small and stable. One approval per
