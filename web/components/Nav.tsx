@@ -2,6 +2,18 @@
 
 // The things Rivo does, in the order a person needs them.
 //
+// THERE IS NO CALL TO ACTION UP HERE, AND THAT IS THE SECOND ANSWER TO THE SAME
+// QUESTION. A "Check a price" button lived in the right slot for a while: it
+// balanced a centred nav against a wordmark and it put the one useful action on
+// every page. Both true, and it still read as an advertisement following the
+// reader around a set of pages they had already chosen to open. Asked about
+// twice, which is once more than a composition argument is worth.
+//
+// The balance problem it was solving is solved by geometry instead — the nav
+// sits at the right rather than in the middle, so there is no empty slot to
+// fill. `/check` is the first entry in the list; anyone who wants it is one tap
+// from it on every page.
+//
 // CHECK → UNDERSTAND → VALIDATE → PROVE. Check is the ten-second answer for
 // somebody about to accept a price; Markets and Calibration are the same
 // question with the table left open; Agents answers whether a model deserves
@@ -26,9 +38,6 @@ const SECTIONS = [
   ["/proof", "Proof", "What happened on-chain"],
   ["/evidence", "Evidence", "Every study, including the negative ones"],
 ] as const;
-
-/** Routes where the header's call to action would be noise rather than help. */
-const CTA_HIDDEN_ON = new Set(["/", "/check", "/app", "/demo"]);
 
 export function Nav({ right }: { right?: React.ReactNode }) {
   const path = usePathname();
@@ -63,30 +72,6 @@ export function Nav({ right }: { right?: React.ReactNode }) {
           </nav>
           
           {right && <div className="nav-right row hide-mobile">{right}</div>}
-
-          {/*
-            The right slot. Empty, it made a centred nav read as off-centre;
-            filled with the primary action, the header balances and the one
-            thing a first-time visitor should do follows them across the site.
-
-            It is deliberately NOT everywhere:
-
-              /              the hero carries this action a few hundred pixels
-                             below, and two identical buttons in one viewport is
-                             clutter rather than emphasis
-              /check         it points there
-              /app, /demo    product surfaces, not marketing ones. A person
-                             reading their own portfolio is past being sold to,
-                             and a call to action in that header is noise in a
-                             place that should be quiet.
-              menu open      the open menu IS the navigation; a second control
-                             beside the close button competes with it
-          */}
-          {!CTA_HIDDEN_ON.has(path) && !isOpen && (
-            <Link className="nav-cta" href="/check">
-              Check a price
-            </Link>
-          )}
 
           <button 
             className="mobile-toggle hide-desktop" 

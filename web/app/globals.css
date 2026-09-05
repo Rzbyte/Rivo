@@ -587,7 +587,8 @@ tr:last-child td { border-bottom: none; }
 
 /* --- section nav --------------------------------------------------------- */
 .nav-links {
-  justify-self: center; margin-left: 0;
+  /* Right, not centre — see the header-layout note above. */
+  margin-left: auto;
   display: inline-flex; gap: 4px; flex-wrap: wrap;
   background: rgba(0,0,0,0.3); padding: 4px; border-radius: 999px;
   border: 1px solid var(--line-2);
@@ -717,12 +718,19 @@ header.top {
   position: sticky; top: 0; z-index: 50;
   box-shadow: 0 4px 24px -4px rgba(0,0,0,0.3);
 }
-header.top .wrap { 
-  display: grid; 
-  grid-template-columns: 1fr auto 1fr; 
-  align-items: center; 
+/*
+ * Two parts, pushed apart. The third column went with the call to action.
+ *
+ * `1fr auto 1fr` centred the nav between a 247px wordmark and an empty slot,
+ * which is off-centre to the eye however exact the arithmetic — measured 283px
+ * of clearance on each side and it still read as leaning. Flex with the nav
+ * pushed right needs no filler on the other side to look deliberate.
+ */
+header.top .wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
   height: 64px; 
-  gap: 16px; 
 }
 .brand {
   display: inline-flex; align-items: center; gap: 10px;
@@ -1150,35 +1158,23 @@ header.top .wrap {
  */
 
 
-/* --- the navbar's right slot --------------------------------------------- */
+/* --- header layout ------------------------------------------------------- */
 
 /*
- * Measured on production: the nav pill sat mathematically centred — 283px of
- * clearance on each side — with a 247px wordmark on the left and NOTHING on the
- * right. Optical balance follows mass, not arithmetic, so it read as pushed
- * right and the whole header looked careless.
+ * Brand left, sections right. No third slot, and nothing to fill it with.
  *
- * The primary action takes that slot. It fixes the composition and puts the one
- * thing a first-time visitor should do on every page, which is the same fix.
+ * The nav pill used to sit dead centre with a 247px wordmark on one side and
+ * nothing on the other, which reads as off-centre however precise the
+ * arithmetic — measured 283px of clearance on each side and it still looked
+ * wrong. A call to action filled that slot for a few commits and was reported
+ * twice as an advertisement following the reader around pages they had already
+ * chosen to open.
+ *
+ * Two parts pushed apart need no third: the imbalance was in having a centred
+ * element flanked by unequal mass, not in the slot being empty.
  */
-.nav-cta {
-  font-family: var(--mono); font-size: 11px; font-weight: 700;
-  letter-spacing: .08em; text-transform: uppercase; white-space: nowrap;
-  padding: 10px 18px; border-radius: 999px;
-  background: var(--accent); color: var(--accent-ink);
-  text-decoration: none; border: 1px solid transparent;
-  display: inline-flex; align-items: center; min-height: 40px;
-}
-
-.nav-cta:hover { background: #1f3722; color: var(--accent-ink); }
-.nav-cta:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
 
-
-@media (max-width: 360px) {
-  /* Below this the wordmark and a 44px menu target already fill the bar. */
-  .nav-cta { display: none; }
-}
 
 
 /* --- proof strip --------------------------------------------------------- */
@@ -1235,7 +1231,6 @@ header.top .wrap {
   .panel:hover { transform: translateY(-2px); }
   .inst-live .dot { animation: pulse 2.4s ease-in-out infinite; }
   .mobile-nav a { transition: color .1s ease-out; }
-  .nav-cta { transition: background-color .1s ease-out; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1269,7 +1264,6 @@ header.top .wrap {
   .mobile-toggle { margin-left: auto; min-width: 44px; min-height: 44px; }
   /* It survives the breakpoint rather than disappearing into the menu: a
      hamburger alone hides the only action that matters to a new visitor. */
-  .nav-cta { padding: 9px 13px; font-size: 10.5px; letter-spacing: .06em; }
   .mobile-toggle { margin-left: 0; }
   /* Two-up rather than four: a 30px figure squeezed into a quarter of 390px
      stops being the thing you read first, which is its only job. */

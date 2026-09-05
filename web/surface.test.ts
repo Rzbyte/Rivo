@@ -102,20 +102,22 @@ describe("one web surface", () => {
     expect(body).toMatch(/snapshot|recomputes/);
   });
 
-  it("keeps the header's call to action off the pages where it is noise", () => {
-    // Reported by the user: "the Check a price button is still in some navs".
-    // It is deliberate on the five reading surfaces, where the header is the
-    // only place that action exists — and wrong on four others, each for its
-    // own reason. A list is easy to extend and easy to quietly drop, so the
-    // reasons live in the component and the membership lives here.
+  it("puts no call to action in the header", () => {
+    // It lived there for a few commits: it balanced a centred nav against the
+    // wordmark, and it put the one useful action on every page. Both true, and
+    // it still read as an advertisement following a reader around pages they had
+    // already chosen to open — reported twice, which is once more than a
+    // composition argument is worth.
+    //
+    // The balance is geometry now: brand left, sections right, no third slot.
+    // This test exists so the button does not come back as a "small
+    // improvement" without someone reading why it went.
     const nav = read("web/components/Nav.tsx");
-    const block = nav.slice(nav.indexOf("CTA_HIDDEN_ON = new Set("), nav.indexOf("]", nav.indexOf("CTA_HIDDEN_ON = new Set(")));
-    for (const route of ["/", "/check", "/app", "/demo"]) {
-      expect(block, `${route} should not offer "Check a price" in the header`).toContain(`"${route}"`);
-    }
-    // And it must disappear while the mobile menu is open: the open menu is the
-    // navigation, and a second control beside the close button competes with it.
-    expect(nav).toMatch(/!CTA_HIDDEN_ON\.has\(path\) && !isOpen/);
+    expect(nav, "the header CTA was removed deliberately").not.toContain("nav-cta");
+    expect(read("web/app/globals.css"), "its styles went with it").not.toContain(".nav-cta");
+    // /check stays reachable from every page: it is the first entry in the list.
+    const block = nav.slice(nav.indexOf("const SECTIONS"), nav.indexOf("] as const"));
+    expect(block.match(/\["(\/[a-z]+)"/)?.[1]).toBe("/check");
   });
 
   it("puts the live address where somebody opening the repo will see it", () => {
