@@ -27,6 +27,7 @@
 // reader who does not yet, and a front door behind four other doors is not one.
 
 import Link from "next/link";
+import { BrandMark } from "./BrandMark";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 
@@ -54,7 +55,7 @@ export function Nav({ right }: { right?: React.ReactNode }) {
       <header className="top">
         <div className="wrap">
           <Link className="brand" href="/" onClick={() => setIsOpen(false)}>
-            <span className="brand-dot" aria-hidden="true" />
+            <BrandMark className="brand-mark" size={14} />
             Rivo
           </Link>
           

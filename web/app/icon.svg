@@ -1,14 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 8" width="18" height="8">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <!-- The mark is the venue, not a logo: two assets across four tenors, which is
        exactly the universe Rivo prices. No asset to fetch, and it is the one icon
        nobody else could plausibly be using.
 
-       This existed in the browser bundle and never made it to the Next app, so
-       every tab a reader opened showed a blank document icon. -->
-  <g fill="#2f5233">
-    <rect x="0" y="0" width="3" height="3"/><rect x="5" y="0" width="3" height="3"/>
-    <rect x="10" y="0" width="3" height="3"/><rect x="15" y="0" width="3" height="3"/>
-    <rect x="0" y="5" width="3" height="3"/><rect x="5" y="5" width="3" height="3"/>
-    <rect x="10" y="5" width="3" height="3"/><rect x="15" y="5" width="3" height="3"/>
+       This one carries its own dark tile rather than sitting transparent on the
+       browser's chrome, and that is the whole reason it can use the logo's real
+       gradient: the pale end of that ramp (#d8f7da) is invisible on a light tab
+       bar and near-invisible on Rivo's own cream. Give it the ground the logo was
+       drawn against and both ends read everywhere.
+
+       Geometry matches components/BrandMark.tsx — 24 / 4 / 14 on a 98x52 grid,
+       fourth column narrow — scaled to 46px wide and centred in the tile. -->
+  <rect width="64" height="64" rx="14" fill="#111214"/>
+  <linearGradient id="m" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="98" y2="0">
+    <stop offset="0" stop-color="#d8f7da"/>
+    <stop offset="1" stop-color="#35dd48"/>
+  </linearGradient>
+  <g transform="translate(9 19.8) scale(0.4694)" fill="url(#m)">
+    <rect x="0"  y="0"  width="24" height="24" rx="4.4"/>
+    <rect x="28" y="0"  width="24" height="24" rx="4.4"/>
+    <rect x="56" y="0"  width="24" height="24" rx="4.4"/>
+    <rect x="84" y="0"  width="14" height="24" rx="4.4"/>
+    <rect x="0"  y="28" width="24" height="24" rx="4.4"/>
+    <rect x="28" y="28" width="24" height="24" rx="4.4"/>
+    <rect x="56" y="28" width="24" height="24" rx="4.4"/>
+    <rect x="84" y="28" width="14" height="24" rx="4.4"/>
   </g>
 </svg>

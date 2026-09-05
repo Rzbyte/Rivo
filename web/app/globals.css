@@ -7,6 +7,7 @@
   --ink: #14140f;       --muted: #605d54;     --faint: #6b675b;
   --line: rgba(0,0,0,0.08); --line-2: rgba(0,0,0,0.15);
   --accent: #2f5233;    --accent-ink: #fbf9f5; --accent-soft: rgba(47, 82, 51, 0.1);
+  --mark-a: #4f8c58;    --mark-b: #2f5233;
   --pos: #2c6b3c;       --neg: #9d3423;       --warn: #7d5714;
   --pos-soft: #e4efe6;  --neg-soft: #f6e6e2;  --warn-soft: #f5ecd9;
   --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
@@ -21,6 +22,7 @@
     --ink: #ece9df;     --muted: #a09c8f;     --faint: #8e8b7f;
     --line: rgba(255,255,255,0.10);    --line-2: rgba(255,255,255,0.16);
     --accent: #78d785;  --accent-ink: #0a0a0c; --accent-soft: rgba(120, 215, 133, 0.15);
+  --mark-a: #d8f7da;    --mark-b: #35dd48;
     --pos: #8cc79a;     --neg: #e86a58;       --warn: #e6b863;
     --pos-soft: rgba(140, 199, 154, 0.15); --neg-soft: rgba(232, 106, 88, 0.15); --warn-soft: rgba(230, 184, 99, 0.15);
     --shadow: 0 8px 32px -4px rgba(0,0,0,0.4);
@@ -32,10 +34,31 @@
   --ink: #ece9df;       --muted: #a09c8f;     --faint: #8e8b7f;
   --line: rgba(255,255,255,0.10);      --line-2: rgba(255,255,255,0.16);
   --accent: #78d785;    --accent-ink: #0a0a0c; --accent-soft: rgba(120, 215, 133, 0.15);
+  --mark-a: #d8f7da;    --mark-b: #35dd48;
   --pos: #8cc79a;       --neg: #e86a58;       --warn: #e6b863;
   --pos-soft: rgba(140, 199, 154, 0.15);  --neg-soft: rgba(232, 106, 88, 0.15);  --warn-soft: rgba(230, 184, 99, 0.15);
   --shadow: 0 8px 32px -4px rgba(0,0,0,0.4);
 }
+
+/*
+ * EVERY SURFACE IN THIS FILE IS A TOKEN, AND THAT RULE WAS BOUGHT THE HARD WAY.
+ *
+ * Thirty-three declarations here painted a dark-theme value directly —
+ * `rgba(10,10,12,0.7)` on the header, `rgba(0,0,0,0.3)` on the nav track,
+ * `rgba(0,0,0,0.2)` on every input — while the text on top of them kept using
+ * `--ink`. In the dark theme that reads correctly, which is exactly why it
+ * lasted: the header measured near-black text on a #505050 bar in the LIGHT
+ * theme, about 2.5:1, and the light theme is the default.
+ *
+ * The same shape had already been fixed once, on the mobile menu, and the note
+ * there says why it survived. It survived in twelve more places. So: a ground is
+ * --bg / --panel / --panel-2, a border is --line / --line-2, a hover lift is
+ * --panel-2 or --accent-soft, a shadow is --shadow. A raw colour on a surface
+ * property is a bug even when it looks right in the theme you have open.
+ *
+ * The text-shadows went with them. `0 2px 12px rgba(0,0,0,0.4)` behind a heading
+ * is a glow on near-black and a grey smudge behind dark type on cream.
+ */
 
 * { box-sizing: border-box; }
 
@@ -179,7 +202,7 @@ button, .btn {
   padding: 10px 16px;
   border-radius: var(--r);
   border: 1px solid var(--line-2);
-  background: rgba(255,255,255,0.03);
+  background: var(--panel);
   color: var(--ink);
   cursor: pointer;
   text-decoration: none;
@@ -188,7 +211,7 @@ button, .btn {
 }
 button:hover:not(:disabled), .btn:hover { 
   background: var(--panel-2); 
-  border-color: rgba(255,255,255,0.3);
+  border-color: var(--faint);
   transform: translateY(-1px);
 }
 button:disabled { opacity: .4; cursor: not-allowed; }
@@ -267,7 +290,7 @@ input, select {
   padding: 10px 12px;
   border-radius: var(--r);
   border: 1px solid var(--line-2);
-  background: rgba(0,0,0,0.2);
+  background: var(--bg);
   color: var(--ink);
   width: 100%;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -330,7 +353,7 @@ a[href^="https://shannon-explorer"]:focus-visible {
 
 /* --- section heads ------------------------------------------------------- */
 .sec-head { display: flex; align-items: baseline; gap: 12px; margin: 40px 0 16px; flex-wrap: wrap; }
-.sec-head h2, .sec-head h3 { flex: none; margin: 0; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+.sec-head h2, .sec-head h3 { flex: none; margin: 0; }
 /*
  * The ruler between a heading and its figures — kept, because a product whose
  * subject is measurement should carry one, and sharpened because at 0.6 opacity
@@ -359,16 +382,18 @@ a[href^="https://shannon-explorer"]:focus-visible {
 }
 
 /* --- the mark ------------------------------------------------------------ */
-.brand-dot {
-  width: 18px; height: 8px; flex: none; color: var(--accent);
-  background-image:
-    repeating-linear-gradient(to right, currentColor 0 3px, transparent 3px 5px),
-    repeating-linear-gradient(to right, currentColor 0 3px, transparent 3px 5px);
-  background-size: 18px 3px, 18px 3px;
-  background-position: 0 0, 0 5px;
-  background-repeat: no-repeat;
-  filter: drop-shadow(0 0 6px var(--accent));
-}
+/*
+ * Drawn as an SVG now (components/BrandMark.tsx), not as two repeating
+ * gradients. The logo's cells have rounded corners and a ramp that runs once
+ * across all four columns, and a background-image cannot do either: corners
+ * because a gradient stripe has none, and the ramp because each stripe repeats
+ * its own. The endpoints are --mark-a / --mark-b, set per theme.
+ *
+ * The drop-shadow that used to sit here is gone with it. It read as a glow on
+ * the dark theme and as a muddy halo around a dark-green mark on cream, and the
+ * logo has no glow in it.
+ */
+.brand-mark { flex: none; display: block; }
 
 /* --- the instrument ------------------------------------------------------ */
 .hero-grid { display: grid; gap: 32px; align-items: start; }
@@ -377,14 +402,14 @@ a[href^="https://shannon-explorer"]:focus-visible {
 }
 
 .inst {
-  border: 1px solid rgba(255,255,255,0.1); border-radius: var(--r);
+  border: 1px solid var(--line-2); border-radius: var(--r);
   background: var(--panel); overflow: hidden;
-  box-shadow: 0 16px 48px -12px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.05);
+  box-shadow: var(--shadow);
   backdrop-filter: blur(20px);
 }
 .inst-top {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  padding: 10px 14px; border-bottom: 1px solid var(--line-2); background: rgba(0,0,0,0.2);
+  padding: 10px 14px; border-bottom: 1px solid var(--line-2); background: var(--panel-2);
   font-family: var(--mono); font-size: 11px; font-weight: 700;
   text-transform: uppercase; letter-spacing: .12em; color: var(--faint);
 }
@@ -409,20 +434,20 @@ a[href^="https://shannon-explorer"]:focus-visible {
   border-radius: 0 4px 4px 0;
 }
 .inst-foot {
-  padding: 10px 14px; border-top: 1px solid var(--line-2); background: rgba(0,0,0,0.2);
+  padding: 10px 14px; border-top: 1px solid var(--line-2); background: var(--panel-2);
   font-family: var(--mono); font-size: 11.5px; color: var(--faint);
   display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap;
 }
 
-.tally { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0; border-top: 1px solid var(--line-2); border-bottom: 1px solid var(--line-2); background: rgba(0,0,0,0.1); backdrop-filter: blur(8px); }
+.tally { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0; border-top: 1px solid var(--line-2); border-bottom: 1px solid var(--line-2); background: var(--panel-2); backdrop-filter: blur(8px); }
 .tally > div { padding: 20px 20px; border-right: 1px solid var(--line); }
 .tally > div:last-child { border-right: none; }
-.tally .v { display: block; font-family: var(--mono); font-size: 28px; font-weight: 500; letter-spacing: -.03em; font-variant-numeric: tabular-nums; line-height: 1.1; color: var(--ink); text-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+.tally .v { display: block; font-family: var(--mono); font-size: 28px; font-weight: 500; letter-spacing: -.03em; font-variant-numeric: tabular-nums; line-height: 1.1; color: var(--ink); }
 .tally .k { display: block; margin-top: 6px; font-size: 12.5px; color: var(--muted); line-height: 1.4; }
 
 /* --- reveal -------------------------------------------------------------- */
 .reveal { border-top: 1px solid var(--line); transition: background 0.2s; }
-.reveal:hover { background: rgba(255,255,255,0.02); }
+.reveal:hover { background: var(--panel-2); }
 .reveal:last-of-type { border-bottom: 1px solid var(--line); }
 .reveal > summary {
   list-style: none; cursor: pointer;
@@ -451,7 +476,6 @@ a[href^="https://shannon-explorer"]:focus-visible {
 .compare .big {
   font-family: var(--mono); font-size: 28px; font-weight: 500;
   font-variant-numeric: tabular-nums; letter-spacing: -.03em; line-height: 1.1;
-  text-shadow: 0 2px 12px rgba(0,0,0,0.4);
 }
 .compare .vs { font-size: 13px; color: var(--muted); }
 .compare .gap {
@@ -487,7 +511,6 @@ a[href^="https://shannon-explorer"]:focus-visible {
   letter-spacing: .12em; text-transform: uppercase;
   padding: 4px 10px; border-radius: 4px;
   border: 1px solid var(--line-2); background: var(--panel-2); color: var(--muted);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
 }
 .verdict.claim { border-color: var(--warn); background: var(--warn-soft); color: var(--warn); text-shadow: 0 0 8px var(--warn-soft); }
 .verdict.caution { border-color: var(--neg); background: var(--neg-soft); color: var(--neg); text-shadow: 0 0 8px var(--neg-soft); }
@@ -500,7 +523,7 @@ a[href^="https://shannon-explorer"]:focus-visible {
   padding: 18px 0; border-bottom: 1px solid var(--line);
   transition: background 0.2s, padding-left 0.2s;
 }
-.flow li:hover { background: rgba(255,255,255,0.02); padding-left: 8px; border-radius: 4px; }
+.flow li:hover { background: var(--panel-2); padding-left: 8px; border-radius: 4px; }
 .flow li:last-child { border-bottom: none; }
 .flow li::before {
   counter-increment: step; content: counter(step, decimal-leading-zero);
@@ -516,7 +539,7 @@ a[href^="https://shannon-explorer"]:focus-visible {
 
 .defs { display: grid; gap: 0; }
 .defs > div { padding: 14px 0; border-bottom: 1px solid var(--line); transition: background 0.2s, padding-left 0.2s; }
-.defs > div:hover { background: rgba(255,255,255,0.02); padding-left: 8px; border-radius: 4px; }
+.defs > div:hover { background: var(--panel-2); padding-left: 8px; border-radius: 4px; }
 .defs > div:last-child { border-bottom: none; }
 .defs dt, .defs .t {
   font-family: var(--mono); font-size: 13px; font-weight: 700;
@@ -529,7 +552,7 @@ a[href^="https://shannon-explorer"]:focus-visible {
   display: inline-flex; align-items: center; gap: 8px;
   font-size: 12px; font-weight: 640; letter-spacing: 0.03em;
   padding: 4px 12px; border-radius: 999px;
-  border: 1px solid var(--line-2); background: rgba(0,0,0,0.2); color: var(--muted);
+  border: 1px solid var(--line-2); background: var(--panel-2); color: var(--muted);
   backdrop-filter: blur(4px);
 }
 .pill.live { background: var(--pos-soft); border-color: var(--pos); color: var(--pos); box-shadow: 0 0 10px var(--pos-soft); }
@@ -544,7 +567,6 @@ a[href^="https://shannon-explorer"]:focus-visible {
   font-family: var(--mono); font-size: 32px; font-weight: 500;
   font-variant-numeric: tabular-nums;
   letter-spacing: -.03em; line-height: 1.15; margin-top: 8px;
-  text-shadow: 0 2px 12px rgba(0,0,0,0.4);
 }
 .stat .sub { display: block; font-size: 13px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
 
@@ -552,7 +574,7 @@ details > summary::-webkit-details-marker { display: none; }
 details > summary:hover { color: var(--ink); }
 
 /* --- meters -------------------------------------------------------------- */
-.meter { height: 6px; background: rgba(255,255,255,0.05); border-radius: 999px; overflow: hidden; margin-top: 6px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.3); }
+.meter { height: 6px; background: var(--panel-2); border-radius: 999px; overflow: hidden; margin-top: 6px; }
 .meter > span { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), #7bc08b); border-radius: 999px; box-shadow: 0 0 8px var(--accent); }
 .meter > span.hot { background: linear-gradient(90deg, var(--warn), #f5d17a); box-shadow: 0 0 8px var(--warn); }
 .meter > span.over { background: linear-gradient(90deg, var(--neg), #f08a78); box-shadow: 0 0 8px var(--neg); }
@@ -588,7 +610,7 @@ th {
 td { padding: 12px 12px 12px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
 td.n, th.n { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; padding-right: 0; }
 tr { transition: background 0.15s; }
-tr:hover td { background: rgba(255,255,255,0.015); }
+tr:hover td { background: var(--panel-2); }
 tr:last-child td { border-bottom: none; }
 
 /* --- decisions ----------------------------------------------------------- */
@@ -600,7 +622,7 @@ tr:last-child td { border-bottom: none; }
 .decision .why {
   grid-column: 1 / -1; font-size: 13px; color: var(--muted);
   padding: 8px 12px; border-radius: 4px;
-  border-left: 3px solid var(--line-2); background: rgba(255,255,255,0.02);
+  border-left: 3px solid var(--line-2); background: var(--panel-2);
 }
 .decision.taken .why { border-left-color: var(--pos); background: var(--pos-soft); color: var(--pos); box-shadow: 0 0 10px var(--pos-soft); }
 .decision.refused .why { border-left-color: var(--warn); }
@@ -619,7 +641,7 @@ tr:last-child td { border-bottom: none; }
   /* Right, not centre — see the header-layout note above. */
   margin-left: auto;
   display: inline-flex; gap: 4px; flex-wrap: wrap;
-  background: rgba(0,0,0,0.3); padding: 4px; border-radius: 999px;
+  background: var(--panel-2); padding: 4px; border-radius: 999px;
   border: 1px solid var(--line-2);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
 }
@@ -632,12 +654,12 @@ tr:last-child td { border-bottom: none; }
   transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
   border: 1px solid transparent;
 }
-.nav-links a:hover { color: var(--ink); background: rgba(255,255,255,0.05); }
+.nav-links a:hover { color: var(--ink); background: var(--accent-soft); }
 .nav-links a[aria-current="page"] {
-  color: var(--ink);
-  background: var(--panel-2);
-  border-color: rgba(255,255,255,0.1);
-  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  color: var(--bg);
+  background: var(--ink);
+  border-color: transparent;
+  box-shadow: var(--shadow);
   text-shadow: none;
 }
 .nav-right { justify-self: end; margin-left: 0; }
@@ -652,7 +674,7 @@ tr:last-child td { border-bottom: none; }
   display: flex; align-items: center; justify-content: center;
   transition: background 0.2s; margin-left: auto;
 }
-.mobile-toggle:hover { background: rgba(255,255,255,0.05); }
+.mobile-toggle:hover { background: var(--panel-2); }
 
 /*
  * The menu paints the THEME's surface, not a dark one.
@@ -711,7 +733,7 @@ tr:last-child td { border-bottom: none; }
 .tabs {
   display: inline-flex; gap: 4px;
   overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
-  background: rgba(0,0,0,0.15); padding: 4px; border-radius: 12px;
+  background: var(--panel-2); padding: 4px; border-radius: 12px;
   border: 1px solid var(--line-2); margin-bottom: 16px;
 }
 .tabs::-webkit-scrollbar { display: none; }
@@ -724,21 +746,21 @@ tr:last-child td { border-bottom: none; }
   text-transform: uppercase; letter-spacing: .1em;
   transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.tabs button:hover { background: rgba(255,255,255,0.05); color: var(--ink); transform: none; box-shadow: none; }
+.tabs button:hover { background: var(--accent-soft); color: var(--ink); transform: none; box-shadow: none; }
 .tabs button.primary {
   background: var(--panel); color: var(--ink);
-  border-color: rgba(255,255,255,0.1); box-shadow: 0 2px 8px rgba(0,0,0,0.3); text-shadow: none;
+  border-color: var(--line-2); box-shadow: var(--shadow); text-shadow: none;
 }
 
 /* --- shell --------------------------------------------------------------- */
 .app { min-height: 100vh; display: flex; flex-direction: column; }
 header.top {
   border-bottom: 1px solid var(--line);
-  background: rgba(10, 10, 12, 0.7);
+  background: var(--panel);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   position: sticky; top: 0; z-index: 50;
-  box-shadow: 0 4px 24px -4px rgba(0,0,0,0.3);
+  box-shadow: var(--shadow);
 }
 /*
  * Two parts, pushed apart. The third column went with the call to action.
@@ -757,9 +779,16 @@ header.top .wrap {
 .brand {
   display: inline-flex; align-items: center; gap: 10px;
   font-weight: 700; letter-spacing: -.03em; font-size: 20px; color: var(--ink);
-  text-shadow: 0 2px 12px rgba(0,0,0,0.5);
 }
-.brand:hover { text-decoration: none; color: white; }
+/*
+ * Two dark-theme values used to sit here and neither survived the light default:
+ * `text-shadow: 0 2px 12px rgba(0,0,0,0.5)`, which is a glow on near-black and a
+ * grey smudge behind the wordmark on cream, and `color: white` on hover, which
+ * turned "Rivo" invisible against its own background the moment a pointer
+ * touched it. The wordmark is --ink and stays --ink; it has 12:1 either way and
+ * needs no help.
+ */
+.brand:hover { text-decoration: none; color: var(--ink); }
 
 .steps { display: flex; gap: 0; margin: 0 0 24px; padding: 0; list-style: none; flex-wrap: wrap; }
 .steps li {
@@ -929,7 +958,7 @@ header.top .wrap {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  background: rgba(255,255,255,0.03);
+  background: var(--panel);
   border: 1px solid var(--line-2);
   color: var(--faint);
   backdrop-filter: blur(10px);
@@ -964,7 +993,7 @@ header.top .wrap {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: 0 8px 32px -4px rgba(0,0,0,0.2);
+  box-shadow: var(--shadow);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
@@ -985,8 +1014,8 @@ header.top .wrap {
 }
 .bento-card:hover {
   transform: translateY(-4px) scale(1.01);
-  box-shadow: 0 24px 48px -12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
-  border-color: rgba(255,255,255,0.15);
+  box-shadow: 0 24px 48px -12px rgba(0,0,0,0.22);
+  border-color: var(--accent);
 }
 /*
  * Four cards, four columns, two rows, and no hole.

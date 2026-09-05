@@ -8,6 +8,7 @@
 // visible to somebody who has thirty seconds and no account.
 
 import { useCallback, useEffect, useState } from "react";
+import { BrandMark } from "@/components/BrandMark";
 import { Dashboard, type Bundle } from "@/components/Dashboard";
 import { NETWORK } from "@/lib/somnia";
 
@@ -40,7 +41,7 @@ export default function DemoPage() {
       <header className="top">
         <div className="wrap">
           <a className="brand" href="/">
-            <span className="brand-dot" aria-hidden="true" />
+            <BrandMark className="brand-mark" size={14} />
             Rivo
           </a>
           <div className="row">

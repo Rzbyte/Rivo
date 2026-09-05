@@ -15,11 +15,25 @@ export const contentType = "image/png";
 export const alt = "Rivo — Event Intelligence & Agent Validation for DreamDEX";
 
 export default function Image() {
-  // The venue mark: two assets across four tenors, the same eight squares the
-  // nav uses. Built from divs because Satori has no SVG shape support worth
-  // relying on.
-  const square = { width: 26, height: 26, background: "#2f5233" };
-  const row = { display: "flex", gap: 16 };
+  // The venue mark: two assets across four tenors, the same eight cells the nav
+  // uses. Built from divs because Satori has no SVG shape support worth relying
+  // on — which also means no gradient element, so the ramp is sampled at each
+  // column instead of interpolated by the renderer.
+  //
+  // The card's ground is Rivo's cream, so this takes the LIGHT ramp
+  // (#4f8c58 -> #2f5233), not the logo's #d8f7da -> #35dd48. That pale end
+  // measures 2.0:1 here; it belongs on the dark tile the favicon carries.
+  //
+  // Both rows are identical. The old version dimmed the second to 55%, which
+  // said the two assets were not equally real.
+  const RAMP = ["#4f8c58", "#44794c", "#3a653f", "#2f5233"];
+  const cell = (i: number) => ({
+    width: i === 3 ? 15 : 26,   // the fourth column is the narrow one
+    height: 26,
+    borderRadius: 5,
+    background: RAMP[i],
+  });
+  const row = { display: "flex", gap: 4 };
 
   return new ImageResponse(
     (
@@ -35,15 +49,15 @@ export default function Image() {
           fontFamily: "sans-serif",
         }}
       >
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           <div style={row}>
             {[0, 1, 2, 3].map((i) => (
-              <div key={`a${i}`} style={square} />
+              <div key={`a${i}`} style={cell(i)} />
             ))}
           </div>
           <div style={row}>
             {[0, 1, 2, 3].map((i) => (
-              <div key={`b${i}`} style={{ ...square, opacity: 0.55 }} />
+              <div key={`b${i}`} style={cell(i)} />
             ))}
           </div>
         </div>
