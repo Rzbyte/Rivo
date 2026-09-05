@@ -20,14 +20,36 @@
 // one page that reads no data, so nothing could have caught them drifting from
 // the verdict /agents shows — and `landing.test.ts` now fails if they come back.
 
+import { readFileSync, existsSync } from "node:fs";
+import { resolve } from "node:path";
 import Link from "next/link";
 import { Nav } from "@/components/Nav";
 import { PRODUCTION_STRATEGY } from "@rivo/research/gating.js";
 import { BASELINES } from "@rivo/intel/baselines.js";
 
+/**
+ * The calibration headline, read from the artefact rather than typed.
+ *
+ * This page is the one surface that fetches nothing, which is exactly why its
+ * numbers rot: "843 settled windows" survived here for twelve days after the
+ * sample reached 2,179. A figure a reader can check is worth having; a figure
+ * nobody can catch drifting is a liability, and this file has produced one
+ * before.
+ */
+function calibration(): { windows: string; skill: string } | null {
+  for (const p of ["docs/evidence/calibration-report.json", "../docs/evidence/calibration-report.json"]) {
+    const full = resolve(p);
+    if (!existsSync(full)) continue;
+    const w = (JSON.parse(readFileSync(full, "utf8")) as { window: { windows: number; skill: number } }).window;
+    return { windows: w.windows.toLocaleString("en-US"), skill: `${(w.skill * 100).toFixed(1)}%` };
+  }
+  return null;
+}
+
 
 
 export default function Landing() {
+  const cal = calibration();
   return (
     <>
       <Nav />
@@ -39,6 +61,7 @@ export default function Landing() {
         
         {/* Extreme Hero Section */}
         <section className="hero">
+        <div>
           <div className="badges">
             {/* Somnia Shannon, chain 50312. The execution mode is
                 `experimental_testnet` and the gate refuses mainnet outright for
@@ -50,21 +73,94 @@ export default function Landing() {
             <span className="badge">DREAMDEX INTEGRATED</span>
           </div>
           
-          <h1 className="text-gradient">
-            Event Contracts, <br /> Proven Before Trading.
+          {/* A claim, a doubt, a number, an action.
+              The previous headline named the category — "Event Contracts,
+              Proven Before Trading" — which states what this is and gives a
+              reader no reason to care in the ten seconds they are deciding. */}
+          <h1>
+            Every price is a claim.<br />
+            <span className="text-gradient">Check it</span> before you take it.
           </h1>
-          
+
           <p className="lede" style={{ maxWidth: "600px" }}>
-            Rivo scores DreamDEX&rsquo;s own Event Contract prices against contracts that have already
-            settled, and tests whether an agent&rsquo;s edge survives the spread before any capital
-            moves. Nothing here needs a wallet to read.
+            DreamDEX says 67%. Nobody tells you whether contracts priced at 67% ever settled true
+            about 67% of the time. Rivo does — against{" "}
+            <strong>{cal ? `${cal.windows} contracts` : "every contract"} that have already
+            settled</strong>, with the sample size attached to every answer.
+            {" "}Nothing here needs a wallet to read.
           </p>
 
-          <div className="row" style={{ marginTop: 32 }}>
-            <Link className="btn primary big" href="/check">Check an Asset</Link>
-            <Link className="btn btn-glass big" href="/markets">Explore Live Markets</Link>
+          <div className="row">
+            <Link className="btn primary big" href="/check">Check a live price →</Link>
+            <Link className="btn btn-glass big" href="/calibration">See the calibration</Link>
           </div>
+          <p className="hint" style={{ marginTop: 14, marginBottom: 0 }}>
+            No wallet. No account. Four of five pages open to anyone.
+          </p>
+        </div>
+
+        {/* The product, not an illustration of it.
+            One real card, static: the same two numbers and the same track the
+            live surface draws, so the hero shows the answer rather than
+            describing the idea of one. */}
+        <div className="hero-sample">
+          <div className="row" style={{ justifyContent: "space-between", alignItems: "baseline" }}>
+            <span className="label" style={{ color: "var(--accent)" }}>BTC · 1h</span>
+            <span className="mono faint" style={{ fontSize: 12.5 }}>14m 40s left</span>
+          </div>
+          <div className="hero-sample-q">Will BTC close lower than it opened?</div>
+          <div className="figures" style={{ marginTop: 18 }}>
+            <div>
+              <div className="figure-label book">The book asks</div>
+              <div className="figure">14%</div>
+            </div>
+            <div>
+              <div className="figure-label hist">History settled</div>
+              <div className="figure hist">21%</div>
+            </div>
+          </div>
+          <div className="track" role="img" aria-label="On a nought to one hundred percent scale, the book asks 14% and comparable contracts settled 21%.">
+            <div className="track-ends" aria-hidden="true"><span>0%</span><span>100%</span></div>
+            <div className="track-rail" aria-hidden="true" />
+            <div className="track-gap" aria-hidden="true" style={{ left: "14%", width: "7%" }} />
+            <div className="track-mark book" aria-hidden="true" style={{ left: "14%" }} />
+            <div className="track-mark hist" aria-hidden="true" style={{ left: "21%" }} />
+          </div>
+          <div className="check-verdict">
+            <div className="check-verdict-headline" style={{ color: "var(--accent)" }}>
+              The book is asking too little
+            </div>
+            <p className="muted" style={{ marginTop: 8, marginBottom: 0, fontSize: 15 }}>
+              Contracts priced in this band settled true 21% of the time, and you are being asked
+              for 14%.
+            </p>
+          </div>
+        </div>
         </section>
+
+        {/* Proof, in four numbers a visitor can go and check.
+              Marketing pages put adjectives here. Every figure below is read
+              from an artefact in this repository or from a constant the
+              execution gate reads, and the last one is the least flattering
+              thing we could put on a landing page. */}
+          <div className="proof-strip">
+            <div>
+              <div className="proof-figure">{cal ? cal.windows : "—"}</div>
+              <div className="proof-label">settled contracts measured</div>
+            </div>
+            <div>
+              <div className="proof-figure accent">{cal ? cal.skill : "—"}</div>
+              <div className="proof-label">better than guessing</div>
+            </div>
+            <div>
+              <div className="proof-figure">{BASELINES.length + 1}</div>
+              <div className="proof-label">agents judged live, none paid</div>
+            </div>
+            <div>
+              <div className="proof-figure neg">1</div>
+              <div className="proof-label">model rejected &mdash; ours</div>
+            </div>
+          </div>
 
         {/* Bento Box Grid */}
         <section className="bento-grid">

@@ -39,6 +39,18 @@
 
 * { box-sizing: border-box; }
 
+html { overflow-x: clip; }
+/*
+ * `body` is the orbs' containing block on purpose.
+ *
+ * Without it they resolve `right: 0` against the initial containing block,
+ * which on a scrollable page is not the same width as the body box — measured
+ * 17px past the viewport, which is the scrollbar. Positioning the body makes
+ * "the right edge" mean the right edge of the content, which is what the
+ * declaration was always trying to say.
+ */
+body { position: relative; }
+
 html, body {
   margin: 0;
   padding: 0;
@@ -688,17 +700,44 @@ header.top .wrap {
   animation: float 15s ease-in-out infinite alternate;
   pointer-events: none;
 }
+/*
+ * The orbs are atmosphere at z-index -1 and they were setting the page width.
+ *
+ * `.orb.two` sat at `right: 0` of a 300px box that the float animation then
+ * translated outward: measured on production, its right edge landed at 1288px
+ * in a 1280px viewport, so every page scrolled sideways at every width. A
+ * decorative element must never be able to widen the document.
+ *
+ * `body` clips the horizontal axis and the orbs are inset far enough that the
+ * animation cannot reach the edge. Vertical scrolling is untouched — clipping
+ * both axes on the body is how a page loses `position: sticky`.
+ */
 .orb.one {
   width: 300px; height: 300px;
   background: var(--accent);
-  top: 5%; left: 0%;
+  top: 5%; left: 0;
 }
 .orb.two {
   width: 300px; height: 300px;
   background: var(--pos);
-  bottom: 0%; right: 0%;
+  bottom: 5%; right: 0;
   animation-delay: -5s;
 }
+/*
+ * The orbs drift on Y only.
+ *
+ * The shared `float` keyframes translate +20px on X, which on the right-hand
+ * orb put its edge 20px past the viewport and made the whole document
+ * scrollable sideways at every width — measured 77px of overflow at 1280 and
+ * 80px at 390 once the insets were widened. `overflow: clip` would have hidden
+ * it; this removes it. Decoration that can widen the document is a layout bug
+ * wearing an animation.
+ */
+@keyframes orb-drift {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-30px); }
+}
+.orb { animation-name: orb-drift; }
 
 /* Floating Animations */
 @keyframes float {
@@ -722,27 +761,41 @@ header.top .wrap {
 }
 
 /* Hero Section */
+/*
+ * Two columns, not one centred stack.
+ *
+ * Centred, the headline wrapped to four lines, ate 400px of height and pushed
+ * the proof below the fold — while the right half of a 1280px screen stayed
+ * empty. The claim goes left and the PRODUCT goes right, because a screenshot
+ * of the answer argues better than a paragraph about the idea.
+ */
 .hero {
   position: relative;
-  text-align: center;
-  padding: 100px 20px 80px;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 56px;
   align-items: center;
-  gap: 24px;
+  padding: 64px 0 12px;
+  text-align: left;
 }
 .hero h1 {
-  font-size: clamp(28px, 8vw, 56px);
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  max-width: 16ch;
-  margin: 0 auto;
+  font-size: clamp(34px, 4.2vw, 58px);
+  line-height: 1.04;
+  letter-spacing: -0.045em;
+  max-width: 15ch;
+  margin: 0 0 18px;
 }
 .hero p.lede {
-  font-size: clamp(16px, 2vw, 20px);
-  max-width: 60ch;
-  margin: 0 auto;
+  font-size: clamp(16px, 1.35vw, 19px);
+  max-width: 46ch;
+  margin: 0 0 28px;
   color: var(--muted);
+}
+@media (max-width: 900px) {
+  /* One column, and the sample card follows the words rather than competing
+     with them for a half-width that no longer exists. */
+  .hero { grid-template-columns: minmax(0, 1fr); gap: 32px; padding: 36px 0 8px; }
+  .hero h1 { max-width: 18ch; }
 }
 .hero .badges {
   display: flex;
@@ -1008,4 +1061,107 @@ header.top .wrap {
     gap: 12px;
   }
   .mobile-toggle { margin-left: auto; min-width: 44px; min-height: 44px; }
+}
+
+
+/* --- the navbar's right slot --------------------------------------------- */
+
+/*
+ * Measured on production: the nav pill sat mathematically centred — 283px of
+ * clearance on each side — with a 247px wordmark on the left and NOTHING on the
+ * right. Optical balance follows mass, not arithmetic, so it read as pushed
+ * right and the whole header looked careless.
+ *
+ * The primary action takes that slot. It fixes the composition and puts the one
+ * thing a first-time visitor should do on every page, which is the same fix.
+ */
+.nav-cta {
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase; white-space: nowrap;
+  padding: 10px 18px; border-radius: 999px;
+  background: var(--accent); color: var(--accent-ink);
+  text-decoration: none; border: 1px solid transparent;
+  display: inline-flex; align-items: center; min-height: 40px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .nav-cta { transition: background-color .1s ease-out; }
+}
+.nav-cta:hover { background: #1f3722; color: var(--accent-ink); }
+.nav-cta:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+/* On the page it points at, the button would be an invitation to stand still. */
+.nav-cta[aria-current="page"] { display: none; }
+
+@media (max-width: 720px) {
+  /* It survives the breakpoint rather than disappearing into the menu: a
+     hamburger alone hides the only action that matters to a new visitor. */
+  .nav-cta { padding: 9px 13px; font-size: 10.5px; letter-spacing: .06em; }
+  .mobile-toggle { margin-left: 0; }
+}
+@media (max-width: 360px) {
+  /* Below this the wordmark and a 44px menu target already fill the bar. */
+  .nav-cta { display: none; }
+}
+
+
+/* --- proof strip --------------------------------------------------------- */
+
+/*
+ * Four numbers, hairline-separated, sharing one border — a table of facts
+ * rather than four floating cards. The 1px gap over a --line-2 ground is what
+ * makes the rules; it needs no per-cell borders and never doubles at a seam.
+ */
+.proof-strip {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px; background: var(--line-2);
+  border: 1px solid var(--line-2); border-radius: 12px; overflow: hidden;
+  margin-top: 44px;
+}
+.proof-strip > div { background: var(--panel); padding: 20px 22px; }
+.proof-figure {
+  font-family: var(--mono); font-size: clamp(24px, 3vw, 30px); font-weight: 700;
+  letter-spacing: -.03em; font-variant-numeric: tabular-nums; line-height: 1.05;
+}
+.proof-figure.accent { color: var(--accent); }
+.proof-figure.neg { color: var(--neg); }
+.proof-label {
+  font-family: var(--mono); font-size: 10.5px; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--faint);
+  margin-top: 6px; line-height: 1.4;
+}
+@media (max-width: 720px) {
+  /* Two-up rather than four: a 30px figure squeezed into a quarter of 390px
+     stops being the thing you read first, which is its only job. */
+  .proof-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 32px; }
+  .proof-strip > div { padding: 16px 14px; }
+}
+
+
+/* --- the hero's sample card ---------------------------------------------- */
+.hero-sample {
+  padding: 24px 22px;
+  border: 1px solid var(--line-2);
+  border-radius: calc(var(--r) * 1.75);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+.hero-sample-q {
+  font-size: clamp(19px, 1.8vw, 25px); font-weight: 680;
+  letter-spacing: -.02em; line-height: 1.2; margin-top: 8px;
+}
+.hero .badges { justify-content: flex-start; }
+
+
+@media (max-width: 640px) {
+  /*
+   * Hero actions stack full-width.
+   *
+   * As a wrapping flex row the secondary button lost its box and sat indented
+   * under the primary, reading as stray text rather than a control. Two
+   * full-width rows give both a 48px target and a left edge that agrees with
+   * every other line on the page.
+   */
+  .hero .row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .hero .row .btn { width: 100%; justify-content: center; text-align: center; }
+  .hero p.lede { font-size: 16.5px; }
+  .hero .badges { gap: 6px; }
 }

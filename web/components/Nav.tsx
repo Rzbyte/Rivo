@@ -61,6 +61,17 @@ export function Nav({ right }: { right?: React.ReactNode }) {
           
           {right && <div className="nav-right row hide-mobile">{right}</div>}
 
+          {/* The right slot. Empty, it made a centred nav read as off-centre;
+              filled with the primary action, the header balances and the one
+              thing a first-time visitor should do follows them across the site. */}
+          <Link
+            className="nav-cta"
+            href="/check"
+            aria-current={path === "/check" ? "page" : undefined}
+          >
+            Check a price
+          </Link>
+
           <button 
             className="mobile-toggle hide-desktop" 
             onClick={() => setIsOpen(!isOpen)}
